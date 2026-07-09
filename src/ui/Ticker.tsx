@@ -20,7 +20,7 @@ export default function Ticker() {
   }, [tickers, dropTicker]);
 
   return (
-    <div className="ticker">
+    <div className="ticker" aria-live="polite" aria-label="Course activity">
       {tickers.map((t) => (
         <div key={t.id} className={'tk' + (t.cls ? ' ' + t.cls : '')}>
           {t.name ? <b>{t.name}: </b> : null}

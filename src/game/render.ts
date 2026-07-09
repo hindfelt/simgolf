@@ -7,8 +7,11 @@ import { P, PE, screenToWorld, viewXY } from './camera';
 import { parFor } from './engine';
 import { CATALOG, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite } from './sprites';
 import type { GolferFrame, TreeKind, BSprite } from './sprites';
+import { facilityActivityPose } from './facilityActivity';
+import type { FacilityActivityPose } from './facilityActivity';
+import { countEmp } from './employees';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -16,13 +19,14 @@ import type { GolferFrame, TreeKind, BSprite } from './sprites';
    iso quad (two triangles, corner heightfield) with slope-based sun shading.
    That gives SimGolf-style rolling ground instead of stair-step terraces. */
 
-const RES = 24; // ortho px per tile
-const GPAD = 30;
+const RES = 32; // ortho px per tile; enough resolution for material texture
+const GPAD = 56;
+const EDGE_DEPTH = 26;
 const gox = (Math.max(W, H) * TW) / 2 + GPAD; // room for either rotation
 const goy = GPAD + MAXE * EH;
 const gc = document.createElement('canvas');
 gc.width = Math.max(W, H) * TW + GPAD * 2;
-gc.height = ((W + H) * TH) / 2 + GPAD * 2 + TH + MAXE * EH;
+gc.height = ((W + H) * TH) / 2 + GPAD * 2 + TH + MAXE * EH + EDGE_DEPTH;
 const gctx = gc.getContext('2d')!;
 
 const oc = document.createElement('canvas');
@@ -30,14 +34,18 @@ oc.width = W * RES;
 oc.height = H * RES;
 const octx = oc.getContext('2d')!;
 
+const bgc = document.createElement('canvas');
+const bgctx = bgc.getContext('2d')!;
+
 /** Terrain merge groups: tiles in the same group flow together as one blob. */
 type Grp = number;
-const Grp = { ROUGH: 0, FAIR: 1, GREEN: 2, SAND: 3, WATER: 4, PATH: 5 } as const;
+const Grp = { ROUGH: 0, FAIR: 1, GREEN: 2, SAND: 3, WATER: 4, PATH: 5, TEE: 6 } as const;
 function groupOf(t: number): Grp {
   switch (t) {
     case Tile.FAIR:
-    case Tile.TEE:
       return Grp.FAIR;
+    case Tile.TEE:
+      return Grp.TEE;
     case Tile.GREEN:
       return Grp.GREEN;
     case Tile.SAND:
@@ -83,40 +91,56 @@ function drawOrtho() {
   const c = octx;
   c.clearRect(0, 0, oc.width, oc.height);
 
-  // 1) rough base under everything (shows through rounded blob corners)
+  // 1) Rough under everything. Large translucent patches hide the tile grid;
+  // tiny grass marks keep the material readable at close zoom.
+  c.fillStyle = TINFO[Tile.ROUGH].c1;
+  c.fillRect(0, 0, oc.width, oc.height);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      const R = TINFO[Tile.ROUGH];
-      c.fillStyle = hash2(x, y) > 0.5 ? R.c1 : R.c2;
-      c.fillRect(x * RES, y * RES, RES, RES);
-      for (let i = 0; i < 5; i++) {
-        const a = hash2(x * 7 + i * 31, y * 13 + i * 17);
-        const b = hash2(y * 11 + i * 7, x * 5 + i * 23);
-        c.fillStyle = a > 0.5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.06)';
-        c.fillRect(x * RES + a * (RES - 3), y * RES + b * (RES - 3), 2.5, 2);
+      const u = x * RES;
+      const v = y * RES;
+      const patch = hash2(x * 5 + 17, y * 7 + 31);
+      c.fillStyle = patch > 0.48 ? 'rgba(27,65,29,.12)' : 'rgba(222,239,162,.08)';
+      c.beginPath();
+      c.ellipse(u + patch * RES, v + hash2(y + 9, x + 23) * RES, RES * (0.42 + patch * 0.3), RES * 0.32, patch * 2.2, 0, Math.PI * 2);
+      c.fill();
+      for (let i = 0; i < 7; i++) {
+        const a = hash2(x * 17 + i * 31, y * 23 + i * 13);
+        const b = hash2(y * 19 + i * 7, x * 11 + i * 29);
+        c.fillStyle = a > 0.53 ? 'rgba(233,246,190,.09)' : 'rgba(20,53,25,.1)';
+        c.fillRect(u + a * (RES - 3), v + b * (RES - 3), 1.5 + b * 1.5, 1.2);
       }
       const t = S.tiles[idx(x, y)];
-      if (t === Tile.ROUGH && hash2(x * 3, y * 9) > 0.74) {
-        c.strokeStyle = 'rgba(30,60,20,.35)';
-        c.lineWidth = 1.2;
-        const tu = x * RES + hash2(x, y * 2) * (RES - 6) + 3;
-        const tv = y * RES + hash2(x * 2, y) * (RES - 6) + 4;
-        c.beginPath();
-        c.moveTo(tu, tv + 3);
-        c.lineTo(tu - 1.5, tv - 2);
-        c.moveTo(tu + 1, tv + 3);
-        c.lineTo(tu + 2.5, tv - 2);
-        c.stroke();
+      if ((t === Tile.ROUGH || t === Tile.TREE) && hash2(x * 3, y * 9) > 0.52) {
+        for (let i = 0; i < 2; i++) {
+          const tu = u + hash2(x + i * 37, y * 2 + i) * (RES - 8) + 4;
+          const tv = v + hash2(x * 2 + i, y + i * 19) * (RES - 8) + 5;
+          c.strokeStyle = i ? 'rgba(216,235,154,.2)' : 'rgba(24,60,27,.32)';
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(tu, tv + 3.5);
+          c.quadraticCurveTo(tu - 1, tv, tu - 2.3, tv - 2.6);
+          c.moveTo(tu + 0.5, tv + 3.5);
+          c.quadraticCurveTo(tu + 1.5, tv, tu + 3, tv - 2.3);
+          c.stroke();
+        }
       }
     }
 
-  // 2) water — beach rim, deep fill, crisp shoreline
+  // 2) Water — a recessed shoreline, deep centre and fine caustic marks.
   const water = blobPath(Grp.WATER, RES * 0.5);
   if (water.any) {
-    c.strokeStyle = '#e0cc90';
+    c.strokeStyle = '#a98c55';
+    c.lineWidth = 11;
+    c.stroke(water.path);
+    c.strokeStyle = '#dfc789';
     c.lineWidth = 7;
     c.stroke(water.path);
-    c.fillStyle = TINFO[Tile.WATER].c2;
+    const waterGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    waterGrad.addColorStop(0, TINFO[Tile.WATER].c1);
+    waterGrad.addColorStop(0.55, TINFO[Tile.WATER].c2);
+    waterGrad.addColorStop(1, '#1c5f8b');
+    c.fillStyle = waterGrad;
     c.fill(water.path);
     const deep = new Path2D();
     let anyDeep = false;
@@ -128,44 +152,68 @@ function drawOrtho() {
     if (anyDeep) {
       c.save();
       c.clip(water.path);
-      c.fillStyle = 'rgba(20,50,110,.16)';
+      c.fillStyle = 'rgba(8,40,75,.22)';
       c.fill(deep);
       c.restore();
     }
-    c.strokeStyle = '#2c639c';
-    c.lineWidth = 2.2;
+    c.save();
+    c.clip(water.path);
+    c.strokeStyle = 'rgba(170,228,237,.22)';
+    c.lineWidth = 1.2;
+    for (const [x, y] of water.tiles) {
+      const a = hash2(x * 13 + 4, y * 17 + 9);
+      const b = hash2(y * 11 + 3, x * 7 + 5);
+      c.beginPath();
+      c.moveTo(x * RES + 5 + a * 10, y * RES + 7 + b * 15);
+      c.quadraticCurveTo(x * RES + RES * 0.5, y * RES + 5 + b * 15, x * RES + RES - 5 - a * 8, y * RES + 8 + b * 15);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = '#245b78';
+    c.lineWidth = 2;
     c.stroke(water.path);
   }
 
-  // 3) sand bunkers
+  // 3) Sand — a darker cut lip, warm depth and lightly raked arcs.
   const sand = blobPath(Grp.SAND, RES * 0.5);
   if (sand.any) {
-    c.fillStyle = TINFO[Tile.SAND].c1;
+    c.strokeStyle = '#9f854d';
+    c.lineWidth = 7;
+    c.stroke(sand.path);
+    const sandGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    sandGrad.addColorStop(0, '#ead69a');
+    sandGrad.addColorStop(1, TINFO[Tile.SAND].c2);
+    c.fillStyle = sandGrad;
     c.fill(sand.path);
     c.save();
     c.clip(sand.path);
-    c.fillStyle = 'rgba(120,90,30,.28)';
+    c.fillStyle = 'rgba(105,75,27,.22)';
     for (const [x, y] of sand.tiles)
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 7; i++) {
         const a = hash2(x * 3 + i, y * 5 + i);
         const b = hash2(y * 9 + i, x * 7 + i);
-        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.8, 1.8);
+        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.3, 1.3);
       }
+    c.strokeStyle = 'rgba(126,91,35,.23)';
+    c.lineWidth = 1;
+    for (const [x, y] of sand.tiles) {
+      const rr = RES * (0.19 + hash2(x, y) * 0.08);
+      c.beginPath();
+      c.arc(x * RES + RES * 0.48, y * RES + RES * 0.52, rr, 0.22, 2.55);
+      c.stroke();
+    }
     c.restore();
-    c.strokeStyle = '#c4ae74';
-    c.lineWidth = 2.4;
+    c.strokeStyle = 'rgba(250,233,181,.65)';
+    c.lineWidth = 1.4;
     c.stroke(sand.path);
-    c.save();
-    c.clip(sand.path);
-    c.strokeStyle = 'rgba(255,255,255,.5)';
-    c.lineWidth = 1.2;
-    c.stroke(sand.path);
-    c.restore();
   }
 
-  // 4) fairway (tees merge into the same blob) with mowing stripes
+  // 4) Fairway with broad mower lanes.
   const fair = blobPath(Grp.FAIR, RES * 0.5);
   if (fair.any) {
+    c.strokeStyle = '#426e32';
+    c.lineWidth = 5;
+    c.stroke(fair.path);
     c.fillStyle = TINFO[Tile.FAIR].c1;
     c.fill(fair.path);
     c.save();
@@ -181,43 +229,85 @@ function drawOrtho() {
       c.closePath();
       c.fill();
     }
+    c.strokeStyle = 'rgba(231,247,187,.08)';
+    c.lineWidth = 2;
+    for (let k = -2; k <= W + H; k += 2) {
+      c.beginPath();
+      c.moveTo(k * band, 0);
+      c.lineTo(k * band - oc.height, oc.height);
+      c.stroke();
+    }
     c.restore();
-    c.strokeStyle = 'rgba(20,50,10,.14)';
-    c.lineWidth = 1.6;
+    c.strokeStyle = 'rgba(30,65,24,.35)';
+    c.lineWidth = 1.4;
     c.stroke(fair.path);
-    const T = TINFO[Tile.TEE];
-    for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++) {
-        if (S.tiles[idx(x, y)] !== Tile.TEE) continue;
-        c.fillStyle = T.c1;
-        c.beginPath();
-        c.roundRect(x * RES + 2, y * RES + 2, RES - 4, RES - 4, 4);
-        c.fill();
-        c.fillStyle = '#fffdf2';
-        c.fillRect(x * RES + RES / 2 - 6, y * RES + RES / 2 - 1.5, 3.5, 3.5);
-        c.fillRect(x * RES + RES / 2 + 3, y * RES + RES / 2 - 1.5, 3.5, 3.5);
-      }
   }
 
-  // 5) greens — smooth, pale, checkerboard mow + fringe ring
+  // 5) Tee boxes — a compact circular cut with a darker collar and subtle
+  // quadrant mowing, matching the understated read of classic SimGolf tees.
+  const tee = blobPath(Grp.TEE, RES * 0.78);
+  if (tee.any) {
+    c.strokeStyle = '#426e32';
+    c.lineWidth = 10;
+    c.stroke(tee.path);
+    c.strokeStyle = '#78aa50';
+    c.lineWidth = 6;
+    c.stroke(tee.path);
+    const teeGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    teeGrad.addColorStop(0, '#99cf72');
+    teeGrad.addColorStop(1, '#76b65c');
+    c.fillStyle = teeGrad;
+    c.fill(tee.path);
+    c.save();
+    c.clip(tee.path);
+    for (const hole of S.holes) {
+      const cx = hole.tee.x * RES;
+      const cy = hole.tee.y * RES;
+      const radius = RES * 1.08;
+      for (let q = 0; q < 4; q++) {
+        c.fillStyle = q & 1 ? 'rgba(232,248,188,.09)' : 'rgba(30,83,36,.055)';
+        c.beginPath();
+        c.moveTo(cx, cy);
+        c.arc(cx, cy, radius, -Math.PI / 4 + q * Math.PI / 2, -Math.PI / 4 + (q + 1) * Math.PI / 2);
+        c.closePath();
+        c.fill();
+      }
+      c.strokeStyle = 'rgba(43,94,39,.2)';
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.ellipse(cx, cy, RES * 0.62, RES * 0.62, 0, 0, Math.PI * 2);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = 'rgba(31,73,32,.42)';
+    c.lineWidth = 1.4;
+    c.stroke(tee.path);
+  }
+
+  // 6) Greens — double fringe, subtle checker cut and a crisp collar.
   const green = blobPath(Grp.GREEN, RES * 0.6);
   if (green.any) {
-    c.strokeStyle = '#68b455';
+    c.strokeStyle = '#477f38';
+    c.lineWidth = 9;
+    c.stroke(green.path);
+    c.strokeStyle = '#76ae4c';
     c.lineWidth = 6;
     c.stroke(green.path);
     c.fillStyle = TINFO[Tile.GREEN].c1;
     c.fill(green.path);
     c.save();
     c.clip(green.path);
-    c.fillStyle = 'rgba(255,255,255,.05)';
-    for (const [x, y] of green.tiles) if ((x + y) & 1) c.fillRect(x * RES, y * RES, RES, RES);
+    for (const [x, y] of green.tiles) {
+      c.fillStyle = (x + y) & 1 ? 'rgba(237,255,215,.075)' : 'rgba(25,85,35,.04)';
+      c.fillRect(x * RES, y * RES, RES, RES);
+    }
     c.restore();
-    c.strokeStyle = 'rgba(20,60,20,.18)';
+    c.strokeStyle = 'rgba(23,73,30,.35)';
     c.lineWidth = 1.4;
     c.stroke(green.path);
   }
 
-  // 6) pathways — connected gravel vs. disconnected mud
+  // 7) pathways — connected gravel vs. disconnected mud
   const conn = caches.pathConnected;
   const pathOn = blobPath(Grp.PATH, RES * 0.35, (x, y) => conn.has(x + ',' + y));
   const pathOff = blobPath(Grp.PATH, RES * 0.35, (x, y) => !conn.has(x + ',' + y));
@@ -226,37 +316,40 @@ function drawOrtho() {
     [pathOff, PATH_MUD.c1, '#5f5138'],
   ] as const) {
     if (!pp.any) continue;
+    c.strokeStyle = edge;
+    c.lineWidth = 5;
+    c.stroke(pp.path);
     c.fillStyle = col;
     c.fill(pp.path);
     c.save();
     c.clip(pp.path);
-    c.fillStyle = 'rgba(90,70,40,.25)';
+    c.fillStyle = 'rgba(70,52,31,.27)';
     for (const [x, y] of pp.tiles)
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 7; i++) {
         const a = hash2(x * 13 + i, y * 3 + i);
         const b = hash2(y * 5 + i, x * 11 + i);
-        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.6, 1.6);
+        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1 + a * 1.5, 1 + a);
       }
     c.restore();
-    c.strokeStyle = edge;
-    c.lineWidth = 1.8;
+    c.strokeStyle = 'rgba(249,225,174,.28)';
+    c.lineWidth = 1.2;
     c.stroke(pp.path);
   }
 
-  // 7) flower tiles — lush bed: dark foliage patch, stems, leaves, petal rosettes
+  // 8) flower tiles — lush bed: dark foliage patch, stems, leaves, petal rosettes
   const petals = ['#f2a7c3', '#f7d34d', '#ffffff', '#e78ad1', '#f0806a', '#c8493c', '#9a8ae0'];
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       if (S.tiles[idx(x, y)] !== Tile.FLOWER) continue;
-      c.fillStyle = '#4c7a2e';
+      c.fillStyle = '#315e2f';
       c.beginPath();
       c.roundRect(x * RES + 1.5, y * RES + 1.5, RES - 3, RES - 3, RES * 0.42);
       c.fill();
-      c.fillStyle = '#568a34';
+      c.fillStyle = '#477b38';
       c.beginPath();
       c.roundRect(x * RES + 3.5, y * RES + 3.5, RES - 7, RES - 7, RES * 0.35);
       c.fill();
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 11; i++) {
         const a = hash2(x * 11 + i, y * 17 + i);
         const b = hash2(y * 11 + i, x * 5 + i);
         const fx = x * RES + 4 + a * (RES - 8);
@@ -276,7 +369,7 @@ function drawOrtho() {
       }
     }
 
-  // 8) land you don't own yet: dimmed, with parcel boundaries
+  // 9) land you don't own yet: dimmed, with parcel boundaries
   c.fillStyle = 'rgba(24,38,22,.32)';
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!ownedAt(x, y)) c.fillRect(x * RES, y * RES, RES, RES);
   c.strokeStyle = 'rgba(255,255,255,.22)';
@@ -375,21 +468,118 @@ function triShade(lx: number, ly: number, x0: number, y0: number, h0: number, x1
   return d > 0 ? d * 1.0 : d * 1.1;
 }
 
+type GroundEdgePoint = { x: number; y: number; baseY: number };
+
+/** All grid corners around the map, clockwise in world space. */
+function groundPerimeter(): GroundEdgePoint[] {
+  const out: GroundEdgePoint[] = [];
+  const add = (x: number, y: number) => out.push({ x: gX(x, y), y: gY(x, y), baseY: gY0(x, y) + EDGE_DEPTH });
+  for (let x = 0; x <= W; x++) add(x, 0);
+  for (let y = 1; y <= H; y++) add(W, y);
+  for (let x = W - 1; x >= 0; x--) add(x, H);
+  for (let y = H - 1; y > 0; y--) add(0, y);
+  return out;
+}
+
+/** Soft cast shadow and layered earth faces make the course a physical diorama. */
+function drawGroundBase() {
+  const edge = groundPerimeter();
+  const outline = new Path2D();
+  outline.moveTo(edge[0].x, edge[0].y);
+  for (let i = 1; i < edge.length; i++) outline.lineTo(edge[i].x, edge[i].y);
+  outline.closePath();
+
+  gctx.save();
+  gctx.translate(10, EDGE_DEPTH + 10);
+  gctx.filter = 'blur(15px)';
+  gctx.fillStyle = 'rgba(4,15,14,.52)';
+  gctx.fill(outline);
+  gctx.restore();
+
+  for (let i = 0; i < edge.length; i++) {
+    const a = edge[i];
+    const b = edge[(i + 1) % edge.length];
+    const grad = gctx.createLinearGradient(0, Math.min(a.y, b.y), 0, Math.max(a.baseY, b.baseY));
+    const lit = b.x - a.x < 0;
+    grad.addColorStop(0, lit ? '#6c5435' : '#5a432c');
+    grad.addColorStop(0.18, lit ? '#56402b' : '#493523');
+    grad.addColorStop(1, lit ? '#2c2a22' : '#22241f');
+    gctx.fillStyle = grad;
+    gctx.beginPath();
+    gctx.moveTo(a.x, a.y);
+    gctx.lineTo(b.x, b.y);
+    gctx.lineTo(b.x, b.baseY);
+    gctx.lineTo(a.x, a.baseY);
+    gctx.closePath();
+    gctx.fill();
+
+    // Broken strata stop the edge reading as a single flat brown polygon.
+    if (i % 3 === 0) {
+      gctx.strokeStyle = lit ? 'rgba(219,183,116,.13)' : 'rgba(205,165,102,.09)';
+      gctx.lineWidth = 1;
+      gctx.beginPath();
+      gctx.moveTo(a.x, a.y + (a.baseY - a.y) * 0.54);
+      gctx.lineTo(b.x, b.y + (b.baseY - b.y) * 0.54);
+      gctx.stroke();
+    }
+  }
+}
+
+/** Screen-sized atmosphere behind the course. Rebuilt only after a resize. */
+function buildBackdrop(w: number, h: number) {
+  bgc.width = Math.max(1, Math.ceil(w));
+  bgc.height = Math.max(1, Math.ceil(h));
+  const c = bgctx;
+  const sky = c.createLinearGradient(0, 0, w, h);
+  sky.addColorStop(0, '#28465a');
+  sky.addColorStop(0.48, '#1d3a3c');
+  sky.addColorStop(1, '#102820');
+  c.fillStyle = sky;
+  c.fillRect(0, 0, w, h);
+
+  const glow = c.createRadialGradient(w * 0.24, h * 0.12, 0, w * 0.24, h * 0.12, Math.max(w, h) * 0.72);
+  glow.addColorStop(0, 'rgba(218,228,179,.22)');
+  glow.addColorStop(0.42, 'rgba(131,176,145,.08)');
+  glow.addColorStop(1, 'rgba(8,24,24,0)');
+  c.fillStyle = glow;
+  c.fillRect(0, 0, w, h);
+
+  // Out-of-focus forest crowns around the frame imply a larger park beyond.
+  for (let i = 0; i < 42; i++) {
+    const a = hash2(i * 17 + 5, i * 31 + 2);
+    const b = hash2(i * 7 + 19, i * 13 + 11);
+    const side = i & 3;
+    const x = side === 0 ? a * w * 0.24 : side === 1 ? w * (0.76 + a * 0.24) : a * w;
+    const y = side === 2 ? b * h * 0.2 : side === 3 ? h * (0.78 + b * 0.22) : b * h;
+    const r = 34 + hash2(i, i + 97) * 80;
+    c.fillStyle = i % 3 === 0 ? 'rgba(70,110,83,.08)' : 'rgba(6,30,27,.1)';
+    c.beginPath();
+    c.ellipse(x, y, r, r * (0.42 + b * 0.25), a * Math.PI, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  c.strokeStyle = 'rgba(178,207,179,.045)';
+  c.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const y = (i / 11) * h + hash2(i, 4) * 30;
+    c.beginPath();
+    c.moveTo(-40, y);
+    c.bezierCurveTo(w * 0.26, y - 50, w * 0.65, y + 55, w + 40, y - 10);
+    c.stroke();
+  }
+
+  for (let i = 0; i < Math.ceil((w * h) / 1800); i++) {
+    const x = hash2(i * 5, i * 29) * w;
+    const y = hash2(i * 37, i * 11) * h;
+    c.fillStyle = i & 1 ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.035)';
+    c.fillRect(x, y, 1.2, 1.2);
+  }
+}
+
 function buildGround() {
   gctx.setTransform(1, 0, 0, 1, 0, 0);
   gctx.clearRect(0, 0, gc.width, gc.height);
-  // dark skirt under the island
-  gctx.save();
-  gctx.translate(0, 5);
-  gctx.fillStyle = 'rgba(0,0,0,.25)';
-  gctx.beginPath();
-  gctx.moveTo(gX(0, 0), gY0(0, 0));
-  gctx.lineTo(gX(W, 0), gY0(W, 0));
-  gctx.lineTo(gX(W, H), gY0(W, H));
-  gctx.lineTo(gX(0, H), gY0(0, H));
-  gctx.closePath();
-  gctx.fill();
-  gctx.restore();
+  drawGroundBase();
 
   drawOrtho();
   const [lx, ly] = worldLight();
@@ -420,6 +610,17 @@ function buildGround() {
         mapTri(sx, sy, sx + RES, sy + RES, sx, sy + RES, d00x, d00y, d11x, d11y, d01x, d01y, sh);
       }
     }
+  const edge = groundPerimeter();
+  gctx.strokeStyle = 'rgba(29,64,31,.82)';
+  gctx.lineWidth = 2.2;
+  gctx.beginPath();
+  gctx.moveTo(edge[0].x, edge[0].y);
+  for (let i = 1; i < edge.length; i++) gctx.lineTo(edge[i].x, edge[i].y);
+  gctx.closePath();
+  gctx.stroke();
+  gctx.strokeStyle = 'rgba(206,227,153,.24)';
+  gctx.lineWidth = 0.8;
+  gctx.stroke();
   caches.groundDirty = false;
 }
 
@@ -427,11 +628,8 @@ function buildGround() {
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
   const u = z;
-  const grd = ctx.createLinearGradient(0, 0, 0, cssH);
-  grd.addColorStop(0, '#101216');
-  grd.addColorStop(1, '#000000');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, cssW, cssH);
+  if (bgc.width !== Math.ceil(cssW) || bgc.height !== Math.ceil(cssH)) buildBackdrop(cssW, cssH);
+  ctx.drawImage(bgc, 0, 0, cssW, cssH);
   if (caches.groundDirty) buildGround();
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(gc, S.cam.x - gox * z, S.cam.y - goy * z, gc.width * z, gc.height * z);
@@ -443,13 +641,12 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     const ph = S.time * 1.8 + s * 20;
     const a = Math.max(0, Math.sin(ph)) * 0.35;
     if (a < 0.03) continue;
-    ctx.strokeStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
-    ctx.lineWidth = 1.2 * z;
+    ctx.strokeStyle = 'rgba(207,244,246,' + a.toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.8, 1.15 * z);
     ctx.beginPath();
     const ox = (s - 0.5) * TW * 0.5 * z;
     const oy = (hash2(w.y, w.x) - 0.5) * TH * 0.5 * z;
-    ctx.moveTo(c.x + ox - 4 * z, c.y + oy);
-    ctx.lineTo(c.x + ox + 4 * z, c.y + oy);
+    ctx.ellipse(c.x + ox, c.y + oy, 5.5 * z, 1.8 * z, 0, Math.PI * 0.14, Math.PI * 0.86);
     ctx.stroke();
   }
 
@@ -468,6 +665,21 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
         const sy = py * PARCEL_H + PARCEL_H / 2;
         D.push({ z: dep(sx, sy), f: () => drawForSale(ctx, sx, sy, u) });
       }
+  const tidyStaff = countEmp('groundskeeper') + countEmp('turftech');
+  const visiblePatches = Math.max(3, caches.naturePatches.length - tidyStaff * 6);
+  for (const patch of caches.naturePatches.slice(0, visiblePatches)) D.push({ z: dep(patch.x, patch.y) - 0.04, f: () => drawNaturePatch(ctx, patch, u) });
+  const wildlifeManaged = countEmp('ranger') + countEmp('marshall') > 0;
+  for (const animal of caches.wildlife) {
+    const pose = wildlifePose(animal, wildlifeManaged);
+    D.push({ z: dep(pose.x, pose.y) + 0.03, f: () => drawWildlife(ctx, animal.kind, pose, u) });
+  }
+  let staffIndex = 0;
+  for (const employee of S.employees) {
+    const staffKind = employee.kind;
+    if (staffKind !== 'ranger' && staffKind !== 'groundskeeper' && staffKind !== 'turftech') continue;
+    const pose = courseStaffPose(employee.id, staffKind, staffIndex++);
+    D.push({ z: dep(pose.x, pose.y) + 0.05, f: () => drawCourseStaff(ctx, staffKind, pose, u) });
+  }
   for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
   S.holes.forEach((h, i) => {
     D.push({ z: dep(h.cup.x, h.cup.y), f: () => drawFlag(ctx, h, i + 1, u) });
@@ -477,6 +689,13 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     Math.max(dep(x, y), dep(x + w, y), dep(x, y + h), dep(x + w, y + h)) - 0.4;
   D.push({ z: bDep(Math.floor(CH.x) - 1, Math.floor(CH.y) - 1, 2, 2), f: () => drawClubhouse(ctx, u) });
   for (const b of S.buildings) D.push({ z: bDep(b.x, b.y, b.w, b.h), f: () => drawBuilding(ctx, b, u) });
+  for (const activity of S.facilityActivities) {
+    if (activity.kind !== 'marina-boat') continue;
+    const facility = S.buildings.find((building) => building.id === activity.facilityId);
+    if (!facility) continue;
+    const pose = facilityActivityPose(activity, facility);
+    D.push({ z: bDep(facility.x, facility.y, facility.w, facility.h) + 0.08, f: () => drawFacilityBoat(ctx, pose, u) });
+  }
   for (const g of S.golfers) {
     D.push({ z: dep(g.x, g.y), f: () => drawGolfer(ctx, g, u) });
     if (g.ball && (g.state === 'toBall' || g.state === 'preshot' || g.state === 'prePutt' || g.state === 'toTee'))
@@ -490,9 +709,174 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   D.sort((a, b) => a.z - b.z);
   for (const d of D) d.f();
 
+  // Aircraft remain above the world painter's order while approaching; their
+  // ground shadow still tracks the rolling terrain below.
+  for (const activity of S.facilityActivities) {
+    if (activity.kind === 'marina-boat') continue;
+    const facility = S.buildings.find((building) => building.id === activity.facilityId);
+    if (facility) drawFacilityPlane(ctx, facilityActivityPose(activity, facility), u);
+  }
+
   drawAim(ctx, u);
   drawParticles(ctx, u);
   drawFloaters(ctx, u);
+
+  const vignette = ctx.createRadialGradient(cssW / 2, cssH * 0.46, Math.min(cssW, cssH) * 0.22, cssW / 2, cssH / 2, Math.max(cssW, cssH) * 0.72);
+  vignette.addColorStop(0, 'rgba(7,20,20,0)');
+  vignette.addColorStop(0.72, 'rgba(7,20,20,.025)');
+  vignette.addColorStop(1, 'rgba(4,12,15,.16)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, cssW, cssH);
+}
+
+function poseScreenAngle(pose: FacilityActivityPose): number {
+  const a = P(pose.x, pose.y);
+  const b = P(pose.x + pose.heading.x, pose.y + pose.heading.y);
+  return Math.atan2(b.y - a.y, b.x - a.x);
+}
+
+function drawFacilityPlane(ctx: CanvasRenderingContext2D, pose: FacilityActivityPose, u: number) {
+  const ground = PE(pose.x, pose.y);
+  const altitude = pose.altitude * u;
+  const angle = poseScreenAngle(pose);
+  const k = clamp(u, 0.62, 1.55) * pose.scale * 0.92;
+  const shadowScale = clamp(1 - pose.altitude / 125, 0.3, 0.9);
+
+  ctx.save();
+  ctx.translate(ground.x + altitude * 0.08, ground.y + altitude * 0.08);
+  ctx.rotate(angle);
+  ctx.fillStyle = 'rgba(7,22,22,' + (0.08 + shadowScale * 0.18).toFixed(3) + ')';
+  ctx.beginPath();
+  ctx.ellipse(1.5 * k, 0, 18 * k * shadowScale, 6.2 * k * shadowScale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(ground.x, ground.y - altitude);
+  ctx.rotate(angle);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(facilityPlaneSprite(), -22 * k, -20 * k, 44 * k, 40 * k);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
+}
+
+function drawFacilityBoat(ctx: CanvasRenderingContext2D, pose: FacilityActivityPose, u: number) {
+  const p = PE(pose.x, pose.y);
+  const angle = poseScreenAngle(pose);
+  const k = clamp(u, 0.62, 1.32) * pose.scale * 0.88;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(angle);
+  ctx.strokeStyle = 'rgba(215,245,244,.42)';
+  ctx.lineWidth = 1.2;
+  for (const oy of [-3, 3]) {
+    ctx.beginPath();
+    ctx.moveTo(-8 * k, oy * k * 0.35);
+    ctx.quadraticCurveTo(-16 * k, oy * k, -24 * k, oy * k * 1.2);
+    ctx.stroke();
+  }
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(facilityBoatSprite(), -17 * k, -8 * k, 34 * k, 16 * k);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
+}
+
+type WildlifeCache = (typeof caches.wildlife)[number];
+type NaturePose = { x: number; y: number; altitude: number; bob: number; face: number };
+
+function wildlifePose(animal: WildlifeCache, managed: boolean): NaturePose {
+  if (animal.kind === 'bird') {
+    const dir = animal.s > 0.5 ? 1 : -1;
+    const rawX = animal.x + dir * S.time * (0.38 + animal.s * 0.22);
+    const x = ((rawX % W) + W) % W;
+    return { x, y: clamp(animal.y + Math.sin(S.time * 0.27 + animal.s * 20) * 2.4, 1, H - 1), altitude: 24 + animal.s * 15, bob: 0, face: dir };
+  }
+  const radius = animal.kind === 'duck' ? 0.16 : managed ? 0.28 : animal.kind === 'deer' ? 0.68 : 0.52;
+  const speed = animal.kind === 'deer' ? 0.22 : animal.kind === 'rabbit' ? 0.48 : 0.3;
+  const phase = S.time * speed + animal.s * 31;
+  return {
+    x: animal.x + Math.cos(phase) * radius,
+    y: animal.y + Math.sin(phase * 0.83) * radius * 0.65,
+    altitude: 0,
+    bob: animal.kind === 'rabbit' ? Math.max(0, Math.sin(phase * 4.5)) * 2.5 : 0,
+    face: Math.sin(phase) >= 0 ? 1 : -1,
+  };
+}
+
+function drawNaturePatch(ctx: CanvasRenderingContext2D, patch: (typeof caches.naturePatches)[number], u: number) {
+  const p = PE(patch.x, patch.y);
+  const k = clamp(u, 0.6, 1.8);
+  if (patch.kind === 'divot') {
+    ctx.fillStyle = 'rgba(80,57,31,.64)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 4.2 * k, 1.8 * k, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#668d3f';
+    ctx.beginPath();
+    ctx.ellipse(p.x + 2.4 * k, p.y - 1.2 * k, 3 * k, 1.2 * k, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.strokeStyle = '#3b7136';
+  ctx.lineWidth = Math.max(0.7, 0.8 * k);
+  for (let i = 0; i < 4; i++) {
+    const ox = (i - 1.5) * 2.2 * k;
+    const oy = Math.sin(i * 2.4 + patch.s * 10) * 1.3 * k;
+    ctx.beginPath();
+    ctx.moveTo(p.x + ox, p.y + oy);
+    ctx.lineTo(p.x + ox - 0.8 * k, p.y + oy - (3.5 + (i & 1)) * k);
+    ctx.stroke();
+    ctx.fillStyle = i & 1 ? '#f3f0d5' : '#e6cf55';
+    ctx.beginPath();
+    ctx.arc(p.x + ox - 0.8 * k, p.y + oy - (3.7 + (i & 1)) * k, 1.15 * k, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind'], pose: NaturePose, u: number) {
+  const p = PE(pose.x, pose.y);
+  const k = clamp(u, 0.65, 1.75);
+  if (kind === 'bird') {
+    const y = p.y - pose.altitude * u;
+    ctx.strokeStyle = 'rgba(28,42,39,.78)';
+    ctx.lineWidth = Math.max(1, 1.3 * k);
+    const flap = Math.sin(S.time * 7 + pose.x) * 2.2 * k;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 7 * k, y + flap);
+    ctx.quadraticCurveTo(p.x - 3 * k, y - 2 * k, p.x, y);
+    ctx.quadraticCurveTo(p.x + 3 * k, y - 2 * k, p.x + 7 * k, y - flap);
+    ctx.stroke();
+    return;
+  }
+  const y = p.y - pose.bob * k;
+  ctx.fillStyle = 'rgba(17,39,26,.2)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + 1.5 * k, p.y + 1.2 * k, (kind === 'deer' ? 7 : 4.5) * k, 2 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (kind === 'duck') {
+    ctx.strokeStyle = 'rgba(207,241,239,.36)';
+    ctx.beginPath();
+    ctx.moveTo(p.x - pose.face * 10 * k, y + 1 * k);
+    ctx.lineTo(p.x - pose.face * 5 * k, y);
+    ctx.stroke();
+  }
+  const sk = k * (kind === 'deer' ? 0.88 : kind === 'rabbit' ? 0.6 : 0.55);
+  ctx.save();
+  ctx.translate(p.x, y + 2 * sk);
+  ctx.scale(pose.face, 1);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(wildlifeSprite(kind), -16 * sk, -29 * sk, 32 * sk, 30 * sk);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
+}
+
+function courseStaffPose(id: number, kind: 'ranger' | 'groundskeeper' | 'turftech', index: number) {
+  const targets = kind === 'ranger' ? caches.wildlife : caches.naturePatches;
+  const target = targets.length ? targets[Math.abs(Math.floor(id + index * 7)) % targets.length] : { x: CH.x + 4, y: CH.y + 3 };
+  const cycle = (S.time * (0.045 + index * 0.004) + (Math.abs(id) % 97) / 97) % 2;
+  const t0 = cycle <= 1 ? cycle : 2 - cycle;
+  const t = t0 * t0 * (3 - 2 * t0);
+  return { x: CH.x + (target.x - CH.x) * t, y: CH.y + (target.y - CH.y) * t, phase: S.time * 7 + index, face: cycle <= 1 ? 1 : -1 };
 }
 
 /** Terrain-following tile outline. */
@@ -580,9 +964,15 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
       if (S.tool === 'raise' || S.tool === 'lower') {
         const c = PE(x + 0.5, y + 0.5);
         ctx.fillStyle = 'rgba(255,255,255,.95)';
-        ctx.font = 'bold ' + 11 * u + 'px sans-serif';
+        ctx.strokeStyle = 'rgba(20,47,31,.82)';
+        ctx.lineWidth = 3;
+        ctx.font = 'bold ' + clamp(10 * u, 10, 16) + 'px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(S.tool === 'raise' ? '▲' : '▼', c.x, c.y - 8 * u);
+        const level = Math.round(elevAt(x + 0.5, y + 0.5));
+        const next = clamp(level + (S.tool === 'raise' ? 1 : -1), 0, MAXE);
+        const label = (S.tool === 'raise' ? '▲ ' : '▼ ') + level + ' → ' + next;
+        ctx.strokeText(label, c.x, c.y - 8 * u);
+        ctx.fillText(label, c.x, c.y - 8 * u);
       }
     }
   }
@@ -636,20 +1026,20 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 /* ================= scenery ================= */
 function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
   const p = PE(tr.x, tr.y);
-  const sc = (0.8 + tr.s * 0.5) * u;
-  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  const sc = (0.78 + tr.s * 0.38) * u;
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 2 * sc, p.y + 1 * u, 8.5 * sc, 3.5 * sc, 0, 0, 7);
+  ctx.ellipse(p.x + 7 * sc, p.y + 3 * u, 14 * sc, 4.8 * sc, 0.16, 0, Math.PI * 2);
   ctx.fill();
   const kind: TreeKind = tr.s > 0.85 ? 'blossom' : tr.s > 0.62 ? 'pine' : 'round';
   const spr = treeSprite(kind, ((tr.s * 97) | 0) % 3);
-  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.02;
-  const k = sc * 0.95;
+  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.013;
+  const k = sc * 0.92;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y);
   ctx.rotate(sway);
-  ctx.drawImage(spr, -15 * k, -35 * k, 30 * k, 38 * k);
+  ctx.drawImage(spr, -21 * k, -52 * k, 42 * k, 56 * k);
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
 }
@@ -684,26 +1074,50 @@ function drawFlag(ctx: CanvasRenderingContext2D, h: Hole, num: number, u: number
 }
 
 function drawTeeSign(ctx: CanvasRenderingContext2D, h: Hole, num: number, u: number) {
-  const p = PE(h.tee.x - 1.1, h.tee.y - 1.1);
+  let dx = h.cup.x - h.tee.x;
+  let dy = h.cup.y - h.tee.y;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len;
+  dy /= len;
+  const px = -dy;
+  const py = dx;
+
+  // Two low tee blocks sit perpendicular to the line of play.
+  for (const side of [-1, 1]) {
+    const marker = PE(h.tee.x + px * side * 0.34 - dx * 0.08, h.tee.y + py * side * 0.34 - dy * 0.08);
+    ctx.fillStyle = 'rgba(16,44,27,.28)';
+    ctx.beginPath();
+    ctx.ellipse(marker.x + 1.4 * u, marker.y + 1.2 * u, 3.2 * u, 1.4 * u, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = side < 0 ? '#f2eee0' : '#e1b33d';
+    ctx.strokeStyle = side < 0 ? '#6c766f' : '#8d6721';
+    ctx.lineWidth = Math.max(0.7, 0.8 * u);
+    ctx.beginPath();
+    ctx.roundRect(marker.x - 2.5 * u, marker.y - 3 * u, 5 * u, 3.5 * u, 0.8 * u);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  const p = PE(h.tee.x - dx * 0.62 - px * 0.7, h.tee.y - dy * 0.62 - py * 0.7);
   ctx.strokeStyle = '#6d4a2b';
-  ctx.lineWidth = 2 * u;
+  ctx.lineWidth = 1.8 * u;
   ctx.beginPath();
   ctx.moveTo(p.x, p.y);
-  ctx.lineTo(p.x, p.y - 12 * u);
+  ctx.lineTo(p.x, p.y - 10 * u);
   ctx.stroke();
-  ctx.fillStyle = '#fffdf2';
-  ctx.strokeStyle = '#16301f';
-  ctx.lineWidth = 1.2 * u;
-  const w = 22 * u;
-  const hh = 11 * u;
+  ctx.fillStyle = '#243d35';
+  ctx.strokeStyle = '#d0a83f';
+  ctx.lineWidth = 1 * u;
+  const w = 20 * u;
+  const hh = 9 * u;
   ctx.beginPath();
-  ctx.roundRect(p.x - w / 2, p.y - 12 * u - hh, w, hh, 3 * u);
+  ctx.roundRect(p.x - w / 2, p.y - 10 * u - hh, w, hh, 2 * u);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#16301f';
-  ctx.font = 'bold ' + 6.5 * u + 'px sans-serif';
+  ctx.fillStyle = '#fff0b1';
+  ctx.font = '800 ' + clamp(5.8 * u, 6, 10) + 'px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(num + ' · PAR ' + h.par, p.x, p.y - 12 * u - hh / 2 + 2.4 * u);
+  ctx.fillText(num + '  PAR ' + h.par, p.x, p.y - 10 * u - hh / 2 + 2.1 * u);
 }
 
 /* ================= buildings (baked pixel sprites) ================= */
@@ -724,21 +1138,37 @@ function drawAnchored(ctx: CanvasRenderingContext2D, spr: BSprite, x: number, y:
   ctx.imageSmoothingEnabled = true;
 }
 
+function drawWorldLabel(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, u: number, tone: 'dark' | 'gold' | 'danger' = 'dark') {
+  const size = clamp(6.4 * u, 7, 11);
+  ctx.font = '800 ' + size + 'px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + clamp(10 * u, 9, 16);
+  const h = size + clamp(6 * u, 6, 10);
+  ctx.fillStyle = tone === 'danger' ? 'rgba(112,41,31,.92)' : 'rgba(18,43,34,.9)';
+  ctx.strokeStyle = tone === 'danger' ? '#f1a078' : tone === 'gold' ? '#e9b53c' : 'rgba(231,239,205,.52)';
+  ctx.lineWidth = Math.max(1, 1.1 * u);
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, h * 0.38);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = tone === 'gold' ? '#ffe39a' : '#fff8df';
+  ctx.fillText(text, x, y + 0.3);
+  ctx.textBaseline = 'alphabetic';
+}
+
 /** Boxy facilities get a soft ground shadow; flat panels bring their own ground. */
 const SHADOWED = new Set(['proshop', 'snackbar', 'cartgarage', 'hotel', 'clubhouse']);
 
 function drawClubhouse(ctx: CanvasRenderingContext2D, u: number) {
   const e = elevAt(CH.x, CH.y);
   const c = cornerAt(Math.floor(CH.x), Math.floor(CH.y), e, u);
-  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(c.x, c.y, 38 * u, 14 * u, 0, 0, 7);
+  ctx.ellipse(c.x + 8 * u, c.y + 4 * u, 42 * u, 14 * u, 0.12, 0, Math.PI * 2);
   ctx.fill();
-  drawAnchored(ctx, buildingSprite('clubhouse'), c.x, c.y, u);
-  ctx.fillStyle = '#16301f';
-  ctx.font = 'bold ' + 6 * u + 'px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('CLUBHOUSE', c.x, c.y - 62 * u);
+  drawAnchored(ctx, buildingSprite('clubhouse', 2, 2, S.rot), c.x, c.y, u);
+  if (S.cam.z > 0.62) drawWorldLabel(ctx, 'CLUBHOUSE', c.x, c.y - 66 * u, u, 'gold');
 }
 
 function spriteKeyFor(b: Building): string {
@@ -754,34 +1184,28 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
   const e = elevAt(b.x + 0.01, b.y + 0.01);
   const c = cornerAt(b.x + b.w / 2, b.y + b.h / 2, e, u);
   if (b.kind === 'bench' || b.kind === 'flowerbed') {
-    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.fillStyle = 'rgba(5,22,17,.2)';
     ctx.beginPath();
-    ctx.ellipse(c.x, c.y, 9 * u, 3.5 * u, 0, 0, 7);
+    ctx.ellipse(c.x + 3 * u, c.y + 1.5 * u, 10 * u, 3.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
     drawAnchored(ctx, propSprite(b.kind), c.x, c.y, u, 0.8);
     return;
   }
   const key = spriteKeyFor(b);
   if (SHADOWED.has(key) || key.startsWith('house')) {
-    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.fillStyle = 'rgba(5,22,17,.23)';
     ctx.beginPath();
-    ctx.ellipse(c.x, c.y, ((b.w + b.h) / 2) * 19 * u, ((b.w + b.h) / 2) * 7 * u, 0, 0, 7);
+    ctx.ellipse(c.x + 7 * u, c.y + 4 * u, ((b.w + b.h) / 2) * 20 * u, ((b.w + b.h) / 2) * 7.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
   }
-  drawAnchored(ctx, buildingSprite(key), c.x, c.y, u);
-  if (S.cam.z > 0.8) {
-    const spr = buildingSprite(key);
+  drawAnchored(ctx, buildingSprite(key, b.w, b.h, S.rot), c.x, c.y, u);
+  if (S.cam.z > 0.68) {
+    const spr = buildingSprite(key, b.w, b.h, S.rot);
     const topY = c.y - spr.ay * u;
-    ctx.fillStyle = 'rgba(255,253,242,.85)';
-    ctx.font = 'bold ' + 5.5 * u + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(b.kind === 'buildinglot' ? ['Lot (building…)', 'Cottage', 'Estate'][clamp(b.stage ?? 0, 0, 2)] : def.name, c.x, topY - 3 * u);
+    drawWorldLabel(ctx, b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : def.name.toUpperCase(), c.x, topY - 6 * u, u);
   }
   if (!b.open) {
-    ctx.fillStyle = '#ffd2a6';
-    ctx.font = 'bold ' + 6 * u + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('⚠ needs path', c.x, c.y + 6 * u);
+    drawWorldLabel(ctx, 'NO PATH', c.x, c.y + Math.max(15, (b.w + b.h) * 2.6) * u, u, 'danger');
   }
 }
 
@@ -798,12 +1222,12 @@ function drawGolferSprite(
   face: number,
   bob: number
 ) {
-  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(x, y + 1 * u, 5 * u, 2.2 * u, 0, 0, 7);
+  ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame);
-  const k = u * 0.68;
+  const k = u * 0.8;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y - bob);
@@ -811,6 +1235,47 @@ function drawGolferSprite(
   ctx.drawImage(spr, -12 * k, -31 * k, 24 * k, 32 * k);
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
+}
+
+function drawCourseStaff(
+  ctx: CanvasRenderingContext2D,
+  kind: 'ranger' | 'groundskeeper' | 'turftech',
+  pose: { x: number; y: number; phase: number; face: number },
+  u: number
+) {
+  const p = PE(pose.x, pose.y);
+  const frame: GolferFrame = Math.sin(pose.phase) > 0 ? 'walkA' : 'walkB';
+  const shirt = kind === 'ranger' ? '#456b3b' : kind === 'turftech' ? '#2f8172' : '#c98236';
+  const cap = kind === 'ranger' ? '#d0ad58' : kind === 'turftech' ? '#e8eee4' : '#f0d36b';
+  const bob = Math.abs(Math.sin(pose.phase)) * 1.1 * u;
+  drawGolferSprite(ctx, p.x, p.y, u * 0.92, shirt, '#c98a5e', cap, frame, pose.face, bob);
+
+  ctx.save();
+  ctx.translate(p.x, p.y - 8 * u);
+  ctx.scale(pose.face, 1);
+  if (kind === 'ranger') {
+    ctx.strokeStyle = '#283d35';
+    ctx.lineWidth = Math.max(1, 1.2 * u);
+    ctx.beginPath();
+    ctx.moveTo(4 * u, -5 * u);
+    ctx.lineTo(9 * u, -8 * u);
+    ctx.stroke();
+    ctx.fillStyle = '#263c39';
+    ctx.fillRect(8 * u, -10 * u, 4 * u, 3 * u);
+  } else {
+    ctx.strokeStyle = '#79532c';
+    ctx.lineWidth = Math.max(1, 1.2 * u);
+    ctx.beginPath();
+    ctx.moveTo(4 * u, -4 * u);
+    ctx.lineTo(12 * u, 8 * u);
+    ctx.stroke();
+    ctx.strokeStyle = '#60676a';
+    ctx.beginPath();
+    ctx.moveTo(9 * u, 8 * u);
+    ctx.lineTo(15 * u, 8 * u);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function golferFrame(g: Golfer): GolferFrame {
@@ -836,13 +1301,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const py = bp.y - 1 * u;
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
   drawGolferSprite(ctx, px, py, u, '#e9b53c', '#f1c6a0', '#fffdf2', frame, 1, 0);
-  ctx.fillStyle = '#fffdf2';
-  ctx.strokeStyle = 'rgba(20,40,25,.8)';
-  ctx.lineWidth = 2.5;
-  ctx.font = '800 ' + clamp(7 * u, 9, 14) + 'px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.strokeText('YOU', px, py - 24 * u);
-  ctx.fillText('YOU', px, py - 24 * u);
+  drawWorldLabel(ctx, 'YOU', px, py - 31 * u, u, 'gold');
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {

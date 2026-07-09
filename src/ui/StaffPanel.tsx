@@ -3,8 +3,20 @@ import { hireEmployee, fireEmployee } from '../game/engine';
 import { EMP_CATALOG, hireCost, countEmp, skilledUnlocked, empWagesPerSec } from '../game/employees';
 import { fmt$ } from '../game/rng';
 import type { EmployeeKind } from '../game/types';
+import Icon, { type IconName } from './Icon';
 
 const ORDER: EmployeeKind[] = ['clubpro', 'ranger', 'groundskeeper', 'sodavendor', 'celebrity', 'marshall', 'turftech', 'refreshment'];
+
+const ICONS: Record<EmployeeKind, IconName> = {
+  clubpro: 'staff',
+  ranger: 'fast',
+  groundskeeper: 'terrain',
+  sodavendor: 'water',
+  celebrity: 'reputation',
+  marshall: 'staff',
+  turftech: 'fair',
+  refreshment: 'fee',
+};
 
 export default function StaffPanel() {
   const open = useUI((s) => s.staffPanel);
@@ -16,25 +28,25 @@ export default function StaffPanel() {
   const locked = !skilledUnlocked();
 
   return (
-    <div className="buildPanel">
+    <section className="buildPanel" role="dialog" aria-modal="false" aria-labelledby="staff-title">
       <div className="bpHead">
-        <b>Staff</b>
+        <b id="staff-title">Staff</b>
         <span>
           Total wages: {fmt$(empWagesPerSec())}/s{locked ? ' · skilled staff unlock at 6 holes' : ''}
         </span>
-        <button className="bpClose" onClick={() => setStore({ staffPanel: false })}>
-          ✕
+        <button className="bpClose" aria-label="Close staff" onClick={() => setStore({ staffPanel: false })}>
+          <Icon name="close" size={14} />
         </button>
       </div>
-      <div className="bpGrid">
+      <div className="bpGrid staffGrid">
         {ORDER.map((k) => {
           const d = EMP_CATALOG[k];
           const n = countEmp(k);
           const cost = hireCost(k);
           const cantHire = (d.skilled && locked) || cash < cost;
           return (
-            <div key={k} className="bpItem">
-              <div className="bpIc">{d.short}</div>
+            <div key={k} className="bpItem staffCard">
+              <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
               <div className="bpName">
                 {d.name}
                 {n > 0 ? ' ×' + n : ''}
@@ -58,6 +70,6 @@ export default function StaffPanel() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

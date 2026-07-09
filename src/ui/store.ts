@@ -35,6 +35,7 @@ interface UIStore {
   playHud: PlayHudInfo | null;
   buildPanel: boolean;
   staffPanel: boolean;
+  reportsPanel: boolean;
   staffVersion: number; // bumped on hire/fire to re-render the roster
 
   set: (patch: Partial<UIStore>) => void;
@@ -60,6 +61,7 @@ export const useUI = create<UIStore>((set) => ({
   playHud: null,
   buildPanel: false,
   staffPanel: false,
+  reportsPanel: false,
   staffVersion: 0,
 
   set: (patch) => set(patch),

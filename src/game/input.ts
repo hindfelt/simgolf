@@ -14,14 +14,43 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   let lastPaint: { x: number; y: number } | null = null;
   let pinch: { d: number; mx: number; my: number } | null = null;
   let spaceHeld = false;
+  let elevationDelay: number | null = null;
+  let elevationRepeat: number | null = null;
+  let elevationHold: { pointerId: number; x: number; y: number } | null = null;
 
   const pos = (e: PointerEvent) => ({ x: e.clientX, y: e.clientY });
+
+  function cancelElevationHold() {
+    if (elevationDelay !== null) window.clearTimeout(elevationDelay);
+    if (elevationRepeat !== null) window.clearInterval(elevationRepeat);
+    elevationDelay = null;
+    elevationRepeat = null;
+    elevationHold = null;
+  }
+
+  function startElevationHold(pointerId: number, p: { x: number; y: number }) {
+    cancelElevationHold();
+    elevationHold = { pointerId, x: p.x, y: p.y };
+    elevationDelay = window.setTimeout(() => {
+      const repeat = () => {
+        if (!painting || !elevationHold || (S.tool !== 'raise' && S.tool !== 'lower')) return cancelElevationHold();
+        const held = pointers.get(elevationHold.pointerId);
+        if (!held) return cancelElevationHold();
+        const w = screenToWorldT(held.x, held.y);
+        beginPaintStroke();
+        paintAt(w.x, w.y);
+      };
+      repeat();
+      elevationRepeat = window.setInterval(repeat, 260);
+    }, 430);
+  }
 
   function onDown(e: PointerEvent) {
     ensureAudio();
     cv.setPointerCapture?.(e.pointerId);
     pointers.set(e.pointerId, pos(e));
     if (pointers.size === 2) {
+      cancelElevationHold();
       const [a, b] = [...pointers.values()];
       pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
       painting = false;
@@ -67,10 +96,12 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     lastPaint = w;
     beginPaintStroke();
     paintAt(w.x, w.y);
+    if (S.tool === 'raise' || S.tool === 'lower') startElevationHold(e.pointerId, p);
   }
 
   function onMove(e: PointerEvent) {
     const p = pos(e);
+    if (elevationHold && e.pointerId === elevationHold.pointerId && Math.hypot(p.x - elevationHold.x, p.y - elevationHold.y) > 7) cancelElevationHold();
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, p);
     const w = screenToWorldT(p.x, p.y);
     S.hover = { x: Math.floor(w.x), y: Math.floor(w.y) };
@@ -103,6 +134,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   }
 
   function onUp(e: PointerEvent) {
+    if (elevationHold?.pointerId === e.pointerId) cancelElevationHold();
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
     if (S.player && S.player.aim && S.player.aim.on && pointers.size === 0) {
@@ -157,6 +189,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   window.addEventListener('keyup', onKeyUp);
 
   return () => {
+    cancelElevationHold();
     cv.removeEventListener('pointerdown', onDown);
     cv.removeEventListener('pointermove', onMove);
     cv.removeEventListener('pointerup', onUp);

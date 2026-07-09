@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, NAMES, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH } from './constants';
 import { Tile } from './types';
-import type { Ball, Golfer, Hole, LieKey, Vec, ToolId } from './types';
+import type { Ball, FacilityActivity, Golfer, Hole, LieKey, Vec, ToolId } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf } from './camera';
@@ -21,6 +21,7 @@ import {
 } from './buildings';
 import type { Building, BuildingKind, EmployeeKind } from './types';
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
+import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -103,22 +104,39 @@ function computeBeauty(h: Hole) {
 function recomputeAllBeauty() {
   for (const h of S.holes) computeBeauty(h);
 }
+
+function holePlacementProblem(tx: number, ty: number, cx?: number, cy?: number): string | null {
+  const tee = teeFootprint(tx, ty);
+  const green = cx === undefined || cy === undefined ? [] : greenFootprint(cx, cy);
+  const tiles = tee.concat(green);
+  if (!footprintInBounds(tiles)) return 'Leave more room around the tee and green.';
+
+  const locked = lockedTiles();
+  const occupied = occupiedTiles();
+  const clubhouse = new Set(CH_TILES.map(([x, y]) => `${x},${y}`));
+  for (const tile of tiles) {
+    const k = tileKey(tile);
+    if (!ownedAt(tile.x, tile.y)) return 'The entire tee and green must be on land you own.';
+    if (locked.has(k)) return 'That footprint overlaps another hole.';
+    if (occupied.has(k) || clubhouse.has(k)) return 'A building is in the way.';
+    const terrain = tileAt(tile.x, tile.y);
+    if (terrain === Tile.WATER || terrain === Tile.PATH) return 'The tee and green need clear, dry ground.';
+  }
+  return null;
+}
+
 function createHole(tx: number, ty: number, cx: number, cy: number, free: boolean): Hole | null {
+  const problem = holePlacementProblem(tx, ty, cx, cy);
+  if (problem) {
+    setHint(problem);
+    sfx.err();
+    return null;
+  }
   if (!free && !spend(HOLE_COST)) return null;
-  const teeTiles: string[] = [];
-  const greenTiles: string[] = [];
-  for (let dy = 0; dy <= 1; dy++)
-    for (let dx = 0; dx <= 1; dx++)
-      if (inb(tx + dx, ty + dy)) {
-        S.tiles[idx(tx + dx, ty + dy)] = Tile.TEE;
-        teeTiles.push(tx + dx + ',' + (ty + dy));
-      }
-  for (let dy = -2; dy <= 2; dy++)
-    for (let dx = -2; dx <= 2; dx++)
-      if (inb(cx + dx, cy + dy) && dx * dx + dy * dy <= 4.5) {
-        S.tiles[idx(cx + dx, cy + dy)] = Tile.GREEN;
-        greenTiles.push(cx + dx + ',' + (cy + dy));
-      }
+  const teeTiles = teeFootprint(tx, ty).map(tileKey);
+  const greenTiles = greenFootprint(cx, cy).map(tileKey);
+  for (const { x, y } of teeFootprint(tx, ty)) S.tiles[idx(x, y)] = Tile.TEE;
+  for (const { x, y } of greenFootprint(cx, cy)) S.tiles[idx(x, y)] = Tile.GREEN;
   // tees and greens sit on level pads carved into the terrain
   forceLevel(teeTiles, Math.round(elevAt(tx + 1, ty + 1)));
   forceLevel(greenTiles, Math.round(elevAt(cx + 0.5, cy + 0.5)));
@@ -156,12 +174,32 @@ function removeHoleAt(x: number, y: number): boolean {
 export function rebuildStatics() {
   caches.trees = [];
   caches.waterTiles = [];
+  caches.wildlife = [];
+  caches.naturePatches = [];
+  const ducks: { kind: 'duck'; x: number; y: number; s: number }[] = [];
+  const deer: { kind: 'deer'; x: number; y: number; s: number }[] = [];
+  const rabbits: { kind: 'rabbit'; x: number; y: number; s: number }[] = [];
+  const birds: { kind: 'bird'; x: number; y: number; s: number }[] = [];
+  const patches: { kind: 'dandelion' | 'divot'; x: number; y: number; s: number }[] = [];
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const t = tileAt(x, y);
       if (t === Tile.TREE) caches.trees.push({ x: x + 0.5, y: y + 0.5, s: hash2(x, y) });
       if (t === Tile.WATER) caches.waterTiles.push({ x, y });
+      if (!ownedAt(x, y)) continue;
+      const s = hash2(x * 23 + 17, y * 31 + 9);
+      if (t === Tile.WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.TREE) deer.push({ kind: 'deer', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FLOWER) rabbits.push({ kind: 'rabbit', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FAIR) birds.push({ kind: 'bird', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FAIR) {
+        const maintenance = hash2(x * 41 + 3, y * 19 + 27);
+        patches.push({ kind: maintenance > 0.5 ? 'dandelion' : 'divot', x: x + 0.5, y: y + 0.5, s: maintenance });
+      }
     }
+  const strongest = <T extends { s: number }>(items: T[], count: number) => items.sort((a, b) => b.s - a.s).slice(0, count);
+  caches.wildlife = [...strongest(ducks, 5), ...strongest(deer, 3), ...strongest(rabbits, 6), ...strongest(birds, 3)];
+  caches.naturePatches = strongest(patches, 20);
   recomputeConnectivity();
   caches.groundDirty = true;
 }
@@ -184,6 +222,7 @@ export function placeBuilding(kind: BuildingKind, tx: number, ty: number): Build
     b.stageT = 0;
   }
   S.buildings.push(b);
+  if (kind === 'airstrip' || kind === 'marina') S.nextFacilityActivity = Math.min(S.nextFacilityActivity, 1.5);
   rebuildStatics();
   sfx.coin();
   floater(x + def.w / 2, y + def.h / 2, def.name + '!', '#fff');
@@ -581,13 +620,9 @@ export function holeToolTap(wx: number, wy: number) {
       setHint('Flag repositioned. Paint more green (⛳ Green tool) to reshape it.');
       return;
     }
-    if (!ownedAt(x, y)) {
-      setHint('Buy this land first (🗺️ Buy land).');
-      sfx.err();
-      return;
-    }
-    if (tileAt(x, y) === Tile.WATER || lockedTiles().has(k)) {
-      setHint('Can’t put a tee there.');
+    const problem = holePlacementProblem(x - 1, y - 1);
+    if (problem) {
+      setHint(problem);
       sfx.err();
       return;
     }
@@ -612,8 +647,8 @@ export function holeToolTap(wx: number, wy: number) {
     return;
   }
   const h = createHole(S.holeDraft.tee.x - 1, S.holeDraft.tee.y - 1, x, y, false);
-  S.holeDraft = null;
   if (h) {
+    S.holeDraft = null;
     sfx.tada();
     floater(h.cup.x, h.cup.y, 'Hole ' + S.holes.length + ' · Par ' + h.par + '!', '#fff');
     setHint('Hole ' + S.holes.length + ' open for play! Paint some fairway between tee and green.');
@@ -740,7 +775,8 @@ function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean) {
 
 /* ---------------- golfers ---------------- */
 function golferCap(): number {
-  return Math.min(3 + S.holes.length * 2, 14);
+  // big courses need a real field of players, not 14 souls on 30 holes
+  return Math.min(4 + S.holes.length * 2, 36);
 }
 function spawnGolfer() {
   const g: Golfer = {
@@ -917,7 +953,7 @@ function updateGolfers(dt: number) {
     g.phase += dt * 9;
     if (g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave') {
       const d = Math.hypot(g.tx - g.x, g.ty - g.y);
-      const sp = 2.4 * dt * moveSpeedMul() * empMoveSpeedMul();
+      const sp = 3.1 * dt * moveSpeedMul() * empMoveSpeedMul();
       if (d <= sp) {
         g.x = g.tx;
         g.y = g.ty;
@@ -1041,7 +1077,7 @@ export function startRound() {
   if (S.speed === 0) setSpeed(1);
   S.mode = 'play';
   S.player = { holeIdx: 0, strokes: 0, card: [], ball: null, lie: 'tee', state: 'aim', aim: null };
-  ui.set({ mode: 'play' });
+  ui.set({ mode: 'play', buildPanel: false, staffPanel: false, reportsPanel: false });
   setupPlayerHole(0);
   setHint('Your round! Drag back from the ball, release to swing.');
 }
@@ -1170,8 +1206,8 @@ const HINTS: Record<string, string> = {
   tree: 'Trees add beauty and bounce shots into next week.',
   flower: 'Flower beds. Pure beauty, zero mercy required.',
   path: 'Drag to lay pathway. Connect facilities to the clubhouse to open them.',
-  raise: 'Drag to raise the land. Sculpt hills, plateaus and elevated tees.',
-  lower: 'Drag to lower the land. Dig valleys and punchbowl greens.',
+  raise: 'Click repeatedly or hold to raise several levels. Drag to sculpt larger slopes.',
+  lower: 'Click repeatedly or hold to lower several levels. Drag to carve valleys and bowls.',
   build: 'Pick a facility, then tap the course to place it.',
   dozer: 'Tap to clear terrain, a hole, or a building. Refunds some cash.',
 };
@@ -1240,6 +1276,7 @@ export function saveGame() {
         cash: S.cash,
         fee: S.fee,
         rep: S.rep,
+        rot: S.rot,
         served: S.served,
         lost: S.lost,
         tiles: Array.from(S.tiles),
@@ -1248,6 +1285,7 @@ export function saveGame() {
         holes: S.holes,
         buildings: S.buildings,
         employees: S.employees,
+        golfers: S.golfers,
       })
     );
   } catch {
@@ -1263,6 +1301,7 @@ export function loadGame(): boolean {
     S.cash = d.cash;
     S.fee = d.fee;
     S.rep = d.rep;
+    S.rot = Number.isFinite(d.rot) ? clamp(Math.trunc(d.rot), 0, 3) : 0;
     S.served = d.served || 0;
     S.lost = d.lost || 0;
     S.tiles = Uint8Array.from(d.tiles);
@@ -1286,7 +1325,32 @@ export function loadGame(): boolean {
     }
     S.holes = d.holes || [];
     S.buildings = d.buildings || [];
+    S.facilityActivities = [];
+    S.nextFacilityActivity = 3;
     S.employees = d.employees || [];
+    // restore golfers mid-round; balls in flight aren't saved, so coerce
+    // anyone who was watching/swinging back into a walking state
+    S.golfers = [];
+    if (Array.isArray(d.golfers)) {
+      for (const g of d.golfers as Golfer[]) {
+        if (typeof g?.x !== 'number' || typeof g?.holeIdx !== 'number') continue;
+        if (g.holeIdx >= S.holes.length) continue; // their hole is gone
+        g.chatCd = 0;
+        if (g.state !== 'leave') {
+          if (g.ball) {
+            g.state = 'toBall';
+            g.tx = g.ball.x;
+            g.ty = g.ball.y;
+          } else {
+            const h = S.holes[g.holeIdx];
+            g.state = 'toTee';
+            g.tx = h.tee.x;
+            g.ty = h.tee.y;
+          }
+        }
+        S.golfers.push(g);
+      }
+    }
     rebuildStatics();
     updateTopbar();
     return true;
@@ -1299,10 +1363,17 @@ export function newCourse() {
   S.cash = 20000;
   S.fee = 20;
   S.rep = 2.5;
+  S.time = 0;
+  S.speed = 1;
+  S.rot = 0;
+  S.nextGolfer = 2.5;
+  S.camTarget = null;
   S.served = 0;
   S.lost = 0;
   S.holes = [];
   S.buildings = [];
+  S.facilityActivities = [];
+  S.nextFacilityActivity = 4;
   S.employees = [];
   S.golfers = [];
   S.balls = [];
@@ -1311,8 +1382,9 @@ export function newCourse() {
   S.player = null;
   S.mode = 'build';
   initMap();
+  centerCam(S.holes[0]?.tee.x ?? CH.x, S.holes[0]?.tee.y ?? CH.y);
   updateTopbar();
-  ui.set({ mode: 'build', playHud: null, modal: null });
+  ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false });
   setTool('hole');
   setHint('Fresh land, fresh start. Build your first hole!');
 }
@@ -1331,6 +1403,42 @@ function updateLots(dtw: number) {
       sfx.tada();
     }
   }
+}
+
+/* ---------------- ambient facility traffic ---------------- */
+let facilityActivitySeq = 0;
+
+function spawnFacilityActivity() {
+  const activeIds = new Set(S.facilityActivities.map((activity) => activity.facilityId));
+  const candidates = S.buildings.filter((building) => (building.kind === 'airstrip' || building.kind === 'marina') && !activeIds.has(building.id));
+  if (!candidates.length) {
+    S.nextFacilityActivity = 2.5;
+    return;
+  }
+  const facility = pick(candidates);
+  const direction: 1 | -1 = facility.x + facility.w / 2 >= W / 2 ? 1 : -1;
+  const sequence = ++facilityActivitySeq;
+  const kind: FacilityActivity['kind'] = facility.kind === 'marina' ? 'marina-boat' : sequence & 1 ? 'plane-arrival' : 'plane-departure';
+  S.facilityActivities.push({
+    id: sequence,
+    facilityId: facility.id,
+    kind,
+    age: 0,
+    duration: kind === 'marina-boat' ? 13 : kind === 'plane-arrival' ? 15 : 13,
+    direction,
+  });
+  S.nextFacilityActivity = facility.kind === 'airstrip' ? rand(8, 14) : rand(5, 10);
+}
+
+function updateFacilityActivities(dtw: number) {
+  const facilityIds = new Set(S.buildings.map((building) => building.id));
+  for (let i = S.facilityActivities.length - 1; i >= 0; i--) {
+    const activity = S.facilityActivities[i];
+    activity.age += dtw;
+    if (activity.age >= activity.duration || !facilityIds.has(activity.facilityId)) S.facilityActivities.splice(i, 1);
+  }
+  S.nextFacilityActivity -= dtw;
+  if (S.nextFacilityActivity <= 0 && S.facilityActivities.length < 3) spawnFacilityActivity();
 }
 
 /* ---------------- per-frame update (no draw) ---------------- */
@@ -1353,6 +1461,7 @@ export function update(dt: number) {
     updateSpawner(dtw);
     updateGolfers(dtw);
     updateLots(dtw);
+    updateFacilityActivities(dtw);
     accrueIncome(dtw);
   }
   updateBalls(dt);

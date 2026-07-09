@@ -13,6 +13,8 @@ export const S: GameState = {
   owned: new Uint8Array(PW * PH),
   holes: [],
   buildings: [],
+  facilityActivities: [],
+  nextFacilityActivity: 4,
   buildKind: null,
   employees: [],
   golfers: [],
@@ -39,5 +41,7 @@ export const caches = {
   groundDirty: true,
   trees: [] as { x: number; y: number; s: number }[],
   waterTiles: [] as { x: number; y: number }[],
+  wildlife: [] as { kind: 'duck' | 'rabbit' | 'deer' | 'bird'; x: number; y: number; s: number }[],
+  naturePatches: [] as { kind: 'dandelion' | 'divot'; x: number; y: number; s: number }[],
   pathConnected: new Set<string>(), // "x,y" path tiles reachable from clubhouse
 };

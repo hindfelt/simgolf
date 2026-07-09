@@ -65,5 +65,12 @@ export default function GameCanvas() {
     };
   }, [setUI, pushTicker]);
 
-  return <canvas ref={ref} className="game" />;
+  return (
+    <canvas
+      ref={ref}
+      className="game"
+      tabIndex={0}
+      aria-label="Interactive isometric golf course. Choose a construction tool, then use pointer or touch controls on the course."
+    />
+  );
 }

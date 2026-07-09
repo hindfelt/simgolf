@@ -17,15 +17,15 @@ export interface BuildingDef {
 
 /** Catalog. Footprints are in tiles. Effects are applied in engine + here. */
 export const CATALOG: Record<BuildingKind, BuildingDef> = {
-  proshop: { name: 'Pro Shop', cost: 1400, w: 2, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Accuracy amenity. Lifts play + green fees.' },
-  drivingrange: { name: 'Driving Range', cost: 1600, w: 3, h: 2, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Length amenity. Happier big hitters.' },
-  puttinggreen: { name: 'Putting Green', cost: 1200, w: 2, h: 2, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Imagination amenity. Sharper short game.' },
+  proshop: { name: 'Pro Shop', cost: 1800, w: 3, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Accuracy amenity. Lifts play + green fees.' },
+  drivingrange: { name: 'Driving Range', cost: 2800, w: 6, h: 3, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Length amenity. Happier big hitters.' },
+  puttinggreen: { name: 'Putting Green', cost: 1600, w: 3, h: 3, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Imagination amenity. Sharper short game.' },
   snackbar: { name: 'Snack Bar', cost: 1000, w: 2, h: 2, wall: '#efc9a0', roof: '#c25a3a', short: '🌭', blurb: 'Feeds hungry golfers. Keeps moods up.' },
-  cartgarage: { name: 'Cart Garage', cost: 1300, w: 2, h: 2, wall: '#c9c2b4', roof: '#5d6d7e', short: '🛺', blurb: 'Golfers move faster around the course.' },
-  hotel: { name: 'Resort Hotel', cost: 3200, w: 3, h: 2, wall: '#e7dcc0', roof: '#9a3f5c', short: '🏨', blurb: 'Well-rested golfers stay happy longer.' },
-  tennis: { name: 'Tennis Court', cost: 1500, w: 2, h: 2, wall: '#7fae5b', roof: '#2f6f3c', short: '🎾', blurb: 'Golfers arrive in a good mood.' },
-  marina: { name: 'Marina', cost: 2400, w: 3, h: 2, wall: '#bcd7e8', roof: '#3679b8', short: '⛵', blurb: 'Boosts building-lot income + green fees.' },
-  airstrip: { name: 'Airstrip', cost: 2800, w: 3, h: 2, wall: '#c7ccd2', roof: '#7a5233', short: '✈️', blurb: 'Raises green fees on every hole.' },
+  cartgarage: { name: 'Cart Garage', cost: 1800, w: 3, h: 2, wall: '#c9c2b4', roof: '#5d6d7e', short: '🛺', blurb: 'Golfers move faster around the course.' },
+  hotel: { name: 'Resort Hotel', cost: 4800, w: 4, h: 3, wall: '#e7dcc0', roof: '#9a3f5c', short: '🏨', blurb: 'Well-rested golfers stay happy longer.' },
+  tennis: { name: 'Tennis Court', cost: 1900, w: 3, h: 2, wall: '#7fae5b', roof: '#2f6f3c', short: '🎾', blurb: 'Golfers arrive in a good mood.' },
+  marina: { name: 'Marina', cost: 3800, w: 5, h: 3, wall: '#bcd7e8', roof: '#3679b8', short: '⛵', blurb: 'Boosts building-lot income + green fees.' },
+  airstrip: { name: 'Airstrip', cost: 6800, w: 8, h: 3, wall: '#c7ccd2', roof: '#7a5233', short: '✈️', blurb: 'Private runway. Raises every green fee.' },
   bench: { name: 'Bench', cost: 120, w: 1, h: 1, wall: '#a9825a', roof: '#7a5233', short: '🪑', blurb: 'A rest stop. Small mood lift nearby.' },
   flowerbed: { name: 'Flower Bed', cost: 200, w: 1, h: 1, wall: '#f2a7c3', roof: '#e78ad1', short: '🌷', blurb: 'Pure beauty. Lifts spirits.' },
   buildinglot: { name: 'Building Lot', cost: 900, w: 2, h: 2, wall: '#d9d2c2', roof: '#8a7f68', short: '🏡', blurb: 'Sells homes: steady passive income.' },
@@ -107,20 +107,20 @@ export function recomputeConnectivity() {
       b.open = true; // scenery works anywhere
       continue;
     }
-    let open = false;
-    for (let dy = -1; dy <= b.h && !open; dy++)
-      for (let dx = -1; dx <= b.w && !open; dx++) {
-        // only orthogonal border tiles
-        const onBorder = dx === -1 || dx === b.w || dy === -1 || dy === b.h;
-        const inside = dx >= 0 && dx < b.w && dy >= 0 && dy < b.h;
-        if (!onBorder || inside) continue;
-        const tx = b.x + dx;
-        const ty = b.y + dy;
-        const k = key(tx, ty);
-        if (connected.has(k) || chSet.has(k)) open = true;
-      }
-    b.open = open;
+    b.open = buildingTouchesNetwork(b, connected, chSet);
   }
+}
+
+/** True only for an orthogonal edge connection; diagonal corner contact does not count. */
+export function buildingTouchesNetwork(b: Building, connected: Set<string>, clubhouse = new Set<string>()): boolean {
+  const touches = (x: number, y: number) => connected.has(key(x, y)) || clubhouse.has(key(x, y));
+  for (let dx = 0; dx < b.w; dx++) {
+    if (touches(b.x + dx, b.y - 1) || touches(b.x + dx, b.y + b.h)) return true;
+  }
+  for (let dy = 0; dy < b.h; dy++) {
+    if (touches(b.x - 1, b.y + dy) || touches(b.x + b.w, b.y + dy)) return true;
+  }
+  return false;
 }
 
 /* ---------------- gameplay effects (open buildings only) ---------------- */
