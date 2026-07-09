@@ -6,12 +6,13 @@ import PlayHud from './ui/PlayHud';
 import Ticker from './ui/Ticker';
 import BuildPanel from './ui/BuildPanel';
 import StaffPanel from './ui/StaffPanel';
+import ReportsPanel from './ui/ReportsPanel';
 import Modals from './ui/Modals';
 import { useUI } from './ui/store';
 
 function Hint() {
   const hint = useUI((s) => s.hint);
-  return <div className="hint">{hint}</div>;
+  return <div className="hint" role="status" aria-live="polite">{hint}</div>;
 }
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
       <Ticker />
       <BuildPanel />
       <StaffPanel />
+      <ReportsPanel />
       <Toolbar />
       <Modals />
     </>

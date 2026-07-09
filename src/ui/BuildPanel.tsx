@@ -3,6 +3,7 @@ import { selectBuilding } from '../game/engine';
 import { CATALOG } from '../game/buildings';
 import { fmt$ } from '../game/rng';
 import type { BuildingKind } from '../game/types';
+import Icon, { type IconName } from './Icon';
 
 const ORDER: BuildingKind[] = [
   'proshop',
@@ -19,6 +20,21 @@ const ORDER: BuildingKind[] = [
   'flowerbed',
 ];
 
+const ICONS: Record<BuildingKind, IconName> = {
+  proshop: 'cash',
+  snackbar: 'resort',
+  drivingrange: 'play',
+  puttinggreen: 'green',
+  cartgarage: 'fast',
+  hotel: 'build',
+  tennis: 'course',
+  marina: 'water',
+  airstrip: 'land',
+  buildinglot: 'resort',
+  bench: 'course',
+  flowerbed: 'flower',
+};
+
 export default function BuildPanel() {
   const open = useUI((s) => s.buildPanel);
   const cash = useUI((s) => s.cash);
@@ -26,12 +42,12 @@ export default function BuildPanel() {
   if (open === false) return null;
 
   return (
-    <div className="buildPanel">
+    <section className="buildPanel" role="dialog" aria-modal="false" aria-labelledby="facilities-title">
       <div className="bpHead">
-        <b>Facilities</b>
+        <b id="facilities-title">Facilities</b>
         <span>Pick one, tap the course, then wire it to the clubhouse with a pathway.</span>
-        <button className="bpClose" onClick={() => setStore({ buildPanel: false })}>
-          ✕
+        <button className="bpClose" aria-label="Close facilities" onClick={() => setStore({ buildPanel: false })}>
+          <Icon name="close" size={14} />
         </button>
       </div>
       <div className="bpGrid">
@@ -48,7 +64,7 @@ export default function BuildPanel() {
                 setStore({ buildPanel: false });
               }}
             >
-              <div className="bpIc">{d.short}</div>
+              <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
               <div className="bpName">{d.name}</div>
               <div className="bpCost">{fmt$(d.cost)}</div>
               <div className="bpBlurb">{d.blurb}</div>
@@ -56,6 +72,6 @@ export default function BuildPanel() {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

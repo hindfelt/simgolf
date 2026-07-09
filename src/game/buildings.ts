@@ -107,20 +107,20 @@ export function recomputeConnectivity() {
       b.open = true; // scenery works anywhere
       continue;
     }
-    let open = false;
-    for (let dy = -1; dy <= b.h && !open; dy++)
-      for (let dx = -1; dx <= b.w && !open; dx++) {
-        // only orthogonal border tiles
-        const onBorder = dx === -1 || dx === b.w || dy === -1 || dy === b.h;
-        const inside = dx >= 0 && dx < b.w && dy >= 0 && dy < b.h;
-        if (!onBorder || inside) continue;
-        const tx = b.x + dx;
-        const ty = b.y + dy;
-        const k = key(tx, ty);
-        if (connected.has(k) || chSet.has(k)) open = true;
-      }
-    b.open = open;
+    b.open = buildingTouchesNetwork(b, connected, chSet);
   }
+}
+
+/** True only for an orthogonal edge connection; diagonal corner contact does not count. */
+export function buildingTouchesNetwork(b: Building, connected: Set<string>, clubhouse = new Set<string>()): boolean {
+  const touches = (x: number, y: number) => connected.has(key(x, y)) || clubhouse.has(key(x, y));
+  for (let dx = 0; dx < b.w; dx++) {
+    if (touches(b.x + dx, b.y - 1) || touches(b.x + dx, b.y + b.h)) return true;
+  }
+  for (let dy = 0; dy < b.h; dy++) {
+    if (touches(b.x - 1, b.y + dy) || touches(b.x + b.w, b.y + dy)) return true;
+  }
+  return false;
 }
 
 /* ---------------- gameplay effects (open buildings only) ---------------- */

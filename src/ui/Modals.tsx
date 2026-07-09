@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useUI } from './store';
 import { fmt$ } from '../game/rng';
 import { newCourse } from '../game/engine';
@@ -5,6 +6,16 @@ import { newCourse } from '../game/engine';
 export default function Modals() {
   const modal = useUI((s) => s.modal);
   const setStore = useUI((s) => s.set);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!modal) return;
+    modalRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setStore({ modal: null });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modal, setStore]);
   if (!modal) return null;
 
   const close = () => setStore({ modal: null });
@@ -16,10 +27,10 @@ export default function Modals() {
         if ((e.target as HTMLElement).classList.contains('overlay')) close();
       }}
     >
-      <div className="modal">
+      <div className="modal" ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
         {modal.kind === 'help' && (
           <>
-            <h1>FAIRWAY MOGUL</h1>
+            <h1 id="modal-title">FAIRWAY MOGUL</h1>
             <div className="tag">Welcome to the club, boss</div>
             <div className="step">
               <div className="n">1</div>
@@ -68,7 +79,7 @@ export default function Modals() {
 
         {modal.kind === 'round' && (
           <>
-            <h1>Round complete</h1>
+            <h1 id="modal-title">Round complete</h1>
             <div className="tag">The owner’s exhibition</div>
             <table className="sc">
               <tbody>

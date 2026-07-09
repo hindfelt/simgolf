@@ -13,6 +13,7 @@ canvas engine; React drives the UI chrome (topbar, toolbar, HUD, modals).
 ```bash
 npm install
 npm run dev        # dev server at http://localhost:5173/
+npm test           # deterministic placement/connectivity regression tests
 npm run build      # typecheck (tsc -b) + production bundle to dist/ (base /simgolf/)
 npm run preview    # preview the production build
 ```
@@ -75,6 +76,11 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   → estate) with rising passive income.
 - **Save/load** — autosave to localStorage every 10s, resume on boot,
   “Start a new course” in the help modal.
+- **Management UI** — categorized build palettes, accessible original SVG
+  controls, four-way camera rotation, and a live report for cash flow,
+  facilities, guest conversion, alerts, and per-hole scenery.
+- **Regression coverage** — map-edge and full-footprint hole validation plus
+  strict orthogonal facility-path connectivity.
 
 **Roadmap (from the SimGolf manual)**
 1. Richer terrain (firm fairway, deep rough, streams…)

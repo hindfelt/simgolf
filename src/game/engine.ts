@@ -21,6 +21,7 @@ import {
 } from './buildings';
 import type { Building, BuildingKind, EmployeeKind } from './types';
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
+import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -103,22 +104,39 @@ function computeBeauty(h: Hole) {
 function recomputeAllBeauty() {
   for (const h of S.holes) computeBeauty(h);
 }
+
+function holePlacementProblem(tx: number, ty: number, cx?: number, cy?: number): string | null {
+  const tee = teeFootprint(tx, ty);
+  const green = cx === undefined || cy === undefined ? [] : greenFootprint(cx, cy);
+  const tiles = tee.concat(green);
+  if (!footprintInBounds(tiles)) return 'Leave more room around the tee and green.';
+
+  const locked = lockedTiles();
+  const occupied = occupiedTiles();
+  const clubhouse = new Set(CH_TILES.map(([x, y]) => `${x},${y}`));
+  for (const tile of tiles) {
+    const k = tileKey(tile);
+    if (!ownedAt(tile.x, tile.y)) return 'The entire tee and green must be on land you own.';
+    if (locked.has(k)) return 'That footprint overlaps another hole.';
+    if (occupied.has(k) || clubhouse.has(k)) return 'A building is in the way.';
+    const terrain = tileAt(tile.x, tile.y);
+    if (terrain === Tile.WATER || terrain === Tile.PATH) return 'The tee and green need clear, dry ground.';
+  }
+  return null;
+}
+
 function createHole(tx: number, ty: number, cx: number, cy: number, free: boolean): Hole | null {
+  const problem = holePlacementProblem(tx, ty, cx, cy);
+  if (problem) {
+    setHint(problem);
+    sfx.err();
+    return null;
+  }
   if (!free && !spend(HOLE_COST)) return null;
-  const teeTiles: string[] = [];
-  const greenTiles: string[] = [];
-  for (let dy = 0; dy <= 1; dy++)
-    for (let dx = 0; dx <= 1; dx++)
-      if (inb(tx + dx, ty + dy)) {
-        S.tiles[idx(tx + dx, ty + dy)] = Tile.TEE;
-        teeTiles.push(tx + dx + ',' + (ty + dy));
-      }
-  for (let dy = -2; dy <= 2; dy++)
-    for (let dx = -2; dx <= 2; dx++)
-      if (inb(cx + dx, cy + dy) && dx * dx + dy * dy <= 4.5) {
-        S.tiles[idx(cx + dx, cy + dy)] = Tile.GREEN;
-        greenTiles.push(cx + dx + ',' + (cy + dy));
-      }
+  const teeTiles = teeFootprint(tx, ty).map(tileKey);
+  const greenTiles = greenFootprint(cx, cy).map(tileKey);
+  for (const { x, y } of teeFootprint(tx, ty)) S.tiles[idx(x, y)] = Tile.TEE;
+  for (const { x, y } of greenFootprint(cx, cy)) S.tiles[idx(x, y)] = Tile.GREEN;
   // tees and greens sit on level pads carved into the terrain
   forceLevel(teeTiles, Math.round(elevAt(tx + 1, ty + 1)));
   forceLevel(greenTiles, Math.round(elevAt(cx + 0.5, cy + 0.5)));
@@ -581,13 +599,9 @@ export function holeToolTap(wx: number, wy: number) {
       setHint('Flag repositioned. Paint more green (⛳ Green tool) to reshape it.');
       return;
     }
-    if (!ownedAt(x, y)) {
-      setHint('Buy this land first (🗺️ Buy land).');
-      sfx.err();
-      return;
-    }
-    if (tileAt(x, y) === Tile.WATER || lockedTiles().has(k)) {
-      setHint('Can’t put a tee there.');
+    const problem = holePlacementProblem(x - 1, y - 1);
+    if (problem) {
+      setHint(problem);
       sfx.err();
       return;
     }
@@ -612,8 +626,8 @@ export function holeToolTap(wx: number, wy: number) {
     return;
   }
   const h = createHole(S.holeDraft.tee.x - 1, S.holeDraft.tee.y - 1, x, y, false);
-  S.holeDraft = null;
   if (h) {
+    S.holeDraft = null;
     sfx.tada();
     floater(h.cup.x, h.cup.y, 'Hole ' + S.holes.length + ' · Par ' + h.par + '!', '#fff');
     setHint('Hole ' + S.holes.length + ' open for play! Paint some fairway between tee and green.');
@@ -740,7 +754,8 @@ function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean) {
 
 /* ---------------- golfers ---------------- */
 function golferCap(): number {
-  return Math.min(3 + S.holes.length * 2, 14);
+  // big courses need a real field of players, not 14 souls on 30 holes
+  return Math.min(4 + S.holes.length * 2, 36);
 }
 function spawnGolfer() {
   const g: Golfer = {
@@ -917,7 +932,7 @@ function updateGolfers(dt: number) {
     g.phase += dt * 9;
     if (g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave') {
       const d = Math.hypot(g.tx - g.x, g.ty - g.y);
-      const sp = 2.4 * dt * moveSpeedMul() * empMoveSpeedMul();
+      const sp = 3.1 * dt * moveSpeedMul() * empMoveSpeedMul();
       if (d <= sp) {
         g.x = g.tx;
         g.y = g.ty;
@@ -1041,7 +1056,7 @@ export function startRound() {
   if (S.speed === 0) setSpeed(1);
   S.mode = 'play';
   S.player = { holeIdx: 0, strokes: 0, card: [], ball: null, lie: 'tee', state: 'aim', aim: null };
-  ui.set({ mode: 'play' });
+  ui.set({ mode: 'play', buildPanel: false, staffPanel: false, reportsPanel: false });
   setupPlayerHole(0);
   setHint('Your round! Drag back from the ball, release to swing.');
 }
@@ -1240,6 +1255,7 @@ export function saveGame() {
         cash: S.cash,
         fee: S.fee,
         rep: S.rep,
+        rot: S.rot,
         served: S.served,
         lost: S.lost,
         tiles: Array.from(S.tiles),
@@ -1248,6 +1264,7 @@ export function saveGame() {
         holes: S.holes,
         buildings: S.buildings,
         employees: S.employees,
+        golfers: S.golfers,
       })
     );
   } catch {
@@ -1263,6 +1280,7 @@ export function loadGame(): boolean {
     S.cash = d.cash;
     S.fee = d.fee;
     S.rep = d.rep;
+    S.rot = Number.isFinite(d.rot) ? clamp(Math.trunc(d.rot), 0, 3) : 0;
     S.served = d.served || 0;
     S.lost = d.lost || 0;
     S.tiles = Uint8Array.from(d.tiles);
@@ -1287,6 +1305,29 @@ export function loadGame(): boolean {
     S.holes = d.holes || [];
     S.buildings = d.buildings || [];
     S.employees = d.employees || [];
+    // restore golfers mid-round; balls in flight aren't saved, so coerce
+    // anyone who was watching/swinging back into a walking state
+    S.golfers = [];
+    if (Array.isArray(d.golfers)) {
+      for (const g of d.golfers as Golfer[]) {
+        if (typeof g?.x !== 'number' || typeof g?.holeIdx !== 'number') continue;
+        if (g.holeIdx >= S.holes.length) continue; // their hole is gone
+        g.chatCd = 0;
+        if (g.state !== 'leave') {
+          if (g.ball) {
+            g.state = 'toBall';
+            g.tx = g.ball.x;
+            g.ty = g.ball.y;
+          } else {
+            const h = S.holes[g.holeIdx];
+            g.state = 'toTee';
+            g.tx = h.tee.x;
+            g.ty = h.tee.y;
+          }
+        }
+        S.golfers.push(g);
+      }
+    }
     rebuildStatics();
     updateTopbar();
     return true;
@@ -1299,6 +1340,11 @@ export function newCourse() {
   S.cash = 20000;
   S.fee = 20;
   S.rep = 2.5;
+  S.time = 0;
+  S.speed = 1;
+  S.rot = 0;
+  S.nextGolfer = 2.5;
+  S.camTarget = null;
   S.served = 0;
   S.lost = 0;
   S.holes = [];
@@ -1311,8 +1357,9 @@ export function newCourse() {
   S.player = null;
   S.mode = 'build';
   initMap();
+  centerCam(S.holes[0]?.tee.x ?? CH.x, S.holes[0]?.tee.y ?? CH.y);
   updateTopbar();
-  ui.set({ mode: 'build', playHud: null, modal: null });
+  ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false });
   setTool('hole');
   setHint('Fresh land, fresh start. Build your first hole!');
 }
