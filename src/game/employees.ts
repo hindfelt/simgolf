@@ -12,8 +12,8 @@ export interface EmployeeDef {
 
 export const EMP_CATALOG: Record<EmployeeKind, EmployeeDef> = {
   clubpro: { name: 'Club Pro', wage: 1.4, skilled: false, short: '🧑‍🏫', blurb: 'Greets golfers — steady fun boost.' },
-  ranger: { name: 'Ranger', wage: 1.1, skilled: false, short: '🚦', blurb: 'Speeds up play around the course.' },
-  groundskeeper: { name: 'Groundskeeper', wage: 1.0, skilled: false, short: '🧹', blurb: 'Clears dandelions — tidier, happier course.' },
+  ranger: { name: 'Ranger', wage: 1.1, skilled: false, short: '🚦', blurb: 'Manages wildlife and keeps play moving.' },
+  groundskeeper: { name: 'Groundskeeper', wage: 1.0, skilled: false, short: '🧹', blurb: 'Clears weeds and repairs divots.' },
   sodavendor: { name: 'Soda Vendor', wage: 1.0, skilled: false, short: '🥤', blurb: 'Refreshes thirsty golfers.' },
   celebrity: { name: 'Celebrity', wage: 4.0, skilled: true, short: '🌟', blurb: 'Star power — big fun-rating boost.' },
   marshall: { name: 'Marshall', wage: 2.6, skilled: true, short: '🎽', blurb: 'Hurries play and calms angry golfers.' },
@@ -66,5 +66,7 @@ export function empMoveSpeedMul(): number {
 export function empMoodPerHole(): number {
   const tidy = countEmp('groundskeeper') + countEmp('turftech');
   const drinks = countEmp('sodavendor') + countEmp('refreshment');
-  return clamp(tidy * 0.18 + drinks * 0.22, 0, 1.6);
+  const managedWildlife = countEmp('ranger') + countEmp('marshall');
+  const natureCare = managedWildlife > 0 ? Math.min(0.24, managedWildlife * 0.12) : -0.12;
+  return clamp(tidy * 0.18 + drinks * 0.22 + natureCare, -0.12, 1.6);
 }

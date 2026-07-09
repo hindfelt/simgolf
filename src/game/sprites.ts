@@ -251,6 +251,76 @@ export function facilityBoatSprite(withOutline = true): HTMLCanvasElement {
   return done;
 }
 
+export function wildlifeSprite(kind: 'duck' | 'rabbit' | 'deer'): HTMLCanvasElement {
+  const key = 'wildlife-v1-' + kind;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const [art, ctx] = makeCanvas(32, 30);
+  if (kind === 'duck') {
+    ctx.fillStyle = '#8b6940';
+    ctx.beginPath();
+    ctx.ellipse(14, 21, 9, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#634b31';
+    ctx.beginPath();
+    ctx.ellipse(12, 20, 5, 3, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#315844';
+    ctx.beginPath();
+    ctx.arc(23, 14, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(20, 15, 4, 6);
+    ctx.fillStyle = '#d7a13b';
+    ctx.fillRect(26, 14, 5, 2);
+    ctx.fillStyle = '#f2eee0';
+    ctx.fillRect(20, 16, 4, 2);
+  } else if (kind === 'rabbit') {
+    ctx.fillStyle = '#8a7a68';
+    ctx.beginPath();
+    ctx.ellipse(14, 22, 9, 5.5, -0.08, 0, Math.PI * 2);
+    ctx.arc(23, 17, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#695c50';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(21, 14);
+    ctx.lineTo(19, 4);
+    ctx.moveTo(24, 14);
+    ctx.lineTo(26, 4);
+    ctx.stroke();
+    ctx.fillStyle = '#efe9dc';
+    ctx.beginPath();
+    ctx.arc(5, 19, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#24231f';
+    ctx.fillRect(25, 16, 1.5, 1.5);
+  } else {
+    ctx.fillStyle = '#573d28';
+    ctx.fillRect(8, 21, 3, 8);
+    ctx.fillRect(16, 21, 3, 8);
+    ctx.fillRect(22, 20, 3, 9);
+    ctx.fillStyle = '#8b5b35';
+    ctx.beginPath();
+    ctx.ellipse(14, 18, 11, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    poly(ctx, [[20, 18], [22, 8], [26, 7], [27, 17]], '#8b5b35');
+    ctx.beginPath();
+    ctx.ellipse(27, 7, 4.5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    poly(ctx, [[24, 5], [21, 1], [25, 3]], '#8b5b35');
+    poly(ctx, [[28, 5], [31, 2], [30, 7]], '#8b5b35');
+    ctx.fillStyle = '#d4ae75';
+    ctx.fillRect(10, 16, 2, 2);
+    ctx.fillRect(15, 19, 2, 2);
+    ctx.fillRect(19, 15, 2, 2);
+    ctx.fillStyle = '#1e211d';
+    ctx.fillRect(29, 7, 1, 1);
+  }
+  const done = outlined(art, '#26372e');
+  cache.set(key, done);
+  return done;
+}
+
 interface BoxOpts {
   wall: string;
   roofC: string;

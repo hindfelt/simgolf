@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { H, PW, PH, W } from './constants';
-import { holeToolTap, rebuildStatics, update } from './engine';
-import { S } from './state';
+import { beginPaintStroke, holeToolTap, paintAt, rebuildStatics, update } from './engine';
+import { idx, idxC } from './rng';
+import { S, caches } from './state';
 import { Tile } from './types';
 
 describe('new-hole placement', () => {
@@ -16,6 +17,7 @@ describe('new-hole placement', () => {
     S.buildings = [];
     S.facilityActivities = [];
     S.nextFacilityActivity = 4;
+    S.employees = [];
     S.golfers = [];
     S.balls = [];
     S.speed = 1;
@@ -49,5 +51,33 @@ describe('new-hole placement', () => {
     expect(S.facilityActivities).toHaveLength(1);
     expect(S.facilityActivities[0].facilityId).toBe(99);
     expect(S.facilityActivities[0].kind).toMatch(/^plane-/);
+  });
+
+  it('raises and lowers the same land through several elevation steps', () => {
+    S.tool = 'raise';
+    for (let step = 1; step <= 3; step++) {
+      beginPaintStroke();
+      paintAt(30.2, 30.2);
+      expect(S.elevC[idxC(30, 30)]).toBe(step);
+    }
+
+    S.tool = 'lower';
+    for (let step = 2; step >= 0; step--) {
+      beginPaintStroke();
+      paintAt(30.2, 30.2);
+      expect(S.elevC[idxC(30, 30)]).toBe(step);
+    }
+  });
+
+  it('seeds visible wildlife from water, woodland, and rough habitats', () => {
+    for (let y = 2; y < 10; y++) for (let x = 2; x < 10; x++) S.tiles[idx(x, y)] = Tile.WATER;
+    for (let y = 12; y < 22; y++) for (let x = 2; x < 12; x++) S.tiles[idx(x, y)] = Tile.TREE;
+
+    rebuildStatics();
+
+    const kinds = new Set(caches.wildlife.map((animal) => animal.kind));
+    expect(kinds).toContain('duck');
+    expect(kinds).toContain('deer');
+    expect(kinds).toContain('rabbit');
   });
 });

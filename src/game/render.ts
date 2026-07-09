@@ -7,10 +7,11 @@ import { P, PE, screenToWorld, viewXY } from './camera';
 import { parFor } from './engine';
 import { CATALOG, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite } from './sprites';
 import type { GolferFrame, TreeKind, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
+import { countEmp } from './employees';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -38,12 +39,13 @@ const bgctx = bgc.getContext('2d')!;
 
 /** Terrain merge groups: tiles in the same group flow together as one blob. */
 type Grp = number;
-const Grp = { ROUGH: 0, FAIR: 1, GREEN: 2, SAND: 3, WATER: 4, PATH: 5 } as const;
+const Grp = { ROUGH: 0, FAIR: 1, GREEN: 2, SAND: 3, WATER: 4, PATH: 5, TEE: 6 } as const;
 function groupOf(t: number): Grp {
   switch (t) {
     case Tile.FAIR:
-    case Tile.TEE:
       return Grp.FAIR;
+    case Tile.TEE:
+      return Grp.TEE;
     case Tile.GREEN:
       return Grp.GREEN;
     case Tile.SAND:
@@ -206,7 +208,7 @@ function drawOrtho() {
     c.stroke(sand.path);
   }
 
-  // 4) Fairway (tees merge into the same blob) with broad mower lanes.
+  // 4) Fairway with broad mower lanes.
   const fair = blobPath(Grp.FAIR, RES * 0.5);
   if (fair.any) {
     c.strokeStyle = '#426e32';
@@ -239,26 +241,50 @@ function drawOrtho() {
     c.strokeStyle = 'rgba(30,65,24,.35)';
     c.lineWidth = 1.4;
     c.stroke(fair.path);
-    const T = TINFO[Tile.TEE];
-    for (let y = 0; y < H; y++)
-      for (let x = 0; x < W; x++) {
-        if (S.tiles[idx(x, y)] !== Tile.TEE) continue;
-        c.fillStyle = T.c1;
-        c.beginPath();
-        c.roundRect(x * RES + 2, y * RES + 2, RES - 4, RES - 4, 4);
-        c.fill();
-        c.strokeStyle = 'rgba(38,76,30,.35)';
-        c.lineWidth = 1.2;
-        c.stroke();
-        c.fillStyle = '#fff8da';
-        c.beginPath();
-        c.arc(x * RES + RES / 2 - 6, y * RES + RES / 2, 2.2, 0, Math.PI * 2);
-        c.arc(x * RES + RES / 2 + 6, y * RES + RES / 2, 2.2, 0, Math.PI * 2);
-        c.fill();
-      }
   }
 
-  // 5) Greens — double fringe, subtle checker cut and a crisp collar.
+  // 5) Tee boxes — a compact circular cut with a darker collar and subtle
+  // quadrant mowing, matching the understated read of classic SimGolf tees.
+  const tee = blobPath(Grp.TEE, RES * 0.78);
+  if (tee.any) {
+    c.strokeStyle = '#426e32';
+    c.lineWidth = 10;
+    c.stroke(tee.path);
+    c.strokeStyle = '#78aa50';
+    c.lineWidth = 6;
+    c.stroke(tee.path);
+    const teeGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    teeGrad.addColorStop(0, '#99cf72');
+    teeGrad.addColorStop(1, '#76b65c');
+    c.fillStyle = teeGrad;
+    c.fill(tee.path);
+    c.save();
+    c.clip(tee.path);
+    for (const hole of S.holes) {
+      const cx = hole.tee.x * RES;
+      const cy = hole.tee.y * RES;
+      const radius = RES * 1.08;
+      for (let q = 0; q < 4; q++) {
+        c.fillStyle = q & 1 ? 'rgba(232,248,188,.09)' : 'rgba(30,83,36,.055)';
+        c.beginPath();
+        c.moveTo(cx, cy);
+        c.arc(cx, cy, radius, -Math.PI / 4 + q * Math.PI / 2, -Math.PI / 4 + (q + 1) * Math.PI / 2);
+        c.closePath();
+        c.fill();
+      }
+      c.strokeStyle = 'rgba(43,94,39,.2)';
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.ellipse(cx, cy, RES * 0.62, RES * 0.62, 0, 0, Math.PI * 2);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = 'rgba(31,73,32,.42)';
+    c.lineWidth = 1.4;
+    c.stroke(tee.path);
+  }
+
+  // 6) Greens — double fringe, subtle checker cut and a crisp collar.
   const green = blobPath(Grp.GREEN, RES * 0.6);
   if (green.any) {
     c.strokeStyle = '#477f38';
@@ -281,7 +307,7 @@ function drawOrtho() {
     c.stroke(green.path);
   }
 
-  // 6) pathways — connected gravel vs. disconnected mud
+  // 7) pathways — connected gravel vs. disconnected mud
   const conn = caches.pathConnected;
   const pathOn = blobPath(Grp.PATH, RES * 0.35, (x, y) => conn.has(x + ',' + y));
   const pathOff = blobPath(Grp.PATH, RES * 0.35, (x, y) => !conn.has(x + ',' + y));
@@ -310,7 +336,7 @@ function drawOrtho() {
     c.stroke(pp.path);
   }
 
-  // 7) flower tiles — lush bed: dark foliage patch, stems, leaves, petal rosettes
+  // 8) flower tiles — lush bed: dark foliage patch, stems, leaves, petal rosettes
   const petals = ['#f2a7c3', '#f7d34d', '#ffffff', '#e78ad1', '#f0806a', '#c8493c', '#9a8ae0'];
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
@@ -343,7 +369,7 @@ function drawOrtho() {
       }
     }
 
-  // 8) land you don't own yet: dimmed, with parcel boundaries
+  // 9) land you don't own yet: dimmed, with parcel boundaries
   c.fillStyle = 'rgba(24,38,22,.32)';
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!ownedAt(x, y)) c.fillRect(x * RES, y * RES, RES, RES);
   c.strokeStyle = 'rgba(255,255,255,.22)';
@@ -639,6 +665,21 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
         const sy = py * PARCEL_H + PARCEL_H / 2;
         D.push({ z: dep(sx, sy), f: () => drawForSale(ctx, sx, sy, u) });
       }
+  const tidyStaff = countEmp('groundskeeper') + countEmp('turftech');
+  const visiblePatches = Math.max(3, caches.naturePatches.length - tidyStaff * 6);
+  for (const patch of caches.naturePatches.slice(0, visiblePatches)) D.push({ z: dep(patch.x, patch.y) - 0.04, f: () => drawNaturePatch(ctx, patch, u) });
+  const wildlifeManaged = countEmp('ranger') + countEmp('marshall') > 0;
+  for (const animal of caches.wildlife) {
+    const pose = wildlifePose(animal, wildlifeManaged);
+    D.push({ z: dep(pose.x, pose.y) + 0.03, f: () => drawWildlife(ctx, animal.kind, pose, u) });
+  }
+  let staffIndex = 0;
+  for (const employee of S.employees) {
+    const staffKind = employee.kind;
+    if (staffKind !== 'ranger' && staffKind !== 'groundskeeper' && staffKind !== 'turftech') continue;
+    const pose = courseStaffPose(employee.id, staffKind, staffIndex++);
+    D.push({ z: dep(pose.x, pose.y) + 0.05, f: () => drawCourseStaff(ctx, staffKind, pose, u) });
+  }
   for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
   S.holes.forEach((h, i) => {
     D.push({ z: dep(h.cup.x, h.cup.y), f: () => drawFlag(ctx, h, i + 1, u) });
@@ -740,6 +781,104 @@ function drawFacilityBoat(ctx: CanvasRenderingContext2D, pose: FacilityActivityP
   ctx.imageSmoothingEnabled = true;
 }
 
+type WildlifeCache = (typeof caches.wildlife)[number];
+type NaturePose = { x: number; y: number; altitude: number; bob: number; face: number };
+
+function wildlifePose(animal: WildlifeCache, managed: boolean): NaturePose {
+  if (animal.kind === 'bird') {
+    const dir = animal.s > 0.5 ? 1 : -1;
+    const rawX = animal.x + dir * S.time * (0.38 + animal.s * 0.22);
+    const x = ((rawX % W) + W) % W;
+    return { x, y: clamp(animal.y + Math.sin(S.time * 0.27 + animal.s * 20) * 2.4, 1, H - 1), altitude: 24 + animal.s * 15, bob: 0, face: dir };
+  }
+  const radius = animal.kind === 'duck' ? 0.16 : managed ? 0.28 : animal.kind === 'deer' ? 0.68 : 0.52;
+  const speed = animal.kind === 'deer' ? 0.22 : animal.kind === 'rabbit' ? 0.48 : 0.3;
+  const phase = S.time * speed + animal.s * 31;
+  return {
+    x: animal.x + Math.cos(phase) * radius,
+    y: animal.y + Math.sin(phase * 0.83) * radius * 0.65,
+    altitude: 0,
+    bob: animal.kind === 'rabbit' ? Math.max(0, Math.sin(phase * 4.5)) * 2.5 : 0,
+    face: Math.sin(phase) >= 0 ? 1 : -1,
+  };
+}
+
+function drawNaturePatch(ctx: CanvasRenderingContext2D, patch: (typeof caches.naturePatches)[number], u: number) {
+  const p = PE(patch.x, patch.y);
+  const k = clamp(u, 0.6, 1.8);
+  if (patch.kind === 'divot') {
+    ctx.fillStyle = 'rgba(80,57,31,.64)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 4.2 * k, 1.8 * k, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#668d3f';
+    ctx.beginPath();
+    ctx.ellipse(p.x + 2.4 * k, p.y - 1.2 * k, 3 * k, 1.2 * k, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.strokeStyle = '#3b7136';
+  ctx.lineWidth = Math.max(0.7, 0.8 * k);
+  for (let i = 0; i < 4; i++) {
+    const ox = (i - 1.5) * 2.2 * k;
+    const oy = Math.sin(i * 2.4 + patch.s * 10) * 1.3 * k;
+    ctx.beginPath();
+    ctx.moveTo(p.x + ox, p.y + oy);
+    ctx.lineTo(p.x + ox - 0.8 * k, p.y + oy - (3.5 + (i & 1)) * k);
+    ctx.stroke();
+    ctx.fillStyle = i & 1 ? '#f3f0d5' : '#e6cf55';
+    ctx.beginPath();
+    ctx.arc(p.x + ox - 0.8 * k, p.y + oy - (3.7 + (i & 1)) * k, 1.15 * k, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind'], pose: NaturePose, u: number) {
+  const p = PE(pose.x, pose.y);
+  const k = clamp(u, 0.65, 1.75);
+  if (kind === 'bird') {
+    const y = p.y - pose.altitude * u;
+    ctx.strokeStyle = 'rgba(28,42,39,.78)';
+    ctx.lineWidth = Math.max(1, 1.3 * k);
+    const flap = Math.sin(S.time * 7 + pose.x) * 2.2 * k;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 7 * k, y + flap);
+    ctx.quadraticCurveTo(p.x - 3 * k, y - 2 * k, p.x, y);
+    ctx.quadraticCurveTo(p.x + 3 * k, y - 2 * k, p.x + 7 * k, y - flap);
+    ctx.stroke();
+    return;
+  }
+  const y = p.y - pose.bob * k;
+  ctx.fillStyle = 'rgba(17,39,26,.2)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + 1.5 * k, p.y + 1.2 * k, (kind === 'deer' ? 7 : 4.5) * k, 2 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (kind === 'duck') {
+    ctx.strokeStyle = 'rgba(207,241,239,.36)';
+    ctx.beginPath();
+    ctx.moveTo(p.x - pose.face * 10 * k, y + 1 * k);
+    ctx.lineTo(p.x - pose.face * 5 * k, y);
+    ctx.stroke();
+  }
+  const sk = k * (kind === 'deer' ? 0.88 : kind === 'rabbit' ? 0.6 : 0.55);
+  ctx.save();
+  ctx.translate(p.x, y + 2 * sk);
+  ctx.scale(pose.face, 1);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(wildlifeSprite(kind), -16 * sk, -29 * sk, 32 * sk, 30 * sk);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
+}
+
+function courseStaffPose(id: number, kind: 'ranger' | 'groundskeeper' | 'turftech', index: number) {
+  const targets = kind === 'ranger' ? caches.wildlife : caches.naturePatches;
+  const target = targets.length ? targets[Math.abs(Math.floor(id + index * 7)) % targets.length] : { x: CH.x + 4, y: CH.y + 3 };
+  const cycle = (S.time * (0.045 + index * 0.004) + (Math.abs(id) % 97) / 97) % 2;
+  const t0 = cycle <= 1 ? cycle : 2 - cycle;
+  const t = t0 * t0 * (3 - 2 * t0);
+  return { x: CH.x + (target.x - CH.x) * t, y: CH.y + (target.y - CH.y) * t, phase: S.time * 7 + index, face: cycle <= 1 ? 1 : -1 };
+}
+
 /** Terrain-following tile outline. */
 function tileDiamond(ctx: CanvasRenderingContext2D, x: number, y: number, u: number) {
   const cp = (cx: number, cy: number) => {
@@ -825,9 +964,15 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
       if (S.tool === 'raise' || S.tool === 'lower') {
         const c = PE(x + 0.5, y + 0.5);
         ctx.fillStyle = 'rgba(255,255,255,.95)';
-        ctx.font = 'bold ' + 11 * u + 'px sans-serif';
+        ctx.strokeStyle = 'rgba(20,47,31,.82)';
+        ctx.lineWidth = 3;
+        ctx.font = 'bold ' + clamp(10 * u, 10, 16) + 'px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(S.tool === 'raise' ? '▲' : '▼', c.x, c.y - 8 * u);
+        const level = Math.round(elevAt(x + 0.5, y + 0.5));
+        const next = clamp(level + (S.tool === 'raise' ? 1 : -1), 0, MAXE);
+        const label = (S.tool === 'raise' ? '▲ ' : '▼ ') + level + ' → ' + next;
+        ctx.strokeText(label, c.x, c.y - 8 * u);
+        ctx.fillText(label, c.x, c.y - 8 * u);
       }
     }
   }
@@ -929,26 +1074,50 @@ function drawFlag(ctx: CanvasRenderingContext2D, h: Hole, num: number, u: number
 }
 
 function drawTeeSign(ctx: CanvasRenderingContext2D, h: Hole, num: number, u: number) {
-  const p = PE(h.tee.x - 1.1, h.tee.y - 1.1);
+  let dx = h.cup.x - h.tee.x;
+  let dy = h.cup.y - h.tee.y;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len;
+  dy /= len;
+  const px = -dy;
+  const py = dx;
+
+  // Two low tee blocks sit perpendicular to the line of play.
+  for (const side of [-1, 1]) {
+    const marker = PE(h.tee.x + px * side * 0.34 - dx * 0.08, h.tee.y + py * side * 0.34 - dy * 0.08);
+    ctx.fillStyle = 'rgba(16,44,27,.28)';
+    ctx.beginPath();
+    ctx.ellipse(marker.x + 1.4 * u, marker.y + 1.2 * u, 3.2 * u, 1.4 * u, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = side < 0 ? '#f2eee0' : '#e1b33d';
+    ctx.strokeStyle = side < 0 ? '#6c766f' : '#8d6721';
+    ctx.lineWidth = Math.max(0.7, 0.8 * u);
+    ctx.beginPath();
+    ctx.roundRect(marker.x - 2.5 * u, marker.y - 3 * u, 5 * u, 3.5 * u, 0.8 * u);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  const p = PE(h.tee.x - dx * 0.62 - px * 0.7, h.tee.y - dy * 0.62 - py * 0.7);
   ctx.strokeStyle = '#6d4a2b';
-  ctx.lineWidth = 2 * u;
+  ctx.lineWidth = 1.8 * u;
   ctx.beginPath();
   ctx.moveTo(p.x, p.y);
-  ctx.lineTo(p.x, p.y - 12 * u);
+  ctx.lineTo(p.x, p.y - 10 * u);
   ctx.stroke();
-  ctx.fillStyle = '#fffdf2';
-  ctx.strokeStyle = '#16301f';
-  ctx.lineWidth = 1.2 * u;
-  const w = 22 * u;
-  const hh = 11 * u;
+  ctx.fillStyle = '#243d35';
+  ctx.strokeStyle = '#d0a83f';
+  ctx.lineWidth = 1 * u;
+  const w = 20 * u;
+  const hh = 9 * u;
   ctx.beginPath();
-  ctx.roundRect(p.x - w / 2, p.y - 12 * u - hh, w, hh, 3 * u);
+  ctx.roundRect(p.x - w / 2, p.y - 10 * u - hh, w, hh, 2 * u);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#16301f';
-  ctx.font = 'bold ' + 6.5 * u + 'px sans-serif';
+  ctx.fillStyle = '#fff0b1';
+  ctx.font = '800 ' + clamp(5.8 * u, 6, 10) + 'px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(num + ' · PAR ' + h.par, p.x, p.y - 12 * u - hh / 2 + 2.4 * u);
+  ctx.fillText(num + '  PAR ' + h.par, p.x, p.y - 10 * u - hh / 2 + 2.1 * u);
 }
 
 /* ================= buildings (baked pixel sprites) ================= */
@@ -1066,6 +1235,47 @@ function drawGolferSprite(
   ctx.drawImage(spr, -12 * k, -31 * k, 24 * k, 32 * k);
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
+}
+
+function drawCourseStaff(
+  ctx: CanvasRenderingContext2D,
+  kind: 'ranger' | 'groundskeeper' | 'turftech',
+  pose: { x: number; y: number; phase: number; face: number },
+  u: number
+) {
+  const p = PE(pose.x, pose.y);
+  const frame: GolferFrame = Math.sin(pose.phase) > 0 ? 'walkA' : 'walkB';
+  const shirt = kind === 'ranger' ? '#456b3b' : kind === 'turftech' ? '#2f8172' : '#c98236';
+  const cap = kind === 'ranger' ? '#d0ad58' : kind === 'turftech' ? '#e8eee4' : '#f0d36b';
+  const bob = Math.abs(Math.sin(pose.phase)) * 1.1 * u;
+  drawGolferSprite(ctx, p.x, p.y, u * 0.92, shirt, '#c98a5e', cap, frame, pose.face, bob);
+
+  ctx.save();
+  ctx.translate(p.x, p.y - 8 * u);
+  ctx.scale(pose.face, 1);
+  if (kind === 'ranger') {
+    ctx.strokeStyle = '#283d35';
+    ctx.lineWidth = Math.max(1, 1.2 * u);
+    ctx.beginPath();
+    ctx.moveTo(4 * u, -5 * u);
+    ctx.lineTo(9 * u, -8 * u);
+    ctx.stroke();
+    ctx.fillStyle = '#263c39';
+    ctx.fillRect(8 * u, -10 * u, 4 * u, 3 * u);
+  } else {
+    ctx.strokeStyle = '#79532c';
+    ctx.lineWidth = Math.max(1, 1.2 * u);
+    ctx.beginPath();
+    ctx.moveTo(4 * u, -4 * u);
+    ctx.lineTo(12 * u, 8 * u);
+    ctx.stroke();
+    ctx.strokeStyle = '#60676a';
+    ctx.beginPath();
+    ctx.moveTo(9 * u, 8 * u);
+    ctx.lineTo(15 * u, 8 * u);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function golferFrame(g: Golfer): GolferFrame {

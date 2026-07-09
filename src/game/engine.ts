@@ -174,12 +174,32 @@ function removeHoleAt(x: number, y: number): boolean {
 export function rebuildStatics() {
   caches.trees = [];
   caches.waterTiles = [];
+  caches.wildlife = [];
+  caches.naturePatches = [];
+  const ducks: { kind: 'duck'; x: number; y: number; s: number }[] = [];
+  const deer: { kind: 'deer'; x: number; y: number; s: number }[] = [];
+  const rabbits: { kind: 'rabbit'; x: number; y: number; s: number }[] = [];
+  const birds: { kind: 'bird'; x: number; y: number; s: number }[] = [];
+  const patches: { kind: 'dandelion' | 'divot'; x: number; y: number; s: number }[] = [];
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       const t = tileAt(x, y);
       if (t === Tile.TREE) caches.trees.push({ x: x + 0.5, y: y + 0.5, s: hash2(x, y) });
       if (t === Tile.WATER) caches.waterTiles.push({ x, y });
+      if (!ownedAt(x, y)) continue;
+      const s = hash2(x * 23 + 17, y * 31 + 9);
+      if (t === Tile.WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.TREE) deer.push({ kind: 'deer', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FLOWER) rabbits.push({ kind: 'rabbit', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FAIR) birds.push({ kind: 'bird', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.ROUGH || t === Tile.FAIR) {
+        const maintenance = hash2(x * 41 + 3, y * 19 + 27);
+        patches.push({ kind: maintenance > 0.5 ? 'dandelion' : 'divot', x: x + 0.5, y: y + 0.5, s: maintenance });
+      }
     }
+  const strongest = <T extends { s: number }>(items: T[], count: number) => items.sort((a, b) => b.s - a.s).slice(0, count);
+  caches.wildlife = [...strongest(ducks, 5), ...strongest(deer, 3), ...strongest(rabbits, 6), ...strongest(birds, 3)];
+  caches.naturePatches = strongest(patches, 20);
   recomputeConnectivity();
   caches.groundDirty = true;
 }
@@ -1186,8 +1206,8 @@ const HINTS: Record<string, string> = {
   tree: 'Trees add beauty and bounce shots into next week.',
   flower: 'Flower beds. Pure beauty, zero mercy required.',
   path: 'Drag to lay pathway. Connect facilities to the clubhouse to open them.',
-  raise: 'Drag to raise the land. Sculpt hills, plateaus and elevated tees.',
-  lower: 'Drag to lower the land. Dig valleys and punchbowl greens.',
+  raise: 'Click repeatedly or hold to raise several levels. Drag to sculpt larger slopes.',
+  lower: 'Click repeatedly or hold to lower several levels. Drag to carve valleys and bowls.',
   build: 'Pick a facility, then tap the course to place it.',
   dozer: 'Tap to clear terrain, a hole, or a building. Refunds some cash.',
 };
