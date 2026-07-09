@@ -224,18 +224,21 @@ function isoBox(ctx: CanvasRenderingContext2D, c: (x: number, y: number) => P2, 
   const B = c(w, 0);
   const C = c(w, h);
   const D = c(0, h);
-  const A2 = up(A, o.wallH);
-  const B2 = up(B, o.wallH);
-  const C2 = up(C, o.wallH);
-  const D2 = up(D, o.wallH);
-  const wallSE = shade(o.wall, 0.84);
-  const wallSW = shade(o.wall, 0.68);
-  poly(ctx, [B, C, C2, B2], wallSE);
-  poly(ctx, [C, D, D2, C2], wallSW);
-  // skirting board
-  poly(ctx, [B, C, up(C, 2), up(B, 2)], shade(o.wall, 0.6));
-  poly(ctx, [C, D, up(D, 2), up(C, 2)], shade(o.wall, 0.5));
-  // windows
+  const base = [A, B, C, D];
+  const top = base.map((p) => up(p, o.wallH));
+  const edgeUnits = [w, h, w, h];
+  const front = base.reduce((best, p, i) => (p[1] > base[best][1] ? i : best), 0);
+  const faces = [
+    { from: front, to: (front + 3) % 4, units: edgeUnits[(front + 3) % 4] },
+    { from: front, to: (front + 1) % 4, units: edgeUnits[front] },
+  ];
+
+  for (const face of faces) {
+    const lit = base[face.to][0] > base[face.from][0];
+    poly(ctx, [base[face.from], base[face.to], top[face.to], top[face.from]], shade(o.wall, lit ? 0.84 : 0.68));
+    poly(ctx, [base[face.from], base[face.to], up(base[face.to], 2), up(base[face.from], 2)], shade(o.wall, lit ? 0.58 : 0.48));
+  }
+
   const winFace = (p0: P2, p1: P2, q0: P2, q1: P2, cols: number, rows: number) => {
     for (let r = 0; r < rows; r++)
       for (let i = 0; i < cols; i++) {
@@ -253,25 +256,25 @@ function isoBox(ctx: CanvasRenderingContext2D, c: (x: number, y: number) => P2, 
       }
   };
   const rows = o.winRows ?? 1;
-  if (rows > 0) {
-    winFace(C, B, C2, B2, Math.max(1, Math.round(h)), rows);
-    winFace(C, D, C2, D2, o.winCols ?? Math.max(1, Math.round(w)), rows);
-  }
+  if (rows > 0)
+    for (const face of faces) winFace(base[face.from], base[face.to], top[face.from], top[face.to], o.winCols ?? Math.max(1, Math.round(face.units)), rows);
+
+  const entryFace = faces.find((face) => base[face.to][0] < base[face.from][0]) ?? faces[0];
   if (o.door) {
-    const a = mix(C, D, 0.14);
-    const b = mix(C, D, 0.4);
-    const qa = mix(C2, D2, 0.14);
-    const qb = mix(C2, D2, 0.4);
+    const a = mix(base[entryFace.from], base[entryFace.to], 0.14);
+    const b = mix(base[entryFace.from], base[entryFace.to], 0.4);
+    const qa = mix(top[entryFace.from], top[entryFace.to], 0.14);
+    const qb = mix(top[entryFace.from], top[entryFace.to], 0.4);
     poly(ctx, [a, b, mix(b, qb, 0.8), mix(a, qa, 0.8)], '#6e4a2c');
     poly(ctx, [mix(a, b, 0.75), b, mix(b, qb, 0.78), mix(mix(a, b, 0.75), mix(qa, qb, 0.75), 0.78)], '#8a6238');
   }
   if (o.awning) {
-    // striped canopy sloping out from the SW face
     const y0 = o.wallH * 0.62;
-    const a = up(mix(C, D, 0.05), y0);
-    const b = up(mix(C, D, 0.5), y0);
-    const ao: P2 = [a[0] - 5, a[1] + 7];
-    const bo: P2 = [b[0] - 5, b[1] + 7];
+    const a = up(mix(base[entryFace.from], base[entryFace.to], 0.05), y0);
+    const b = up(mix(base[entryFace.from], base[entryFace.to], 0.5), y0);
+    const outward = base[entryFace.to][0] < base[entryFace.from][0] ? -5 : 5;
+    const ao: P2 = [a[0] + outward, a[1] + 7];
+    const bo: P2 = [b[0] + outward, b[1] + 7];
     const N = 5;
     for (let i = 0; i < N; i++) {
       poly(ctx, [mix(a, b, i / N), mix(a, b, (i + 1) / N), mix(ao, bo, (i + 1) / N), mix(ao, bo, i / N)], i % 2 ? o.awning[0] : o.awning[1]);
@@ -281,34 +284,33 @@ function isoBox(ctx: CanvasRenderingContext2D, c: (x: number, y: number) => P2, 
   // roof
   const roofH = o.roofH ?? 10;
   if (o.roof === 'flat') {
-    poly(ctx, [A2, B2, C2, D2], o.roofC);
-    poly(ctx, [up(A2, 2), up(B2, 2), B2, A2], shade(o.roofC, 1.12));
-    poly(ctx, [A2, up(A2, 2), up(D2, 2), D2], shade(o.roofC, 0.9));
-    return { ridge: up(mix(A2, C2, 0.5), 2) };
+    poly(ctx, top, o.roofC);
+    for (let i = 0; i < 4; i++) poly(ctx, [up(top[i], 2), up(top[(i + 1) % 4], 2), top[(i + 1) % 4], top[i]], shade(o.roofC, i & 1 ? 0.9 : 1.1));
+    return { ridge: up(mix(top[0], top[2], 0.5), 2) };
   }
   const alongX = w >= h;
   const Ra = up(alongX ? c(0, h / 2) : c(w / 2, 0), o.wallH + roofH);
   const Rb = up(alongX ? c(w, h / 2) : c(w / 2, h), o.wallH + roofH);
-  const upSlope: P2[] = alongX ? [A2, B2, Rb, Ra] : [A2, D2, Rb, Ra];
-  const dnSlope: P2[] = alongX ? [D2, C2, Rb, Ra] : [B2, C2, Rb, Ra];
-  poly(ctx, upSlope, shade(o.roofC, 1.08));
-  poly(ctx, dnSlope, shade(o.roofC, 0.85));
+  const slopes: P2[][] = alongX ? [[top[0], top[1], Rb, Ra], [top[3], top[2], Rb, Ra]] : [[top[0], top[3], Rb, Ra], [top[1], top[2], Rb, Ra]];
+  slopes.sort((p, q) => p.reduce((n, v) => n + v[1], 0) - q.reduce((n, v) => n + v[1], 0));
+  poly(ctx, slopes[0], shade(o.roofC, 1.08));
+  poly(ctx, slopes[1], shade(o.roofC, 0.85));
   if (o.roofStripes) {
-    // stripes parallel to the eaves on the visible slope
     ctx.strokeStyle = o.roofStripes;
     ctx.lineWidth = 1.5;
     for (let t = 0.25; t < 1; t += 0.25) {
       ctx.beginPath();
-      const s0 = mix(dnSlope[0], Ra, t);
-      const s1 = mix(dnSlope[1], Rb, t);
+      const s0 = mix(slopes[1][0], Ra, t);
+      const s1 = mix(slopes[1][1], Rb, t);
       ctx.moveTo(s0[0], s0[1]);
       ctx.lineTo(s1[0], s1[1]);
       ctx.stroke();
     }
   }
-  // gable end
-  const gable: P2[] = alongX ? [B2, C2, Rb] : [D2, C2, Rb];
-  poly(ctx, gable, shade(o.wall, 0.78));
+  const gables: P2[][] = alongX ? [[top[0], top[3], Ra], [top[1], top[2], Rb]] : [[top[0], top[1], Ra], [top[3], top[2], Rb]];
+  gables.sort((p, q) => p.reduce((n, v) => n + v[1], 0) - q.reduce((n, v) => n + v[1], 0));
+  poly(ctx, gables[0], shade(o.wall, 0.82));
+  poly(ctx, gables[1], shade(o.wall, 0.72));
   // ridge cap
   ctx.strokeStyle = shade(o.roofC, 1.25);
   ctx.lineWidth = 1.6;
@@ -325,7 +327,14 @@ function isoPanel(ctx: CanvasRenderingContext2D, c: (x: number, y: number) => P2
   const B = c(w - inset, inset);
   const C = c(w - inset, h - inset);
   const D = c(inset, h - inset);
-  poly(ctx, [A, B, C, D], fill, edge);
+  const pts = [A, B, C, D];
+  const front = pts.reduce((best, p, i) => (p[1] > pts[best][1] ? i : best), 0);
+  for (const other of [(front + 3) % 4, (front + 1) % 4]) {
+    const a = pts[front];
+    const b = pts[other];
+    poly(ctx, [a, b, [b[0], b[1] + 2], [a[0], a[1] + 2]], edge);
+  }
+  poly(ctx, pts, fill, edge);
   return { A, B, C, D };
 }
 
@@ -344,6 +353,61 @@ function makeB(key: string, cw: number, ch: number, w: number, h: number, draw: 
   return spr;
 }
 
+function makeFacility(key: string, w: number, h: number, headroom: number, rotation: number, draw: (ctx: CanvasRenderingContext2D, c: (x: number, y: number) => P2) => void): BSprite {
+  const cacheKey = key + '@' + w + 'x' + h + 'r' + (rotation & 3);
+  const hit = bcache.get(cacheKey);
+  if (hit) return hit;
+  const cw = Math.ceil((w + h) * TWs * 0.5 + 14);
+  const ch = Math.ceil((w + h) * THs * 0.5 + headroom + 14);
+  const [art, ctx] = makeCanvas(cw, ch);
+  const viewW = rotation & 1 ? h : w;
+  const viewH = rotation & 1 ? w : h;
+  const ox = (viewH * TWs) / 2 + 6;
+  const oy = ch - ((viewW + viewH) * THs) / 2 - 8;
+  const c = (x: number, y: number): P2 => {
+    let rx = x;
+    let ry = y;
+    switch (rotation & 3) {
+      case 1: rx = y; ry = w - x; break;
+      case 2: rx = w - x; ry = h - y; break;
+      case 3: rx = h - y; ry = x; break;
+    }
+    return [ox + ((rx - ry) * TWs) / 2, oy + ((rx + ry) * THs) / 2];
+  };
+  draw(ctx, c);
+  const done = outlined(art, 'rgba(25,30,40,.75)');
+  const anchor = c(w / 2, h / 2);
+  const spr = { cv: done, ax: anchor[0], ay: anchor[1] };
+  bcache.set(cacheKey, spr);
+  return spr;
+}
+
+function shrub(ctx: CanvasRenderingContext2D, p: P2, color = '#3f7839') {
+  ctx.fillStyle = '#244d2b';
+  ctx.beginPath();
+  ctx.ellipse(p[0] + 1, p[1] + 1, 5, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = color;
+  for (const [dx, dy, r] of [[-3, -2, 3], [1, -3, 3.5], [4, -1, 2.7]] as [number, number, number][]) {
+    ctx.beginPath();
+    ctx.arc(p[0] + dx, p[1] + dy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function lamp(ctx: CanvasRenderingContext2D, p: P2, h = 18) {
+  ctx.strokeStyle = '#454c53';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(p[0], p[1]);
+  ctx.lineTo(p[0], p[1] - h);
+  ctx.stroke();
+  ctx.fillStyle = '#fff2b2';
+  ctx.strokeStyle = '#454c53';
+  ctx.fillRect(p[0] - 2.5, p[1] - h - 2, 5, 3);
+  ctx.strokeRect(p[0] - 2.5, p[1] - h - 2, 5, 3);
+}
+
 const FLAG_RED = '#d0453a';
 function miniFlag(ctx: CanvasRenderingContext2D, x: number, y: number, hgt: number) {
   ctx.strokeStyle = '#f3efe2';
@@ -355,129 +419,186 @@ function miniFlag(ctx: CanvasRenderingContext2D, x: number, y: number, hgt: numb
   poly(ctx, [[x, y - hgt], [x + 7, y - hgt + 2.5], [x, y - hgt + 5]], FLAG_RED);
 }
 
-export function buildingSprite(kind: string): BSprite {
+const DEFAULT_FOOTPRINTS: Record<string, [number, number]> = {
+  clubhouse: [2, 2],
+  proshop: [3, 2],
+  snackbar: [2, 2],
+  cartgarage: [3, 2],
+  hotel: [4, 3],
+  tennis: [3, 2],
+  puttinggreen: [3, 3],
+  drivingrange: [6, 3],
+  marina: [5, 3],
+  airstrip: [8, 3],
+};
+
+export function buildingSprite(kind: string, footprintW?: number, footprintH?: number, rotation = 0): BSprite {
+  const [defaultW, defaultH] = DEFAULT_FOOTPRINTS[kind] ?? [2, 2];
+  const w = footprintW ?? defaultW;
+  const h = footprintH ?? defaultH;
   switch (kind) {
     case 'clubhouse':
-      return makeB(kind, 120, 108, 2, 2, (ctx, c) => {
-        const r = isoBox(ctx, c, 2, 2, {
-          wall: '#f6efdc',
-          roofC: '#b04438',
-          wallH: 26,
-          roofH: 14,
-          roofStripes: 'rgba(255,255,255,.28)',
-          winRows: 1,
-          door: true,
-          awning: ['#c8493c', '#f2ede0'],
-        });
-        miniFlag(ctx, r.ridge[0], r.ridge[1] - 1, 16);
+      return makeFacility(kind, w, h, 70, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.05, '#a9bd83', '#49663d');
+        const bc = (x: number, y: number): P2 => c(0.16 + x * ((w - 0.32) / 2), 0.14 + y * ((h - 0.45) / 1.7));
+        const r = isoBox(ctx, bc, 2, 1.7, { wall: '#f6efdc', roofC: '#a63e34', wallH: 27, roofH: 15, roofStripes: 'rgba(255,255,255,.25)', winRows: 1, winCols: 2, door: true, awning: ['#b43f35', '#f4e9d4'] });
+        // Central cupola gives the clubhouse a silhouette no other building has.
+        const cup = (x: number, y: number): P2 => c(w * 0.42 + x * 0.45, h * 0.28 + y * 0.42);
+        isoBox(ctx, cup, 1, 1, { wall: '#f4ead5', roofC: '#a63e34', wallH: 10, roofH: 7, winRows: 1 });
+        miniFlag(ctx, r.ridge[0], r.ridge[1] - 2, 20);
+        shrub(ctx, c(0.3, h - 0.18));
+        shrub(ctx, c(w - 0.28, h - 0.2), '#537f3d');
+        lamp(ctx, c(w * 0.53, h - 0.1), 17);
       });
     case 'proshop':
-      return makeB(kind, 120, 100, 2, 2, (ctx, c) => {
-        isoBox(ctx, c, 2, 2, {
-          wall: '#e8dcc0',
-          roofC: '#3f6f9c',
-          wallH: 20,
-          roofH: 11,
-          roofStripes: 'rgba(255,255,255,.25)',
-          winRows: 1,
-          door: true,
-          awning: ['#3f6f9c', '#f2ede0'],
-        });
-        // golf-ball sign on the gable
-        const g = c(2, 1);
+      return makeFacility(kind, w, h, 62, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.06, '#b8aa82', '#6f6145');
+        const bw = Math.max(1.5, w - 0.55);
+        const bh = Math.max(1.15, h - 0.58);
+        const bc = (x: number, y: number): P2 => c(0.18 + x, 0.12 + y);
+        isoBox(ctx, bc, bw, bh, { wall: '#e5d9bd', roofC: '#315f86', wallH: 22, roofH: 12, roofStripes: 'rgba(255,255,255,.22)', winRows: 1, winCols: 3, door: true, awning: ['#315f86', '#eee7d7'] });
+        // Large circular golf-ball sign and display clubs make it legible at a glance.
+        const g = c(w - 0.35, 0.65);
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(g[0] + 1, g[1] - 26, 3.2, 0, 7);
+        ctx.arc(g[0], g[1] - 29, 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#3f6f9c';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#315f86';
+        ctx.lineWidth = 1.5;
         ctx.stroke();
+        ctx.fillStyle = '#6d91ad';
+        for (const [dx, dy] of [[-2, -2], [2, -1], [0, 2]] as [number, number][]) ctx.fillRect(g[0] + dx, g[1] - 29 + dy, 1, 1);
+        const clubs = c(w - 0.22, h - 0.3);
+        ctx.strokeStyle = '#5b6268';
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(clubs[0] + i * 2, clubs[1]);
+          ctx.lineTo(clubs[0] + i * 2 - 3, clubs[1] - 15 - i);
+          ctx.stroke();
+        }
+        shrub(ctx, c(0.25, h - 0.18));
       });
     case 'snackbar':
-      return makeB(kind, 120, 96, 2, 2, (ctx, c) => {
-        isoBox(ctx, c, 2, 2, {
-          wall: '#f2d9a0',
-          roofC: '#c8493c',
-          wallH: 16,
-          roofH: 9,
-          roofStripes: 'rgba(255,255,255,.3)',
-          winRows: 1,
-          winCols: 1,
-          door: true,
-          awning: ['#c8493c', '#fdf6e3'],
-        });
-        // parasol beside the bar
-        const u0 = c(0.25, 1.75);
+      return makeFacility(kind, w, h, 54, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.06, '#c2aa7a', '#715e3d');
+        const bc = (x: number, y: number): P2 => c(0.12 + x * 0.95, 0.08 + y * 0.85);
+        isoBox(ctx, bc, 1.55, 1.25, { wall: '#f0d49c', roofC: '#b94437', wallH: 16, roofH: 9, roofStripes: 'rgba(255,255,255,.26)', winRows: 1, winCols: 2, door: true, awning: ['#bd4337', '#fff1d2'] });
+        // Patio furniture makes the small scale intentional instead of underbuilt.
+        const u0 = c(w - 0.28, h - 0.3);
         ctx.strokeStyle = '#7a5233';
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(u0[0], u0[1]);
         ctx.lineTo(u0[0], u0[1] - 14);
         ctx.stroke();
-        for (let i = 0; i < 4; i++)
+        for (let i = 0; i < 6; i++)
           poly(
             ctx,
             [
               [u0[0], u0[1] - 14],
-              [u0[0] - 9 + i * 4.5, u0[1] - 8],
-              [u0[0] - 9 + (i + 1) * 4.5, u0[1] - 8],
+              [u0[0] - 10 + i * (20 / 6), u0[1] - 8],
+              [u0[0] - 10 + (i + 1) * (20 / 6), u0[1] - 8],
             ],
-            i % 2 ? '#e9b53c' : '#fdf6e3'
+            i % 2 ? '#d6503f' : '#fff1d2'
           );
+        ctx.fillStyle = '#724b2a';
+        ctx.fillRect(u0[0] - 5, u0[1] - 1, 10, 2);
+        ctx.fillRect(u0[0] - 1, u0[1] - 1, 2, 5);
       });
     case 'cartgarage':
-      return makeB(kind, 120, 92, 2, 2, (ctx, c) => {
-        isoBox(ctx, c, 2, 2, {
-          wall: '#cfd2d8',
-          roofC: '#6a7280',
-          wallH: 17,
-          roof: 'flat',
-          winRows: 0,
-        });
-        // roller door on the SW face
-        const C0 = c(2, 2);
-        const D0 = c(0, 2);
-        const a = mix(C0, D0, 0.15);
-        const b = mix(C0, D0, 0.85);
-        poly(ctx, [a, b, up(b, 13), up(a, 13)], '#aeb4bd');
-        ctx.strokeStyle = 'rgba(60,70,80,.6)';
-        ctx.lineWidth = 1;
-        for (let i = 1; i < 5; i++) {
-          ctx.beginPath();
-          ctx.moveTo(a[0], a[1] - i * 2.6);
-          ctx.lineTo(b[0], b[1] - i * 2.6);
-          ctx.stroke();
+      return makeFacility(kind, w, h, 54, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.05, '#8c9294', '#5a6061');
+        const bc = (x: number, y: number): P2 => c(0.16 + x, 0.12 + y);
+        const bw = Math.max(1.5, w - 0.5);
+        const bh = Math.max(0.9, h - 0.82);
+        isoBox(ctx, bc, bw, bh, { wall: '#c9ced0', roofC: '#5a6870', wallH: 18, roof: 'flat', winRows: 0 });
+        // Three clearly separated roller bays.
+        const C0 = bc(bw, bh);
+        const D0 = bc(0, bh);
+        for (let bay = 0; bay < 3; bay++) {
+          const a = mix(C0, D0, 0.08 + bay * 0.3);
+          const b = mix(C0, D0, 0.31 + bay * 0.3);
+          poly(ctx, [a, b, up(b, 13), up(a, 13)], bay === 1 ? '#9fa7aa' : '#b7bec0', '#687176');
+          ctx.strokeStyle = 'rgba(52,61,65,.45)';
+          for (let i = 1; i < 5; i++) {
+            ctx.beginPath();
+            ctx.moveTo(a[0], a[1] - i * 2.5);
+            ctx.lineTo(b[0], b[1] - i * 2.5);
+            ctx.stroke();
+          }
         }
-        // parked cart
-        const k = c(2.3, 1.2);
-        poly(ctx, [[k[0], k[1]], [k[0] + 10, k[1] - 3], [k[0] + 10, k[1] - 8], [k[0], k[1] - 5]], '#f2f0e8');
-        poly(ctx, [[k[0] + 2, k[1] - 5], [k[0] + 8, k[1] - 7.5], [k[0] + 8, k[1] - 11], [k[0] + 2, k[1] - 8.5]], '#3f6f9c');
-        ctx.fillStyle = '#2b2b2b';
-        ctx.beginPath();
-        ctx.arc(k[0] + 2.5, k[1] + 1, 1.6, 0, 7);
-        ctx.arc(k[0] + 8.5, k[1] - 1.5, 1.6, 0, 7);
-        ctx.fill();
+        for (let cart = 0; cart < 2; cart++) {
+          const k = c(w - 0.35 - cart * 0.5, h - 0.2 - cart * 0.16);
+          poly(ctx, [[k[0] - 6, k[1]], [k[0] + 5, k[1] - 3], [k[0] + 5, k[1] - 8], [k[0] - 6, k[1] - 5]], cart ? '#e7b84d' : '#f2f0e8', '#41484d');
+          poly(ctx, [[k[0] - 3, k[1] - 5], [k[0] + 3, k[1] - 7], [k[0] + 3, k[1] - 11], [k[0] - 3, k[1] - 9]], '#315f86');
+          ctx.fillStyle = '#252a2d';
+          ctx.beginPath();
+          ctx.arc(k[0] - 3, k[1] + 0.5, 1.8, 0, Math.PI * 2);
+          ctx.arc(k[0] + 4, k[1] - 2, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
       });
     case 'hotel':
-      return makeB(kind, 120, 118, 2, 2, (ctx, c) => {
-        isoBox(ctx, c, 2, 2, {
-          wall: '#efe3c8',
-          roofC: '#8c3a52',
-          wallH: 38,
-          roofH: 12,
-          roofStripes: 'rgba(255,255,255,.22)',
-          winRows: 3,
-          door: true,
-          awning: ['#8c3a52', '#f2ede0'],
-        });
+      return makeFacility(kind, w, h, 88, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.05, '#aeb98a', '#536748');
+        // Pool and terrace remain visible in front of the taller hotel block.
+        const pool = [c(w * 0.58, h * 0.74), c(w * 0.88, h * 0.74), c(w * 0.88, h * 0.94), c(w * 0.58, h * 0.94)];
+        poly(ctx, pool, '#4b9fc2', '#e6ddc4');
+        ctx.strokeStyle = 'rgba(219,246,247,.65)';
+        ctx.beginPath();
+        ctx.moveTo(pool[0][0] + 3, pool[0][1]);
+        ctx.lineTo(pool[2][0] - 3, pool[2][1]);
+        ctx.stroke();
+        const bc = (x: number, y: number): P2 => c(0.18 + x, 0.1 + y);
+        const bw = Math.max(2, w - 0.55);
+        const bh = Math.max(1.4, h - 0.95);
+        isoBox(ctx, bc, bw, bh, { wall: '#eadfc7', roofC: '#83374e', wallH: 48, roofH: 13, roofStripes: 'rgba(255,255,255,.18)', winRows: 4, winCols: 4, door: true, awning: ['#8c3a52', '#f2ede0'] });
+        // Entrance porte-cochère and rooftop sign add resort identity.
+        const e0 = c(w * 0.25, h * 0.78);
+        const e1 = c(w * 0.48, h * 0.78);
+        poly(ctx, [up(e0, 8), up(e1, 8), [e1[0] - 5, e1[1] - 3], [e0[0] - 5, e0[1] - 3]], '#9d435b', '#633144');
+        for (const p of [e0, e1]) {
+          ctx.strokeStyle = '#eee4cf';
+          ctx.beginPath();
+          ctx.moveTo(p[0], p[1]);
+          ctx.lineTo(p[0], p[1] - 8);
+          ctx.stroke();
+        }
+        const sign = c(w * 0.48, h * 0.35);
+        ctx.fillStyle = '#fff0c6';
+        ctx.strokeStyle = '#633144';
+        ctx.fillRect(sign[0] - 13, sign[1] - 64, 26, 7);
+        ctx.strokeRect(sign[0] - 13, sign[1] - 64, 26, 7);
+        ctx.fillStyle = '#83374e';
+        ctx.font = 'bold 5px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('RESORT', sign[0], sign[1] - 59);
+        shrub(ctx, c(0.25, h - 0.16));
+        lamp(ctx, c(w - 0.25, h - 0.18), 21);
       });
     case 'tennis':
-      return makeB(kind, 120, 70, 2, 2, (ctx, c) => {
-        isoPanel(ctx, c, 2, 2, 0.06, '#3e8f5a', '#2d6b42');
-        isoPanel(ctx, c, 2, 2, 0.3, '#4aa468', '#e8f4ec');
-        // centre net
-        const n0 = c(1, 0.32);
-        const n1 = c(1, 1.68);
+      return makeFacility(kind, w, h, 34, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.04, '#365e49', '#263f35');
+        const A = c(0.22, 0.22);
+        const B = c(w - 0.22, 0.22);
+        const C = c(w - 0.22, h - 0.22);
+        const D = c(0.22, h - 0.22);
+        poly(ctx, [A, B, C, D], '#3d9261', '#edf4e8');
+        ctx.strokeStyle = 'rgba(244,249,236,.9)';
+        ctx.lineWidth = 1;
+        for (const [p0, p1] of [
+          [c(w / 2, 0.22), c(w / 2, h - 0.22)],
+          [c(0.22, h / 2), c(w - 0.22, h / 2)],
+          [c(w * 0.25, 0.22), c(w * 0.25, h - 0.22)],
+          [c(w * 0.75, 0.22), c(w * 0.75, h - 0.22)],
+        ] as [P2, P2][]) {
+          ctx.beginPath();
+          ctx.moveTo(p0[0], p0[1]);
+          ctx.lineTo(p1[0], p1[1]);
+          ctx.stroke();
+        }
+        const n0 = c(w / 2, 0.16);
+        const n1 = c(w / 2, h - 0.16);
         ctx.strokeStyle = '#e8f4ec';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -493,57 +614,115 @@ export function buildingSprite(kind: string): BSprite {
           ctx.lineTo(p[0], p[1] - 7);
           ctx.stroke();
         }
+        // Perimeter fence posts and mesh.
+        const fence = [c(0.05, 0.05), c(w - 0.05, 0.05), c(w - 0.05, h - 0.05), c(0.05, h - 0.05)];
+        ctx.strokeStyle = 'rgba(202,216,213,.58)';
+        for (let i = 0; i < fence.length; i++) {
+          const p0 = fence[i];
+          const p1 = fence[(i + 1) % fence.length];
+          poly(ctx, [p0, p1, up(p1, 11), up(p0, 11)], 'rgba(187,207,202,.12)', 'rgba(190,210,205,.5)');
+          for (const p of [p0, p1]) {
+            ctx.beginPath();
+            ctx.moveTo(p[0], p[1]);
+            ctx.lineTo(p[0], p[1] - 12);
+            ctx.stroke();
+          }
+        }
       });
     case 'puttinggreen':
-      return makeB(kind, 120, 70, 2, 2, (ctx, c) => {
-        isoPanel(ctx, c, 2, 2, 0.05, '#68b455', '#4c9440');
-        isoPanel(ctx, c, 2, 2, 0.22, '#8ce49b', 'rgba(30,80,30,.35)');
+      return makeFacility(kind, w, h, 28, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.04, '#5b8c42', '#355f34');
+        const A = c(0.28, 0.5);
+        const B = c(w - 0.48, 0.24);
+        const C = c(w - 0.2, h - 0.7);
+        const D = c(w * 0.52, h - 0.2);
+        const E = c(0.2, h * 0.64);
+        poly(ctx, [A, B, C, D, E], '#76c978', '#4b9a51');
+        // Checker mowing patches are broad enough to survive zooming out.
+        ctx.fillStyle = 'rgba(226,250,198,.09)';
+        for (let gy = 0; gy < 3; gy++)
+          for (let gx = 0; gx < 3; gx++)
+            if ((gx + gy) & 1) {
+              const p0 = c(0.42 + gx * ((w - 0.84) / 3), 0.42 + gy * ((h - 0.84) / 3));
+              const p1 = c(0.42 + (gx + 1) * ((w - 0.84) / 3), 0.42 + gy * ((h - 0.84) / 3));
+              const p2 = c(0.42 + (gx + 1) * ((w - 0.84) / 3), 0.42 + (gy + 1) * ((h - 0.84) / 3));
+              const p3 = c(0.42 + gx * ((w - 0.84) / 3), 0.42 + (gy + 1) * ((h - 0.84) / 3));
+              poly(ctx, [p0, p1, p2, p3], 'rgba(226,250,198,.09)');
+            }
         ctx.fillStyle = '#123a20';
-        for (const [hx, hy] of [
-          [0.6, 1.4],
-          [1.5, 0.6],
-        ]) {
+        const holes: [number, number][] = [
+          [w * 0.24, h * 0.7],
+          [w * 0.54, h * 0.32],
+          [w * 0.78, h * 0.64],
+        ];
+        for (const [hx, hy] of holes) {
           const p = c(hx, hy);
           ctx.beginPath();
-          ctx.ellipse(p[0], p[1], 2, 1, 0, 0, 7);
+          ctx.ellipse(p[0], p[1], 2.3, 1.1, 0, 0, Math.PI * 2);
           ctx.fill();
         }
-        const f = c(1.5, 0.6);
-        miniFlag(ctx, f[0], f[1], 13);
+        for (let i = 0; i < holes.length; i++) {
+          const f = c(holes[i][0], holes[i][1]);
+          miniFlag(ctx, f[0], f[1], 12 + i * 2);
+        }
+        const bunker = c(w * 0.74, h * 0.18);
+        ctx.fillStyle = '#e2cb8d';
+        ctx.strokeStyle = '#9f854d';
+        ctx.beginPath();
+        ctx.ellipse(bunker[0], bunker[1], 11, 4.5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       });
     case 'drivingrange':
-      return makeB(kind, 150, 100, 3, 2, (ctx, c) => {
-        // grass apron + tee mats
-        isoPanel(ctx, c, 3, 2, 0.06, '#85c545', '#5f9433');
-        for (let i = 0; i < 3; i++) {
-          const m = c(0.55, 0.45 + i * 0.55);
-          poly(ctx, [m, [m[0] + 8, m[1] + 4], [m[0] + 16, m[1]], [m[0] + 8, m[1] - 4]], '#3e8f5a', '#2d6b42');
+      return makeFacility(kind, w, h, 50, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.04, '#6cac48', '#456f34');
+        // Alternating distance lanes and three large target greens.
+        for (let lane = 0; lane < 4; lane++) {
+          const y0 = 0.22 + lane * ((h - 0.44) / 4);
+          const y1 = 0.22 + (lane + 1) * ((h - 0.44) / 4);
+          poly(ctx, [c(1.15, y0), c(w - 0.18, y0), c(w - 0.18, y1), c(1.15, y1)], lane & 1 ? 'rgba(125,191,76,.48)' : 'rgba(153,205,91,.42)');
         }
-        // open shelter over the mats
-        const s0 = c(0.15, 0.1);
-        const s1 = c(0.15, 1.9);
-        poly(ctx, [up(s0, 16), up(s1, 16), up([s1[0] + 12, s1[1] + 6], 22), up([s0[0] + 12, s0[1] + 6], 22)], '#6a8f3c');
+        for (const [tx, ty, r] of [[w * 0.48, h * 0.35, 8], [w * 0.68, h * 0.7, 10], [w * 0.87, h * 0.34, 7]] as [number, number, number][]) {
+          const t = c(tx, ty);
+          ctx.fillStyle = '#4f8e40';
+          ctx.beginPath();
+          ctx.ellipse(t[0], t[1], r, r * 0.42, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#edf0d4';
+          ctx.beginPath();
+          ctx.ellipse(t[0], t[1], r * 0.48, r * 0.2, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        // Six covered hitting bays establish the building-scale rhythm.
+        const s0 = c(0.14, 0.12);
+        const s1 = c(0.14, h - 0.12);
+        poly(ctx, [up(s0, 18), up(s1, 18), up(c(1.12, h - 0.12), 24), up(c(1.12, 0.12), 24)], '#537a3d', '#314d30');
         ctx.strokeStyle = '#5a5f66';
         ctx.lineWidth = 1.4;
-        for (const p of [s0, s1]) {
+        for (let i = 0; i <= 6; i++) {
+          const p = c(0.14, 0.12 + (i / 6) * (h - 0.24));
           ctx.beginPath();
           ctx.moveTo(p[0], p[1]);
-          ctx.lineTo(p[0], p[1] - 16);
+          ctx.lineTo(p[0], p[1] - 18);
           ctx.stroke();
+          if (i < 6) {
+            const m = c(0.72, 0.12 + ((i + 0.5) / 6) * (h - 0.24));
+            poly(ctx, [[m[0] - 5, m[1]], [m[0], m[1] + 2.5], [m[0] + 5, m[1]], [m[0], m[1] - 2.5]], '#315f4a', '#253d35');
+          }
         }
-        // tall catch nets at the far side
-        const n0 = c(2.9, 0.1);
-        const n1 = c(2.9, 1.9);
+        const n0 = c(w - 0.08, 0.08);
+        const n1 = c(w - 0.08, h - 0.08);
         ctx.strokeStyle = '#8f959c';
-        for (const p of [n0, mix(n0, n1, 0.5), n1]) {
+        for (let i = 0; i <= 4; i++) {
+          const p = mix(n0, n1, i / 4);
           ctx.beginPath();
           ctx.moveTo(p[0], p[1]);
-          ctx.lineTo(p[0], p[1] - 30);
+          ctx.lineTo(p[0], p[1] - 42);
           ctx.stroke();
         }
-        ctx.strokeStyle = 'rgba(200,210,220,.5)';
+        ctx.strokeStyle = 'rgba(200,218,215,.42)';
         ctx.lineWidth = 1;
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 7; i++) {
           ctx.beginPath();
           ctx.moveTo(n0[0], n0[1] - i * 5.5);
           ctx.lineTo(n1[0], n1[1] - i * 5.5);
@@ -551,11 +730,19 @@ export function buildingSprite(kind: string): BSprite {
         }
       });
     case 'marina':
-      return makeB(kind, 150, 104, 3, 2, (ctx, c) => {
-        // water pool + dock
-        isoPanel(ctx, c, 3, 2, 0.05, '#3a7cba', '#2c639c');
-        const d0 = c(0.2, 1);
-        const d1 = c(2.4, 1);
+      return makeFacility(kind, w, h, 56, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.04, '#2779a5', '#174f73');
+        // Depth bands and ripples make this a basin rather than a blue slab.
+        poly(ctx, [c(0.18, 0.18), c(w - 0.18, 0.18), c(w - 0.18, h * 0.52), c(0.18, h * 0.52)], 'rgba(91,177,197,.22)');
+        ctx.strokeStyle = 'rgba(196,239,239,.3)';
+        for (let i = 0; i < 7; i++) {
+          const p = c(1.1 + (i / 7) * Math.max(1, w - 1.5), 0.45 + (i % 3) * 0.72);
+          ctx.beginPath();
+          ctx.ellipse(p[0], p[1], 7, 2, 0, 0.2, 2.8);
+          ctx.stroke();
+        }
+        const d0 = c(0.7, h * 0.52);
+        const d1 = c(w - 0.25, h * 0.52);
         poly(ctx, [d0, d1, [d1[0], d1[1] + 6], [d0[0], d0[1] + 6]], '#a9825a', '#6e4523');
         ctx.strokeStyle = 'rgba(90,60,30,.55)';
         ctx.lineWidth = 1;
@@ -566,41 +753,101 @@ export function buildingSprite(kind: string): BSprite {
           ctx.lineTo(p[0], p[1] + 6);
           ctx.stroke();
         }
-        // boathouse
-        const bo = (x: number, y: number): P2 => c(x * 0.9, y * 0.8);
-        isoBox(ctx, bo, 1, 1, { wall: '#e3ecf2', roofC: '#3f6f9c', wallH: 12, roofH: 8, winRows: 1, door: true });
-        // sailboat
-        const s = c(2.3, 1.55);
-        poly(ctx, [[s[0] - 7, s[1]], [s[0] + 7, s[1]], [s[0] + 4, s[1] + 4], [s[0] - 4, s[1] + 4]], '#f2f0e8', '#8f959c');
-        ctx.strokeStyle = '#5a5f66';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(s[0], s[1]);
-        ctx.lineTo(s[0], s[1] - 18);
-        ctx.stroke();
-        poly(ctx, [[s[0], s[1] - 18], [s[0] + 9, s[1] - 4], [s[0] + 1, s[1] - 4]], '#fdf6e3');
-        poly(ctx, [[s[0] - 1, s[1] - 15], [s[0] - 7, s[1] - 4], [s[0] - 1, s[1] - 4]], '#c8493c');
+        // Finger piers create berths on both sides of the main dock.
+        for (let i = 1; i <= Math.max(2, Math.floor(w - 1)); i++) {
+          const root = mix(d0, d1, i / Math.max(3, Math.floor(w)));
+          const len = i & 1 ? -16 : 16;
+          poly(ctx, [[root[0] - 2, root[1]], [root[0] + 2, root[1] - 1], [root[0] + 2, root[1] + len], [root[0] - 2, root[1] + len + 1]], '#b68a54', '#6e4523');
+        }
+        const bo = (x: number, y: number): P2 => c(0.1 + x * 0.85, 0.08 + y * 0.78);
+        isoBox(ctx, bo, 1, 1, { wall: '#e3ecf2', roofC: '#315f86', wallH: 15, roofH: 9, winRows: 1, door: true });
+        // Two distinct sailboats give the facility a useful visual scale.
+        for (let i = 0; i < 2; i++) {
+          const s = c(w * (0.55 + i * 0.22), h * (0.3 + i * 0.43));
+          poly(ctx, [[s[0] - 8, s[1]], [s[0] + 8, s[1]], [s[0] + 5, s[1] + 4], [s[0] - 5, s[1] + 4]], i ? '#f1d38c' : '#f2f0e8', '#526068');
+          ctx.strokeStyle = '#4d5960';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.moveTo(s[0], s[1]);
+          ctx.lineTo(s[0], s[1] - 23);
+          ctx.stroke();
+          poly(ctx, [[s[0], s[1] - 23], [s[0] + 11, s[1] - 5], [s[0] + 1, s[1] - 5]], i ? '#f7efe0' : '#fff4d4');
+          poly(ctx, [[s[0] - 1, s[1] - 20], [s[0] - 8, s[1] - 5], [s[0] - 1, s[1] - 5]], i ? '#315f86' : '#b94437');
+        }
+        lamp(ctx, c(0.72, h * 0.52), 17);
       });
     case 'airstrip':
-      return makeB(kind, 150, 96, 3, 2, (ctx, c) => {
-        isoPanel(ctx, c, 3, 2, 0.05, '#9aa0a8', '#70757c');
-        // runway centreline dashes
-        ctx.strokeStyle = '#f2f0e8';
-        ctx.lineWidth = 2;
-        for (let t = 0.12; t < 0.95; t += 0.16) {
-          const a = mix(c(0.2, 1), c(2.8, 1), t);
-          const b = mix(c(0.2, 1), c(2.8, 1), t + 0.07);
+      return makeFacility(kind, w, h, 58, rotation, (ctx, c) => {
+        isoPanel(ctx, c, w, h, 0.03, '#5c7c45', '#354e34');
+        const runway = [c(0.32, 0.62), c(w - 0.22, 0.62), c(w - 0.22, h - 0.42), c(0.32, h - 0.42)];
+        poly(ctx, runway, '#747c80', '#41484c');
+        // Runway shoulders, centreline, thresholds and edge lights.
+        ctx.strokeStyle = '#d7d9d3';
+        ctx.lineWidth = 1.2;
+        for (const [a, b] of [[runway[0], runway[1]], [runway[3], runway[2]]] as [P2, P2][]) {
           ctx.beginPath();
           ctx.moveTo(a[0], a[1]);
           ctx.lineTo(b[0], b[1]);
           ctx.stroke();
         }
-        // hangar
-        const hg = c(0.55, 0.35);
-        poly(ctx, [[hg[0] - 10, hg[1]], [hg[0] + 10, hg[1] - 4], [hg[0] + 10, hg[1] - 14], [hg[0] - 10, hg[1] - 10]], '#c9ced4', '#70757c');
-        poly(ctx, [[hg[0] - 10, hg[1] - 10], [hg[0] + 10, hg[1] - 14], [hg[0] + 6, hg[1] - 17], [hg[0] - 8, hg[1] - 13]], '#6a7280');
-        // windsock
-        const wsk = c(2.7, 0.3);
+        const mid0 = c(0.55, h / 2);
+        const mid1 = c(w - 0.42, h / 2);
+        ctx.strokeStyle = '#f2f0e8';
+        ctx.lineWidth = 2;
+        const dashCount = Math.max(5, Math.floor(w * 1.35));
+        for (let i = 0; i < dashCount; i += 2) {
+          const a = mix(mid0, mid1, i / dashCount);
+          const b = mix(mid0, mid1, Math.min(1, (i + 1) / dashCount));
+          ctx.beginPath();
+          ctx.moveTo(a[0], a[1]);
+          ctx.lineTo(b[0], b[1]);
+          ctx.stroke();
+        }
+        for (const x of [0.5, w - 0.4]) {
+          for (let i = 0; i < 5; i++) {
+            const a = c(x, 0.82 + i * ((h - 1.45) / 5));
+            const b = c(x + (x < w / 2 ? 0.35 : -0.35), 0.82 + i * ((h - 1.45) / 5));
+            ctx.beginPath();
+            ctx.moveTo(a[0], a[1]);
+            ctx.lineTo(b[0], b[1]);
+            ctx.stroke();
+          }
+        }
+        ctx.fillStyle = '#f2d36b';
+        for (let i = 0; i <= Math.max(6, Math.floor(w)); i++)
+          for (const yy of [0.55, h - 0.35]) {
+            const p = c(0.38 + (i / Math.max(6, Math.floor(w))) * (w - 0.7), yy);
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 1.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        // A real hangar and apron occupy the service edge of the site.
+        const hangarW = Math.max(1.25, Math.min(2, w * 0.28));
+        const hc = (x: number, y: number): P2 => c(0.12 + x, 0.06 + y);
+        isoBox(ctx, hc, hangarW, 0.72, { wall: '#c8ced0', roofC: '#56646a', wallH: 18, roofH: 9, winRows: 0 });
+        const doorA = hc(hangarW, 0.72);
+        const doorB = mix(doorA, hc(0, 0.72), 0.75);
+        poly(ctx, [doorA, doorB, up(doorB, 13), up(doorA, 13)], '#7d898d', '#49545a');
+        ctx.strokeStyle = 'rgba(218,225,225,.38)';
+        for (let i = 1; i < 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(doorA[0], doorA[1] - i * 2.6);
+          ctx.lineTo(doorB[0], doorB[1] - i * 2.6);
+          ctx.stroke();
+        }
+        // Parked single-engine aircraft, large enough to read without a label.
+        const px = Math.max(2.2, w * 0.68);
+        const py = h * 0.5;
+        const plane = [c(px + 0.72, py), c(px + 0.12, py - 0.1), c(px - 0.05, py - 0.65), c(px - 0.24, py - 0.66), c(px - 0.14, py - 0.1), c(px - 0.7, py - 0.13), c(px - 0.8, py), c(px - 0.7, py + 0.13), c(px - 0.14, py + 0.1), c(px - 0.05, py + 0.65), c(px + 0.14, py + 0.64), c(px + 0.12, py + 0.1)];
+        poly(ctx, plane.map((p) => [p[0] + 3, p[1] + 3] as P2), 'rgba(27,37,41,.28)');
+        poly(ctx, plane, '#ecece4', '#4f5b61');
+        const cockpit = c(px + 0.22, py);
+        ctx.fillStyle = '#4c8298';
+        ctx.beginPath();
+        ctx.ellipse(cockpit[0], cockpit[1] - 2, 5, 2.2, 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        // Windsock remains a secondary detail rather than the whole identity.
+        const wsk = c(w - 0.24, 0.24);
         ctx.strokeStyle = '#8f959c';
         ctx.lineWidth = 1.4;
         ctx.beginPath();

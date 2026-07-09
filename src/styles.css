@@ -621,6 +621,17 @@ table.sc td.bad {
   font-weight: 800;
   font-size: 11px;
   color: #9c7a12;
+  white-space: nowrap;
+}
+.bpCost span {
+  display: inline-block;
+  margin-left: 3px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: #e9e6d6;
+  color: #57546f;
+  font-size: 8px;
+  letter-spacing: 0.04em;
 }
 .bpBlurb {
   grid-column: 2 / 4;

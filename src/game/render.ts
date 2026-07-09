@@ -929,7 +929,7 @@ function drawClubhouse(ctx: CanvasRenderingContext2D, u: number) {
   ctx.beginPath();
   ctx.ellipse(c.x + 8 * u, c.y + 4 * u, 42 * u, 14 * u, 0.12, 0, Math.PI * 2);
   ctx.fill();
-  drawAnchored(ctx, buildingSprite('clubhouse'), c.x, c.y, u);
+  drawAnchored(ctx, buildingSprite('clubhouse', 2, 2, S.rot), c.x, c.y, u);
   if (S.cam.z > 0.62) drawWorldLabel(ctx, 'CLUBHOUSE', c.x, c.y - 66 * u, u, 'gold');
 }
 
@@ -960,9 +960,9 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
     ctx.ellipse(c.x + 7 * u, c.y + 4 * u, ((b.w + b.h) / 2) * 20 * u, ((b.w + b.h) / 2) * 7.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
   }
-  drawAnchored(ctx, buildingSprite(key), c.x, c.y, u);
+  drawAnchored(ctx, buildingSprite(key, b.w, b.h, S.rot), c.x, c.y, u);
   if (S.cam.z > 0.68) {
-    const spr = buildingSprite(key);
+    const spr = buildingSprite(key, b.w, b.h, S.rot);
     const topY = c.y - spr.ay * u;
     drawWorldLabel(ctx, b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : def.name.toUpperCase(), c.x, topY - 6 * u, u);
   }

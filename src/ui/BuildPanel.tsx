@@ -66,7 +66,9 @@ export default function BuildPanel() {
             >
               <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
               <div className="bpName">{d.name}</div>
-              <div className="bpCost">{fmt$(d.cost)}</div>
+              <div className="bpCost">
+                {fmt$(d.cost)} <span>{d.w}×{d.h}</span>
+              </div>
               <div className="bpBlurb">{d.blurb}</div>
             </button>
           );
