@@ -1,0 +1,257 @@
+// Core domain types for Fairway Mogul.
+// POC-level types are implemented now; the fuller-clone types (buildings,
+// employees, skills, sim-stories, SGA) are declared here so modules added
+// later slot into a stable shape.
+
+export type Vec = { x: number; y: number };
+
+/** Terrain tile ids. Values are stable — persisted in saves. */
+export enum Tile {
+  ROUGH = 0,
+  FAIR = 1,
+  GREEN = 2,
+  TEE = 3,
+  SAND = 4,
+  WATER = 5,
+  TREE = 6,
+  FLOWER = 7,
+  // --- reserved for the elevation/terrain feature pass ---
+  FIRM_FAIR = 8,
+  DEEP_ROUGH = 9,
+  PATH = 10,
+}
+
+export type LieKey = 'tee' | 'fair' | 'rough' | 'sand' | 'tree' | 'green' | 'flower' | 'water';
+
+export interface TileInfo {
+  name: string;
+  c1: string;
+  c2: string;
+  cost: number;
+}
+
+/** How a lie plays: max carry (tiles), aim wobble (deg), distance wobble. */
+export interface LieInfo {
+  max: number;
+  ang: number;
+  dst: number;
+}
+
+export interface Hole {
+  id: number;
+  tee: Vec;
+  cup: Vec;
+  par: number;
+  teeTiles: string[];
+  greenTiles: string[];
+  beauty: number;
+  open?: boolean;
+  // reserved: SGA classification & ratings
+  sgaClass?: string;
+  top100?: boolean;
+  top18?: boolean;
+}
+
+export type GolferState =
+  | 'toTee'
+  | 'toBall'
+  | 'leave'
+  | 'preshot'
+  | 'prePutt'
+  | 'watch';
+
+export interface Golfer {
+  name: string;
+  skill: number;
+  shirt: string;
+  skin: string;
+  cap: string;
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  phase: number;
+  state: GolferState;
+  t: number;
+  holeIdx: number;
+  strokes: number;
+  mood: number;
+  ball: Vec | null;
+  lie: LieKey;
+  chatCd: number;
+  scenicSaid: boolean;
+  face?: number; // 1 = facing screen-right, -1 = left
+  // reserved: distinct skills + needs meters
+  length?: number;
+  accuracy?: number;
+  imagination?: number;
+  energy?: number;
+  hunger?: number;
+  thirst?: number;
+}
+
+export type BallKind = 'fly' | 'roll' | 'putt';
+
+export interface Ball {
+  kind: BallKind;
+  owner: Golfer | 'P';
+  cup: Vec | null;
+  fx: number;
+  fy: number;
+  tx: number;
+  ty: number;
+  t: number;
+  dur: number;
+  h: number;
+  x: number;
+  y: number;
+  events?: string[];
+  holed?: boolean;
+}
+
+export interface Floater {
+  wx: number;
+  wy: number;
+  txt: string;
+  color: string;
+  kind: 'txt' | 'cash' | 'bub';
+  age: number;
+  life: number;
+}
+
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  g: number;
+  c: string;
+  age: number;
+  life: number;
+}
+
+export interface PlayerRound {
+  holeIdx: number;
+  strokes: number;
+  card: { par: number; strokes: number }[];
+  ball: Vec | null;
+  lie: LieKey;
+  state: 'aim' | 'wait' | 'between';
+  aim: Aim | null;
+}
+
+export interface Aim {
+  on: boolean;
+  sx: number;
+  sy: number;
+  cx: number;
+  cy: number;
+}
+
+export interface Camera {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export type ToolId =
+  | 'pan'
+  | 'hole'
+  | 'fair'
+  | 'green'
+  | 'sand'
+  | 'water'
+  | 'tree'
+  | 'flower'
+  | 'path'
+  | 'raise'
+  | 'lower'
+  | 'land'
+  | 'build'
+  | 'dozer'
+  | 'play';
+
+/** Facilities & scenery placed on the course. */
+export type BuildingKind =
+  | 'proshop'
+  | 'snackbar'
+  | 'drivingrange'
+  | 'puttinggreen'
+  | 'cartgarage'
+  | 'hotel'
+  | 'tennis'
+  | 'marina'
+  | 'airstrip'
+  | 'bench'
+  | 'flowerbed'
+  | 'buildinglot';
+
+export interface Building {
+  id: number;
+  kind: BuildingKind;
+  x: number; // footprint top-left tile
+  y: number;
+  w: number;
+  h: number;
+  open: boolean; // connected to the clubhouse by pathway
+  /** Building lots develop over time: 0 construction, 1 cottage, 2 estate. */
+  stage?: number;
+  stageT?: number; // seconds accumulated toward the next stage
+}
+
+/** Staff. Skilled tiers unlock once a course has 6+ holes (manual). */
+export type EmployeeKind =
+  | 'clubpro'
+  | 'ranger'
+  | 'groundskeeper'
+  | 'sodavendor'
+  | 'celebrity'
+  | 'marshall'
+  | 'turftech'
+  | 'refreshment';
+
+export interface Employee {
+  id: number;
+  kind: EmployeeKind;
+  hiredAt: number; // S.time when hired
+}
+
+export type GameMode = 'build' | 'play';
+
+/** The full mutable simulation state. Read every frame by the renderer. */
+export interface GameState {
+  cash: number;
+  fee: number;
+  rep: number;
+  time: number;
+  speed: number;
+  tiles: Uint8Array;
+  /** Corner heightfield, (W+1)x(H+1), 0..MAXE. Tiles render as sloped quads. */
+  elevC: Uint8Array;
+  /** Owned land parcels, PW x PH (1 = owned). */
+  owned: Uint8Array;
+  holes: Hole[];
+  buildings: Building[];
+  buildKind: BuildingKind | null; // pending placement when tool === 'build'
+  employees: Employee[];
+  golfers: Golfer[];
+  balls: Ball[];
+  floaters: Floater[];
+  parts: Particle[];
+  tool: ToolId;
+  holeDraft: { tee: Vec } | null;
+  hover: Vec | null;
+  mode: GameMode;
+  muted: boolean;
+  nextGolfer: number;
+  lost: number;
+  served: number;
+  player: PlayerRound | null;
+  cam: Camera;
+  /** Viewport css size, kept fresh by the canvas resize handler. */
+  view: { w: number; h: number };
+  /** When set, the camera glides until this world point is centred. */
+  camTarget: Vec | null;
+  /** View rotation in 90° steps (0..3). */
+  rot: number;
+}
