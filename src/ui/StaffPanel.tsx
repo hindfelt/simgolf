@@ -38,14 +38,14 @@ export default function StaffPanel() {
           <Icon name="close" size={14} />
         </button>
       </div>
-      <div className="bpGrid">
+      <div className="bpGrid staffGrid">
         {ORDER.map((k) => {
           const d = EMP_CATALOG[k];
           const n = countEmp(k);
           const cost = hireCost(k);
           const cantHire = (d.skilled && locked) || cash < cost;
           return (
-            <div key={k} className="bpItem">
+            <div key={k} className="bpItem staffCard">
               <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
               <div className="bpName">
                 {d.name}

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { H, PW, PH, W } from './constants';
-import { holeToolTap, rebuildStatics } from './engine';
+import { holeToolTap, rebuildStatics, update } from './engine';
 import { S } from './state';
 import { Tile } from './types';
 
@@ -14,8 +14,12 @@ describe('new-hole placement', () => {
     S.owned.fill(1);
     S.holes = [];
     S.buildings = [];
+    S.facilityActivities = [];
+    S.nextFacilityActivity = 4;
     S.golfers = [];
     S.balls = [];
+    S.speed = 1;
+    S.nextGolfer = 999;
     S.holeDraft = null;
     rebuildStatics();
   });
@@ -34,5 +38,16 @@ describe('new-hole placement', () => {
     expect(S.holes).toHaveLength(0);
     expect(S.holeDraft).not.toBeNull();
     expect(S.cash).toBe(20_000);
+  });
+
+  it('starts ambient traffic after a destination facility is built', () => {
+    S.buildings.push({ id: 99, kind: 'airstrip', x: 30, y: 18, w: 8, h: 3, open: false });
+    S.nextFacilityActivity = 0;
+
+    update(0.1);
+
+    expect(S.facilityActivities).toHaveLength(1);
+    expect(S.facilityActivities[0].facilityId).toBe(99);
+    expect(S.facilityActivities[0].kind).toMatch(/^plane-/);
   });
 });

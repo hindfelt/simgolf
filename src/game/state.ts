@@ -13,6 +13,8 @@ export const S: GameState = {
   owned: new Uint8Array(PW * PH),
   holes: [],
   buildings: [],
+  facilityActivities: [],
+  nextFacilityActivity: 4,
   buildKind: null,
   employees: [],
   golfers: [],

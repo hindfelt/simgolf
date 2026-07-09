@@ -2,7 +2,9 @@ export type IconName =
   | 'pan' | 'hole' | 'fair' | 'green' | 'sand' | 'water' | 'tree' | 'flower' | 'path'
   | 'raise' | 'lower' | 'dozer' | 'land' | 'build' | 'play' | 'pause' | 'fast'
   | 'volume' | 'mute' | 'rotateLeft' | 'rotateRight' | 'staff' | 'report' | 'help'
-  | 'cash' | 'reputation' | 'fee' | 'course' | 'terrain' | 'resort' | 'close';
+  | 'cash' | 'reputation' | 'fee' | 'course' | 'terrain' | 'resort' | 'close'
+  | 'proShop' | 'snackBar' | 'drivingRange' | 'puttingGreen' | 'cartGarage'
+  | 'hotel' | 'tennis' | 'marina' | 'airstrip' | 'buildingLot' | 'bench';
 
 const PATHS: Record<IconName, string> = {
   pan: 'M8 11V6a1.4 1.4 0 0 1 2.8 0v4-1V4.8a1.4 1.4 0 0 1 2.8 0V10 9V6a1.4 1.4 0 0 1 2.8 0v5-1V8a1.4 1.4 0 0 1 2.8 0v6c0 5-3.2 8-7.5 8H12c-2.2 0-3.6-.8-5-2.4l-3.4-4.2a1.6 1.6 0 0 1 2.3-2.2L8 15',
@@ -36,6 +38,17 @@ const PATHS: Record<IconName, string> = {
   terrain: 'm3 18 6-9 4 5 3-4 5 8H3Zm10-9 2-4 2 4',
   resort: 'M4 21V8l8-5 8 5v13M8 11h2m4 0h2M8 15h2m4 0h2M3 21h18',
   close: 'M5 5l14 14M19 5 5 19',
+  proShop: 'M3 9h18l-2-5H5L3 9Zm2 0v11h14V9M8 20v-6h5v6m3-7h1M8 6h8',
+  snackBar: 'M4 9h16M5 9l1 11h12l1-11M8 9V5h8v4m-7 4h6m-5 3h4M7 3h10',
+  drivingRange: 'M5 20h14M8 18l4-10m0 0 4 10M10 12h5M4 8c4-5 10-6 16-3m-2-2 2 2-3 1',
+  puttingGreen: 'M4 18c3-4 11-5 16-1-4 4-12 5-16 1Zm8-2V5m0 1h7l-2 2 2 2h-7m-6 9h.01',
+  cartGarage: 'M3 20h18M5 17V8l7-4 7 4v9M7 13h10M8 17v-3h8v3m-7 3a1 1 0 1 0 0-2m6 2a1 1 0 1 0 0-2',
+  hotel: 'M4 21V6h16v15M8 10h2m4 0h2m-8 4h2m4 0h2m-5 7v-4h2v4M7 6V3h10v3M3 21h18',
+  tennis: 'M15 4c3 3 3 7 0 10s-7 3-10 0-3-7 0-10 7-3 10 0Zm-1 9 6 7m-3 0 3-3M8 6l6 6m-9-2 5 5M19 5h.01',
+  marina: 'm12 3 7 10H5l7-10Zm0 0v14m-8-1h16l-3 4H7l-3-4ZM3 22c2-1 4-1 6 0s4 1 6 0 4-1 6 0',
+  airstrip: 'M21 13 14 10V4l-2-2-2 2v6l-7 3v2l7-1v5l-3 2v1l5-1 5 1v-1l-3-2v-5l7 1v-2Z',
+  buildingLot: 'M3 21h18M5 21V10l7-7 7 7v11M9 21v-6h6v6M8 11h2m4 0h2',
+  bench: 'M5 12h14v4H5v-4Zm2 4v5m10-5v5M6 9h12v3M7 9V6m10 3V6',
 };
 
 export default function Icon({ name, size = 20, className = '' }: { name: IconName; size?: number; className?: string }) {

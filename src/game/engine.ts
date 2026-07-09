@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, NAMES, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH } from './constants';
 import { Tile } from './types';
-import type { Ball, Golfer, Hole, LieKey, Vec, ToolId } from './types';
+import type { Ball, FacilityActivity, Golfer, Hole, LieKey, Vec, ToolId } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf } from './camera';
@@ -202,6 +202,7 @@ export function placeBuilding(kind: BuildingKind, tx: number, ty: number): Build
     b.stageT = 0;
   }
   S.buildings.push(b);
+  if (kind === 'airstrip' || kind === 'marina') S.nextFacilityActivity = Math.min(S.nextFacilityActivity, 1.5);
   rebuildStatics();
   sfx.coin();
   floater(x + def.w / 2, y + def.h / 2, def.name + '!', '#fff');
@@ -1304,6 +1305,8 @@ export function loadGame(): boolean {
     }
     S.holes = d.holes || [];
     S.buildings = d.buildings || [];
+    S.facilityActivities = [];
+    S.nextFacilityActivity = 3;
     S.employees = d.employees || [];
     // restore golfers mid-round; balls in flight aren't saved, so coerce
     // anyone who was watching/swinging back into a walking state
@@ -1349,6 +1352,8 @@ export function newCourse() {
   S.lost = 0;
   S.holes = [];
   S.buildings = [];
+  S.facilityActivities = [];
+  S.nextFacilityActivity = 4;
   S.employees = [];
   S.golfers = [];
   S.balls = [];
@@ -1380,6 +1385,42 @@ function updateLots(dtw: number) {
   }
 }
 
+/* ---------------- ambient facility traffic ---------------- */
+let facilityActivitySeq = 0;
+
+function spawnFacilityActivity() {
+  const activeIds = new Set(S.facilityActivities.map((activity) => activity.facilityId));
+  const candidates = S.buildings.filter((building) => (building.kind === 'airstrip' || building.kind === 'marina') && !activeIds.has(building.id));
+  if (!candidates.length) {
+    S.nextFacilityActivity = 2.5;
+    return;
+  }
+  const facility = pick(candidates);
+  const direction: 1 | -1 = facility.x + facility.w / 2 >= W / 2 ? 1 : -1;
+  const sequence = ++facilityActivitySeq;
+  const kind: FacilityActivity['kind'] = facility.kind === 'marina' ? 'marina-boat' : sequence & 1 ? 'plane-arrival' : 'plane-departure';
+  S.facilityActivities.push({
+    id: sequence,
+    facilityId: facility.id,
+    kind,
+    age: 0,
+    duration: kind === 'marina-boat' ? 13 : kind === 'plane-arrival' ? 15 : 13,
+    direction,
+  });
+  S.nextFacilityActivity = facility.kind === 'airstrip' ? rand(8, 14) : rand(5, 10);
+}
+
+function updateFacilityActivities(dtw: number) {
+  const facilityIds = new Set(S.buildings.map((building) => building.id));
+  for (let i = S.facilityActivities.length - 1; i >= 0; i--) {
+    const activity = S.facilityActivities[i];
+    activity.age += dtw;
+    if (activity.age >= activity.duration || !facilityIds.has(activity.facilityId)) S.facilityActivities.splice(i, 1);
+  }
+  S.nextFacilityActivity -= dtw;
+  if (S.nextFacilityActivity <= 0 && S.facilityActivities.length < 3) spawnFacilityActivity();
+}
+
 /* ---------------- per-frame update (no draw) ---------------- */
 let incomeAcc = 0;
 function accrueIncome(dtw: number) {
@@ -1400,6 +1441,7 @@ export function update(dt: number) {
     updateSpawner(dtw);
     updateGolfers(dtw);
     updateLots(dtw);
+    updateFacilityActivities(dtw);
     accrueIncome(dtw);
   }
   updateBalls(dt);

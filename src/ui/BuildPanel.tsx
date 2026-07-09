@@ -21,17 +21,17 @@ const ORDER: BuildingKind[] = [
 ];
 
 const ICONS: Record<BuildingKind, IconName> = {
-  proshop: 'cash',
-  snackbar: 'resort',
-  drivingrange: 'play',
-  puttinggreen: 'green',
-  cartgarage: 'fast',
-  hotel: 'build',
-  tennis: 'course',
-  marina: 'water',
-  airstrip: 'land',
-  buildinglot: 'resort',
-  bench: 'course',
+  proshop: 'proShop',
+  snackbar: 'snackBar',
+  drivingrange: 'drivingRange',
+  puttinggreen: 'puttingGreen',
+  cartgarage: 'cartGarage',
+  hotel: 'hotel',
+  tennis: 'tennis',
+  marina: 'marina',
+  airstrip: 'airstrip',
+  buildinglot: 'buildingLot',
+  bench: 'bench',
   flowerbed: 'flower',
 };
 
@@ -64,7 +64,7 @@ export default function BuildPanel() {
                 setStore({ buildPanel: false });
               }}
             >
-              <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
+              <div className={'bpIc bpIc-' + k}><Icon name={ICONS[k]} size={25} /></div>
               <div className="bpName">{d.name}</div>
               <div className="bpCost">
                 {fmt$(d.cost)} <span>{d.w}×{d.h}</span>

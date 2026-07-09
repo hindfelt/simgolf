@@ -74,7 +74,11 @@ export default function Toolbar() {
             aria-selected={group === item.id}
             className={'toolGroup' + (group === item.id ? ' active' : '')}
             key={item.id}
-            onClick={() => setGroup(item.id)}
+            onClick={() => {
+              setGroup(item.id);
+              if (item.id === 'resort') setStore({ buildPanel: true, staffPanel: false, reportsPanel: false });
+              else setStore({ buildPanel: false });
+            }}
           >
             <Icon name={item.icon} size={16} />
             <span>{item.label}</span>

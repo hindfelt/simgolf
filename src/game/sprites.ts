@@ -205,6 +205,52 @@ function poly(ctx: CanvasRenderingContext2D, pts: P2[], fill: string, stroke?: s
 const mix = (a: P2, b: P2, t: number): P2 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 const up = (p: P2, h: number): P2 => [p[0], p[1] - h];
 
+/** Compact top-down commuter aircraft that matches the pixel-world scale. */
+export function facilityPlaneSprite(withOutline = true): HTMLCanvasElement {
+  const key = 'facility-plane-v3-' + (withOutline ? 'outlined' : 'raw');
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const [art, ctx] = makeCanvas(44, 40);
+  // Wingspan is intentionally close to fuselage length: this reads as an
+  // aircraft even when the sprite is only a few dozen screen pixels wide.
+  poly(ctx, [[29, 18], [23, 3], [17, 3], [20, 19]], '#c8cecb', '#667278');
+  poly(ctx, [[29, 22], [23, 37], [17, 37], [20, 21]], '#adb8b7', '#59666d');
+  poly(ctx, [[13, 18], [8, 12], [4, 12], [8, 20]], '#c8ceca', '#59666d');
+  poly(ctx, [[13, 22], [8, 28], [4, 28], [8, 20]], '#aeb8b6', '#59666d');
+  poly(ctx, [[4, 18], [31, 17], [38, 18], [42, 20], [38, 22], [31, 23], [4, 22], [1, 20]], '#e5e7df', '#3d4b52');
+  ctx.fillStyle = '#f7f3e8';
+  ctx.fillRect(10, 18, 23, 2);
+  ctx.fillStyle = '#47788c';
+  ctx.fillRect(33, 18, 5, 2);
+  ctx.fillStyle = '#345f70';
+  ctx.fillRect(32, 20, 6, 2);
+  poly(ctx, [[20, 10], [25, 11], [25, 15], [19, 14]], '#68777b', '#36444a');
+  poly(ctx, [[20, 30], [25, 29], [25, 25], [19, 26]], '#58676c', '#344249');
+  ctx.fillStyle = '#a43e35';
+  ctx.fillRect(5, 18, 5, 4);
+  const done = withOutline ? outlined(art, '#293940') : art;
+  cache.set(key, done);
+  return done;
+}
+
+/** Low-profile launch viewed from above; no oversized vertical sail. */
+export function facilityBoatSprite(withOutline = true): HTMLCanvasElement {
+  const key = 'facility-boat-v3-' + (withOutline ? 'outlined' : 'raw');
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const [art, ctx] = makeCanvas(34, 16);
+  poly(ctx, [[2, 4], [25, 3], [32, 8], [25, 13], [2, 12], [0, 8]], '#e2dfd3', '#33464f');
+  poly(ctx, [[7, 5], [24, 5], [28, 8], [24, 11], [7, 11]], '#b94437', '#78372f');
+  poly(ctx, [[13, 5], [23, 5], [25, 8], [23, 10], [13, 10]], '#f1e7cf', '#59666b');
+  ctx.fillStyle = '#3e7187';
+  ctx.fillRect(17, 6, 6, 3);
+  ctx.fillStyle = '#f2c95e';
+  ctx.fillRect(29, 7, 2, 2);
+  const done = withOutline ? outlined(art, '#293b43') : art;
+  cache.set(key, done);
+  return done;
+}
+
 interface BoxOpts {
   wall: string;
   roofC: string;
@@ -761,18 +807,18 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
         }
         const bo = (x: number, y: number): P2 => c(0.1 + x * 0.85, 0.08 + y * 0.78);
         isoBox(ctx, bo, 1, 1, { wall: '#e3ecf2', roofC: '#315f86', wallH: 15, roofH: 9, winRows: 1, door: true });
-        // Two distinct sailboats give the facility a useful visual scale.
+        // Compact launches establish scale without obscuring the dock.
         for (let i = 0; i < 2; i++) {
           const s = c(w * (0.55 + i * 0.22), h * (0.3 + i * 0.43));
-          poly(ctx, [[s[0] - 8, s[1]], [s[0] + 8, s[1]], [s[0] + 5, s[1] + 4], [s[0] - 5, s[1] + 4]], i ? '#f1d38c' : '#f2f0e8', '#526068');
-          ctx.strokeStyle = '#4d5960';
-          ctx.lineWidth = 1.3;
-          ctx.beginPath();
-          ctx.moveTo(s[0], s[1]);
-          ctx.lineTo(s[0], s[1] - 23);
-          ctx.stroke();
-          poly(ctx, [[s[0], s[1] - 23], [s[0] + 11, s[1] - 5], [s[0] + 1, s[1] - 5]], i ? '#f7efe0' : '#fff4d4');
-          poly(ctx, [[s[0] - 1, s[1] - 20], [s[0] - 8, s[1] - 5], [s[0] - 1, s[1] - 5]], i ? '#315f86' : '#b94437');
+          const ahead = c(w * (0.55 + i * 0.22) + 0.4, h * (0.3 + i * 0.43));
+          const angle = Math.atan2(ahead[1] - s[1], ahead[0] - s[0]);
+          const spr = facilityBoatSprite(false);
+          ctx.save();
+          ctx.imageSmoothingEnabled = false;
+          ctx.translate(s[0], s[1]);
+          ctx.rotate(angle);
+          ctx.drawImage(spr, -9, -4.25, 18, 8.5);
+          ctx.restore();
         }
         lamp(ctx, c(0.72, h * 0.52), 17);
       });
@@ -835,17 +881,23 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
           ctx.lineTo(doorB[0], doorB[1] - i * 2.6);
           ctx.stroke();
         }
-        // Parked single-engine aircraft, large enough to read without a label.
+        // A compact parked commuter plane, sized against the hangar and runway.
         const px = Math.max(2.2, w * 0.68);
         const py = h * 0.5;
-        const plane = [c(px + 0.72, py), c(px + 0.12, py - 0.1), c(px - 0.05, py - 0.65), c(px - 0.24, py - 0.66), c(px - 0.14, py - 0.1), c(px - 0.7, py - 0.13), c(px - 0.8, py), c(px - 0.7, py + 0.13), c(px - 0.14, py + 0.1), c(px - 0.05, py + 0.65), c(px + 0.14, py + 0.64), c(px + 0.12, py + 0.1)];
-        poly(ctx, plane.map((p) => [p[0] + 3, p[1] + 3] as P2), 'rgba(27,37,41,.28)');
-        poly(ctx, plane, '#ecece4', '#4f5b61');
-        const cockpit = c(px + 0.22, py);
-        ctx.fillStyle = '#4c8298';
+        const planeAt = c(px, py);
+        const ahead = c(px + 0.5, py);
+        const planeAngle = Math.atan2(ahead[1] - planeAt[1], ahead[0] - planeAt[0]);
+        const planeSpr = facilityPlaneSprite(false);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(planeAt[0], planeAt[1]);
+        ctx.rotate(planeAngle);
+        ctx.fillStyle = 'rgba(28,39,42,.24)';
         ctx.beginPath();
-        ctx.ellipse(cockpit[0], cockpit[1] - 2, 5, 2.2, 0.42, 0, Math.PI * 2);
+        ctx.ellipse(2, 2, 11, 3.2, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.drawImage(planeSpr, -15, -13.5, 30, 27);
+        ctx.restore();
         // Windsock remains a secondary detail rather than the whole identity.
         const wsk = c(w - 0.24, 0.24);
         ctx.strokeStyle = '#8f959c';

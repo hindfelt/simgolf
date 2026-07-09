@@ -7,8 +7,10 @@ import { P, PE, screenToWorld, viewXY } from './camera';
 import { parFor } from './engine';
 import { CATALOG, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite } from './sprites';
 import type { GolferFrame, TreeKind, BSprite } from './sprites';
+import { facilityActivityPose } from './facilityActivity';
+import type { FacilityActivityPose } from './facilityActivity';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -646,6 +648,13 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     Math.max(dep(x, y), dep(x + w, y), dep(x, y + h), dep(x + w, y + h)) - 0.4;
   D.push({ z: bDep(Math.floor(CH.x) - 1, Math.floor(CH.y) - 1, 2, 2), f: () => drawClubhouse(ctx, u) });
   for (const b of S.buildings) D.push({ z: bDep(b.x, b.y, b.w, b.h), f: () => drawBuilding(ctx, b, u) });
+  for (const activity of S.facilityActivities) {
+    if (activity.kind !== 'marina-boat') continue;
+    const facility = S.buildings.find((building) => building.id === activity.facilityId);
+    if (!facility) continue;
+    const pose = facilityActivityPose(activity, facility);
+    D.push({ z: bDep(facility.x, facility.y, facility.w, facility.h) + 0.08, f: () => drawFacilityBoat(ctx, pose, u) });
+  }
   for (const g of S.golfers) {
     D.push({ z: dep(g.x, g.y), f: () => drawGolfer(ctx, g, u) });
     if (g.ball && (g.state === 'toBall' || g.state === 'preshot' || g.state === 'prePutt' || g.state === 'toTee'))
@@ -659,6 +668,14 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   D.sort((a, b) => a.z - b.z);
   for (const d of D) d.f();
 
+  // Aircraft remain above the world painter's order while approaching; their
+  // ground shadow still tracks the rolling terrain below.
+  for (const activity of S.facilityActivities) {
+    if (activity.kind === 'marina-boat') continue;
+    const facility = S.buildings.find((building) => building.id === activity.facilityId);
+    if (facility) drawFacilityPlane(ctx, facilityActivityPose(activity, facility), u);
+  }
+
   drawAim(ctx, u);
   drawParticles(ctx, u);
   drawFloaters(ctx, u);
@@ -669,6 +686,58 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   vignette.addColorStop(1, 'rgba(4,12,15,.16)');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, cssW, cssH);
+}
+
+function poseScreenAngle(pose: FacilityActivityPose): number {
+  const a = P(pose.x, pose.y);
+  const b = P(pose.x + pose.heading.x, pose.y + pose.heading.y);
+  return Math.atan2(b.y - a.y, b.x - a.x);
+}
+
+function drawFacilityPlane(ctx: CanvasRenderingContext2D, pose: FacilityActivityPose, u: number) {
+  const ground = PE(pose.x, pose.y);
+  const altitude = pose.altitude * u;
+  const angle = poseScreenAngle(pose);
+  const k = clamp(u, 0.62, 1.55) * pose.scale * 0.92;
+  const shadowScale = clamp(1 - pose.altitude / 125, 0.3, 0.9);
+
+  ctx.save();
+  ctx.translate(ground.x + altitude * 0.08, ground.y + altitude * 0.08);
+  ctx.rotate(angle);
+  ctx.fillStyle = 'rgba(7,22,22,' + (0.08 + shadowScale * 0.18).toFixed(3) + ')';
+  ctx.beginPath();
+  ctx.ellipse(1.5 * k, 0, 18 * k * shadowScale, 6.2 * k * shadowScale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(ground.x, ground.y - altitude);
+  ctx.rotate(angle);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(facilityPlaneSprite(), -22 * k, -20 * k, 44 * k, 40 * k);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
+}
+
+function drawFacilityBoat(ctx: CanvasRenderingContext2D, pose: FacilityActivityPose, u: number) {
+  const p = PE(pose.x, pose.y);
+  const angle = poseScreenAngle(pose);
+  const k = clamp(u, 0.62, 1.32) * pose.scale * 0.88;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(angle);
+  ctx.strokeStyle = 'rgba(215,245,244,.42)';
+  ctx.lineWidth = 1.2;
+  for (const oy of [-3, 3]) {
+    ctx.beginPath();
+    ctx.moveTo(-8 * k, oy * k * 0.35);
+    ctx.quadraticCurveTo(-16 * k, oy * k, -24 * k, oy * k * 1.2);
+    ctx.stroke();
+  }
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(facilityBoatSprite(), -17 * k, -8 * k, 34 * k, 16 * k);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = true;
 }
 
 /** Terrain-following tile outline. */
@@ -967,7 +1036,7 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
     drawWorldLabel(ctx, b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : def.name.toUpperCase(), c.x, topY - 6 * u, u);
   }
   if (!b.open) {
-    drawWorldLabel(ctx, 'NO PATH', c.x, c.y + 9 * u, u, 'danger');
+    drawWorldLabel(ctx, 'NO PATH', c.x, c.y + Math.max(15, (b.w + b.h) * 2.6) * u, u, 'danger');
   }
 }
 

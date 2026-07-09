@@ -593,7 +593,7 @@ table.sc td.bad {
   padding: 8px;
   cursor: pointer;
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 42px 1fr auto;
   grid-template-rows: auto auto;
   column-gap: 8px;
   align-items: center;
@@ -607,11 +607,26 @@ table.sc td.bad {
 }
 .bpIc {
   grid-row: 1 / 3;
-  font-size: 22px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  color: #34436f;
+  color: #314469;
+  border: 1px solid rgba(49, 68, 105, 0.28);
+  border-radius: 10px;
+  background: linear-gradient(145deg, #f7f3df, #d9d7c8);
+  box-shadow: inset 0 1px rgba(255,255,255,.8), 0 2px 0 rgba(44,58,110,.2);
 }
+.bpIc-drivingrange,
+.bpIc-puttinggreen,
+.bpIc-tennis,
+.bpIc-bench,
+.bpIc-flowerbed { color: #356738; background: linear-gradient(145deg, #eef4d4, #bdd097); }
+.bpIc-marina { color: #245f85; background: linear-gradient(145deg, #dff4f4, #9bc8d8); }
+.bpIc-airstrip,
+.bpIc-cartgarage { color: #46545c; background: linear-gradient(145deg, #eef0ec, #bcc4c5); }
+.bpIc-hotel,
+.bpIc-snackbar { color: #8b4938; background: linear-gradient(145deg, #fff0d0, #e5bf99); }
 .bpName {
   font-weight: 800;
   font-size: 12px;
@@ -663,6 +678,40 @@ table.sc td.bad {
 .bpBtns button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.staffCard {
+  min-height: 198px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(3.9em, 1fr) auto;
+  align-items: start;
+}
+.staffCard .bpIc {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+.staffCard .bpName {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  line-height: 1.12;
+}
+.staffCard .bpCost {
+  grid-column: 2;
+  grid-row: 2;
+  margin-top: 3px;
+  text-align: left;
+}
+.staffCard .bpBlurb {
+  grid-column: 2;
+  grid-row: 3;
+  min-width: 0;
+  margin-top: 4px;
+}
+.staffCard .bpBtns {
+  grid-column: 1 / 3;
+  grid-row: 4;
+  align-self: end;
+  margin-top: 10px;
 }
 .errBanner {
   position: fixed;
