@@ -16,19 +16,23 @@ import type { GolferFrame, TreeKind, BSprite } from './sprites';
    iso quad (two triangles, corner heightfield) with slope-based sun shading.
    That gives SimGolf-style rolling ground instead of stair-step terraces. */
 
-const RES = 24; // ortho px per tile
-const GPAD = 30;
+const RES = 32; // ortho px per tile; enough resolution for material texture
+const GPAD = 56;
+const EDGE_DEPTH = 26;
 const gox = (Math.max(W, H) * TW) / 2 + GPAD; // room for either rotation
 const goy = GPAD + MAXE * EH;
 const gc = document.createElement('canvas');
 gc.width = Math.max(W, H) * TW + GPAD * 2;
-gc.height = ((W + H) * TH) / 2 + GPAD * 2 + TH + MAXE * EH;
+gc.height = ((W + H) * TH) / 2 + GPAD * 2 + TH + MAXE * EH + EDGE_DEPTH;
 const gctx = gc.getContext('2d')!;
 
 const oc = document.createElement('canvas');
 oc.width = W * RES;
 oc.height = H * RES;
 const octx = oc.getContext('2d')!;
+
+const bgc = document.createElement('canvas');
+const bgctx = bgc.getContext('2d')!;
 
 /** Terrain merge groups: tiles in the same group flow together as one blob. */
 type Grp = number;
@@ -83,40 +87,56 @@ function drawOrtho() {
   const c = octx;
   c.clearRect(0, 0, oc.width, oc.height);
 
-  // 1) rough base under everything (shows through rounded blob corners)
+  // 1) Rough under everything. Large translucent patches hide the tile grid;
+  // tiny grass marks keep the material readable at close zoom.
+  c.fillStyle = TINFO[Tile.ROUGH].c1;
+  c.fillRect(0, 0, oc.width, oc.height);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      const R = TINFO[Tile.ROUGH];
-      c.fillStyle = hash2(x, y) > 0.5 ? R.c1 : R.c2;
-      c.fillRect(x * RES, y * RES, RES, RES);
-      for (let i = 0; i < 5; i++) {
-        const a = hash2(x * 7 + i * 31, y * 13 + i * 17);
-        const b = hash2(y * 11 + i * 7, x * 5 + i * 23);
-        c.fillStyle = a > 0.5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.06)';
-        c.fillRect(x * RES + a * (RES - 3), y * RES + b * (RES - 3), 2.5, 2);
+      const u = x * RES;
+      const v = y * RES;
+      const patch = hash2(x * 5 + 17, y * 7 + 31);
+      c.fillStyle = patch > 0.48 ? 'rgba(27,65,29,.12)' : 'rgba(222,239,162,.08)';
+      c.beginPath();
+      c.ellipse(u + patch * RES, v + hash2(y + 9, x + 23) * RES, RES * (0.42 + patch * 0.3), RES * 0.32, patch * 2.2, 0, Math.PI * 2);
+      c.fill();
+      for (let i = 0; i < 7; i++) {
+        const a = hash2(x * 17 + i * 31, y * 23 + i * 13);
+        const b = hash2(y * 19 + i * 7, x * 11 + i * 29);
+        c.fillStyle = a > 0.53 ? 'rgba(233,246,190,.09)' : 'rgba(20,53,25,.1)';
+        c.fillRect(u + a * (RES - 3), v + b * (RES - 3), 1.5 + b * 1.5, 1.2);
       }
       const t = S.tiles[idx(x, y)];
-      if (t === Tile.ROUGH && hash2(x * 3, y * 9) > 0.74) {
-        c.strokeStyle = 'rgba(30,60,20,.35)';
-        c.lineWidth = 1.2;
-        const tu = x * RES + hash2(x, y * 2) * (RES - 6) + 3;
-        const tv = y * RES + hash2(x * 2, y) * (RES - 6) + 4;
-        c.beginPath();
-        c.moveTo(tu, tv + 3);
-        c.lineTo(tu - 1.5, tv - 2);
-        c.moveTo(tu + 1, tv + 3);
-        c.lineTo(tu + 2.5, tv - 2);
-        c.stroke();
+      if ((t === Tile.ROUGH || t === Tile.TREE) && hash2(x * 3, y * 9) > 0.52) {
+        for (let i = 0; i < 2; i++) {
+          const tu = u + hash2(x + i * 37, y * 2 + i) * (RES - 8) + 4;
+          const tv = v + hash2(x * 2 + i, y + i * 19) * (RES - 8) + 5;
+          c.strokeStyle = i ? 'rgba(216,235,154,.2)' : 'rgba(24,60,27,.32)';
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(tu, tv + 3.5);
+          c.quadraticCurveTo(tu - 1, tv, tu - 2.3, tv - 2.6);
+          c.moveTo(tu + 0.5, tv + 3.5);
+          c.quadraticCurveTo(tu + 1.5, tv, tu + 3, tv - 2.3);
+          c.stroke();
+        }
       }
     }
 
-  // 2) water — beach rim, deep fill, crisp shoreline
+  // 2) Water — a recessed shoreline, deep centre and fine caustic marks.
   const water = blobPath(Grp.WATER, RES * 0.5);
   if (water.any) {
-    c.strokeStyle = '#e0cc90';
+    c.strokeStyle = '#a98c55';
+    c.lineWidth = 11;
+    c.stroke(water.path);
+    c.strokeStyle = '#dfc789';
     c.lineWidth = 7;
     c.stroke(water.path);
-    c.fillStyle = TINFO[Tile.WATER].c2;
+    const waterGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    waterGrad.addColorStop(0, TINFO[Tile.WATER].c1);
+    waterGrad.addColorStop(0.55, TINFO[Tile.WATER].c2);
+    waterGrad.addColorStop(1, '#1c5f8b');
+    c.fillStyle = waterGrad;
     c.fill(water.path);
     const deep = new Path2D();
     let anyDeep = false;
@@ -128,44 +148,68 @@ function drawOrtho() {
     if (anyDeep) {
       c.save();
       c.clip(water.path);
-      c.fillStyle = 'rgba(20,50,110,.16)';
+      c.fillStyle = 'rgba(8,40,75,.22)';
       c.fill(deep);
       c.restore();
     }
-    c.strokeStyle = '#2c639c';
-    c.lineWidth = 2.2;
+    c.save();
+    c.clip(water.path);
+    c.strokeStyle = 'rgba(170,228,237,.22)';
+    c.lineWidth = 1.2;
+    for (const [x, y] of water.tiles) {
+      const a = hash2(x * 13 + 4, y * 17 + 9);
+      const b = hash2(y * 11 + 3, x * 7 + 5);
+      c.beginPath();
+      c.moveTo(x * RES + 5 + a * 10, y * RES + 7 + b * 15);
+      c.quadraticCurveTo(x * RES + RES * 0.5, y * RES + 5 + b * 15, x * RES + RES - 5 - a * 8, y * RES + 8 + b * 15);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = '#245b78';
+    c.lineWidth = 2;
     c.stroke(water.path);
   }
 
-  // 3) sand bunkers
+  // 3) Sand — a darker cut lip, warm depth and lightly raked arcs.
   const sand = blobPath(Grp.SAND, RES * 0.5);
   if (sand.any) {
-    c.fillStyle = TINFO[Tile.SAND].c1;
+    c.strokeStyle = '#9f854d';
+    c.lineWidth = 7;
+    c.stroke(sand.path);
+    const sandGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
+    sandGrad.addColorStop(0, '#ead69a');
+    sandGrad.addColorStop(1, TINFO[Tile.SAND].c2);
+    c.fillStyle = sandGrad;
     c.fill(sand.path);
     c.save();
     c.clip(sand.path);
-    c.fillStyle = 'rgba(120,90,30,.28)';
+    c.fillStyle = 'rgba(105,75,27,.22)';
     for (const [x, y] of sand.tiles)
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 7; i++) {
         const a = hash2(x * 3 + i, y * 5 + i);
         const b = hash2(y * 9 + i, x * 7 + i);
-        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.8, 1.8);
+        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.3, 1.3);
       }
+    c.strokeStyle = 'rgba(126,91,35,.23)';
+    c.lineWidth = 1;
+    for (const [x, y] of sand.tiles) {
+      const rr = RES * (0.19 + hash2(x, y) * 0.08);
+      c.beginPath();
+      c.arc(x * RES + RES * 0.48, y * RES + RES * 0.52, rr, 0.22, 2.55);
+      c.stroke();
+    }
     c.restore();
-    c.strokeStyle = '#c4ae74';
-    c.lineWidth = 2.4;
+    c.strokeStyle = 'rgba(250,233,181,.65)';
+    c.lineWidth = 1.4;
     c.stroke(sand.path);
-    c.save();
-    c.clip(sand.path);
-    c.strokeStyle = 'rgba(255,255,255,.5)';
-    c.lineWidth = 1.2;
-    c.stroke(sand.path);
-    c.restore();
   }
 
-  // 4) fairway (tees merge into the same blob) with mowing stripes
+  // 4) Fairway (tees merge into the same blob) with broad mower lanes.
   const fair = blobPath(Grp.FAIR, RES * 0.5);
   if (fair.any) {
+    c.strokeStyle = '#426e32';
+    c.lineWidth = 5;
+    c.stroke(fair.path);
     c.fillStyle = TINFO[Tile.FAIR].c1;
     c.fill(fair.path);
     c.save();
@@ -181,9 +225,17 @@ function drawOrtho() {
       c.closePath();
       c.fill();
     }
+    c.strokeStyle = 'rgba(231,247,187,.08)';
+    c.lineWidth = 2;
+    for (let k = -2; k <= W + H; k += 2) {
+      c.beginPath();
+      c.moveTo(k * band, 0);
+      c.lineTo(k * band - oc.height, oc.height);
+      c.stroke();
+    }
     c.restore();
-    c.strokeStyle = 'rgba(20,50,10,.14)';
-    c.lineWidth = 1.6;
+    c.strokeStyle = 'rgba(30,65,24,.35)';
+    c.lineWidth = 1.4;
     c.stroke(fair.path);
     const T = TINFO[Tile.TEE];
     for (let y = 0; y < H; y++)
@@ -193,26 +245,36 @@ function drawOrtho() {
         c.beginPath();
         c.roundRect(x * RES + 2, y * RES + 2, RES - 4, RES - 4, 4);
         c.fill();
-        c.fillStyle = '#fffdf2';
-        c.fillRect(x * RES + RES / 2 - 6, y * RES + RES / 2 - 1.5, 3.5, 3.5);
-        c.fillRect(x * RES + RES / 2 + 3, y * RES + RES / 2 - 1.5, 3.5, 3.5);
+        c.strokeStyle = 'rgba(38,76,30,.35)';
+        c.lineWidth = 1.2;
+        c.stroke();
+        c.fillStyle = '#fff8da';
+        c.beginPath();
+        c.arc(x * RES + RES / 2 - 6, y * RES + RES / 2, 2.2, 0, Math.PI * 2);
+        c.arc(x * RES + RES / 2 + 6, y * RES + RES / 2, 2.2, 0, Math.PI * 2);
+        c.fill();
       }
   }
 
-  // 5) greens — smooth, pale, checkerboard mow + fringe ring
+  // 5) Greens — double fringe, subtle checker cut and a crisp collar.
   const green = blobPath(Grp.GREEN, RES * 0.6);
   if (green.any) {
-    c.strokeStyle = '#68b455';
+    c.strokeStyle = '#477f38';
+    c.lineWidth = 9;
+    c.stroke(green.path);
+    c.strokeStyle = '#76ae4c';
     c.lineWidth = 6;
     c.stroke(green.path);
     c.fillStyle = TINFO[Tile.GREEN].c1;
     c.fill(green.path);
     c.save();
     c.clip(green.path);
-    c.fillStyle = 'rgba(255,255,255,.05)';
-    for (const [x, y] of green.tiles) if ((x + y) & 1) c.fillRect(x * RES, y * RES, RES, RES);
+    for (const [x, y] of green.tiles) {
+      c.fillStyle = (x + y) & 1 ? 'rgba(237,255,215,.075)' : 'rgba(25,85,35,.04)';
+      c.fillRect(x * RES, y * RES, RES, RES);
+    }
     c.restore();
-    c.strokeStyle = 'rgba(20,60,20,.18)';
+    c.strokeStyle = 'rgba(23,73,30,.35)';
     c.lineWidth = 1.4;
     c.stroke(green.path);
   }
@@ -226,20 +288,23 @@ function drawOrtho() {
     [pathOff, PATH_MUD.c1, '#5f5138'],
   ] as const) {
     if (!pp.any) continue;
+    c.strokeStyle = edge;
+    c.lineWidth = 5;
+    c.stroke(pp.path);
     c.fillStyle = col;
     c.fill(pp.path);
     c.save();
     c.clip(pp.path);
-    c.fillStyle = 'rgba(90,70,40,.25)';
+    c.fillStyle = 'rgba(70,52,31,.27)';
     for (const [x, y] of pp.tiles)
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 7; i++) {
         const a = hash2(x * 13 + i, y * 3 + i);
         const b = hash2(y * 5 + i, x * 11 + i);
-        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.6, 1.6);
+        c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1 + a * 1.5, 1 + a);
       }
     c.restore();
-    c.strokeStyle = edge;
-    c.lineWidth = 1.8;
+    c.strokeStyle = 'rgba(249,225,174,.28)';
+    c.lineWidth = 1.2;
     c.stroke(pp.path);
   }
 
@@ -248,15 +313,15 @@ function drawOrtho() {
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       if (S.tiles[idx(x, y)] !== Tile.FLOWER) continue;
-      c.fillStyle = '#4c7a2e';
+      c.fillStyle = '#315e2f';
       c.beginPath();
       c.roundRect(x * RES + 1.5, y * RES + 1.5, RES - 3, RES - 3, RES * 0.42);
       c.fill();
-      c.fillStyle = '#568a34';
+      c.fillStyle = '#477b38';
       c.beginPath();
       c.roundRect(x * RES + 3.5, y * RES + 3.5, RES - 7, RES - 7, RES * 0.35);
       c.fill();
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 11; i++) {
         const a = hash2(x * 11 + i, y * 17 + i);
         const b = hash2(y * 11 + i, x * 5 + i);
         const fx = x * RES + 4 + a * (RES - 8);
@@ -375,21 +440,118 @@ function triShade(lx: number, ly: number, x0: number, y0: number, h0: number, x1
   return d > 0 ? d * 1.0 : d * 1.1;
 }
 
+type GroundEdgePoint = { x: number; y: number; baseY: number };
+
+/** All grid corners around the map, clockwise in world space. */
+function groundPerimeter(): GroundEdgePoint[] {
+  const out: GroundEdgePoint[] = [];
+  const add = (x: number, y: number) => out.push({ x: gX(x, y), y: gY(x, y), baseY: gY0(x, y) + EDGE_DEPTH });
+  for (let x = 0; x <= W; x++) add(x, 0);
+  for (let y = 1; y <= H; y++) add(W, y);
+  for (let x = W - 1; x >= 0; x--) add(x, H);
+  for (let y = H - 1; y > 0; y--) add(0, y);
+  return out;
+}
+
+/** Soft cast shadow and layered earth faces make the course a physical diorama. */
+function drawGroundBase() {
+  const edge = groundPerimeter();
+  const outline = new Path2D();
+  outline.moveTo(edge[0].x, edge[0].y);
+  for (let i = 1; i < edge.length; i++) outline.lineTo(edge[i].x, edge[i].y);
+  outline.closePath();
+
+  gctx.save();
+  gctx.translate(10, EDGE_DEPTH + 10);
+  gctx.filter = 'blur(15px)';
+  gctx.fillStyle = 'rgba(4,15,14,.52)';
+  gctx.fill(outline);
+  gctx.restore();
+
+  for (let i = 0; i < edge.length; i++) {
+    const a = edge[i];
+    const b = edge[(i + 1) % edge.length];
+    const grad = gctx.createLinearGradient(0, Math.min(a.y, b.y), 0, Math.max(a.baseY, b.baseY));
+    const lit = b.x - a.x < 0;
+    grad.addColorStop(0, lit ? '#6c5435' : '#5a432c');
+    grad.addColorStop(0.18, lit ? '#56402b' : '#493523');
+    grad.addColorStop(1, lit ? '#2c2a22' : '#22241f');
+    gctx.fillStyle = grad;
+    gctx.beginPath();
+    gctx.moveTo(a.x, a.y);
+    gctx.lineTo(b.x, b.y);
+    gctx.lineTo(b.x, b.baseY);
+    gctx.lineTo(a.x, a.baseY);
+    gctx.closePath();
+    gctx.fill();
+
+    // Broken strata stop the edge reading as a single flat brown polygon.
+    if (i % 3 === 0) {
+      gctx.strokeStyle = lit ? 'rgba(219,183,116,.13)' : 'rgba(205,165,102,.09)';
+      gctx.lineWidth = 1;
+      gctx.beginPath();
+      gctx.moveTo(a.x, a.y + (a.baseY - a.y) * 0.54);
+      gctx.lineTo(b.x, b.y + (b.baseY - b.y) * 0.54);
+      gctx.stroke();
+    }
+  }
+}
+
+/** Screen-sized atmosphere behind the course. Rebuilt only after a resize. */
+function buildBackdrop(w: number, h: number) {
+  bgc.width = Math.max(1, Math.ceil(w));
+  bgc.height = Math.max(1, Math.ceil(h));
+  const c = bgctx;
+  const sky = c.createLinearGradient(0, 0, w, h);
+  sky.addColorStop(0, '#28465a');
+  sky.addColorStop(0.48, '#1d3a3c');
+  sky.addColorStop(1, '#102820');
+  c.fillStyle = sky;
+  c.fillRect(0, 0, w, h);
+
+  const glow = c.createRadialGradient(w * 0.24, h * 0.12, 0, w * 0.24, h * 0.12, Math.max(w, h) * 0.72);
+  glow.addColorStop(0, 'rgba(218,228,179,.22)');
+  glow.addColorStop(0.42, 'rgba(131,176,145,.08)');
+  glow.addColorStop(1, 'rgba(8,24,24,0)');
+  c.fillStyle = glow;
+  c.fillRect(0, 0, w, h);
+
+  // Out-of-focus forest crowns around the frame imply a larger park beyond.
+  for (let i = 0; i < 42; i++) {
+    const a = hash2(i * 17 + 5, i * 31 + 2);
+    const b = hash2(i * 7 + 19, i * 13 + 11);
+    const side = i & 3;
+    const x = side === 0 ? a * w * 0.24 : side === 1 ? w * (0.76 + a * 0.24) : a * w;
+    const y = side === 2 ? b * h * 0.2 : side === 3 ? h * (0.78 + b * 0.22) : b * h;
+    const r = 34 + hash2(i, i + 97) * 80;
+    c.fillStyle = i % 3 === 0 ? 'rgba(70,110,83,.08)' : 'rgba(6,30,27,.1)';
+    c.beginPath();
+    c.ellipse(x, y, r, r * (0.42 + b * 0.25), a * Math.PI, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  c.strokeStyle = 'rgba(178,207,179,.045)';
+  c.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const y = (i / 11) * h + hash2(i, 4) * 30;
+    c.beginPath();
+    c.moveTo(-40, y);
+    c.bezierCurveTo(w * 0.26, y - 50, w * 0.65, y + 55, w + 40, y - 10);
+    c.stroke();
+  }
+
+  for (let i = 0; i < Math.ceil((w * h) / 1800); i++) {
+    const x = hash2(i * 5, i * 29) * w;
+    const y = hash2(i * 37, i * 11) * h;
+    c.fillStyle = i & 1 ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.035)';
+    c.fillRect(x, y, 1.2, 1.2);
+  }
+}
+
 function buildGround() {
   gctx.setTransform(1, 0, 0, 1, 0, 0);
   gctx.clearRect(0, 0, gc.width, gc.height);
-  // dark skirt under the island
-  gctx.save();
-  gctx.translate(0, 5);
-  gctx.fillStyle = 'rgba(0,0,0,.25)';
-  gctx.beginPath();
-  gctx.moveTo(gX(0, 0), gY0(0, 0));
-  gctx.lineTo(gX(W, 0), gY0(W, 0));
-  gctx.lineTo(gX(W, H), gY0(W, H));
-  gctx.lineTo(gX(0, H), gY0(0, H));
-  gctx.closePath();
-  gctx.fill();
-  gctx.restore();
+  drawGroundBase();
 
   drawOrtho();
   const [lx, ly] = worldLight();
@@ -420,6 +582,17 @@ function buildGround() {
         mapTri(sx, sy, sx + RES, sy + RES, sx, sy + RES, d00x, d00y, d11x, d11y, d01x, d01y, sh);
       }
     }
+  const edge = groundPerimeter();
+  gctx.strokeStyle = 'rgba(29,64,31,.82)';
+  gctx.lineWidth = 2.2;
+  gctx.beginPath();
+  gctx.moveTo(edge[0].x, edge[0].y);
+  for (let i = 1; i < edge.length; i++) gctx.lineTo(edge[i].x, edge[i].y);
+  gctx.closePath();
+  gctx.stroke();
+  gctx.strokeStyle = 'rgba(206,227,153,.24)';
+  gctx.lineWidth = 0.8;
+  gctx.stroke();
   caches.groundDirty = false;
 }
 
@@ -427,11 +600,8 @@ function buildGround() {
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
   const u = z;
-  const grd = ctx.createLinearGradient(0, 0, 0, cssH);
-  grd.addColorStop(0, '#101216');
-  grd.addColorStop(1, '#000000');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, cssW, cssH);
+  if (bgc.width !== Math.ceil(cssW) || bgc.height !== Math.ceil(cssH)) buildBackdrop(cssW, cssH);
+  ctx.drawImage(bgc, 0, 0, cssW, cssH);
   if (caches.groundDirty) buildGround();
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(gc, S.cam.x - gox * z, S.cam.y - goy * z, gc.width * z, gc.height * z);
@@ -443,13 +613,12 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     const ph = S.time * 1.8 + s * 20;
     const a = Math.max(0, Math.sin(ph)) * 0.35;
     if (a < 0.03) continue;
-    ctx.strokeStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
-    ctx.lineWidth = 1.2 * z;
+    ctx.strokeStyle = 'rgba(207,244,246,' + a.toFixed(3) + ')';
+    ctx.lineWidth = Math.max(0.8, 1.15 * z);
     ctx.beginPath();
     const ox = (s - 0.5) * TW * 0.5 * z;
     const oy = (hash2(w.y, w.x) - 0.5) * TH * 0.5 * z;
-    ctx.moveTo(c.x + ox - 4 * z, c.y + oy);
-    ctx.lineTo(c.x + ox + 4 * z, c.y + oy);
+    ctx.ellipse(c.x + ox, c.y + oy, 5.5 * z, 1.8 * z, 0, Math.PI * 0.14, Math.PI * 0.86);
     ctx.stroke();
   }
 
@@ -493,6 +662,13 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   drawAim(ctx, u);
   drawParticles(ctx, u);
   drawFloaters(ctx, u);
+
+  const vignette = ctx.createRadialGradient(cssW / 2, cssH * 0.46, Math.min(cssW, cssH) * 0.22, cssW / 2, cssH / 2, Math.max(cssW, cssH) * 0.72);
+  vignette.addColorStop(0, 'rgba(7,20,20,0)');
+  vignette.addColorStop(0.72, 'rgba(7,20,20,.025)');
+  vignette.addColorStop(1, 'rgba(4,12,15,.16)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, cssW, cssH);
 }
 
 /** Terrain-following tile outline. */
@@ -636,20 +812,20 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 /* ================= scenery ================= */
 function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
   const p = PE(tr.x, tr.y);
-  const sc = (0.8 + tr.s * 0.5) * u;
-  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  const sc = (0.78 + tr.s * 0.38) * u;
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 2 * sc, p.y + 1 * u, 8.5 * sc, 3.5 * sc, 0, 0, 7);
+  ctx.ellipse(p.x + 7 * sc, p.y + 3 * u, 14 * sc, 4.8 * sc, 0.16, 0, Math.PI * 2);
   ctx.fill();
   const kind: TreeKind = tr.s > 0.85 ? 'blossom' : tr.s > 0.62 ? 'pine' : 'round';
   const spr = treeSprite(kind, ((tr.s * 97) | 0) % 3);
-  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.02;
-  const k = sc * 0.95;
+  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.013;
+  const k = sc * 0.92;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y);
   ctx.rotate(sway);
-  ctx.drawImage(spr, -15 * k, -35 * k, 30 * k, 38 * k);
+  ctx.drawImage(spr, -21 * k, -52 * k, 42 * k, 56 * k);
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
 }
@@ -724,21 +900,37 @@ function drawAnchored(ctx: CanvasRenderingContext2D, spr: BSprite, x: number, y:
   ctx.imageSmoothingEnabled = true;
 }
 
+function drawWorldLabel(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, u: number, tone: 'dark' | 'gold' | 'danger' = 'dark') {
+  const size = clamp(6.4 * u, 7, 11);
+  ctx.font = '800 ' + size + 'px "Trebuchet MS", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + clamp(10 * u, 9, 16);
+  const h = size + clamp(6 * u, 6, 10);
+  ctx.fillStyle = tone === 'danger' ? 'rgba(112,41,31,.92)' : 'rgba(18,43,34,.9)';
+  ctx.strokeStyle = tone === 'danger' ? '#f1a078' : tone === 'gold' ? '#e9b53c' : 'rgba(231,239,205,.52)';
+  ctx.lineWidth = Math.max(1, 1.1 * u);
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, h * 0.38);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = tone === 'gold' ? '#ffe39a' : '#fff8df';
+  ctx.fillText(text, x, y + 0.3);
+  ctx.textBaseline = 'alphabetic';
+}
+
 /** Boxy facilities get a soft ground shadow; flat panels bring their own ground. */
 const SHADOWED = new Set(['proshop', 'snackbar', 'cartgarage', 'hotel', 'clubhouse']);
 
 function drawClubhouse(ctx: CanvasRenderingContext2D, u: number) {
   const e = elevAt(CH.x, CH.y);
   const c = cornerAt(Math.floor(CH.x), Math.floor(CH.y), e, u);
-  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(c.x, c.y, 38 * u, 14 * u, 0, 0, 7);
+  ctx.ellipse(c.x + 8 * u, c.y + 4 * u, 42 * u, 14 * u, 0.12, 0, Math.PI * 2);
   ctx.fill();
   drawAnchored(ctx, buildingSprite('clubhouse'), c.x, c.y, u);
-  ctx.fillStyle = '#16301f';
-  ctx.font = 'bold ' + 6 * u + 'px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('CLUBHOUSE', c.x, c.y - 62 * u);
+  if (S.cam.z > 0.62) drawWorldLabel(ctx, 'CLUBHOUSE', c.x, c.y - 66 * u, u, 'gold');
 }
 
 function spriteKeyFor(b: Building): string {
@@ -754,34 +946,28 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
   const e = elevAt(b.x + 0.01, b.y + 0.01);
   const c = cornerAt(b.x + b.w / 2, b.y + b.h / 2, e, u);
   if (b.kind === 'bench' || b.kind === 'flowerbed') {
-    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.fillStyle = 'rgba(5,22,17,.2)';
     ctx.beginPath();
-    ctx.ellipse(c.x, c.y, 9 * u, 3.5 * u, 0, 0, 7);
+    ctx.ellipse(c.x + 3 * u, c.y + 1.5 * u, 10 * u, 3.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
     drawAnchored(ctx, propSprite(b.kind), c.x, c.y, u, 0.8);
     return;
   }
   const key = spriteKeyFor(b);
   if (SHADOWED.has(key) || key.startsWith('house')) {
-    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.fillStyle = 'rgba(5,22,17,.23)';
     ctx.beginPath();
-    ctx.ellipse(c.x, c.y, ((b.w + b.h) / 2) * 19 * u, ((b.w + b.h) / 2) * 7 * u, 0, 0, 7);
+    ctx.ellipse(c.x + 7 * u, c.y + 4 * u, ((b.w + b.h) / 2) * 20 * u, ((b.w + b.h) / 2) * 7.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
   }
   drawAnchored(ctx, buildingSprite(key), c.x, c.y, u);
-  if (S.cam.z > 0.8) {
+  if (S.cam.z > 0.68) {
     const spr = buildingSprite(key);
     const topY = c.y - spr.ay * u;
-    ctx.fillStyle = 'rgba(255,253,242,.85)';
-    ctx.font = 'bold ' + 5.5 * u + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(b.kind === 'buildinglot' ? ['Lot (building…)', 'Cottage', 'Estate'][clamp(b.stage ?? 0, 0, 2)] : def.name, c.x, topY - 3 * u);
+    drawWorldLabel(ctx, b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : def.name.toUpperCase(), c.x, topY - 6 * u, u);
   }
   if (!b.open) {
-    ctx.fillStyle = '#ffd2a6';
-    ctx.font = 'bold ' + 6 * u + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('⚠ needs path', c.x, c.y + 6 * u);
+    drawWorldLabel(ctx, 'NO PATH', c.x, c.y + 9 * u, u, 'danger');
   }
 }
 
@@ -798,12 +984,12 @@ function drawGolferSprite(
   face: number,
   bob: number
 ) {
-  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(x, y + 1 * u, 5 * u, 2.2 * u, 0, 0, 7);
+  ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame);
-  const k = u * 0.68;
+  const k = u * 0.8;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y - bob);
@@ -836,13 +1022,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const py = bp.y - 1 * u;
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
   drawGolferSprite(ctx, px, py, u, '#e9b53c', '#f1c6a0', '#fffdf2', frame, 1, 0);
-  ctx.fillStyle = '#fffdf2';
-  ctx.strokeStyle = 'rgba(20,40,25,.8)';
-  ctx.lineWidth = 2.5;
-  ctx.font = '800 ' + clamp(7 * u, 9, 14) + 'px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.strokeText('YOU', px, py - 24 * u);
-  ctx.fillText('YOU', px, py - 24 * u);
+  drawWorldLabel(ctx, 'YOU', px, py - 31 * u, u, 'gold');
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {

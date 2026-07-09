@@ -30,7 +30,7 @@ body,
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: #102820;
   font-family: 'Trebuchet MS', 'Avenir Next', Avenir, Verdana, system-ui, sans-serif;
   color: var(--ink);
 }

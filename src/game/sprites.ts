@@ -773,57 +773,65 @@ function ditherDisc(p: Px, cx: number, cy: number, r: number, base: string, mid:
     }
 }
 
-/** ~30x38 tree sprite. `tone` 0..2 picks a green ramp. */
+/** 42x56 tree sprite. `tone` 0..2 picks a green ramp. */
 export function treeSprite(kind: TreeKind, tone: number): HTMLCanvasElement {
   const key = 't|' + kind + '|' + tone;
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const [art, , p] = makeCanvas(30, 38);
+  const [art, , p] = makeCanvas(42, 56);
   const ramps: [string, string, string][] = [
-    ['#2c7031', '#3f9245', '#63b968'],
-    ['#256328', '#38853c', '#57ab5b'],
-    ['#357a2f', '#4a9c42', '#6fc262'],
+    ['#22572e', '#397b3e', '#67a94f'],
+    ['#1e4d2a', '#306d38', '#559946'],
+    ['#315f2d', '#4b8138', '#79ad4c'],
   ];
   const [base, mid, hi] = ramps[tone % 3];
   const trunk = '#6d4a2b';
   const trunkDk = '#54371e';
 
   if (kind === 'pine') {
-    p(13, 28, 4, 8, trunk);
-    p(13, 28, 1, 8, trunkDk);
-    // stacked pixel triangles
+    p(18, 39, 6, 15, trunk);
+    p(18, 39, 2, 15, trunkDk);
+    p(15, 52, 4, 2, trunkDk);
+    p(24, 51, 4, 2, trunk);
+    // Five irregular tiers produce a fuller, less icon-like pine.
     const tiers: [number, number, number][] = [
-      [26, 11, 0],
-      [20, 9, 1],
-      [14, 7, 2],
-      [8, 5, 3],
+      [42, 17, 0],
+      [34, 15, 1],
+      [27, 12, 2],
+      [20, 9, 3],
+      [13, 6, 4],
     ];
-    for (const [yb, half] of tiers) {
-      for (let r = 0; r < 6; r++) {
-        const w = Math.max(1, half - r * (half / 6));
+    for (const [yb, half, tier] of tiers) {
+      for (let r = 0; r < 9; r++) {
+        const w = Math.max(1, half - r * (half / 9));
         const y = yb - r;
-        const c = r > 3 ? mid : base;
-        p(15 - w, y, w * 2, 1, c);
-        if ((y + r) % 2 === 0) p(15 - w, y, 2, 1, hi);
+        const c = r > 5 ? mid : base;
+        p(21 - w, y, w * 2, 1, c);
+        if ((y + tier) % 3 === 0) p(21 - w, y, Math.max(2, w * 0.32), 1, hi);
       }
     }
-    p(14, 2, 2, 3, mid);
+    p(20, 4, 3, 4, mid);
   } else {
-    p(13, 26, 4, 10, trunk);
-    p(13, 26, 1, 10, trunkDk);
-    p(11, 30, 2, 1, trunkDk); // root
-    ditherDisc(p, 15, 13, 9, base, mid, hi);
-    ditherDisc(p, 9, 18, 6, base, mid, hi);
-    ditherDisc(p, 21, 18, 6, base, mid, hi);
+    p(18, 33, 6, 21, trunk);
+    p(18, 33, 2, 21, trunkDk);
+    p(13, 50, 6, 2, trunkDk);
+    p(23, 49, 6, 2, trunk);
+    p(15, 31, 4, 8, trunkDk);
+    p(23, 29, 4, 10, trunk);
+    ditherDisc(p, 21, 15, 12, base, mid, hi);
+    ditherDisc(p, 11, 24, 9, base, mid, hi);
+    ditherDisc(p, 31, 24, 9, base, mid, hi);
+    ditherDisc(p, 21, 27, 10, base, mid, hi);
+    ditherDisc(p, 21, 7, 7, base, mid, hi);
     if (kind === 'blossom') {
-      const pinks = ['#f2a7c3', '#f7c9dd', '#e78ad1'];
-      for (let i = 0; i < 14; i++) {
+      const pinks = ['#e990b5', '#f6bed3', '#cf6eab', '#fff0e8'];
+      for (let i = 0; i < 28; i++) {
         const a = (i * 137.5) % 360;
-        const rr = 3 + ((i * 53) % 7);
-        const x = 15 + Math.round(Math.cos((a * Math.PI) / 180) * rr);
-        const y = 14 + Math.round(Math.sin((a * Math.PI) / 180) * rr * 0.8);
-        p(x, y, 1, 1, pinks[i % 3]);
+        const rr = 4 + ((i * 53) % 13);
+        const x = 21 + Math.round(Math.cos((a * Math.PI) / 180) * rr);
+        const y = 18 + Math.round(Math.sin((a * Math.PI) / 180) * rr * 0.74);
+        p(x, y, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1, pinks[i % pinks.length]);
       }
     }
   }

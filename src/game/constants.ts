@@ -21,19 +21,19 @@ export const MAXE = 6;
 export const ELEV_COST = 8;
 
 export const TINFO: Record<number, TileInfo> = {
-  [Tile.ROUGH]: { name: 'Rough', c1: '#79a340', c2: '#6f9739', cost: 0 },
-  [Tile.FAIR]: { name: 'Fairway', c1: '#93d250', c2: '#85c545', cost: 40 },
-  [Tile.GREEN]: { name: 'Green', c1: '#8ce49b', c2: '#7dd98d', cost: 45 },
-  [Tile.TEE]: { name: 'Tee', c1: '#aae38d', c2: '#9dd980', cost: 0 },
-  [Tile.SAND]: { name: 'Sand', c1: '#eedaa2', c2: '#e3cd8d', cost: 25 },
-  [Tile.WATER]: { name: 'Water', c1: '#4189cc', c2: '#3a7cba', cost: 80 },
-  [Tile.TREE]: { name: 'Trees', c1: '#79a340', c2: '#6f9739', cost: 30 },
-  [Tile.FLOWER]: { name: 'Flowers', c1: '#7fa945', c2: '#759e3e', cost: 15 },
-  [Tile.PATH]: { name: 'Pathway', c1: '#cbaa77', c2: '#bf9e6a', cost: 8 },
+  [Tile.ROUGH]: { name: 'Rough', c1: '#628f42', c2: '#547c39', cost: 0 },
+  [Tile.FAIR]: { name: 'Fairway', c1: '#80bf54', c2: '#70ad47', cost: 40 },
+  [Tile.GREEN]: { name: 'Green', c1: '#72cd7d', c2: '#62bc6d', cost: 45 },
+  [Tile.TEE]: { name: 'Tee', c1: '#98cf72', c2: '#87be63', cost: 0 },
+  [Tile.SAND]: { name: 'Sand', c1: '#e3cb8d', c2: '#d4b973', cost: 25 },
+  [Tile.WATER]: { name: 'Water', c1: '#3489b7', c2: '#246f9f', cost: 80 },
+  [Tile.TREE]: { name: 'Trees', c1: '#628f42', c2: '#547c39', cost: 30 },
+  [Tile.FLOWER]: { name: 'Flowers', c1: '#5d8b3e', c2: '#507a36', cost: 15 },
+  [Tile.PATH]: { name: 'Pathway', c1: '#c5a777', c2: '#b79766', cost: 8 },
 };
 
 /** Unconnected pathway renders as a mud track (manual). */
-export const PATH_MUD = { c1: '#7c6a4c', c2: '#726043' };
+export const PATH_MUD = { c1: '#78654a', c2: '#66553e' };
 
 export const LIE: Record<LieKey, LieInfo> = {
   tee: { max: 12.0, ang: 5, dst: 0.05 },
