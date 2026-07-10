@@ -1,11 +1,11 @@
-import { W, H, TW, TH, EH, MAXE, TINFO, LIE, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H, LAND_COST } from './constants';
+import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, LIE, ROLL, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
-import type { Ball, Building, Golfer, Hole, Vec } from './types';
+import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$ } from './rng';
 import { P, PE, screenToWorld, viewXY } from './camera';
-import { parFor } from './engine';
-import { CATALOG, canPlace, occupiedTiles } from './buildings';
+import { activePlayingPro, parFor, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
+import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite } from './sprites';
 import type { GolferFrame, TreeKind, BSprite } from './sprites';
@@ -39,17 +39,46 @@ const bgctx = bgc.getContext('2d')!;
 
 /** Terrain merge groups: tiles in the same group flow together as one blob. */
 type Grp = number;
-const Grp = { ROUGH: 0, FAIR: 1, GREEN: 2, SAND: 3, WATER: 4, PATH: 5, TEE: 6 } as const;
+const Grp = {
+  ROUGH: 0,
+  FAIR: 1,
+  GREEN: 2,
+  SAND: 3,
+  WATER: 4,
+  PATH: 5,
+  TEE: 6,
+  FIRM_FAIR: 7,
+  DEEP_ROUGH: 8,
+  WASTE: 9,
+  POT: 10,
+  STREAM: 11,
+  BRUSH: 12,
+  ROCK: 13,
+} as const;
 function groupOf(t: number): Grp {
   switch (t) {
     case Tile.FAIR:
       return Grp.FAIR;
+    case Tile.FIRM_FAIR:
+      return Grp.FIRM_FAIR;
     case Tile.TEE:
       return Grp.TEE;
     case Tile.GREEN:
       return Grp.GREEN;
     case Tile.SAND:
       return Grp.SAND;
+    case Tile.DEEP_ROUGH:
+      return Grp.DEEP_ROUGH;
+    case Tile.WASTE_BUNKER:
+      return Grp.WASTE;
+    case Tile.POT_BUNKER:
+      return Grp.POT;
+    case Tile.STREAM:
+      return Grp.STREAM;
+    case Tile.BRUSH:
+      return Grp.BRUSH;
+    case Tile.ROCK:
+      return Grp.ROCK;
     case Tile.WATER:
       return Grp.WATER;
     case Tile.PATH:
@@ -93,7 +122,7 @@ function drawOrtho() {
 
   // 1) Rough under everything. Large translucent patches hide the tile grid;
   // tiny grass marks keep the material readable at close zoom.
-  c.fillStyle = TINFO[Tile.ROUGH].c1;
+  c.fillStyle = themedTile(Tile.ROUGH, S.theme).c1;
   c.fillRect(0, 0, oc.width, oc.height);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
@@ -136,10 +165,12 @@ function drawOrtho() {
     c.strokeStyle = '#dfc789';
     c.lineWidth = 7;
     c.stroke(water.path);
+    const waterInfo = themedTile(Tile.WATER, S.theme);
+    const waterDeep: Record<typeof S.theme, string> = { parklands: '#1f5566', links: '#28495a', desert: '#1f6d6e', tropical: '#155e64' };
     const waterGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
-    waterGrad.addColorStop(0, TINFO[Tile.WATER].c1);
-    waterGrad.addColorStop(0.55, TINFO[Tile.WATER].c2);
-    waterGrad.addColorStop(1, '#1c5f8b');
+    waterGrad.addColorStop(0, waterInfo.c1);
+    waterGrad.addColorStop(0.55, waterInfo.c2);
+    waterGrad.addColorStop(1, waterDeep[S.theme]);
     c.fillStyle = waterGrad;
     c.fill(water.path);
     const deep = new Path2D();
@@ -177,24 +208,27 @@ function drawOrtho() {
   // 3) Sand — a darker cut lip, warm depth and lightly raked arcs.
   const sand = blobPath(Grp.SAND, RES * 0.5);
   if (sand.any) {
-    c.strokeStyle = '#9f854d';
+    // Paled toward the original's cream bunker sand (resources/…/Textures/SandBunker*)
+    // rather than a saturated tan — a real reference comparison, not a copied asset.
+    c.strokeStyle = '#b39f6b';
     c.lineWidth = 7;
     c.stroke(sand.path);
+    const sandInfo = themedTile(Tile.SAND, S.theme);
     const sandGrad = c.createLinearGradient(0, 0, oc.width, oc.height);
-    sandGrad.addColorStop(0, '#ead69a');
-    sandGrad.addColorStop(1, TINFO[Tile.SAND].c2);
+    sandGrad.addColorStop(0, S.theme === 'parklands' ? '#f1e5bf' : sandInfo.c1);
+    sandGrad.addColorStop(1, sandInfo.c2);
     c.fillStyle = sandGrad;
     c.fill(sand.path);
     c.save();
     c.clip(sand.path);
-    c.fillStyle = 'rgba(105,75,27,.22)';
+    c.fillStyle = 'rgba(105,75,27,.16)';
     for (const [x, y] of sand.tiles)
       for (let i = 0; i < 7; i++) {
         const a = hash2(x * 3 + i, y * 5 + i);
         const b = hash2(y * 9 + i, x * 7 + i);
         c.fillRect(x * RES + a * (RES - 2), y * RES + b * (RES - 2), 1.3, 1.3);
       }
-    c.strokeStyle = 'rgba(126,91,35,.23)';
+    c.strokeStyle = 'rgba(126,91,35,.18)';
     c.lineWidth = 1;
     for (const [x, y] of sand.tiles) {
       const rr = RES * (0.19 + hash2(x, y) * 0.08);
@@ -203,10 +237,213 @@ function drawOrtho() {
       c.stroke();
     }
     c.restore();
-    c.strokeStyle = 'rgba(250,233,181,.65)';
+    c.strokeStyle = 'rgba(250,240,201,.7)';
     c.lineWidth = 1.4;
     c.stroke(sand.path);
   }
+
+  // 3b) Manual hazard family. Each material has a distinct silhouette so the
+  // player can read the danger at gameplay zoom without relying on UI labels.
+  const deepRough = blobPath(Grp.DEEP_ROUGH, RES * 0.36);
+  if (deepRough.any) {
+    const info = themedTile(Tile.DEEP_ROUGH, S.theme);
+    c.strokeStyle = S.theme === 'desert' ? '#756d3e' : '#294725';
+    c.lineWidth = 5;
+    c.stroke(deepRough.path);
+    c.fillStyle = info.c2;
+    c.fill(deepRough.path);
+    c.save();
+    c.clip(deepRough.path);
+    for (const [x, y] of deepRough.tiles)
+      for (let i = 0; i < 12; i++) {
+        const a = hash2(x * 23 + i * 7, y * 19 + i * 17);
+        const b = hash2(y * 29 + i * 11, x * 13 + i * 5);
+        const px = x * RES + 3 + a * (RES - 6);
+        const py = y * RES + 5 + b * (RES - 8);
+        const h = 3 + hash2(x + i * 31, y + i * 37) * 5;
+        c.strokeStyle = i & 1 ? info.c1 : S.theme === 'desert' ? '#d0b66a' : '#7fa455';
+        c.globalAlpha = 0.42;
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(px, py + 2);
+        c.quadraticCurveTo(px - 1.4, py - h * 0.4, px - 2.2, py - h);
+        c.moveTo(px + 0.5, py + 2);
+        c.quadraticCurveTo(px + 1.3, py - h * 0.35, px + 2.4, py - h * 0.82);
+        c.stroke();
+      }
+    c.restore();
+    c.globalAlpha = 1;
+    c.strokeStyle = 'rgba(20,45,20,.42)';
+    c.lineWidth = 1.2;
+    c.stroke(deepRough.path);
+  }
+
+  const waste = blobPath(Grp.WASTE, RES * 0.42);
+  if (waste.any) {
+    const info = themedTile(Tile.WASTE_BUNKER, S.theme);
+    c.strokeStyle = S.theme === 'desert' ? '#704a30' : '#5d5b38';
+    c.lineWidth = 8;
+    c.stroke(waste.path);
+    c.strokeStyle = S.theme === 'desert' ? '#d0a563' : '#b6a56d';
+    c.lineWidth = 5;
+    c.stroke(waste.path);
+    c.fillStyle = info.c2;
+    c.fill(waste.path);
+    c.save();
+    c.clip(waste.path);
+    for (const [x, y] of waste.tiles)
+      for (let i = 0; i < 9; i++) {
+        const a = hash2(x * 17 + i * 13, y * 31 + i * 5);
+        const b = hash2(y * 11 + i * 19, x * 7 + i * 23);
+        const px = x * RES + 3 + a * (RES - 6);
+        const py = y * RES + 4 + b * (RES - 7);
+        c.strokeStyle = i % 3 ? 'rgba(72,61,34,.58)' : 'rgba(219,198,122,.52)';
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(px, py + 2);
+        c.lineTo(px + (a - 0.5) * 3, py - 3 - b * 3);
+        c.stroke();
+      }
+    c.restore();
+  }
+
+  // Pot bunkers are deliberately compact, dark and steep instead of merging into
+  // a conventional sand blob. The nested rings create a readable sunken crater.
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (S.tiles[idx(x, y)] !== Tile.POT_BUNKER) continue;
+      const info = themedTile(Tile.POT_BUNKER, S.theme);
+      const cx = x * RES + RES / 2;
+      const cy = y * RES + RES / 2;
+      c.fillStyle = S.theme === 'desert' ? '#c08e55' : '#7f8057';
+      c.beginPath();
+      c.ellipse(cx, cy, RES * 0.43, RES * 0.34, 0, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = info.c1;
+      c.beginPath();
+      c.ellipse(cx + 1, cy + 1, RES * 0.34, RES * 0.25, 0, 0, Math.PI * 2);
+      c.fill();
+      const pit = c.createRadialGradient(cx - 2, cy - 2, 1, cx, cy, RES * 0.3);
+      pit.addColorStop(0, '#171d1a');
+      pit.addColorStop(0.68, info.c2);
+      pit.addColorStop(1, info.c1);
+      c.fillStyle = pit;
+      c.beginPath();
+      c.ellipse(cx, cy + 2, RES * 0.27, RES * 0.19, 0, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = 'rgba(235,217,150,.42)';
+      c.lineWidth = 1;
+      c.beginPath();
+      c.arc(cx - 1, cy, RES * 0.29, Math.PI * 1.05, Math.PI * 1.83);
+      c.stroke();
+    }
+
+  // Streams join edge-to-edge. On Links they read as dark peat Burns; on Desert
+  // the same gameplay tile is a dry Ravine, with no misleading water highlight.
+  c.save();
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (S.tiles[idx(x, y)] !== Tile.STREAM) continue;
+      const cx = x * RES + RES / 2;
+      const cy = y * RES + RES / 2;
+      const joins: [number, number][] = [];
+      if (y > 0 && S.tiles[idx(x, y - 1)] === Tile.STREAM) joins.push([cx, y * RES]);
+      if (y + 1 < H && S.tiles[idx(x, y + 1)] === Tile.STREAM) joins.push([cx, (y + 1) * RES]);
+      if (x > 0 && S.tiles[idx(x - 1, y)] === Tile.STREAM) joins.push([x * RES, cy]);
+      if (x + 1 < W && S.tiles[idx(x + 1, y)] === Tile.STREAM) joins.push([(x + 1) * RES, cy]);
+      const channel = new Path2D();
+      if (!joins.length) {
+        channel.moveTo(cx - RES * 0.12, cy + RES * 0.12);
+        channel.lineTo(cx + RES * 0.12, cy - RES * 0.12);
+      } else {
+        for (const [ex, ey] of joins) {
+          channel.moveTo(cx, cy);
+          channel.lineTo(ex, ey);
+        }
+      }
+      c.strokeStyle = S.theme === 'desert' ? '#3b2b26' : S.theme === 'links' ? '#393b31' : '#8f774b';
+      c.lineWidth = S.theme === 'desert' ? 13 : 12;
+      c.stroke(channel);
+      const info = themedTile(Tile.STREAM, S.theme);
+      c.strokeStyle = info.c2;
+      c.lineWidth = S.theme === 'desert' ? 8 : 7;
+      c.stroke(channel);
+      c.strokeStyle = S.theme === 'desert' ? 'rgba(192,137,75,.42)' : 'rgba(173,235,236,.42)';
+      c.lineWidth = 1.4;
+      c.stroke(channel);
+      if (!joins.length) {
+        c.fillStyle = info.c1;
+        c.beginPath();
+        c.ellipse(cx, cy, RES * 0.22, RES * 0.16, -0.35, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  c.restore();
+
+  // Brush/Gorse is dense, irregular plant life rather than another flat green.
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (S.tiles[idx(x, y)] !== Tile.BRUSH) continue;
+      const info = themedTile(Tile.BRUSH, S.theme);
+      c.fillStyle = info.c2;
+      c.beginPath();
+      c.roundRect(x * RES + 2, y * RES + 2, RES - 4, RES - 4, RES * 0.34);
+      c.fill();
+      for (let i = 0; i < 10; i++) {
+        const a = hash2(x * 19 + i * 7, y * 23 + i * 13);
+        const b = hash2(y * 17 + i * 11, x * 29 + i * 5);
+        const px = x * RES + 4 + a * (RES - 8);
+        const py = y * RES + 4 + b * (RES - 8);
+        c.fillStyle = i & 1 ? info.c1 : '#263f27';
+        c.beginPath();
+        c.arc(px, py, 2.5 + a * 2.2, 0, Math.PI * 2);
+        c.fill();
+        if (S.theme === 'links' && i % 3 === 0) {
+          c.fillStyle = '#e0bd43';
+          c.fillRect(px - 0.8, py - 1.2, 1.6, 1.6);
+        }
+      }
+    }
+
+  // Rock tiles use a few large faceted boulders; their hard angular edges preview
+  // the random ricochet mechanic before the player ever lands on one.
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (S.tiles[idx(x, y)] !== Tile.ROCK) continue;
+      const info = themedTile(Tile.ROCK, S.theme);
+      for (let i = 0; i < 4; i++) {
+        const a = hash2(x * 31 + i * 17, y * 11 + i * 7);
+        const b = hash2(y * 37 + i * 5, x * 13 + i * 19);
+        const px = x * RES + 5 + a * (RES - 10);
+        const py = y * RES + 7 + b * (RES - 12);
+        const rr = 3.5 + a * 3;
+        c.fillStyle = '#303a37';
+        c.beginPath();
+        c.moveTo(px - rr - 1, py + rr * 0.7 + 1);
+        c.lineTo(px - rr * 0.65, py - rr * 0.45);
+        c.lineTo(px + rr * 0.15, py - rr - 1);
+        c.lineTo(px + rr + 1, py + rr * 0.55 + 1);
+        c.closePath();
+        c.fill();
+        c.fillStyle = i & 1 ? info.c1 : info.c2;
+        c.beginPath();
+        c.moveTo(px - rr, py + rr * 0.5);
+        c.lineTo(px - rr * 0.55, py - rr * 0.4);
+        c.lineTo(px + rr * 0.12, py - rr);
+        c.lineTo(px + rr, py + rr * 0.45);
+        c.closePath();
+        c.fill();
+        c.fillStyle = 'rgba(238,229,198,.34)';
+        c.beginPath();
+        c.moveTo(px - rr * 0.55, py - rr * 0.4);
+        c.lineTo(px + rr * 0.12, py - rr);
+        c.lineTo(px + rr * 0.2, py - rr * 0.1);
+        c.closePath();
+        c.fill();
+      }
+    }
 
   // 4) Fairway with broad mower lanes.
   const fair = blobPath(Grp.FAIR, RES * 0.5);
@@ -214,11 +451,12 @@ function drawOrtho() {
     c.strokeStyle = '#426e32';
     c.lineWidth = 5;
     c.stroke(fair.path);
-    c.fillStyle = TINFO[Tile.FAIR].c1;
+    const fairInfo = themedTile(Tile.FAIR, S.theme);
+    c.fillStyle = fairInfo.c1;
     c.fill(fair.path);
     c.save();
     c.clip(fair.path);
-    c.fillStyle = TINFO[Tile.FAIR].c2;
+    c.fillStyle = fairInfo.c2;
     const band = RES * 2; // one full tile-diagonal per mow lane
     for (let k = -1; k <= W + H; k += 2) {
       c.beginPath();
@@ -241,6 +479,32 @@ function drawOrtho() {
     c.strokeStyle = 'rgba(30,65,24,.35)';
     c.lineWidth = 1.4;
     c.stroke(fair.path);
+  }
+
+  // 4b) Firm fairway — baked, hard-packed turf: flat fill + fine speckle instead of
+  // the lush mower-lane stripes, so it visually reads as drier ground (manual: "bounces
+  // higher and rolls farther").
+  const firm = blobPath(Grp.FIRM_FAIR, RES * 0.5);
+  if (firm.any) {
+    c.strokeStyle = '#7a8a4a';
+    c.lineWidth = 5;
+    c.stroke(firm.path);
+    const firmInfo = themedTile(Tile.FIRM_FAIR, S.theme);
+    c.fillStyle = firmInfo.c1;
+    c.fill(firm.path);
+    c.save();
+    c.clip(firm.path);
+    for (const [x, y] of firm.tiles)
+      for (let i = 0; i < 5; i++) {
+        const a = hash2(x * 11 + i, y * 13 + i * 3);
+        const b = hash2(y * 7 + i * 5, x * 17 + i);
+        c.fillStyle = a > 0.5 ? 'rgba(80,70,30,.1)' : 'rgba(240,235,190,.12)';
+        c.fillRect(x * RES + a * (RES - 3), y * RES + b * (RES - 3), 1.6, 1.6);
+      }
+    c.restore();
+    c.strokeStyle = 'rgba(70,80,40,.35)';
+    c.lineWidth = 1.4;
+    c.stroke(firm.path);
   }
 
   // 5) Tee boxes — a compact circular cut with a darker collar and subtle
@@ -293,7 +557,7 @@ function drawOrtho() {
     c.strokeStyle = '#76ae4c';
     c.lineWidth = 6;
     c.stroke(green.path);
-    c.fillStyle = TINFO[Tile.GREEN].c1;
+    c.fillStyle = themedTile(Tile.GREEN, S.theme).c1;
     c.fill(green.path);
     c.save();
     c.clip(green.path);
@@ -581,7 +845,13 @@ function buildGround() {
   gctx.clearRect(0, 0, gc.width, gc.height);
   drawGroundBase();
 
-  drawOrtho();
+  // Elevation-only edits (raise/lower) don't change any tile type or ownership, so the
+  // expensive whole-map blob-shape ortho repaint can be skipped — just re-composite the
+  // (unchanged) ortho pixels onto the new sloped iso quads below.
+  if (caches.orthoDirty) {
+    drawOrtho();
+    caches.orthoDirty = false;
+  }
   const [lx, ly] = worldLight();
   gctx.imageSmoothingEnabled = true;
   gctx.imageSmoothingQuality = 'high';
@@ -628,6 +898,8 @@ function buildGround() {
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
   const u = z;
+  ctx.save();
+  if (S.camShake > 0.05) ctx.translate((Math.random() * 2 - 1) * S.camShake, (Math.random() * 2 - 1) * S.camShake);
   if (bgc.width !== Math.ceil(cssW) || bgc.height !== Math.ceil(cssH)) buildBackdrop(cssW, cssH);
   ctx.drawImage(bgc, 0, 0, cssW, cssH);
   if (caches.groundDirty) buildGround();
@@ -660,7 +932,7 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   const D: { z: number; f: () => void }[] = [];
   for (let py = 0; py < PH; py++)
     for (let px = 0; px < PW; px++)
-      if (!S.owned[py * PW + px]) {
+      if (!S.owned[py * PW + px] && S.specialVisitors.landOffer?.parcelIndices.includes(py * PW + px)) {
         const sx = px * PARCEL_W + PARCEL_W / 2;
         const sy = py * PARCEL_H + PARCEL_H / 2;
         D.push({ z: dep(sx, sy), f: () => drawForSale(ctx, sx, sy, u) });
@@ -727,6 +999,32 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   vignette.addColorStop(1, 'rgba(4,12,15,.16)');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, cssW, cssH);
+
+  const tint = dayNightTint(S.time);
+  if (tint) {
+    ctx.fillStyle = tint;
+    ctx.fillRect(0, 0, cssW, cssH);
+  }
+  ctx.restore();
+}
+
+/**
+ * A full day is DAY_CYCLE seconds of play. `darkness` is a smooth cosine curve:
+ * 0 at noon (t=.25), 1 at midnight (t=.75), .5 at dawn/dusk (t=0/.5) — no branch
+ * seams. Returns a translucent wash color, or null in broad daylight (cheap: skips
+ * the fillRect entirely near noon).
+ */
+const DAY_CYCLE = 480;
+function dayNightTint(time: number): string | null {
+  const t = (time % DAY_CYCLE) / DAY_CYCLE;
+  const darkness = (1 - Math.cos(2 * Math.PI * (t - 0.25))) / 2;
+  if (darkness < 0.12) return null;
+  if (darkness < 0.55) {
+    const a = ((darkness - 0.12) / 0.43) * 0.16;
+    return `rgba(255,150,95,${a.toFixed(3)})`; // dawn/dusk warm wash
+  }
+  const a = 0.1 + ((darkness - 0.55) / 0.45) * 0.24;
+  return `rgba(14,20,58,${a.toFixed(3)})`; // night blue wash
 }
 
 function poseScreenAngle(pose: FacilityActivityPose): number {
@@ -791,14 +1089,14 @@ function wildlifePose(animal: WildlifeCache, managed: boolean): NaturePose {
     const x = ((rawX % W) + W) % W;
     return { x, y: clamp(animal.y + Math.sin(S.time * 0.27 + animal.s * 20) * 2.4, 1, H - 1), altitude: 24 + animal.s * 15, bob: 0, face: dir };
   }
-  const radius = animal.kind === 'duck' ? 0.16 : managed ? 0.28 : animal.kind === 'deer' ? 0.68 : 0.52;
-  const speed = animal.kind === 'deer' ? 0.22 : animal.kind === 'rabbit' ? 0.48 : 0.3;
+  const radius = animal.kind === 'duck' ? 0.16 : animal.kind === 'squirrel' ? 0.22 : managed ? 0.28 : animal.kind === 'deer' ? 0.68 : 0.52;
+  const speed = animal.kind === 'deer' ? 0.22 : animal.kind === 'rabbit' ? 0.48 : animal.kind === 'squirrel' ? 0.65 : 0.3;
   const phase = S.time * speed + animal.s * 31;
   return {
     x: animal.x + Math.cos(phase) * radius,
     y: animal.y + Math.sin(phase * 0.83) * radius * 0.65,
     altitude: 0,
-    bob: animal.kind === 'rabbit' ? Math.max(0, Math.sin(phase * 4.5)) * 2.5 : 0,
+    bob: animal.kind === 'rabbit' ? Math.max(0, Math.sin(phase * 4.5)) * 2.5 : animal.kind === 'squirrel' ? Math.max(0, Math.sin(phase * 6)) * 1.8 : 0,
     face: Math.sin(phase) >= 0 ? 1 : -1,
   };
 }
@@ -851,7 +1149,7 @@ function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind']
   const y = p.y - pose.bob * k;
   ctx.fillStyle = 'rgba(17,39,26,.2)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 1.5 * k, p.y + 1.2 * k, (kind === 'deer' ? 7 : 4.5) * k, 2 * k, 0, 0, Math.PI * 2);
+  ctx.ellipse(p.x + 1.5 * k, p.y + 1.2 * k, (kind === 'deer' ? 7 : kind === 'squirrel' ? 3 : 4.5) * k, 2 * k, 0, 0, Math.PI * 2);
   ctx.fill();
   if (kind === 'duck') {
     ctx.strokeStyle = 'rgba(207,241,239,.36)';
@@ -860,7 +1158,7 @@ function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind']
     ctx.lineTo(p.x - pose.face * 5 * k, y);
     ctx.stroke();
   }
-  const sk = k * (kind === 'deer' ? 0.88 : kind === 'rabbit' ? 0.6 : 0.55);
+  const sk = k * (kind === 'deer' ? 0.88 : kind === 'rabbit' ? 0.6 : kind === 'squirrel' ? 0.42 : 0.55);
   ctx.save();
   ctx.translate(p.x, y + 2 * sk);
   ctx.scale(pose.face, 1);
@@ -924,7 +1222,9 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
     // outline the hovered parcel
     const px = Math.floor(S.hover.x / PARCEL_W);
     const py = Math.floor(S.hover.y / PARCEL_H);
-    const owned = S.owned[py * PW + px] === 1;
+    const parcel = py * PW + px;
+    const owned = S.owned[parcel] === 1;
+    const offered = !!S.specialVisitors.landOffer?.parcelIndices.includes(parcel);
     const cp = (cx: number, cy: number) => {
       const p = P(cx, cy);
       return { x: p.x, y: p.y - cornerH(cx, cy) * EH * u };
@@ -936,10 +1236,10 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
     ctx.closePath();
-    ctx.fillStyle = owned ? 'rgba(124,194,66,.12)' : 'rgba(233,181,60,.18)';
+    ctx.fillStyle = owned ? 'rgba(124,194,66,.12)' : offered ? 'rgba(233,181,60,.18)' : 'rgba(75,80,92,.2)';
     ctx.fill();
     ctx.setLineDash([8 * u, 6 * u]);
-    ctx.strokeStyle = owned ? 'rgba(180,220,150,.8)' : '#ffd856';
+    ctx.strokeStyle = owned ? 'rgba(180,220,150,.8)' : offered ? '#ffd856' : 'rgba(190,194,204,.7)';
     ctx.lineWidth = 2.5 * u;
     ctx.stroke();
     ctx.setLineDash([]);
@@ -949,9 +1249,11 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
     ctx.lineWidth = 3;
     ctx.font = '800 ' + clamp(12 * u, 12, 22) + 'px sans-serif';
     ctx.textAlign = 'center';
-    const label = owned ? 'Your land' : 'Buy for ' + fmt$(LAND_COST);
-    ctx.strokeText(label, c.x, c.y - 20 * u);
-    ctx.fillText(label, c.x, c.y - 20 * u);
+    // clear the FOR SALE sign (spans roughly y-25u..y-13u) so the hover label never overlaps it
+    const labelY = c.y - 31 * u;
+    const label = owned ? 'Your land' : offered ? 'County offer · ' + fmt$(S.specialVisitors.landOffer!.price) : 'Await I.M. Picky';
+    ctx.strokeText(label, c.x, labelY);
+    ctx.fillText(label, c.x, labelY);
   }
   if (S.mode === 'build' && S.hover && ['fair', 'green', 'sand', 'water', 'tree', 'flower', 'dozer', 'hole', 'path', 'raise', 'lower'].includes(S.tool)) {
     const { x, y } = S.hover;
@@ -1024,6 +1326,13 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 }
 
 /* ================= scenery ================= */
+/** Species mix shifts with theme: tropical skews lush/blossom, links skews hardy pine, desert is mostly scrub-round. */
+function treeKindFor(theme: CourseTheme, s: number): TreeKind {
+  if (theme === 'tropical') return s > 0.5 ? 'blossom' : 'round';
+  if (theme === 'links') return s > 0.75 ? 'blossom' : s > 0.35 ? 'pine' : 'round';
+  if (theme === 'desert') return s > 0.8 ? 'blossom' : 'round';
+  return s > 0.85 ? 'blossom' : s > 0.62 ? 'pine' : 'round';
+}
 function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
   const p = PE(tr.x, tr.y);
   const sc = (0.78 + tr.s * 0.38) * u;
@@ -1031,7 +1340,7 @@ function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: 
   ctx.beginPath();
   ctx.ellipse(p.x + 7 * sc, p.y + 3 * u, 14 * sc, 4.8 * sc, 0.16, 0, Math.PI * 2);
   ctx.fill();
-  const kind: TreeKind = tr.s > 0.85 ? 'blossom' : tr.s > 0.62 ? 'pine' : 'round';
+  const kind: TreeKind = treeKindFor(S.theme, tr.s);
   const spr = treeSprite(kind, ((tr.s * 97) | 0) % 3);
   const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.013;
   const k = sc * 0.92;
@@ -1179,11 +1488,113 @@ function spriteKeyFor(b: Building): string {
   return 'house' + stage + '_' + vi;
 }
 
+/** Pixel-scale additions make upgrade state legible on the course without replacing
+ * each facility's identity art. Construction gets real scaffolding; Service gets cool
+ * operational signage, while Prestige gets gold entrance architecture and pennants. */
+function drawFacilityUpgradeArt(ctx: CanvasRenderingContext2D, b: Building, c: Pt, topY: number, u: number) {
+  if (b.kind === 'buildinglot') return;
+  if (b.upgrade) {
+    const span = clamp((b.w + b.h) * 8 * u, 26 * u, 86 * u);
+    const left = c.x - span / 2;
+    const right = c.x + span / 2;
+    const top = topY + 9 * u;
+    const bottom = c.y + 5 * u;
+    ctx.save();
+    ctx.lineCap = 'square';
+    ctx.strokeStyle = '#4e4538';
+    ctx.lineWidth = Math.max(1, 1.8 * u);
+    for (const x of [left, c.x, right]) {
+      ctx.beginPath();
+      ctx.moveTo(x, bottom);
+      ctx.lineTo(x, top);
+      ctx.stroke();
+    }
+    for (let t = 0.2; t < 1; t += 0.22) {
+      const y = bottom + (top - bottom) * t;
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#d78a2d';
+    ctx.lineWidth = Math.max(2, 3 * u);
+    ctx.beginPath();
+    ctx.moveTo(left, top + 7 * u);
+    ctx.lineTo(right, top + 7 * u);
+    ctx.stroke();
+    ctx.fillStyle = '#f1b547';
+    const stripeW = Math.max(3, 5 * u);
+    for (let x = left; x < right; x += stripeW * 2) ctx.fillRect(x, top + 4 * u, stripeW, 5 * u);
+    ctx.restore();
+    return;
+  }
+
+  const level = facilityLevel(b);
+  if (level <= 1 || !b.branch) return;
+  const prestige = b.branch === 'prestige';
+  const main = prestige ? '#d7a82f' : '#3b8494';
+  const dark = prestige ? '#765616' : '#245260';
+  const light = prestige ? '#ffe59a' : '#bce8e8';
+  const baseY = c.y + 2 * u;
+  const archW = (level === 3 ? 28 : 22) * u;
+  const archH = (level === 3 ? 17 : 12) * u;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = dark;
+  ctx.fillRect(c.x - archW / 2 - u, baseY - archH - u, 4 * u, archH + 2 * u);
+  ctx.fillRect(c.x + archW / 2 - 3 * u, baseY - archH - u, 4 * u, archH + 2 * u);
+  ctx.fillStyle = main;
+  ctx.fillRect(c.x - archW / 2, baseY - archH, 3 * u, archH);
+  ctx.fillRect(c.x + archW / 2 - 3 * u, baseY - archH, 3 * u, archH);
+  ctx.fillStyle = dark;
+  ctx.fillRect(c.x - archW / 2 - u, baseY - archH - 5 * u, archW + 2 * u, 7 * u);
+  ctx.fillStyle = main;
+  ctx.fillRect(c.x - archW / 2, baseY - archH - 4 * u, archW, 5 * u);
+  ctx.fillStyle = light;
+  const marks = level === 3 ? 3 : 2;
+  for (let i = 0; i < marks; i++) ctx.fillRect(c.x - (marks * 2.5 * u) / 2 + i * 3 * u, baseY - archH - 2.8 * u, 1.7 * u, 1.7 * u);
+
+  // Paired rooftop pennants are part of the silhouette, not a floating UI badge.
+  for (const dx of [-11, 11]) {
+    const px = c.x + dx * u;
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(1, 1.2 * u);
+    ctx.beginPath();
+    ctx.moveTo(px, topY + 14 * u);
+    ctx.lineTo(px, topY - (level === 3 ? 9 : 4) * u);
+    ctx.stroke();
+    ctx.fillStyle = main;
+    ctx.beginPath();
+    ctx.moveTo(px, topY - (level === 3 ? 9 : 4) * u);
+    ctx.lineTo(px + (prestige ? 9 : 7) * u, topY - (level === 3 ? 6 : 1) * u);
+    ctx.lineTo(px, topY - (level === 3 ? 3 : -2) * u);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (level === 3) {
+    ctx.fillStyle = light;
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(1, u);
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 4;
+      const r = (i & 1 ? 3.5 : 7) * u;
+      const x = c.x + Math.cos(a) * r;
+      const y = topY - 11 * u + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
-  const def = CATALOG[b.kind];
   const e = elevAt(b.x + 0.01, b.y + 0.01);
   const c = cornerAt(b.x + b.w / 2, b.y + b.h / 2, e, u);
-  if (b.kind === 'bench' || b.kind === 'flowerbed') {
+  if (b.kind === 'bench' || b.kind === 'flowerbed' || b.kind === 'landmark' || b.kind === 'ballwasher' || b.kind === 'scenicbridge') {
     ctx.fillStyle = 'rgba(5,22,17,.2)';
     ctx.beginPath();
     ctx.ellipse(c.x + 3 * u, c.y + 1.5 * u, 10 * u, 3.5 * u, 0.12, 0, Math.PI * 2);
@@ -1198,11 +1609,15 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
     ctx.ellipse(c.x + 7 * u, c.y + 4 * u, ((b.w + b.h) / 2) * 20 * u, ((b.w + b.h) / 2) * 7.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
   }
-  drawAnchored(ctx, buildingSprite(key, b.w, b.h, S.rot), c.x, c.y, u);
+  const spr = buildingSprite(key, b.w, b.h, S.rot);
+  drawAnchored(ctx, spr, c.x, c.y, u);
+  const topY = c.y - spr.ay * u;
+  drawFacilityUpgradeArt(ctx, b, c, topY, u);
   if (S.cam.z > 0.68) {
-    const spr = buildingSprite(key, b.w, b.h, S.rot);
-    const topY = c.y - spr.ay * u;
-    drawWorldLabel(ctx, b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : def.name.toUpperCase(), c.x, topY - 6 * u, u);
+    const level = facilityLevel(b);
+    const facilityLabel = level > 1 ? `${themedDef(b.kind, S.theme).name.toUpperCase()} · L${['I', 'II', 'III'][level - 1]}` : facilityDisplayName(b, S.theme).toUpperCase();
+    const label = b.kind === 'buildinglot' ? ['BUILDING…', 'COTTAGE', 'ESTATE'][clamp(b.stage ?? 0, 0, 2)] : b.upgrade ? `UPGRADING · ${Math.ceil(b.upgrade.remaining)}s` : facilityLabel;
+    drawWorldLabel(ctx, label, c.x, topY - 6 * u, u, level > 1 || b.upgrade ? 'gold' : 'dark');
   }
   if (!b.open) {
     drawWorldLabel(ctx, 'NO PATH', c.x, c.y + Math.max(15, (b.w + b.h) * 2.6) * u, u, 'danger');
@@ -1220,13 +1635,14 @@ function drawGolferSprite(
   cap: string,
   frame: GolferFrame,
   face: number,
-  bob: number
+  bob: number,
+  view: 'front' | 'rear' = 'front'
 ) {
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
   ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
-  const spr = golferSprite(shirt, skin, cap, frame);
+  const spr = golferSprite(shirt, skin, cap, frame, view);
   const k = u * 0.8;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -1290,7 +1706,9 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const p = PE(g.x, g.y);
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
-  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob);
+  const view = walking && g.facingAway ? 'rear' : 'front';
+  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view);
+  if (g.specialGuest && S.cam.z > 0.58) drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * u - bob, u * 0.88, 'gold');
 }
 
 function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
@@ -1300,8 +1718,9 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const px = bp.x - 7 * u;
   const py = bp.y - 1 * u;
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
-  drawGolferSprite(ctx, px, py, u, '#e9b53c', '#f1c6a0', '#fffdf2', frame, 1, 0);
-  drawWorldLabel(ctx, 'YOU', px, py - 31 * u, u, 'gold');
+  const pro = activePlayingPro();
+  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0);
+  drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - 31 * u, u, 'gold');
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {
@@ -1350,7 +1769,12 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   dy /= pl;
   const L = LIE[p.lie] || LIE.rough;
   const power = clamp(pl / 9, 0.08, 1);
-  const intend = power * L.max;
+  const intend = playerIntendedDistance(p.lie, p.club, power);
+  // mirrors playerFire()'s wind push + shape curve/height exactly, so the preview matches the real shot
+  const windPush = p.lie === 'green' ? 0 : S.wind.speed * intend * 0.35;
+  const perpX = -dy;
+  const perpY = dx;
+  const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul;
   const bp = PE(p.ball!.x, p.ball!.y);
   ctx.setLineDash([5 * u, 5 * u]);
   ctx.strokeStyle = 'rgba(255,255,255,.95)';
@@ -1358,18 +1782,39 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   ctx.beginPath();
   ctx.moveTo(bp.x, bp.y - 1 * u);
   for (let t = 0.1; t <= 1.001; t += 0.1) {
-    const q = PE(p.ball!.x + dx * intend * t, p.ball!.y + dy * intend * t);
-    ctx.lineTo(q.x, q.y - (p.lie === 'green' ? 0 : Math.sin(Math.PI * t) * intend * 3.4 * u));
+    const curve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, t);
+    const wx = p.ball!.x + dx * intend * t + S.wind.dx * windPush * t + perpX * curve;
+    const wy = p.ball!.y + dy * intend * t + S.wind.dy * windPush * t + perpY * curve;
+    const q = PE(wx, wy);
+    ctx.lineTo(q.x, q.y - (p.lie === 'green' ? 0 : Math.sin(Math.PI * t) * intend * 3.4 * u * heightMul));
   }
   ctx.stroke();
   ctx.setLineDash([]);
-  const land = PE(p.ball!.x + dx * intend, p.ball!.y + dy * intend);
-  const spread = intend * (L.dst + 0.04) + intend * Math.sin((L.ang * Math.PI) / 180) * 0.6 + 0.3;
+  const landCurve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, 1);
+  const landX = p.ball!.x + dx * intend + S.wind.dx * windPush + perpX * landCurve;
+  const landY = p.ball!.y + dy * intend + S.wind.dy * windPush + perpY * landCurve;
+  const land = PE(landX, landY);
+  const skill = playerShotSkill(p.lie, p.club, p.shape);
+  const spread = intend * (L.dst * (1 - skill * 0.55) + 0.025) + intend * Math.sin((L.ang * (1 - skill * 0.65) * Math.PI) / 180) * 0.6 + 0.22;
   ctx.strokeStyle = 'rgba(255,255,255,.85)';
   ctx.lineWidth = 1.6 * u;
   ctx.beginPath();
   ctx.ellipse(land.x, land.y, spread * 22 * u, spread * 11 * u, 0, 0, 7);
   ctx.stroke();
+  // roll-out preview: a dimmer dashed line continuing the shot direction along the ground
+  // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
+  const rollLen = p.lie !== 'green' && p.shape === 'backspin' ? 0 : intend * 0.5 * (ROLL[p.lie] ?? 0.3);
+  if (rollLen > 0.15) {
+    const rollEnd = PE(landX + dx * rollLen, landY + dy * rollLen);
+    ctx.setLineDash([3 * u, 4 * u]);
+    ctx.strokeStyle = 'rgba(255,255,255,.4)';
+    ctx.lineWidth = 1.3 * u;
+    ctx.beginPath();
+    ctx.moveTo(land.x, land.y);
+    ctx.lineTo(rollEnd.x, rollEnd.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
   ctx.fillStyle = 'rgba(20,40,28,.75)';
   ctx.fillRect(bp.x - 18 * u, bp.y + 8 * u, 36 * u, 6 * u);
   ctx.fillStyle = power > 0.85 ? '#e9b53c' : '#7cc242';

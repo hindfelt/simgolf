@@ -40,7 +40,7 @@ export default function GameCanvas() {
       updateTopbar();
       setTool('hole');
       fitCamera(cssW, cssH);
-      if (!resumed) setUI({ modal: { kind: 'help' } });
+      if (!resumed) setUI({ modal: { kind: 'newCourse', initial: true } });
       pushTicker('Pro shop', resumed ? 'Welcome back, boss. The course missed you.' : 'Hole 1 is open. Golfers are on their way!', 'money');
     }
 

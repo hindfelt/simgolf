@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "fairway-mogul-api",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-07-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "routes": [{ "pattern": "simgolf.0x4d.in", "custom_domain": true }],
+  "vars": {
+    "APP_ORIGIN": "https://simgolf.0x4d.in",
+    "APP_RETURN_URL": "https://simgolf.0x4d.in/",
+    "ENVIRONMENT": "production"
+  },
+  "secrets": {
+    "required": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "SESSION_SECRET"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fairway-mogul-db",
+      "database_id": "b568f28c-b2a9-4af3-bfa0-2e5d29f756cb",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+  "triggers": {
+    "crons": ["5 0 * * *", "10 0 * * 1", "15 3 * * *"]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  }
+}

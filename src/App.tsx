@@ -7,6 +7,11 @@ import Ticker from './ui/Ticker';
 import BuildPanel from './ui/BuildPanel';
 import StaffPanel from './ui/StaffPanel';
 import ReportsPanel from './ui/ReportsPanel';
+import RegularsPanel from './ui/RegularsPanel';
+import MiniMap from './ui/MiniMap';
+import ScorecardsPanel from './ui/ScorecardsPanel';
+import AccountPanel from './ui/AccountPanel';
+import ProCircuitPanel from './ui/ProCircuitPanel';
 import Modals from './ui/Modals';
 import { useUI } from './ui/store';
 
@@ -42,6 +47,11 @@ export default function App() {
       <BuildPanel />
       <StaffPanel />
       <ReportsPanel />
+      <RegularsPanel />
+      <ScorecardsPanel />
+      <AccountPanel />
+      <ProCircuitPanel />
+      <MiniMap />
       <Toolbar />
       <Modals />
     </>

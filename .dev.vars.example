@@ -1,0 +1,5 @@
+# Copy to .dev.vars. Never commit the real values.
+GOOGLE_CLIENT_ID=replace-me.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=replace-me
+# Generate at least 32 random bytes, encoded as base64url or hex.
+SESSION_SECRET=replace-with-a-long-random-secret

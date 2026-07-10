@@ -56,9 +56,12 @@ function hashStr(s: string): number {
   return h;
 }
 
-/** 24x32 golfer, drawn facing right. */
-export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame): HTMLCanvasElement {
-  const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame;
+/**
+ * 24x32 golfer, drawn facing right. `view: 'rear'` is used while walking away from the
+ * camera (up-screen) — no face or cap brim visible, so it doesn't read as still facing us.
+ */
+export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front'): HTMLCanvasElement {
+  const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -72,6 +75,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const follow = frame === 'follow';
   const putt = frame === 'putt';
   const address = frame === 'address' || putt;
+  const rear = view === 'rear' && !address && !swingBack && !follow; // swing poses always show the front
 
   // golf bag on the back while walking
   if (walking) {
@@ -87,22 +91,30 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(8, 11, 1, 1, '#6e4523');
   }
 
-  // legs + shoes
+  // legs + shoes — a contrast sock band sits between pants and shoe (matches the
+  // knee-sock convention visible in the original's Bodies/*.pcx reference art)
   const shoe = '#2e2a26';
+  const sock = '#e8e4d8';
   if (frame === 'walkA') {
-    p(9, 24, 2, 5, pants); // back leg
+    p(9, 24, 2, 4, pants); // back leg
+    p(9, 28, 2, 1, sock);
     p(8, 29, 3, 2, shoe);
-    p(13, 24, 2, 4, pants); // front leg forward
+    p(13, 24, 2, 3, pants); // front leg forward
+    p(13, 27, 2, 1, sock);
     p(14, 28, 3, 2, shoe);
   } else if (frame === 'walkB') {
-    p(9, 24, 2, 4, pants);
+    p(9, 24, 2, 3, pants);
+    p(9, 27, 2, 1, sock);
     p(9, 28, 3, 2, shoe);
-    p(13, 24, 2, 5, pants);
+    p(13, 24, 2, 4, pants);
+    p(13, 28, 2, 1, sock);
     p(12, 29, 3, 2, shoe);
   } else {
-    p(9, 24, 2, 5, pants);
+    p(9, 24, 2, 4, pants);
+    p(9, 28, 2, 1, sock);
     p(8, 29, 3, 2, shoe);
-    p(13, 24, 2, 5, pants);
+    p(13, 24, 2, 4, pants);
+    p(13, 28, 2, 1, sock);
     p(13, 29, 3, 2, shoe);
   }
   // hips / shorts
@@ -115,17 +127,24 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   p(8, ty, 8, 8, shirt);
   p(8, ty, 1, 8, shirtDk); // back shading
   p(8, ty + 7, 8, 1, shirtDk);
-  // collar
-  p(11, ty - 1, 3, 1, '#f2f0e8');
+  // collar (not visible from behind)
+  if (!rear) p(11, ty - 1, 3, 1, '#f2f0e8');
 
   // head + cap
   const hy = address ? 4 : 3;
   p(9, hy + 2, 6, 5, skin);
-  p(9, hy + 2, 1, 5, skinDk);
-  p(13, hy + 4, 1, 1, '#26221e'); // eye
-  p(9, hy, 6, 2, cap);
-  p(9, hy, 1, 2, capDk);
-  p(14, hy + 1, 4, 1, capDk); // brim
+  if (rear) {
+    // back of the head: no face, cap sits as a full dome with no separate brim
+    p(9, hy + 2, 6, 5, skinDk);
+    p(9, hy, 6, 3, cap);
+    p(9, hy, 1, 3, capDk);
+  } else {
+    p(9, hy + 2, 1, 5, skinDk);
+    p(13, hy + 4, 1, 1, '#26221e'); // eye
+    p(9, hy, 6, 2, cap);
+    p(9, hy, 1, 2, capDk);
+    p(14, hy + 1, 4, 1, capDk); // brim
+  }
 
   // arms + club
   const grey = '#8f959c';
@@ -251,7 +270,7 @@ export function facilityBoatSprite(withOutline = true): HTMLCanvasElement {
   return done;
 }
 
-export function wildlifeSprite(kind: 'duck' | 'rabbit' | 'deer'): HTMLCanvasElement {
+export function wildlifeSprite(kind: 'duck' | 'rabbit' | 'deer' | 'squirrel'): HTMLCanvasElement {
   const key = 'wildlife-v1-' + kind;
   const hit = cache.get(key);
   if (hit) return hit;
@@ -294,6 +313,43 @@ export function wildlifeSprite(kind: 'duck' | 'rabbit' | 'deer'): HTMLCanvasElem
     ctx.fill();
     ctx.fillStyle = '#24231f';
     ctx.fillRect(25, 16, 1.5, 1.5);
+  } else if (kind === 'squirrel') {
+    // small hunched body, big bushy tail curled up over the back — the silhouette that reads instantly
+    ctx.fillStyle = '#a15b30';
+    ctx.beginPath();
+    ctx.ellipse(13, 21, 6, 4.5, -0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(19, 17, 3.6, 0, Math.PI * 2); // head
+    ctx.fill();
+    ctx.fillStyle = '#c98a52';
+    ctx.beginPath();
+    ctx.ellipse(12, 22, 4, 2.6, -0.1, 0, Math.PI * 2); // belly
+    ctx.fill();
+    // bushy curled tail, thick strokes fanning up and over
+    ctx.strokeStyle = '#a15b30';
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 4; i++) {
+      ctx.lineWidth = 3.4 - i * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(7 + i * 0.6, 22 - i * 0.5);
+      ctx.quadraticCurveTo(1 - i, 12 - i * 1.5, 8 + i, 5 + i * 0.5);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#5c3418';
+    ctx.beginPath();
+    ctx.moveTo(17, 14);
+    ctx.lineTo(16, 10);
+    ctx.lineTo(19, 13);
+    ctx.fill(); // ear
+    ctx.fillStyle = '#1e1712';
+    ctx.fillRect(21, 16, 1.4, 1.4); // eye
+    ctx.fillStyle = '#7a4a26';
+    ctx.fillRect(20, 19, 3, 1.6); // paws holding an acorn
+    ctx.fillStyle = '#8b5b35';
+    ctx.beginPath();
+    ctx.arc(22, 19, 1.4, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     ctx.fillStyle = '#573d28';
     ctx.fillRect(8, 21, 3, 8);
@@ -809,25 +865,32 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
           ctx.ellipse(t[0], t[1], r * 0.48, r * 0.2, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
-        // Six covered hitting bays establish the building-scale rhythm.
-        const s0 = c(0.14, 0.12);
-        const s1 = c(0.14, h - 0.12);
-        poly(ctx, [up(s0, 18), up(s1, 18), up(c(1.12, h - 0.12), 24), up(c(1.12, 0.12), 24)], '#537a3d', '#314d30');
+        // Six covered hitting bays establish the building-scale rhythm. This is the one
+        // asymmetric, identity-defining feature of the building, so at 180° it mirrors to
+        // the opposite long edge instead of rotating to the (now far, occluded) far side.
+        const mx = (v: number) => (rotation === 2 ? w - v : v);
+        const bayX = mx(0.14);
+        const bayDepthX = mx(1.12);
+        const markerX = mx(0.72);
+        const s0 = c(bayX, 0.12);
+        const s1 = c(bayX, h - 0.12);
+        poly(ctx, [up(s0, 18), up(s1, 18), up(c(bayDepthX, h - 0.12), 24), up(c(bayDepthX, 0.12), 24)], '#537a3d', '#314d30');
         ctx.strokeStyle = '#5a5f66';
         ctx.lineWidth = 1.4;
         for (let i = 0; i <= 6; i++) {
-          const p = c(0.14, 0.12 + (i / 6) * (h - 0.24));
+          const p = c(bayX, 0.12 + (i / 6) * (h - 0.24));
           ctx.beginPath();
           ctx.moveTo(p[0], p[1]);
           ctx.lineTo(p[0], p[1] - 18);
           ctx.stroke();
           if (i < 6) {
-            const m = c(0.72, 0.12 + ((i + 0.5) / 6) * (h - 0.24));
+            const m = c(markerX, 0.12 + ((i + 0.5) / 6) * (h - 0.24));
             poly(ctx, [[m[0] - 5, m[1]], [m[0], m[1] + 2.5], [m[0] + 5, m[1]], [m[0], m[1] - 2.5]], '#315f4a', '#253d35');
           }
         }
-        const n0 = c(w - 0.08, 0.08);
-        const n1 = c(w - 0.08, h - 0.08);
+        const netX = mx(w - 0.08);
+        const n0 = c(netX, 0.08);
+        const n1 = c(netX, h - 0.08);
         ctx.strokeStyle = '#8f959c';
         for (let i = 0; i <= 4; i++) {
           const p = mix(n0, n1, i / 4);
@@ -875,7 +938,10 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
           const len = i & 1 ? -16 : 16;
           poly(ctx, [[root[0] - 2, root[1]], [root[0] + 2, root[1] - 1], [root[0] + 2, root[1] + len], [root[0] - 2, root[1] + len + 1]], '#b68a54', '#6e4523');
         }
-        const bo = (x: number, y: number): P2 => c(0.1 + x * 0.85, 0.08 + y * 0.78);
+        // The boathouse is the one corner-anchored identity feature; mirror it to the
+        // opposite corner at 180° so it stays on the near side instead of the far one.
+        const boathouseX0 = rotation === 2 ? w - 1.1 : 0.1;
+        const bo = (x: number, y: number): P2 => c(boathouseX0 + x * 0.85, 0.08 + y * 0.78);
         isoBox(ctx, bo, 1, 1, { wall: '#e3ecf2', roofC: '#315f86', wallH: 15, roofH: 9, winRows: 1, door: true });
         // Compact launches establish scale without obscuring the dock.
         for (let i = 0; i < 2; i++) {
@@ -890,7 +956,7 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
           ctx.drawImage(spr, -9, -4.25, 18, 8.5);
           ctx.restore();
         }
-        lamp(ctx, c(0.72, h * 0.52), 17);
+        lamp(ctx, c(boathouseX0 + 0.62, h * 0.52), 17);
       });
     case 'airstrip':
       return makeFacility(kind, w, h, 58, rotation, (ctx, c) => {
@@ -937,9 +1003,12 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
             ctx.arc(p[0], p[1], 1.1, 0, Math.PI * 2);
             ctx.fill();
           }
-        // A real hangar and apron occupy the service edge of the site.
+        // A real hangar and apron occupy the service edge of the site. This — plus the
+        // parked plane and windsock that key off it — is the identity feature, so it
+        // mirrors to the opposite edge at 180° instead of rotating out of view.
         const hangarW = Math.max(1.25, Math.min(2, w * 0.28));
-        const hc = (x: number, y: number): P2 => c(0.12 + x, 0.06 + y);
+        const hangarX0 = rotation === 2 ? w - 0.12 - hangarW : 0.12;
+        const hc = (x: number, y: number): P2 => c(hangarX0 + x, 0.06 + y);
         isoBox(ctx, hc, hangarW, 0.72, { wall: '#c8ced0', roofC: '#56646a', wallH: 18, roofH: 9, winRows: 0 });
         const doorA = hc(hangarW, 0.72);
         const doorB = mix(doorA, hc(0, 0.72), 0.75);
@@ -952,7 +1021,8 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
           ctx.stroke();
         }
         // A compact parked commuter plane, sized against the hangar and runway.
-        const px = Math.max(2.2, w * 0.68);
+        const pxRaw = Math.max(2.2, w * 0.68);
+        const px = rotation === 2 ? w - pxRaw : pxRaw;
         const py = h * 0.5;
         const planeAt = c(px, py);
         const ahead = c(px + 0.5, py);
@@ -969,7 +1039,7 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
         ctx.drawImage(planeSpr, -15, -13.5, 30, 27);
         ctx.restore();
         // Windsock remains a secondary detail rather than the whole identity.
-        const wsk = c(w - 0.24, 0.24);
+        const wsk = c(rotation === 2 ? 0.24 : w - 0.24, 0.24);
         ctx.strokeStyle = '#8f959c';
         ctx.lineWidth = 1.4;
         ctx.beginPath();
@@ -1064,7 +1134,7 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
 }
 
 /** 1x1 props: bench and flower-bed planter. */
-export function propSprite(kind: 'bench' | 'flowerbed'): BSprite {
+export function propSprite(kind: 'bench' | 'flowerbed' | 'landmark' | 'ballwasher' | 'scenicbridge'): BSprite {
   const key = 'p|' + kind;
   const hit = bcache.get(key);
   if (hit) return hit;
@@ -1086,6 +1156,67 @@ export function propSprite(kind: 'bench' | 'flowerbed'): BSprite {
     }
     for (let i = 0; i < 3; i++)
       poly(ctx, [[cx - 11, cy - 13.5 - i * 3], [cx + 11, cy - 16.5 - i * 3], [cx + 11, cy - 18.3 - i * 3], [cx - 11, cy - 15.3 - i * 3]], i % 2 ? '#a9825a' : '#b8905e');
+  } else if (kind === 'landmark') {
+    // stone monument: stepped pedestal + a tall tapering obelisk shaft — the tall
+    // vertical silhouette the original's Landmark icon reads as (AmenitiesPanel.pcx),
+    // rather than a wide fountain basin. Values/shapes only, nothing traced or copied.
+    poly(ctx, [[cx - 13, cy + 3], [cx, cy + 9], [cx + 13, cy + 3], [cx, cy - 3]], '#9a9fa6', '#6d7278');
+    poly(ctx, [[cx - 13, cy + 3], [cx, cy + 9], [cx, cy + 12], [cx - 13, cy + 6]], '#7d828a');
+    poly(ctx, [[cx + 13, cy + 3], [cx, cy + 9], [cx, cy + 12], [cx + 13, cy + 6]], '#5c6167');
+    poly(ctx, [[cx - 8, cy], [cx, cy + 4], [cx + 8, cy], [cx, cy - 4]], '#b3b8bf', '#7d828a');
+    poly(ctx, [[cx - 8, cy], [cx, cy + 4], [cx, cy + 6], [cx - 8, cy + 2]], '#93989f');
+    poly(ctx, [[cx + 8, cy], [cx, cy + 4], [cx, cy + 6], [cx + 8, cy + 2]], '#6d7278');
+    // tapering shaft
+    poly(ctx, [[cx - 3.4, cy - 3], [cx - 2, cy - 24], [cx + 2, cy - 24], [cx + 3.4, cy - 3]], '#d6dade', '#a4aab0');
+    ctx.fillStyle = '#8f959c';
+    ctx.fillRect(cx + 0.4, cy - 24, 3, 21); // shadowed edge
+    // pyramidal cap
+    poly(ctx, [[cx - 2, cy - 24], [cx, cy - 29], [cx + 2, cy - 24]], '#eef1f3', '#c9ced4');
+    // carved plaque line + gold accent band, matching the UI's gold "notable" tint
+    ctx.strokeStyle = 'rgba(60,66,73,.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2.6, cy - 12);
+    ctx.lineTo(cx + 2.6, cy - 12);
+    ctx.stroke();
+    ctx.fillStyle = '#e9b53c';
+    ctx.fillRect(cx - 2.6, cy - 16, 5.2, 1.6);
+  } else if (kind === 'ballwasher') {
+    // tee-side courtesy stand: a slim post with a round basin head and a hanging towel
+    ctx.fillStyle = '#3b3d42';
+    ctx.fillRect(cx - 1.4, cy - 14, 2.8, 16);
+    poly(ctx, [[cx - 6, cy - 14], [cx, cy - 11], [cx + 6, cy - 14], [cx, cy - 17]], '#c9ced4', '#8f959c');
+    poly(ctx, [[cx - 6, cy - 14], [cx, cy - 11], [cx, cy - 9], [cx - 6, cy - 12]], '#a4aab0');
+    poly(ctx, [[cx + 6, cy - 14], [cx, cy - 11], [cx, cy - 9], [cx + 6, cy - 12]], '#7d828a');
+    ctx.fillStyle = '#c0453a';
+    ctx.fillRect(cx + 1.4, cy - 10, 3, 7); // towel
+    ctx.fillStyle = '#a8382e';
+    ctx.fillRect(cx + 1.4, cy - 10, 3, 1.6);
+  } else if (kind === 'scenicbridge') {
+    // short arched wooden footbridge, side-on like the bench
+    ctx.strokeStyle = '#4a3018';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy + 2);
+    ctx.quadraticCurveTo(cx, cy - 10, cx + 14, cy + 2);
+    ctx.stroke();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#8a5a30';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, cy + 4);
+    ctx.quadraticCurveTo(cx, cy - 7, cx + 14, cy + 4);
+    ctx.stroke();
+    ctx.strokeStyle = '#6e4523';
+    ctx.lineWidth = 1;
+    for (let i = -12; i <= 12; i += 4) {
+      const t = (i + 14) / 28;
+      const px2 = cx + i;
+      const py2 = cy + 4 - Math.sin(t * Math.PI) * 11;
+      ctx.beginPath();
+      ctx.moveTo(px2, py2);
+      ctx.lineTo(px2, py2 - 6);
+      ctx.stroke();
+    }
   } else {
     // wooden planter box bursting with flowers
     poly(ctx, [[cx - 13, cy - 2], [cx, cy + 4], [cx + 13, cy - 2], [cx, cy - 8]], '#7a5233', '#4a3018');

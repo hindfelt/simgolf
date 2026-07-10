@@ -16,11 +16,16 @@ npm run dev        # dev server at http://localhost:5173/
 npm test           # deterministic placement/connectivity regression tests
 npm run build      # typecheck (tsc -b) + production bundle to dist/ (base /simgolf/)
 npm run preview    # preview the production build
+npm run dev:api    # Cloudflare Worker API at http://localhost:8787/
+npm run test:api   # Worker + isolated D1 integration suite
 ```
 
 > Note: `vite preview` applies the `/simgolf/` base and its SPA fallback can
 > mask hashed assets locally. Static hosts (Cloudflare Pages) serve the files
 > directly, so this only affects `preview`, not the deployed build or `dev`.
+
+The online layer is optional for local play. To enable Google sign-in, cloud saves,
+published courses and competitions, follow [ONLINE_SETUP.md](ONLINE_SETUP.md).
 
 ## Architecture
 
@@ -79,12 +84,32 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
 - **Management UI** — categorized build palettes, accessible original SVG
   controls, four-way camera rotation, and a live report for cash flow,
   facilities, guest conversion, alerts, and per-hole scenery.
+- **Resident pro & Championship Mode** — customize and save Gary Golf, allocate
+  ten manual skills, earn more points from 23 professional accomplishments,
+  retire courses to a separate pro-circuit library, then play deterministic
+  12-pro championships for rank, money and fame on four difficulty levels.
+- **SGA evaluation & Pro Challenges** — all eight original skill-demand hole
+  classes, real Top 100/Top 18 fee premiums, and issued one-on-one matches
+  against named touring pros with a wager settled independently on every hole.
+- **Financial Report & Membership Roster** — every bank mutation is journaled
+  into year-sorted income, expense and capital statements. Happy repeat guests
+  buy/renew annual memberships or upgrade for life; members return more often,
+  receive a small fee discount, and retain visits, holes, dues and lifetime spend.
+- **Theme Packs** — separate from terrain themes, packs can independently swap
+  players, stories, celebrities, touring professionals and bundled starter
+  courses while omitted sections inherit Standard. Includes Standard, a
+  story-only fallback demonstration, and two complete original content packs.
 - **Regression coverage** — map-edge and full-footprint hole validation plus
   strict orthogonal facility-path connectivity.
+- **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,
+  player discovery/follows, asynchronous one-card challenges with hole-by-hole
+  cards, daily/weekly leaderboards, a scheduled Club Championship, event history,
+  friends boards, quarterly season points, profile scorecard sync, session
+  management and account deletion.
 
-**Roadmap (from the SimGolf manual)**
-1. Richer terrain (firm fairway, deep rough, streams…)
-2. Golfer skills (length/accuracy/imagination), needs meters, sim-stories
-3. SGA evaluation, hole classification, tournaments, pro-challenges, reports
-4. Cloud saves + leaderboards (Cloudflare Worker + KV/D1)
-5. Deploy to Cloudflare Pages
+**Roadmap**
+1. Sixteen-property World Screen and complete manual hotkey parity
+2. Server-replayed score validation and multi-stage online tournaments
+3. Invite links, notifications, match chat and real-time synchronized golfers
+4. Past-season rewards and in-game unlocks
+5. Production backup, rate-limit, thumbnail and alerting hardening

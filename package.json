@@ -6,22 +6,34 @@
   "description": "A SimGolf-style course tycoon — original homage to Sid Meier's SimGolf.",
   "scripts": {
     "dev": "vite",
+    "dev:api": "wrangler dev --port 8787 --var APP_ORIGIN:http://localhost:5173 --var APP_RETURN_URL:http://localhost:5173/ --var ENVIRONMENT:development",
     "build": "tsc -b && vite build",
+    "build:api": "wrangler deploy --dry-run --outdir dist-worker",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "test": "vitest run"
+    "typecheck:api": "tsc -p worker/tsconfig.json --noEmit",
+    "test": "vitest run src",
+    "test:api": "GOOGLE_CLIENT_ID=test-client.apps.googleusercontent.com GOOGLE_CLIENT_SECRET=test-only SESSION_SECRET=test-session-secret-at-least-thirty-two-bytes vitest run --config worker/vitest.config.ts",
+    "db:migrate:local": "wrangler d1 migrations apply fairway-mogul-db --local",
+    "cf:types": "wrangler types worker/worker-configuration.d.ts"
   },
   "dependencies": {
+    "hono": "^4.12.28",
+    "jose": "^6.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "zod": "^4.4.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@types/node": "^26.1.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.3",
     "vite": "^6.0.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.110.0"
   }
 }

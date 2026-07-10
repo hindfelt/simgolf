@@ -38,7 +38,7 @@ export const tileFlat = (x: number, y: number): boolean => {
 export const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const rand = (a: number, b: number) => a + Math.random() * (b - a);
-export const pick = <T>(arr: T[]): T => arr[(Math.random() * arr.length) | 0];
+export const pick = <T>(arr: readonly T[]): T => arr[(Math.random() * arr.length) | 0];
 /** ~[-1,1] bell curve. */
 export const gauss = () => (Math.random() + Math.random() + Math.random()) / 1.5 - 1;
 export const dist = (a: Vec, b: Vec) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -53,9 +53,17 @@ export function hash2(x: number, y: number): number {
 export function lieOf(x: number, y: number): LieKey {
   const t = tileAt(Math.floor(x), Math.floor(y));
   return t === Tile.FAIR ? 'fair'
+    : t === Tile.FIRM_FAIR ? 'firmfair'
+    : t === Tile.DEEP_ROUGH ? 'deeprough'
     : t === Tile.GREEN ? 'green'
     : t === Tile.TEE ? 'tee'
     : t === Tile.SAND ? 'sand'
+    : t === Tile.WASTE_BUNKER ? 'waste'
+    : t === Tile.POT_BUNKER ? 'pot'
+    : t === Tile.STREAM ? 'stream'
+    : t === Tile.BRIDGE_WATER || t === Tile.BRIDGE_STREAM ? 'bridge'
+    : t === Tile.BRUSH ? 'brush'
+    : t === Tile.ROCK ? 'rock'
     : t === Tile.TREE ? 'tree'
     : t === Tile.WATER ? 'water'
     : t === Tile.FLOWER ? 'flower'

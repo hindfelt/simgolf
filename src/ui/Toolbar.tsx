@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useUI } from './store';
 import { setTool, startRound } from '../game/engine';
 import { ensureAudio } from '../game/audio';
-import { TINFO, HOLE_COST, ELEV_COST, LAND_COST } from '../game/constants';
+import { TINFO, HOLE_COST, ELEV_COST, LAND_COST, themedTerrainName } from '../game/constants';
 import { Tile, type ToolId } from '../game/types';
 import Icon, { type IconName } from './Icon';
 
@@ -13,6 +13,7 @@ interface ToolDef {
   icon: IconName;
   bg?: string;
   gold?: boolean;
+  tile?: Tile;
 }
 
 type GroupId = 'course' | 'terrain' | 'resort' | 'play';
@@ -23,9 +24,16 @@ const $ = (n: number) => '$' + n.toLocaleString('en-US');
 const TOOLS: ToolDef[] = [
   { id: 'pan', nm: 'Pan', icon: 'pan', bg: 'linear-gradient(180deg,#c9c6e0,#9a96bf)' },
   { id: 'hole', nm: 'New hole', ct: $(HOLE_COST), icon: 'hole', bg: grass },
-  { id: 'fair', nm: 'Fairway', ct: $(TINFO[Tile.FAIR].cost), icon: 'fair', bg: `repeating-linear-gradient(90deg, ${TINFO[Tile.FAIR].c1} 0 7px, ${TINFO[Tile.FAIR].c2} 7px 14px)` },
-  { id: 'green', nm: 'Green', ct: $(TINFO[Tile.GREEN].cost), icon: 'green', bg: `linear-gradient(180deg,${TINFO[Tile.GREEN].c1},${TINFO[Tile.GREEN].c2})` },
-  { id: 'sand', nm: 'Sand', ct: $(TINFO[Tile.SAND].cost), icon: 'sand', bg: `linear-gradient(180deg,#f4e4b4,${TINFO[Tile.SAND].c2})` },
+  { id: 'fair', nm: 'Fairway', tile: Tile.FAIR, ct: $(TINFO[Tile.FAIR].cost), icon: 'fair', bg: `repeating-linear-gradient(90deg, ${TINFO[Tile.FAIR].c1} 0 7px, ${TINFO[Tile.FAIR].c2} 7px 14px)` },
+  { id: 'firmfair', nm: 'Firm Fairway', tile: Tile.FIRM_FAIR, ct: $(TINFO[Tile.FIRM_FAIR].cost), icon: 'firmFair', bg: `linear-gradient(180deg,${TINFO[Tile.FIRM_FAIR].c1},${TINFO[Tile.FIRM_FAIR].c2})` },
+  { id: 'deeprough', nm: 'Deep Rough', tile: Tile.DEEP_ROUGH, ct: $(TINFO[Tile.DEEP_ROUGH].cost), icon: 'deepRough', bg: `linear-gradient(180deg,${TINFO[Tile.DEEP_ROUGH].c1},${TINFO[Tile.DEEP_ROUGH].c2})` },
+  { id: 'green', nm: 'Green', tile: Tile.GREEN, ct: $(TINFO[Tile.GREEN].cost), icon: 'green', bg: `linear-gradient(180deg,${TINFO[Tile.GREEN].c1},${TINFO[Tile.GREEN].c2})` },
+  { id: 'sand', nm: 'Sand', tile: Tile.SAND, ct: $(TINFO[Tile.SAND].cost), icon: 'sand', bg: `linear-gradient(180deg,#f4e4b4,${TINFO[Tile.SAND].c2})` },
+  { id: 'waste', nm: 'Waste Bunker', tile: Tile.WASTE_BUNKER, ct: $(TINFO[Tile.WASTE_BUNKER].cost), icon: 'waste', bg: `linear-gradient(180deg,${TINFO[Tile.WASTE_BUNKER].c1},${TINFO[Tile.WASTE_BUNKER].c2})` },
+  { id: 'pot', nm: 'Pot Bunker', tile: Tile.POT_BUNKER, ct: $(TINFO[Tile.POT_BUNKER].cost), icon: 'pot', bg: `linear-gradient(180deg,${TINFO[Tile.POT_BUNKER].c1},${TINFO[Tile.POT_BUNKER].c2})` },
+  { id: 'stream', nm: 'Stream', tile: Tile.STREAM, ct: $(TINFO[Tile.STREAM].cost), icon: 'stream', bg: `linear-gradient(180deg,${TINFO[Tile.STREAM].c1},${TINFO[Tile.STREAM].c2})` },
+  { id: 'brush', nm: 'Brush', tile: Tile.BRUSH, ct: $(TINFO[Tile.BRUSH].cost), icon: 'brush', bg: `linear-gradient(180deg,${TINFO[Tile.BRUSH].c1},${TINFO[Tile.BRUSH].c2})` },
+  { id: 'rocks', nm: 'Rocks', tile: Tile.ROCK, ct: $(TINFO[Tile.ROCK].cost), icon: 'rocks', bg: `linear-gradient(180deg,${TINFO[Tile.ROCK].c1},${TINFO[Tile.ROCK].c2})` },
   { id: 'water', nm: 'Water', ct: $(TINFO[Tile.WATER].cost), icon: 'water', bg: `linear-gradient(180deg,#5a9cd8,${TINFO[Tile.WATER].c2})` },
   { id: 'tree', nm: 'Trees', ct: $(TINFO[Tile.TREE].cost), icon: 'tree', bg: grass },
   { id: 'flower', nm: 'Flowers', ct: $(TINFO[Tile.FLOWER].cost), icon: 'flower', bg: grass },
@@ -40,7 +48,7 @@ const TOOLS: ToolDef[] = [
 
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
   { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
-  { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['sand', 'water', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
+  { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
   { id: 'resort', label: 'Resort', icon: 'resort', tools: ['build'] },
   { id: 'play', label: 'Play', icon: 'play', tools: ['play'] },
 ];
@@ -53,6 +61,7 @@ export default function Toolbar() {
   const tool = useUI((s) => s.tool);
   const mode = useUI((s) => s.mode);
   const buildPanel = useUI((s) => s.buildPanel);
+  const courseTheme = useUI((s) => s.courseTheme);
   const setStore = useUI((s) => s.set);
   const [group, setGroup] = useState<GroupId>(() => groupForTool(tool));
 
@@ -76,7 +85,7 @@ export default function Toolbar() {
             key={item.id}
             onClick={() => {
               setGroup(item.id);
-              if (item.id === 'resort') setStore({ buildPanel: true, staffPanel: false, reportsPanel: false });
+              if (item.id === 'resort') setStore({ buildPanel: true, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
               else setStore({ buildPanel: false });
             }}
           >
@@ -88,24 +97,25 @@ export default function Toolbar() {
       <div className="toolbar" role="tabpanel">
         {visible.map((item) => {
           const active = tool === item.id || (item.id === 'build' && buildPanel);
+          const label = item.tile === undefined ? item.nm : themedTerrainName(item.tile, courseTheme);
           return (
             <button
               type="button"
               key={item.id}
-              title={`${item.nm}${item.ct ? ` · ${item.ct}` : ''}`}
-              aria-label={`${item.nm}${item.ct ? `, ${item.ct}` : ''}`}
+              title={`${label}${item.ct ? ` · ${item.ct}` : ''}`}
+              aria-label={`${label}${item.ct ? `, ${item.ct}` : ''}`}
               aria-pressed={active}
               className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
               onClick={(event) => {
                 event.stopPropagation();
                 ensureAudio();
                 if (item.id === 'play') {
-                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false });
+                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
                   startRound();
                 }
-                else if (item.id === 'build') setStore({ buildPanel: !buildPanel, staffPanel: false, reportsPanel: false });
+                else if (item.id === 'build') setStore({ buildPanel: !buildPanel, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
                 else {
-                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false });
+                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
                   setTool(item.id);
                 }
               }}
@@ -116,7 +126,7 @@ export default function Toolbar() {
                 <span className="dia top" style={{ background: item.bg }} />
                 <Icon name={item.icon} size={18} className="diaIc" />
               </span>
-              <span className="nm">{item.nm}</span>
+              <span className="nm">{label}</span>
               <span className="ct">{item.ct ?? '\u00a0'}</span>
             </button>
           );

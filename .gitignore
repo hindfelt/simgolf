@@ -4,7 +4,11 @@ dist-ssr
 *.local
 .DS_Store
 .wrangler
+.dev.vars
 resources/
 tmp/
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
+worker/tsconfig.tsbuildinfo
+dist-worker/
+*.cpuprofile

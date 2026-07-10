@@ -1,9 +1,12 @@
 import { useUI } from './store';
-import { setFee, setSpeed, setMuted } from '../game/engine';
+import { setFee, setSpeed, setMuted, setCourseName } from '../game/engine';
 import { rotateView } from '../game/camera';
 import { ensureAudio } from '../game/audio';
 import { fmt$, clamp } from '../game/rng';
+import { difficultyDefinition } from '../game/difficulty';
 import Icon, { type IconName } from './Icon';
+import { themePackById } from '../game/themePacks';
+import { propertyById } from '../game/properties';
 
 function ControlButton({ label, icon, active = false, disabled = false, onClick }: { label: string; icon: IconName; active?: boolean; disabled?: boolean; onClick: () => void }) {
   return (
@@ -14,6 +17,7 @@ function ControlButton({ label, icon, active = false, disabled = false, onClick 
 }
 
 export default function TopBar() {
+  const courseName = useUI((s) => s.courseName);
   const cash = useUI((s) => s.cash);
   const rep = useUI((s) => s.rep);
   const fee = useUI((s) => s.fee);
@@ -24,6 +28,14 @@ export default function TopBar() {
   const mode = useUI((s) => s.mode);
   const staffPanel = useUI((s) => s.staffPanel);
   const reportsPanel = useUI((s) => s.reportsPanel);
+  const regularsPanel = useUI((s) => s.regularsPanel);
+  const scorecardsPanel = useUI((s) => s.scorecardsPanel);
+  const onlinePanel = useUI((s) => s.onlinePanel);
+  const proPanel = useUI((s) => s.proPanel);
+  const sandbox = useUI((s) => s.sandbox);
+  const difficulty = useUI((s) => s.difficulty);
+  const themePackId = useUI((s) => s.themePackId);
+  const propertyId = useUI((s) => s.propertyId);
   const setStore = useUI((s) => s.set);
 
   const full = Math.round(clamp(rep, 0, 5));
@@ -33,8 +45,24 @@ export default function TopBar() {
     <>
       <header className="plaque" aria-label="Course status">
         <div className="pEyebrow">Course operations</div>
-        <div className="pTitle">FAIRWAY MOGUL</div>
-        <div className="pSub">{holes} hole{holes === 1 ? '' : 's'} open · {golfers} on course</div>
+        <button
+          type="button"
+          className="pTitle pTitleBtn"
+          title="Rename your course"
+          onClick={() => {
+            const next = window.prompt('Name your course:', courseName);
+            if (next != null) setCourseName(next);
+          }}
+        >
+          {courseName.toUpperCase()}
+        </button>
+        <div className="pSub">
+          {holes} hole{holes === 1 ? '' : 's'} open · {golfers} on course
+          <span className="propertyBadge">{propertyById(propertyId).region}</span>
+          {sandbox && <span className="sandboxBadge">SANDBOX</span>}
+          {!sandbox && <span className={'difficultyBadge difficulty-' + difficulty}>{difficultyDefinition(difficulty).label}</span>}
+          {themePackId !== 'standard' && <span className="themePackBadge">{themePackById(themePackId).name}</span>}
+        </div>
       </header>
 
       <div className="gauges" aria-label="Course finances and reputation">
@@ -63,8 +91,13 @@ export default function TopBar() {
         <ControlButton label={muted ? 'Turn sound on' : 'Mute sound'} icon={muted ? 'mute' : 'volume'} active={muted} onClick={() => { setMuted(!muted); ensureAudio(); }} />
         <ControlButton label="Rotate view left" icon="rotateLeft" onClick={() => rotateView(-1)} />
         <ControlButton label="Rotate view right" icon="rotateRight" onClick={() => rotateView(1)} />
-        <ControlButton label="Manage staff" icon="staff" active={staffPanel} disabled={mode === 'play'} onClick={() => setStore({ staffPanel: !staffPanel, buildPanel: false, reportsPanel: false })} />
-        <ControlButton label="Open course report" icon="report" active={reportsPanel} onClick={() => setStore({ reportsPanel: !reportsPanel, buildPanel: false, staffPanel: false })} />
+        <ControlButton label="Manage staff" icon="staff" active={staffPanel} disabled={mode === 'play'} onClick={() => setStore({ staffPanel: !staffPanel, buildPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false })} />
+        <ControlButton label="Open course report" icon="report" active={reportsPanel} onClick={() => setStore({ reportsPanel: !reportsPanel, buildPanel: false, staffPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false })} />
+        <ControlButton label="View regulars roster" icon="regulars" active={regularsPanel} onClick={() => setStore({ regularsPanel: !regularsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false })} />
+        <ControlButton label="Open player scorecards" icon="scorecard" active={scorecardsPanel} onClick={() => setStore({ scorecardsPanel: !scorecardsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, onlinePanel: false, proPanel: false })} />
+        <ControlButton label="Resident pro and Championship Mode" icon="trophy" active={proPanel} disabled={mode === 'play'} onClick={() => setStore({ proPanel: !proPanel, onlinePanel: false, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false })} />
+        <ControlButton label="Account, cloud saves, and competitions" icon="account" active={onlinePanel} onClick={() => setStore({ onlinePanel: !onlinePanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, proPanel: false })} />
+        <ControlButton label="Save, load, or export courses" icon="save" onClick={() => setStore({ modal: { kind: 'saves' } })} />
         <ControlButton label="Open help" icon="help" onClick={() => setStore({ modal: { kind: 'help' } })} />
       </div>
     </>
