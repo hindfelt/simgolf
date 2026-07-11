@@ -14,7 +14,7 @@ Feature-complete against most audited local manual systems: 4 course themes/diff
 npm run dev         # localhost:5173
 npm run build       # tsc -b + vite build
 npm run typecheck
-npm run test        # vitest, 135 tests
+npm run test        # vitest, 146 tests
 npm run dev:api     # Worker API at localhost:8787
 npm run typecheck:api
 npm run test:api    # Workers runtime + D1, 7 tests
@@ -38,6 +38,7 @@ npm run db:migrate:local
 - Save: localStorage `fairway-mogul-save-v1`, format v2. Golfers restored mid-round; mid-swing states coerced to walking (balls in flight aren't saved). Map-dimension changes silently invalidate old saves.
 - Course theme (`S.theme`) and sandbox flag (`S.sandbox`) are cosmetic/economic overlays, not tile data — safe to change live without touching the map. Difficulty (`S.difficulty`) is persisted and scales only negative mood deltas through `attitudeDelta()`.
 - World Screen state is split deliberately: the active `propertyId` belongs to the course save, while sanitized `propertiesPurchased` ownership and `careerProgress` belong to the cross-course profile. Profile v3 keeps best rating, hosted-tournament, and real SGA Top 100/18 milestones sticky; pro fame/starts/podiums/wins remain on `proProfile`. Both the panel and `newCourse()` use `propertyAvailability()`, so prestige-locked deeds cannot be bypassed. A normal new course rejects a previously developed deed and records ownership only after its replacement autosave succeeds; Sandbox Mode can revisit purchased properties without changing that history.
+- `portfolio.ts` is the canonical multi-resort repository. IndexedDB stores UUID-keyed full resort snapshots and a versioned active manifest in a single transaction; `fairway-mogul-save-v1` remains a timestamped compatibility/emergency mirror and wins recovery if it is newer. Career expansion transfers source cash to the destination rather than cloning it; Sandbox copies are separate records. `loadPortfolioGame()` migrates once at boot, portfolio saves protect `isolatedReturnSave`, and the World Screen switches only after the current snapshot and target pointer commit atomically.
 - Special visitor progression is persisted in `S.specialVisitors`. Land can only be purchased from a live Picky selection; the `pickyLand` accomplishment requires an actual accepted county offer rather than merely starting with a large deed. Landmarks remain locked until Ivana donates the first, free placement.
 - Facility levels live on each `Building` as `level`/`branch`; active timed work is `upgrade`. Construction keeps path connectivity but `facilityOperational()` disables effects and traffic until completion. Building-lot `stage` remains a separate automatic housing lifecycle.
 - Completed `RoundRecord` scorecards are not course-save state: they live in the separate local profile key `fairway-mogul-profile-v1`, survive new courses/slot loads, cap at 200, and use a versioned schema plus deterministic `courseHash`. The same backward-compatible v3 profile payload owns the resident pro, career property milestones, retired championship courses and pro-circuit history; course export and scorecard archive export remain intentionally separate.

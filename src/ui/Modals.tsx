@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useUI } from './store';
 import { fmt$ } from '../game/rng';
-import { careerProgressSnapshot, newCourse, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
+import { careerProgressSnapshot, createPortfolioCourse, portfolioResorts, switchPortfolioResort, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
 import type { Difficulty, PropertyId, ThemePackId } from '../game/types';
 import { DIFFICULTIES } from '../game/difficulty';
 import { S } from '../game/state';
@@ -12,6 +12,7 @@ import { relativeScoreLabel } from '../game/scorecards';
 import { THEME_PACKS, themePackById } from '../game/themePacks';
 import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAvailability, propertyById } from '../game/properties';
 import CharacterPortrait from './CharacterPortrait';
+import type { ResortRecord } from '../game/portfolio';
 
 const SLOT_IDS = ['A', 'B', 'C'];
 const WORLD_THEME_ORDER = [
@@ -30,9 +31,17 @@ const THEMES = [
 function NewCoursePanel({ initial, close }: { initial: boolean; close: () => void }) {
   const currentDifficulty = useUI((s) => s.difficulty);
   const currentThemePack = useUI((s) => s.themePackId);
+  const portfolioVersion = useUI((s) => s.portfolioVersion);
   const [difficulty, setDifficulty] = useState<Difficulty>(currentDifficulty);
   const [themePackId, setThemePackId] = useState<ThemePackId>(currentThemePack);
   const [themeCourseId, setThemeCourseId] = useState<string | null>(S.themePackId === currentThemePack ? S.themeCourseId : null);
+  const [resorts, setResorts] = useState<ResortRecord[]>([]);
+  const [travelling, setTravelling] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void portfolioResorts().then((records) => { if (alive) setResorts(records); });
+    return () => { alive = false; };
+  }, [portfolioVersion]);
   const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : S.cash;
   const careerProgress = careerProgressSnapshot();
   const availabilityFor = (candidate: (typeof WORLD_PROPERTIES)[number]) => propertyAvailability(candidate, {
@@ -48,16 +57,28 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
   const property = propertyById(propertyId);
   const availability = availabilityFor(property);
   const purchased = availability.status === 'purchased' || availability.status === 'current';
-  const start = (sandbox: boolean) => {
+  const ownedResort = resorts.find((resort) => resort.kind === 'career' && resort.propertyId === property.id);
+  const start = async (sandbox: boolean) => {
     if (!sandbox && !availability.canPurchase) return;
     const action = sandbox ? `Start a sandbox on ${property.name}` : `Purchase ${property.name}`;
-    if (!initial && !window.confirm(`${action} and permanently leave ${S.courseName}? The current autosave will be replaced.`)) return;
-    newCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds);
+    const detail = sandbox
+      ? `${action} as a separate portfolio resort? ${S.courseName} will remain exactly as it is.`
+      : `${action} and transfer the available ${fmt$(availableFunds)} development fund? ${S.courseName} will remain in your portfolio, with its operating cash moved to the new project.`;
+    if (!initial && !window.confirm(detail)) return;
+    setTravelling(true);
+    await createPortfolioCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds, !initial);
+    setTravelling(false);
+  };
+  const visit = async () => {
+    if (!ownedResort || ownedResort.active) return;
+    setTravelling(true);
+    await switchPortfolioResort(ownedResort.id);
+    setTravelling(false);
   };
   return (
     <>
       <h1 id="modal-title">Choose your property</h1>
-      <div className="tag">New resort setup</div>
+      <div className="tag">{initial ? 'New resort setup' : 'Resort portfolio & travel office'}</div>
       <p className="setupIntro">Choose a Theme Pack and difficulty, then open one of sixteen properties around the world. New deeds release as your portfolio earns stronger ratings, SGA recognition, tournament prestige and pro fame.</p>
       <h2 className="setupLabel">Theme pack</h2>
       <div className="themePackGrid">
@@ -115,9 +136,10 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
                   : isPurchased ? 'Purchased'
                   : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, available` : 'Inherited property, available'
                   : `Locked. ${candidateAvailability.missing.map((requirement) => requirement.label).join(', ')}`;
+                const portfolioResort = resorts.find((resort) => resort.kind === 'career' && resort.propertyId === candidate.id);
                 const cardBadge = isCurrent
                   ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE'
-                  : isPurchased ? 'PURCHASED'
+                  : isPurchased ? portfolioResort ? 'PORTFOLIO RESORT' : 'PURCHASED'
                   : candidateAvailability.canPurchase ? candidate.price ? fmt$(candidate.price) : 'INHERITED'
                   : prestigeMissing.length ? `LOCKED · ${prestigeMissing[0].label}` : `${fmt$(candidateAvailability.cashShortfall)} SHORT`;
                 return (
@@ -141,6 +163,13 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
           <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : availability.canPurchase ? property.price ? 'Ready to purchase' : 'Inheritance ready' : 'Career locked'}</strong></div>
           <p>{property.description}</p>
+          {ownedResort && (
+            <div className={'portfolioDeed' + (ownedResort.active ? ' active' : '')}>
+              <span><small>{ownedResort.active ? 'Current resort' : 'Portfolio resort'}</small><b>{ownedResort.summary.courseName}</b></span>
+              <span><b>{fmt$(ownedResort.summary.cash)}</b><small>operating cash</small></span>
+              <span><b>{ownedResort.summary.rep.toFixed(1)}★</b><small>{ownedResort.summary.holes} holes</small></span>
+            </div>
+          )}
           <div className="propertyUnlocks" aria-label={`${property.name} deed requirements`}>
             <header><b>Deed requirements</b><span>{availability.requirements.filter((requirement) => requirement.met).length} / {availability.requirements.length} complete</span></header>
             <ul>
@@ -171,8 +200,14 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
           </div>
         </>
       )}
-      <button className="bigbtn" disabled={!availability.canPurchase} onClick={() => start(false)}>{purchased ? 'Choose an undeveloped property' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
-      <button className="bigbtn secondarySetup" onClick={() => start(true)}>Sandbox on {property.name} — unlimited funds &amp; land</button>
+      {purchased ? (
+        <button className="bigbtn portfolioVisit" disabled={travelling || !ownedResort || ownedResort.active} onClick={visit}>
+          {travelling ? 'Preparing resort…' : ownedResort?.active ? `${ownedResort.summary.courseName} is open` : ownedResort ? `Visit ${ownedResort.summary.courseName}` : 'Legacy deed owned · local resort save unavailable'}
+        </button>
+      ) : (
+        <button className="bigbtn" disabled={travelling || !availability.canPurchase} onClick={() => void start(false)}>{travelling ? 'Preparing resort…' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
+      )}
+      <button className="bigbtn secondarySetup" disabled={travelling} onClick={() => void start(true)}>{travelling ? 'Saving portfolio…' : `Sandbox on ${property.name} — unlimited funds & land`}</button>
       {!initial && <button className="textBtn" onClick={close}>Keep current course</button>}
     </>
   );
@@ -401,7 +436,7 @@ export default function Modals() {
               style={{ background: '#8a4a3a', marginTop: 8 }}
               onClick={() => setStore({ modal: { kind: 'newCourse' } })}
             >
-              🚜 New course &amp; Sandbox setup
+              🌍 World Screen &amp; resort portfolio
             </button>
             <div className="fine">An original homage to Sid Meier’s SimGolf (2002). All code and art generated fresh.</div>
           </>

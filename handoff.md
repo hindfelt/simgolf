@@ -148,7 +148,7 @@ The in-app Browser/Chrome surface was unavailable during the final session, so d
 
 Current continuation checks:
 
-- `npm test` — 135/135 browser-game tests pass across 21 files, including bridge/property regressions, career unlock boundaries, dedicated staff art, and direct shot-shape behavior.
+- `npm test` — 146/146 browser-game tests pass across 22 files, including bridge/property regressions, career unlock boundaries, transactional portfolio switching, dedicated staff art, and direct shot-shape behavior.
 - `npm run test:api` — 7/7 Worker/D1 integration tests pass.
 - Browser screenshots, the remaining typecheck/build matrix and Snyk scans are still pending; no visual QA is claimed for this round.
 
@@ -157,7 +157,7 @@ These were run immediately before the handoff commit:
 - `npm run typecheck` — passes after restoring the missing theme metadata used by the Help modal.
 - `npm run typecheck:api` — passes.
 - `npm run test:api` — 7/7 passed at the earlier handoff and again in the current continuation.
-- `npm test` — the earlier handoff passed 86/86; the expanded current suite now passes 135/135.
+- `npm test` — the earlier handoff passed 86/86; the expanded current suite now passes 146/146.
 - `npm run build` — passes.
 - `npm run build:api` — Wrangler production dry-run passes.
 - `npm audit` and `snyk test` — no vulnerable dependency paths.

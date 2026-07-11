@@ -69,6 +69,8 @@ interface UIStore {
   simTick: number; // bumped ~once/sec so time-sensitive UI (tournament countdown) stays live
   roundsVersion: number; // bumped when scorecard history is added or imported
   proVersion: number; // bumped when resident-pro/circuit profile data changes
+  portfolioVersion: number; // bumped after portfolio migration, purchase, save, or switch
+  portfolioStatus: 'idle' | 'saving' | 'saved' | 'error';
 
   set: (patch: Partial<UIStore>) => void;
   pushTicker: (name: string, txt: string, cls?: string) => void;
@@ -109,6 +111,8 @@ export const useUI = create<UIStore>((set) => ({
   simTick: 0,
   roundsVersion: 0,
   proVersion: 0,
+  portfolioVersion: 0,
+  portfolioStatus: 'idle',
 
   set: (patch) => set(patch),
   pushTicker: (name, txt, cls) =>

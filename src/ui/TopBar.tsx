@@ -38,6 +38,7 @@ export default function TopBar() {
   const difficulty = useUI((s) => s.difficulty);
   const themePackId = useUI((s) => s.themePackId);
   const propertyId = useUI((s) => s.propertyId);
+  const portfolioStatus = useUI((s) => s.portfolioStatus);
   const setStore = useUI((s) => s.set);
   const fromMenu = (action: () => void) => {
     action();
@@ -65,6 +66,7 @@ export default function TopBar() {
         <div className="pSub">
           {holes} hole{holes === 1 ? '' : 's'} open · {golfers} on course
           <span className="propertyBadge">{propertyById(propertyId).region}</span>
+          <span className={'portfolioSyncBadge status-' + portfolioStatus}>{portfolioStatus === 'error' ? 'PORTFOLIO SAVE ERROR' : portfolioStatus === 'saving' ? 'SAVING PORTFOLIO' : portfolioStatus === 'saved' ? 'PORTFOLIO SAVED' : 'LOCAL AUTOSAVE'}</span>
           {sandbox && <span className="sandboxBadge">SANDBOX</span>}
           {!sandbox && <span className={'difficultyBadge difficulty-' + difficulty}>{difficultyDefinition(difficulty).label}</span>}
           {themePackId !== 'standard' && <span className="themePackBadge">{themePackById(themePackId).name}</span>}
@@ -107,6 +109,7 @@ export default function TopBar() {
               <ControlButton label="View regulars roster" icon="regulars" active={regularsPanel} onClick={() => fromMenu(() => setStore({ regularsPanel: !regularsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
               <ControlButton label="Open player scorecards" icon="scorecard" active={scorecardsPanel} onClick={() => fromMenu(() => setStore({ scorecardsPanel: !scorecardsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, onlinePanel: false, proPanel: false }))} />
               <ControlButton label="Resident pro and Championship Mode" icon="trophy" active={proPanel} disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ proPanel: !proPanel, onlinePanel: false, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false }))} />
+              <ControlButton label="World Screen and resort portfolio" icon="land" disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ modal: { kind: 'newCourse' }, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
               <ControlButton label="Account, cloud saves, and competitions" icon="account" active={onlinePanel} onClick={() => fromMenu(() => setStore({ onlinePanel: !onlinePanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, proPanel: false }))} />
               <ControlButton label="Save, load, or export courses" icon="save" onClick={() => fromMenu(() => setStore({ modal: { kind: 'saves' } }))} />
               <ControlButton label="Open help" icon="help" onClick={() => fromMenu(() => setStore({ modal: { kind: 'help' } }))} />

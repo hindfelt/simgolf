@@ -8,7 +8,7 @@ describe('World Screen career progression presentation', () => {
   it('uses the shared engine availability model for selection, cards, inspection, and purchase', () => {
     expect(source).toContain('propertyAvailability(candidate');
     expect(source).toContain('candidateAvailability.missing');
-    expect(source).toContain('disabled={!availability.canPurchase}');
+    expect(source).toContain('disabled={travelling || !availability.canPurchase}');
     expect(source).toContain('availability.requirements.map');
   });
 
@@ -25,6 +25,14 @@ describe('World Screen career progression presentation', () => {
     expect(source).toContain("requirement.met ? '✓' : '○'");
     expect(css).toMatch(/\.propertyUnlocks\s+li\.missing/);
     expect(css).toMatch(/\.worldProperty\.prestigeLocked/);
+  });
+
+  it('shows developed resorts as visitable portfolio deeds instead of destructive replacements', () => {
+    expect(source).toContain('portfolioResorts()');
+    expect(source).toContain('switchPortfolioResort(ownedResort.id)');
+    expect(source).toContain('className="bigbtn portfolioVisit"');
+    expect(source).not.toContain('permanently leave');
+    expect(css).toMatch(/\.portfolioDeed/);
   });
 
   it('collapses career stats and requirement lists cleanly on phone layouts', () => {

@@ -118,6 +118,21 @@ canvas.game {
   letter-spacing: .04em;
   text-transform: uppercase;
 }
+.portfolioSyncBadge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 4px;
+  border: 1px solid rgba(195,220,201,.35);
+  border-radius: 4px;
+  color: #c8dbc9;
+  font-size: 5.5px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  vertical-align: 1px;
+}
+.portfolioSyncBadge.status-saving { color: #ffe189; }
+.portfolioSyncBadge.status-saved { border-color: rgba(122,211,151,.5); color: #8ee4a9; }
+.portfolioSyncBadge.status-error { border-color: rgba(244,124,112,.7); background: rgba(123,39,36,.5); color: #ffb2a9; }
 
 .routingMap {
   position: fixed;
@@ -1204,6 +1219,26 @@ canvas.game {
 .propertyUnlocks li.met i { background: #4e8750; color: #fffde8; }
 .propertyUnlocks li.missing { background: rgba(132,69,62,.1); color: #85483f; }
 .propertyUnlocks li.missing i { border: 1px solid #9b685e; background: #f3e1d5; color: #8c5148; }
+.portfolioDeed {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(62px, .65fr));
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 7px;
+  padding: 6px;
+  border: 1px solid #765479;
+  border-left-width: 4px;
+  border-radius: 7px;
+  background: linear-gradient(100deg, rgba(169,94,135,.16), rgba(255,253,235,.72));
+  box-shadow: inset 0 1px rgba(255,255,255,.7);
+}
+.portfolioDeed.active { border-color: #3f7751; background: linear-gradient(100deg, rgba(79,143,91,.18), rgba(255,253,235,.72)); }
+.portfolioDeed span { min-width: 0; }
+.portfolioDeed b,
+.portfolioDeed small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portfolioDeed b { color: var(--property-dark); font-size: 8px; }
+.portfolioDeed small { margin-top: 1px; color: #6b6659; font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.portfolioVisit { border-color: #5c3157; background: linear-gradient(180deg, #b6608c, #793f67); box-shadow: 0 3px 0 #4e2844; }
 .propertyFacts {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);

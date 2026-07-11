@@ -61,6 +61,7 @@ import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
 import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceAfterCapitalTransfer, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -2580,7 +2581,7 @@ function captureCareerProgress() {
 }
 
 function saveRoundHistory(): boolean {
-  captureCareerProgress();
+  if (!isolatedReturnSave) captureCareerProgress();
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify({
       version: 3,
@@ -2761,7 +2762,8 @@ export function importRoundHistoryText(text: string): number {
 
 function buildSaveData() {
   return {
-    v: 2,
+    v: 2 as const,
+    savedAt: Date.now(),
     courseName: S.courseName,
     theme: S.theme,
     propertyId: S.propertyId,
@@ -2962,11 +2964,25 @@ function persistCourseSave(data: ReturnType<typeof buildSaveData>): boolean {
     return false;
   }
 }
+let portfolioReady = false;
+function setPortfolioStatus(status: 'idle' | 'saving' | 'saved' | 'error', bump = false) {
+  ui.set({
+    portfolioStatus: status,
+    ...(bump ? { portfolioVersion: ui.get().portfolioVersion + 1 } : {}),
+  });
+}
 export function saveGame() {
   // Event play is a temporary guest course. Autosave must keep protecting the
   // owner's captured home course even if the browser reloads mid-round.
-  persistCourseSave(isolatedReturnSave ?? buildSaveData());
+  const snapshot = isolatedReturnSave ?? buildSaveData();
+  persistCourseSave(snapshot);
   saveRoundHistory();
+  if (portfolioReady && portfolioSupported()) {
+    setPortfolioStatus('saving');
+    void saveActivePortfolioResort(snapshot)
+      .then((saved) => setPortfolioStatus(saved ? 'saved' : 'error', saved))
+      .catch(() => setPortfolioStatus('error'));
+  }
 }
 export function loadGame(): boolean {
   loadRoundHistory();
@@ -2984,6 +3000,38 @@ export function loadGame(): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+/** Browser boot path: migrate the legacy autosave once, then prefer the active portfolio resort. */
+export async function loadPortfolioGame(): Promise<boolean> {
+  const legacyResumed = loadGame();
+  if (!portfolioSupported()) return legacyResumed;
+  try {
+    const active = await bootstrapPortfolio(legacyResumed ? buildSaveData() : null);
+    portfolioReady = true;
+    if (!active) {
+      setPortfolioStatus('idle', true);
+      return legacyResumed;
+    }
+    if (!applySaveData(active.snapshot)) throw new Error('Active resort is incompatible');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    persistCourseSave(buildSaveData()); // compatibility mirror + emergency recovery
+    saveRoundHistory();
+    setPortfolioStatus('saved', true);
+    return true;
+  } catch {
+    setPortfolioStatus('error');
+    return legacyResumed;
+  }
+}
+
+export async function portfolioResorts(): Promise<ResortRecord[]> {
+  try {
+    return await listPortfolioResorts();
+  } catch {
+    setPortfolioStatus('error');
+    return [];
   }
 }
 export function setCourseName(name: string) {
@@ -3028,13 +3076,19 @@ export function saveToSlot(id: string, name: string) {
   }
 }
 export function loadFromSlot(id: string): boolean {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before loading another course.');
+    return false;
+  }
   try {
     const raw = localStorage.getItem(slotDataKey(id));
     if (!raw || !applySaveData(JSON.parse(raw))) {
       setHint('That save slot is empty or incompatible.');
       return false;
     }
-    setHint('Course loaded.');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    saveGame();
+    setHint('Course loaded and saved as the active resort.');
     return true;
   } catch {
     return false;
@@ -3054,12 +3108,18 @@ export function exportSaveText(): string {
 }
 /** Loads a save from arbitrary JSON text (e.g. an imported file). */
 export function importSaveText(text: string): boolean {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before importing another course.');
+    return false;
+  }
   try {
     if (!applySaveData(JSON.parse(text))) {
       setHint('That file is not a compatible Fairway Mogul save.');
       return false;
     }
-    setHint('Course imported.');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    saveGame();
+    setHint('Course imported and saved as the active resort.');
     return true;
   } catch {
     setHint('That file is not a compatible Fairway Mogul save.');
@@ -3165,6 +3225,93 @@ export function newCourse(
     ? `${property.name} · ${pack.name} Sandbox: unlimited funds and every parcel owned.`
     : course ? `${property.name} purchased — ${pack.name}'s ${course.name} is open for development.` : `${property.name} purchased with ${fmt$(S.cash)} left to build. ${pack.name} is enabled.`);
   return true;
+}
+
+/**
+ * Portfolio-aware course creation. The legacy synchronous `newCourse` remains the
+ * deterministic course factory; this wrapper adds transactional source/target saves
+ * and rolls the live course/profile back if the portfolio commit fails.
+ */
+export async function createPortfolioCourse(
+  sandbox = false,
+  difficulty: Difficulty = 'moderate',
+  theme: CourseTheme = S.theme,
+  themePackId: ThemePackId = 'standard',
+  themeCourseId: string | null = null,
+  propertyId?: PropertyId,
+  availableFunds = PROPERTY_INHERITANCE,
+  preserveCurrent = true,
+): Promise<boolean> {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before travelling to another property.');
+    sfx.err();
+    return false;
+  }
+  const source = preserveCurrent ? buildSaveData() : null;
+  const originalProperties = [...S.propertiesPurchased];
+  const originalProgress = { ...S.careerProgress };
+  const legacyBefore = (() => { try { return localStorage.getItem(SAVE_KEY); } catch { return null; } })();
+  const profileBefore = (() => { try { return localStorage.getItem(PROFILE_KEY); } catch { return null; } })();
+  const property = propertyById(propertyId);
+
+  if (!newCourse(sandbox, difficulty, theme, themePackId, themeCourseId, propertyId, availableFunds)) return false;
+  const target = buildSaveData();
+  if (!portfolioSupported()) {
+    setHint(`${property.name} is open. This browser cannot keep a switchable resort portfolio.`);
+    return true;
+  }
+
+  try {
+    setPortfolioStatus('saving');
+    const persistedSource = source && !sandbox ? sourceAfterCapitalTransfer(source, property.name) : source;
+    await createPortfolioResort(persistedSource, target, sandbox ? 'sandbox' : 'career');
+    portfolioReady = true;
+    saveRoundHistory();
+    setPortfolioStatus('saved', true);
+    ticker('World Office', `${property.name} joined your resort portfolio.`, 'money');
+    return true;
+  } catch {
+    S.propertiesPurchased = originalProperties;
+    S.careerProgress = originalProgress;
+    if (source) applySaveData(source);
+    try {
+      if (legacyBefore === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, legacyBefore);
+      if (profileBefore === null) localStorage.removeItem(PROFILE_KEY); else localStorage.setItem(PROFILE_KEY, profileBefore);
+    } catch { /* storage rollback is best effort */ }
+    setPortfolioStatus('error');
+    setHint('The new resort could not be saved safely. Your current course was restored.');
+    sfx.err();
+    return false;
+  }
+}
+
+export async function switchPortfolioResort(id: ResortId): Promise<boolean> {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before travelling.');
+    sfx.err();
+    return false;
+  }
+  try {
+    setPortfolioStatus('saving');
+    const target = await switchPortfolioResortSnapshot(buildSaveData(), id);
+    if (!applySaveData(target.snapshot)) throw new Error('The target resort is incompatible');
+    persistCourseSave(buildSaveData());
+    saveRoundHistory();
+    S.mode = 'build';
+    S.player = null;
+    S.camTarget = null;
+    updateTopbar();
+    ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+    setPortfolioStatus('saved', true);
+    setHint(`Welcome back to ${target.summary.courseName}.`);
+    ticker('World Office', `Arrived at ${target.summary.courseName} · ${propertyById(target.propertyId).region}.`, 'money');
+    return true;
+  } catch {
+    setPortfolioStatus('error');
+    setHint('That resort could not be opened safely. The current course is unchanged.');
+    sfx.err();
+    return false;
+  }
 }
 
 /* ---------------- building lots develop into homes ---------------- */

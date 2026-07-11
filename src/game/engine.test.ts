@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadGame, newCourse, paintAt, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
+import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { idx, idxC } from './rng';
 import { S, caches } from './state';
@@ -258,6 +258,16 @@ describe('save / load round-trip', () => {
     paintAt(2.2, 6.2);
     expect(S.tiles[idx(2, 5)]).toBe(Tile.WATER);
     expect(S.tiles[idx(2, 6)]).toBe(Tile.STREAM);
+  });
+
+  it('immediately replaces the active autosave after loading a named slot', () => {
+    saveToSlot('A', 'Before renovation');
+    S.cash = 17;
+    saveGame();
+
+    expect(loadFromSlot('A')).toBe(true);
+    expect(S.cash).toBe(12_345);
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-save-v1')!).cash).toBe(12_345);
   });
 
   it('rejects a save whose tile-array size no longer matches the current map', () => {

@@ -76,7 +76,9 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   and selected properties. Six starter deeds are open immediately; the remaining
   locations require sticky rating, tournament, SGA, pro-fame, and championship
   milestones. Purchase history and career prestige survive new courses, while
-  Sandbox Mode can deliberately revisit an already-developed property.
+  an IndexedDB-backed resort portfolio keeps each developed course intact and
+  makes owned locations switchable from the World Screen. Sandbox resorts remain
+  distinct copies and career purchases transfer, rather than duplicate, capital.
 - **Water-crossing bridges** — painting Pathway over water or a stream converts
   it to a priced, connected wooden bridge; continuous deck direction follows the
   neighboring path network, the underlying channel remains visible, and
@@ -115,7 +117,7 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — 135 browser-game tests covering course construction,
+- **Regression coverage** — 146 browser-game tests covering course construction,
   simulation, persistence, the World Screen/property lifecycle, bridge pricing,
   restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,

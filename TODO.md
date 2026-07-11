@@ -16,7 +16,6 @@ Theme Packs are implemented as modular player/story/celebrity/pro/course bundles
 
 The owner has explicitly authorized building these systems. Production deployment still requires credential, domain and Cloudflare account decisions before touching live infrastructure.
 
-- [ ] **Make owned locations a switchable resort portfolio.** Career deed gates and ownership are implemented. Replace the destructive single-course autosave with transactional per-resort persistence, preserve each resort's local economy/course state, and provide safe world-map switching without duplicating development funds.
 
 - [ ] **Account polish.** Google OIDC, hashed sessions, session listing/revocation, privacy-preserving account deletion and local↔cloud scorecard migration are implemented. Device labels, downloadable account-data export and re-authentication before destructive actions remain.
 - [ ] **Finish cloud publishing.** Conflict-safe versioned cloud slots, validated course publication and public/unlisted visibility are implemented; private sharing, thumbnails, course-version history and restore UI remain.
