@@ -31,7 +31,7 @@ export default function PlayHud() {
   const windPoints = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
   const windPoint = windPoints[Math.round(((windDeg + 360) % 360) / 45) % 8];
   return (
-    <div className="playHud">
+    <div className="playHud" role="region" aria-label="Player round controls">
       {S.activeChampionship && <div className="championshipHud"><b>PRO CIRCUIT</b><span>{S.activeChampionship.title}</span><em>{S.activeChampionship.pro.name} · {S.activeChampionship.difficulty}</em></div>}
       {S.activeProChallenge && <div className="championshipHud proChallengeHud"><b>PRO CHALLENGE</b><span>{S.proProfile.name} vs {S.activeProChallenge.opponent.name}</span><em>{S.activeProChallenge.wagerPerHole.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} per hole</em></div>}
       <div className="playRoundStatus">
@@ -40,33 +40,43 @@ export default function PlayHud() {
         <div className="sub">{playHud.strokeLabel}</div>
         <div className="playCoach" role="status" aria-live="polite" aria-atomic="true">{playHud.coach}</div>
       </div>
-      <div className="shotTelemetry" aria-label="Shot information">
+      <div className="shotTelemetry" role="group" aria-label="Shot information">
         <span><small>To pin</small><b>{yards(playHud.pinDistance)} yd</b></span>
         <span><small>Lie</small><b>{lieLabel(playHud.lie)}</b></span>
         <span className="powerTelemetry"><small>Power</small><b>{playHud.power === null ? 'Ready' : `${Math.round(playHud.power * 100)}%`}</b><i><em style={{ width: `${Math.round((playHud.power ?? 0) * 100)}%` }} /></i></span>
-        <span><small>{playHud.onGreen ? 'Putt' : 'Carry'}</small><b>{playHud.carry === null ? '—' : `${yards(playHud.carry)} yd`}</b></span>
+        <span>
+          <small>{playHud.onGreen ? 'Putt' : playHud.finishDistance === null ? 'Carry' : 'Carry → est. finish'}</small>
+          <b>{playHud.carry === null ? '—' : playHud.finishDistance === null || playHud.onGreen ? `${yards(playHud.carry)} yd` : `${yards(playHud.carry)} → ${yards(playHud.finishDistance)} yd`}</b>
+        </span>
       </div>
-      {!playHud.onGreen && <div className="shotWorkbench">
+      {!playHud.onGreen && <div className="shotWorkbench" role="group" aria-label="Shot setup">
         <div className="shotControlGroup">
-          <span className="shotControlLabel">Club</span>
-          <div className="clubPicker" aria-label="Club selection">
-            {CLUB_IDS.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className={'clubBtn' + (playHud.club === id ? ' on' : '')}
-                aria-pressed={playHud.club === id}
-                onClick={() => setClub(id)}
-              >
-                <span>{CLUBS[id].label}</span>
-                <small>{yards(playHud.clubRanges[id])} yd</small>
-              </button>
-            ))}
+          <span className="shotControlLabel">Club · {playHud.selectedRole}</span>
+          <div className="clubPicker" role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`}>
+            {CLUB_IDS.map((id) => {
+              const option = playHud.clubOptions[id];
+              const detail = option.available ? `${yards(option.carry)} yards, ${option.role}` : option.reason ?? 'Unavailable from this lie';
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={'clubBtn' + (playHud.club === id ? ' on' : '')}
+                  aria-pressed={playHud.club === id}
+                  aria-label={`${CLUBS[id].label}, ${detail}`}
+                  title={detail}
+                  disabled={!option.available}
+                  onClick={() => setClub(id)}
+                >
+                  <span>{CLUBS[id].label}</span>
+                  <small>{option.available ? `${yards(option.carry)} yd · ${option.role}` : option.reason ?? 'Unavailable from this lie'}</small>
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="shotControlGroup">
           <span className="shotControlLabel">Ball flight</span>
-          <div className="shapePicker" aria-label="Shot technique selection">
+          <div className="shapePicker" role="group" aria-label="Shot technique selection">
             {SHAPE_IDS.map((id) => (
               <button
                 key={id}

@@ -1,10 +1,10 @@
-import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, LIE, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
+import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
 import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
 import { P, PE, viewXY } from './camera';
-import { activePlayingPro, parFor, playerAimIntent, playerEstimatedRoll, playerShotPlan, playerShotPlanPosition, playerShotSkill } from './engine';
+import { activePlayingPro, flightApexHeight, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion, playerShotPlan, playerShotPlanPosition } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
@@ -14,6 +14,7 @@ import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp } from './employees';
 import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
+import { clubLieProfile } from './clubProfiles';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1880,10 +1881,9 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   const aim = playerAimIntent(p.aim, p.lie);
   if (!aim) return;
   const { dirX: dx, dirY: dy, power } = aim;
-  const L = LIE[p.lie] || LIE.rough;
   const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dx, dy, power);
-  const intend = plan.intend;
-  const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul;
+  const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul * clubLieProfile(p.lie, p.club).launchMultiplier;
+  const flightApex = p.lie === 'green' ? 0 : flightApexHeight(plan.targetDistance, heightMul);
   const bp = PE(p.ball!.x, p.ball!.y);
   ctx.setLineDash([5 * u, 5 * u]);
   ctx.strokeStyle = 'rgba(255,255,255,.95)';
@@ -1893,15 +1893,14 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   for (let t = 0.1; t <= 1.001; t += 0.1) {
     const position = playerShotPlanPosition(plan, t);
     const q = PE(position.x, position.y);
-    ctx.lineTo(q.x, q.y - (p.lie === 'green' ? 0 : Math.sin(Math.PI * t) * intend * 3.4 * u * heightMul));
+    ctx.lineTo(q.x, q.y - Math.sin(Math.PI * t) * flightApex * u);
   }
   ctx.stroke();
   ctx.setLineDash([]);
   const landX = plan.target.x;
   const landY = plan.target.y;
   const land = PE(landX, landY);
-  const skill = playerShotSkill(p.lie, p.club, p.shape);
-  const spread = intend * (L.dst * (1 - skill * 0.55) + 0.025) + intend * Math.sin((L.ang * (1 - skill * 0.65) * Math.PI) / 180) * 0.6 + 0.22;
+  const spread = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius;
   ctx.strokeStyle = 'rgba(255,255,255,.85)';
   ctx.lineWidth = 1.6 * u;
   ctx.beginPath();
@@ -1909,7 +1908,7 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   ctx.stroke();
   // roll-out preview: a dimmer dashed line continuing the shot direction along the ground
   // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
-  const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape);
+  const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club);
   if (rollLen > 0.15) {
     const landingDistance = Math.hypot(landX - p.ball!.x, landY - p.ball!.y) || 1;
     const rollDx = (landX - p.ball!.x) / landingDistance;

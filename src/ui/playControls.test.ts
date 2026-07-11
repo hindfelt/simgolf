@@ -7,6 +7,7 @@ import { S } from '../game/state';
 describe('play controls accessibility and shot-shape presentation', () => {
   const hud = readFileSync(new URL('./PlayHud.tsx', import.meta.url), 'utf8');
   const input = readFileSync(new URL('../game/input.ts', import.meta.url), 'utf8');
+  const render = readFileSync(new URL('../game/render.ts', import.meta.url), 'utf8');
 
   it('exposes an explicit Hook alongside Draw and Fade', () => {
     expect(hud).toContain("['straight', 'fade', 'draw', 'hook', 'backspin', 'punch']");
@@ -17,6 +18,26 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain('aria-pressed={playHud.club === id}');
     expect(hud).toContain('aria-pressed={playHud.shape === id}');
     expect(hud).toContain('miles per hour toward ${windPoint}');
+  });
+
+  it('presents club strategy, lie restrictions, and shot forecasts as grouped controls', () => {
+    expect(hud).toContain('role="region" aria-label="Player round controls"');
+    expect(hud).toContain('role="group" aria-label="Shot setup"');
+    expect(hud).toContain('role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`}');
+    expect(hud).toContain('role="group" aria-label="Shot technique selection"');
+    expect(hud).toContain('disabled={!option.available}');
+    expect(hud).toContain("option.reason ?? 'Unavailable from this lie'");
+    expect(hud).toContain(": option.reason ?? 'Unavailable from this lie'}</small>");
+    expect(hud).toContain('playHud.selectedRole');
+    expect(hud).toContain("'Carry → est. finish'");
+    expect(hud).toContain('yards(playHud.finishDistance)');
+  });
+
+  it('uses the shared club profile in aim height, landing dispersion, and rollout previews', () => {
+    expect(render).toContain('clubLieProfile(p.lie, p.club).launchMultiplier');
+    expect(render).toContain('flightApexHeight(plan.targetDistance, heightMul)');
+    expect(render).toContain('playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius');
+    expect(render).toContain('playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club)');
   });
 
   it('supports keyboard aim, power adjustment, and firing on the canvas', () => {

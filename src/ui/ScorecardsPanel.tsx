@@ -108,7 +108,7 @@ export default function ScorecardsPanel() {
           <aside className="scorecardList" aria-label="Completed rounds">
             {!filtered.length && <p>No rounds match this filter.</p>}
             {filtered.map((record) => (
-              <button key={record.id} className={selected?.id === record.id ? 'selected' : ''} onClick={() => selectRecord(record)}>
+              <button key={record.id} aria-pressed={selected?.id === record.id} className={selected?.id === record.id ? 'selected' : ''} onClick={() => selectRecord(record)}>
                 <span className="roundDate">{new Date(record.completedAt).toLocaleDateString()}</span>
                 <b>{record.courseName}</b>
                 <small>{sourceLabel(record.source, record.localEvent)} · {record.holesPlayed} holes</small>
@@ -133,7 +133,7 @@ export default function ScorecardsPanel() {
               <div className="shotLogHead">
                 <div><b>Shot log</b><span>Hole {chosenHole?.hole} · Par {chosenHole?.par} · {relativeScoreLabel(chosenHole?.relative ?? 0)}</span></div>
                 <div className="holePicker">
-                  {selected.card.map((hole) => <button key={hole.holeId} className={chosenHole?.hole === hole.hole ? 'active' : ''} onClick={() => setSelectedHole(hole.hole)}>{hole.hole}</button>)}
+                  {selected.card.map((hole) => <button key={hole.holeId} aria-label={`Hole ${hole.hole}`} aria-pressed={chosenHole?.hole === hole.hole} className={chosenHole?.hole === hole.hole ? 'active' : ''} onClick={() => setSelectedHole(hole.hole)}>{hole.hole}</button>)}
                 </div>
               </div>
               {chosenHole && (

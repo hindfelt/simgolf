@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, ballFlightPosition, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud } from './engine';
+import { H, LIE, MAXE, PW, PH, SHOT_SHAPES, W } from './constants';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, exportSaveText, flightApexHeight, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud } from './engine';
+import { clubLieProfile, fallbackClubForLie, SEVERE_RECOVERY_LIES } from './clubProfiles';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { P } from './camera';
 import { idx, idxC } from './rng';
@@ -396,6 +397,121 @@ describe('save / load round-trip', () => {
     expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(base * 1.25);
   });
 
+  it('gives every club a distinct lie-aware strategic profile', () => {
+    expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'iron', 1));
+    expect(playerIntendedDistance('tee', 'iron', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'wedge', 1));
+
+    const driver = clubLieProfile('tee', 'driver');
+    const iron = clubLieProfile('tee', 'iron');
+    const wedge = clubLieProfile('tee', 'wedge');
+    expect(driver.launchMultiplier).toBeLessThan(iron.launchMultiplier);
+    expect(iron.launchMultiplier).toBeLessThan(wedge.launchMultiplier);
+    expect(driver.rolloutMultiplier).toBeGreaterThan(iron.rolloutMultiplier);
+    expect(iron.rolloutMultiplier).toBeGreaterThan(wedge.rolloutMultiplier);
+
+    for (const lie of SEVERE_RECOVERY_LIES) expect(clubLieProfile(lie, 'driver')).toMatchObject({ available: false });
+    expect(clubLieProfile('pot', 'driver').reason).toContain('pot bunker');
+    expect(clubLieProfile('rough', 'driver')).toMatchObject({ available: true });
+    expect(fallbackClubForLie('sand', 'driver')).toBe('wedge');
+
+    const ironRetention = clubLieProfile('sand', 'iron');
+    const wedgeRetention = clubLieProfile('sand', 'wedge');
+    expect(wedgeRetention.carryMultiplier).toBeGreaterThan(ironRetention.carryMultiplier);
+    expect(wedgeRetention.dispersionMultiplier).toBeLessThan(ironRetention.dispersionMultiplier);
+  });
+
+  it('uses the same club-aware dispersion model for wide Driver and tight Wedge shots', () => {
+    const driver = playerShotDispersion('tee', 'driver', 'straight', 6);
+    const iron = playerShotDispersion('tee', 'iron', 'straight', 6);
+    const wedge = playerShotDispersion('tee', 'wedge', 'straight', 6);
+    expect(driver.angularScale).toBeGreaterThan(iron.angularScale);
+    expect(iron.angularScale).toBeGreaterThan(wedge.angularScale);
+    expect(driver.lateral).toBeGreaterThan(iron.lateral);
+    expect(iron.lateral).toBeGreaterThan(wedge.lateral);
+    expect(playerShotDispersion('tee', 'iron', 'punch', 6).angularScale).toBeLessThan(iron.angularScale);
+  });
+
+  it('rejects Driver from a severe recovery lie without charging a stroke and falls back to Wedge', () => {
+    startRound();
+    S.player!.lie = 'sand';
+    S.player!.club = 'iron';
+    expect(setClub('driver')).toBe(false);
+    expect(S.player!.club).toBe('iron');
+
+    S.player!.club = 'driver'; // simulate a stale selection from an older save
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
+    playerFire(1, 0, 0.5);
+    expect(S.player!.club).toBe('wedge');
+    expect(S.player!.aim).toBeNull();
+    expect(S.player!.strokes).toBe(0);
+    expect(S.balls.filter((ball) => ball.owner === 'P')).toHaveLength(0);
+    quitRound();
+  });
+
+  it('publishes club availability, role, and carry-to-finish forecast through the live HUD', () => {
+    startRound();
+    S.wind.speed = 0;
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
+    updatePlayHud();
+    const teeHud = ui.get().playHud!;
+    expect(teeHud.clubOptions.driver).toMatchObject({ available: true, role: 'Low · runs' });
+    expect(teeHud.clubOptions.wedge).toMatchObject({ available: true, role: 'High · checks' });
+    expect(teeHud.finishDistance).toBeGreaterThan(teeHud.carry!);
+
+    S.player!.lie = 'pot';
+    S.player!.club = 'wedge';
+    updatePlayHud();
+    const recoveryHud = ui.get().playHud!;
+    expect(recoveryHud.clubOptions.driver.available).toBe(false);
+    expect(recoveryHud.clubOptions.driver.reason).toContain('pot bunker');
+    expect(recoveryHud.selectedRole).toBe('High · checks');
+    quitRound();
+  });
+
+  it('applies club launch and rollout profiles to real equal-carry shots', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 93, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.elevC.fill(0);
+    const results = {} as Record<'driver' | 'iron' | 'wedge', { height: number; finish: number }>;
+
+    for (const club of ['driver', 'iron', 'wedge'] as const) {
+      startRound();
+      S.wind.speed = 0;
+      setClub(club);
+      const power = 5 / playerIntendedDistance('tee', club, 1);
+      const start = { ...S.player!.ball! };
+      playerFire(1, 0, power);
+      results[club] = { height: S.balls.at(-1)!.h, finish: 0 };
+      expect(S.balls.at(-1)!.rollMultiplier).toBe(clubLieProfile('tee', club).rolloutMultiplier);
+      update(5);
+      update(5);
+      results[club].finish = S.player!.ball!.x - start.x;
+      quitRound();
+    }
+
+    expect(results.driver.height).toBeLessThan(results.iron.height);
+    expect(results.iron.height).toBeLessThan(results.wedge.height);
+    expect(results.driver.finish).toBeGreaterThan(results.iron.finish);
+    expect(results.iron.finish).toBeGreaterThan(results.wedge.finish);
+    random.mockRestore();
+  });
+
+  it('automatically selects Wedge after a Driver lands in a severe recovery lie', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 90, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.SAND);
+    S.elevC.fill(0);
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 0.25);
+    update(5);
+    expect(S.player).toMatchObject({ lie: 'sand', club: 'wedge', strokes: 1 });
+    quitRound();
+    random.mockRestore();
+  });
+
   it('curves fade, draw, and the stronger hook to their intended sides', () => {
     const carry = 12;
     expect(shapeCurveOffset('fade', carry, 1)).toBeGreaterThan(0);
@@ -405,7 +521,7 @@ describe('save / load round-trip', () => {
     expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
   });
 
-  it('keeps putting accuracy independent of the hidden full-swing shape', () => {
+  it('uses one putter dispersion profile independent of hidden full-swing club and shape', () => {
     S.proProfile.skills.drawShot = 0;
     S.proProfile.skills.fadeShot = 0;
     S.proProfile.skills.highBackspin = 0;
@@ -414,10 +530,32 @@ describe('save / load round-trip', () => {
     expect(playerShotSkill('green', 'iron', 'fade')).toBe(straight);
     expect(playerShotSkill('green', 'iron', 'hook')).toBe(straight);
     expect(playerShotSkill('green', 'iron', 'backspin')).toBe(straight);
+    const baseline = playerShotDispersion('green', 'iron', 'straight', 3.5);
+    expect(baseline.angularScale).toBe(0.8);
+    expect(playerShotDispersion('green', 'driver', 'hook', 3.5)).toEqual(baseline);
+    expect(playerShotDispersion('green', 'wedge', 'punch', 3.5)).toEqual(baseline);
   });
 
-  it('uses the same complete wind and hook endpoint for the guide and launched ball', () => {
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+  it('launches identical putts when only hidden full-swing club and shape differ', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.75);
+    const putt = (club: 'driver' | 'wedge', shape: 'hook' | 'punch') => {
+      startRound();
+      S.player!.ball = { x: 8, y: 8 };
+      S.player!.lie = 'green';
+      S.player!.club = club;
+      S.player!.shape = shape;
+      playerFire(1, 0, 0.4);
+      const ball = S.balls.at(-1)!;
+      const landing = { x: ball.tx, y: ball.ty };
+      quitRound();
+      return landing;
+    };
+    expect(putt('driver', 'hook')).toEqual(putt('wedge', 'punch'));
+    random.mockRestore();
+  });
+
+  it('uses the complete wind/curve target chord for preview, actual dispersion, and flight apex', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.75);
     S.holes = [{ id: 94, tee: { x: 12, y: 20 }, cup: { x: 40, y: 20 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
     S.elevC.fill(0);
     startRound();
@@ -431,10 +569,21 @@ describe('save / load round-trip', () => {
     expect(plan.target.x).toBeGreaterThan(calm.target.x);
     expect(headwind.target.x).toBeLessThan(calm.target.x);
     expect(playerShotPlanPosition(plan, 1)).toEqual(plan.target);
+    expect(plan.targetDistance).toBeCloseTo(Math.hypot(plan.target.x - start.x, plan.target.y - start.y), 10);
+    expect(plan.targetDistance).toBeGreaterThan(plan.intend);
+    const dispersion = playerShotDispersion('tee', 'iron', 'hook', plan.targetDistance);
+    expect(dispersion.previewRadius).toBeGreaterThan(playerShotDispersion('tee', 'iron', 'hook', plan.intend).previewRadius);
+
+    const targetAngle = Math.atan2(plan.target.y - start.y, plan.target.x - start.x);
+    const expectedAngle = targetAngle + 0.5 * LIE.tee.ang * (Math.PI / 180) * (1.35 - dispersion.skill) * dispersion.angularScale;
+    const expectedDistance = plan.targetDistance * (1 + 0.5 * (LIE.tee.dst + (1 - dispersion.skill) * 0.05));
 
     playerFire(1, 0, 1);
-    expect(S.balls.at(-1)!.tx).toBeCloseTo(plan.target.x, 6);
-    expect(S.balls.at(-1)!.ty).toBeCloseTo(plan.target.y, 6);
+    const ball = S.balls.at(-1)!;
+    expect(ball.tx).toBeCloseTo(start.x + Math.cos(expectedAngle) * expectedDistance, 6);
+    expect(ball.ty).toBeCloseTo(start.y + Math.sin(expectedAngle) * expectedDistance, 6);
+    const heightMultiplier = SHOT_SHAPES.hook.heightMul * clubLieProfile('tee', 'iron').launchMultiplier;
+    expect(ball.h).toBeCloseTo(flightApexHeight(plan.targetDistance, heightMultiplier), 10);
     quitRound();
     random.mockRestore();
   });
@@ -506,6 +655,8 @@ describe('save / load round-trip', () => {
   it('uses landing-lie rollout scale and stops backspin instead of scaling roll by carry', () => {
     expect(playerEstimatedRoll('fair', 'straight')).toBeCloseTo(0.9);
     expect(playerEstimatedRoll('firmfair', 'straight')).toBeCloseTo(1.5);
+    expect(playerEstimatedRoll('fair', 'straight', 'driver')).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'iron'));
+    expect(playerEstimatedRoll('fair', 'straight', 'iron')).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'wedge'));
     expect(playerEstimatedRoll('fair', 'backspin')).toBe(0);
   });
 

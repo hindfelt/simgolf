@@ -216,6 +216,8 @@ export interface Ball {
   curvePerpX?: number;
   curvePerpY?: number;
   curveDistance?: number;
+  /** Club-specific ground release; Backspin still bypasses rollout entirely. */
+  rollMultiplier?: number;
 }
 
 export interface Floater {

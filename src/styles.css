@@ -908,7 +908,7 @@ canvas.game {
 }
 .worldCareerStrip > span:first-child { min-width: 82px; }
 .worldCareerStrip b { color: #ffe48c; font-size: 9px; letter-spacing: .03em; }
-.worldCareerStrip small { color: #aeb5d4; font-size: 5.5px; }
+.worldCareerStrip small { color: #c2c7df; font-size: 7.5px; }
 .worldScreenBody {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(245px, .78fr);
@@ -1070,7 +1070,7 @@ canvas.game {
     linear-gradient(180deg, rgba(235,229,219,.9), rgba(203,195,190,.8));
 }
 .worldProperty.prestigeLocked .propertyPin { border-color: #433554; background: linear-gradient(135deg, #9b8daf, #5e5072); }
-.worldProperty.prestigeLocked em { color: #655077; font-size: 6.5px; }
+.worldProperty.prestigeLocked em { color: #655077; font-size: 7.5px; }
 .worldProperty.cashLocked .propertyPin { border-color: #6d4a33; background: linear-gradient(135deg, #c6a272, #8e6544); }
 .worldProperty.purchased {
   border-color: #52566f;
@@ -1194,7 +1194,7 @@ canvas.game {
   border-bottom: 1px solid color-mix(in srgb, var(--property-dark), transparent 78%);
 }
 .propertyUnlocks header b { color: var(--property-dark); font-family: Copperplate, 'Bookman Old Style', Georgia, serif; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
-.propertyUnlocks header span { color: #6c6758; font-size: 7px; font-weight: 800; }
+.propertyUnlocks header span { color: #6c6758; font-size: 8px; font-weight: 800; }
 .propertyUnlocks ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1210,7 +1210,7 @@ canvas.game {
   gap: 5px;
   padding: 4px 5px;
   border-radius: 5px;
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 800;
 }
 .propertyUnlocks li i { flex: 0 0 13px; height: 13px; display: grid; place-items: center; border-radius: 50%; font-size: 8px; font-style: normal; }
@@ -1242,8 +1242,8 @@ canvas.game {
 .portfolioDeed span { min-width: 0; }
 .portfolioDeed b,
 .portfolioDeed small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.portfolioDeed b { color: var(--property-dark); font-size: 8px; }
-.portfolioDeed small { margin-top: 1px; color: #6b6659; font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.portfolioDeed b { color: var(--property-dark); font-size: 9px; }
+.portfolioDeed small { margin-top: 1px; color: #6b6659; font-size: 7.5px; font-weight: 800; text-transform: uppercase; }
 .portfolioVisit { border-color: #5c3157; background: linear-gradient(180deg, #b6608c, #793f67); box-shadow: 0 3px 0 #4e2844; }
 .propertyFacts {
   display: grid;
@@ -3271,6 +3271,13 @@ canvas.game:focus-visible {
 @media (max-width:760px) {
   .setupModal { max-width: 720px; }
   .worldScreenBody { grid-template-columns: 1fr; }
+  .worldMap {
+    max-height: 42dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: #9a7735 rgba(54,47,35,.16);
+    scrollbar-width: thin;
+  }
   .propertyInspector { min-height: 0; }
   .propertyInspector > p { min-height: 0; }
   .propertyFacts { grid-template-columns: 82px repeat(2, minmax(0, 1fr)); }
@@ -3811,7 +3818,7 @@ canvas.game:focus-visible {
   .worldCareerStrip { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .worldCareerStrip > span,
   .worldCareerStrip > span:first-child { min-width: 0; padding-inline: 4px; text-align: left; }
-  .worldCareerStrip b { font-size: 7px; }
+  .worldCareerStrip b { font-size: 8px; }
   .worldScreenBody { padding: 6px; }
   .worldMap { grid-template-columns: 1fr; padding: 6px; }
   .worldProperty { min-height: 49px; }
@@ -4162,8 +4169,10 @@ canvas.game:focus-visible {
   color: var(--desk-ivory);
 }
 .fieldDeskPanel.catalogMode {
-  max-height: 224px;
-  overflow: hidden;
+  max-height: min(224px, calc(100dvh - 128px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .fieldDeskPanel.manageMode {
   left: 12px;
@@ -4418,14 +4427,42 @@ canvas.game:focus-visible {
   background: linear-gradient(180deg, var(--desk-brass-hi), var(--desk-brass));
   color: #3c2b07;
 }
+.playHud .clubBtn:disabled {
+  border-color: #898777;
+  background: repeating-linear-gradient(-45deg, #d6d2c1 0 5px, #c8c4b4 5px 10px);
+  color: #61665e;
+  cursor: not-allowed;
+  filter: saturate(.25);
+  opacity: .72;
+}
+.playHud .clubBtn:disabled small { color: #5d625b; }
 .playHud .windReadout { color: #d3ded4; font-size: 9px; }
 .playHud .quitBtn { min-height:34px; border-radius: 5px; background: var(--desk-oxblood); font-size: 9px; }
 .playControls { bottom: 8px; }
 
+@media (max-width: 1300px) {
+  .playHud {
+    left: 6px;
+    right: 6px;
+    top: 42px;
+    max-width: none;
+    transform: none;
+    flex-wrap: wrap;
+    gap: 5px 8px;
+  }
+  .shotWorkbench {
+    flex: 1 0 100%;
+    width: 100%;
+    padding-bottom: 2px;
+    overflow-x: auto;
+  }
+  .shotControlGroup { flex: 0 0 auto; }
+}
+
 @media (max-width: 900px) {
   .gauges { flex-direction: column; }
   .hint { top: 101px; max-width: calc(100vw - 20px); }
-  .fieldDeskPanel.catalogMode { max-height: 230px; }
+  .fieldDeskPanel.catalogMode { max-height: min(230px, calc(100dvh - 128px)); }
   .catalogMode .catalogCard { flex-basis: 154px; }
 }
 
@@ -4461,7 +4498,7 @@ canvas.game:focus-visible {
     bottom: 153px;
     margin: 0;
   }
-  .fieldDeskPanel.catalogMode { max-height: 238px; }
+  .fieldDeskPanel.catalogMode { max-height: min(238px, calc(100dvh - 164px)); }
   .fieldDeskPanel.manageMode,
   .managementPanel { max-height: min(62vh, calc(100dvh - 164px)); }
   .fieldDeskPanel .bpHead > span:not(.deskSeal) { display: none; }
@@ -4495,8 +4532,8 @@ canvas.game:focus-visible {
   .catalogMode .catalogCard { flex-basis: 142px; min-height: 99px; }
   .fieldDeskPanel .facilityTabs { width: 100%; }
   .playRoundStatus { min-width: 0; flex: 1; }
-  .shotTelemetry { flex: 0 0 100%; grid-template-columns: repeat(4, 1fr); }
-  .shotTelemetry > span:nth-child(2) { border-right: 1px solid rgba(225,195,111,.18); }
+  .shotTelemetry { flex: 0 0 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shotTelemetry > span:nth-child(2) { border-right: 0; }
   .regularCard { grid-template-columns:44px minmax(0,1fr); gap:7px; padding-inline:7px; }
   .regularCard .characterPortrait { width:44px; height:54px; flex-basis:44px; }
   .regularCard .characterPortrait canvas { width:38px; height:51px; }
@@ -4504,6 +4541,73 @@ canvas.game:focus-visible {
   .proChoice { grid-template-columns:1fr; }
   .proSkillGrid article { grid-template-columns:minmax(0,1fr) 82px; }
   .proSkillGrid article .skillStepper { grid-column:1/-1; width:126px; justify-self:end; }
+}
+
+@media (pointer: coarse) {
+  .fieldControls .orb,
+  .fieldMenu summary.orb,
+  .fieldDeskPanel .bpClose,
+  .fieldDeskPanel .facilityTabs button,
+  .catalogMode .catalogFilters button,
+  .playHud .clubBtn,
+  .playHud .shapeBtn,
+  .playHud .quitBtn,
+  .panelClose,
+  .reportTabs button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .fieldControls .orb,
+  .fieldMenu summary.orb,
+  .fieldDeskPanel .bpClose,
+  .panelClose {
+    width: 40px;
+    height: 40px;
+  }
+  .toolGroup,
+  .scorecardToolbar > button,
+  .scoreFilters button,
+  .scorecardActions button,
+  .challengeTerms button,
+  .proFileActions button {
+    min-height: 40px;
+  }
+  .gBtn,
+  .holeReorder button,
+  .holeFeeRow button,
+  .holePicker button,
+  .proPalette button,
+  .skillStepper button,
+  .retiredCourseRemove {
+    min-width: 32px;
+    min-height: 32px;
+  }
+  .gBtn,
+  .holeReorder button,
+  .holeFeeRow button,
+  .holePicker button,
+  .proPalette button,
+  .skillStepper button,
+  .retiredCourseRemove {
+    width: 32px;
+    height: 32px;
+  }
+  .skillStepper { grid-template-columns: 32px 1fr 32px; }
+  .proPalette { flex-wrap: wrap; }
+  .proPalette b { flex-basis: 100%; }
+}
+
+@media (max-width: 700px) and (pointer: coarse) {
+  .fieldControls { bottom: 124px; }
+  .fieldControls.playControls { top: 96px; bottom: auto; }
+  .fieldDeskPanel,
+  .fieldDeskPanel.catalogMode,
+  .fieldDeskPanel.manageMode,
+  .managementPanel { bottom: 178px; }
+  .fieldDeskPanel.catalogMode { max-height: min(238px, calc(100dvh - 189px)); }
+  .fieldDeskPanel.manageMode,
+  .managementPanel { max-height: min(62vh, calc(100dvh - 189px)); }
+  .ticker { bottom: 182px; }
 }
 
 /* Character identity cards reuse the exact sprite palette seen on the course. */

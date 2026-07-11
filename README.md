@@ -61,6 +61,11 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
 - Full port of the playable prototype — course editor (holes, fairway, sand,
   water, trees, flowers, bulldoze), golfer AI with moods/comments/scoring,
   green-fee economy, reputation, play-your-own-round, audio, mobile touch.
+- **Strategic manual play** — Driver, Iron, and Wedge have distinct lie
+  availability, recovery carry, launch, control, and rollout. Straight, Fade,
+  Draw, Hook, Backspin, and Punch share one guide/physics forecast, with
+  pointer and keyboard aiming. Named golfers use deterministic pixel archetypes
+  with varied builds, headwear, hair, outfits, faces, and pants.
 - **Buildings & facilities** (`buildings.ts`) — pro shop, snack bar, driving
   range, putting green, cart garage, hotel, tennis, marina, airstrip, building
   lots, benches, flower beds, landmark, ballwasher, and scenic bridge. The
@@ -117,7 +122,7 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — 177 browser-game tests covering course construction,
+- **Regression coverage** — 195 browser-game tests covering course construction,
   simulation, persistence, the World Screen/property lifecycle, bridge pricing,
   restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,

@@ -49,16 +49,78 @@ function shade(hex: string, f: number): string {
 
 export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt';
 
+export type GolferBuild = 'compact' | 'classic' | 'broad';
+export type GolferHeadwear = 'cap' | 'visor' | 'flat-cap' | 'bucket-hat';
+export type GolferHair = 'close' | 'side-locks' | 'curls' | 'tail';
+
+/**
+ * Stable visual identity derived from a golfer's name. Keeping this pure makes
+ * the cast recognizable when their palette, animation frame, or camera view
+ * changes, and lets the tiny world sprites share an identity with UI portraits.
+ */
+export interface GolferAppearance {
+  build: GolferBuild;
+  headwear: GolferHeadwear;
+  hair: GolferHair;
+  outfit: number;
+  face: number;
+  pants: number;
+}
+
 const PANTS = ['#3b4252', '#6b4f35', '#75787f', '#4a5d3a', '#7d4444', '#e8e4d8'];
+const HAIR = ['#34251f', '#6e3f28', '#b96f3e', '#d7c8aa', '#272a31'];
+const BUILDS = ['compact', 'classic', 'broad'] as const;
+const HEADWEAR = ['cap', 'visor', 'flat-cap', 'bucket-hat'] as const;
+const HAIRSTYLES = ['close', 'side-locks', 'curls', 'tail'] as const;
+
 function hashStr(s: string): number {
   let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = ((h ^ s.charCodeAt(i)) * 16777619) >>> 0;
-  return h;
+  // Math.imul preserves the low 32 bits. Normal JS multiplication loses them
+  // once the FNV intermediate exceeds Number's safe integer range, which used
+  // to collapse almost the entire named cast into outfit variant zero.
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+  // Avalanche the FNV result so independently salted appearance lanes do not
+  // inherit correlations from short or similarly suffixed character names.
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x846ca68b);
+  h ^= h >>> 16;
+  return h >>> 0;
 }
+
+function appearanceIndex(seed: string, lane: string, count: number): number {
+  return hashStr(seed + '\0' + lane) % count;
+}
+
+export function golferAppearance(name: string): GolferAppearance {
+  const seed = name.trim().toLowerCase() || 'anonymous golfer';
+  return {
+    build: BUILDS[appearanceIndex(seed, 'build', BUILDS.length)],
+    headwear: HEADWEAR[appearanceIndex(seed, 'headwear', HEADWEAR.length)],
+    hair: HAIRSTYLES[appearanceIndex(seed, 'hair', HAIRSTYLES.length)],
+    outfit: appearanceIndex(seed, 'outfit', 4),
+    face: appearanceIndex(seed, 'face', 5),
+    pants: appearanceIndex(seed, 'pants', PANTS.length),
+  };
+}
+
+const BUILD_GEOMETRY: Record<GolferBuild, {
+  torsoX: number;
+  torsoW: number;
+  hipsX: number;
+  hipsW: number;
+  headX: number;
+  headW: number;
+}> = {
+  compact: { torsoX: 9, torsoW: 7, hipsX: 10, hipsW: 5, headX: 10, headW: 5 },
+  classic: { torsoX: 8, torsoW: 8, hipsX: 9, hipsW: 6, headX: 9, headW: 6 },
+  broad: { torsoX: 7, torsoW: 10, hipsX: 8, hipsW: 8, headX: 9, headW: 7 },
+};
 
 /**
  * 24x32 golfer, drawn facing right. `view: 'rear'` is used while walking away from the
- * camera (up-screen) — no face or cap brim visible, so it doesn't read as still facing us.
+ * camera (up-screen) — no face or forward-only hat bill is visible, so it reads as a back view.
  */
 export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front', identity = ''): HTMLCanvasElement {
   const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
@@ -66,7 +128,12 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   if (hit) return hit;
 
   const [art, ctx, p] = makeCanvas(24, 32);
-  const pants = PANTS[hashStr(shirt + skin + cap) % PANTS.length];
+  const identitySeed = identity || shirt + skin + cap;
+  const normalizedIdentity = identitySeed.trim().toLowerCase() || 'anonymous golfer';
+  const appearance = golferAppearance(normalizedIdentity);
+  const geometry = BUILD_GEOMETRY[appearance.build];
+  const pants = PANTS[appearance.pants];
+  const hair = HAIR[appearanceIndex(normalizedIdentity, 'hair-tone', HAIR.length)];
   const shirtDk = shade(shirt, 0.78);
   const capDk = shade(cap, 0.75);
   const skinDk = shade(skin, 0.8);
@@ -76,7 +143,6 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const putt = frame === 'putt';
   const address = frame === 'address' || putt;
   const rear = view === 'rear' && !address && !swingBack && !follow; // swing poses always show the front
-  const identityHash = hashStr(identity || shirt + skin + cap);
 
   // golf bag on the back while walking
   if (walking) {
@@ -119,45 +185,87 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(13, 29, 3, 2, shoe);
   }
   // hips / shorts
-  p(9, 20, 6, 4, pants);
-  p(9, 20, 1, 4, shade(pants, 0.8));
+  p(geometry.hipsX, 20, geometry.hipsW, 4, pants);
+  p(geometry.hipsX, 20, 1, 4, shade(pants, 0.8));
 
   // torso (slight crouch for address/putt poses)
   const ty = address ? 12 : 11;
-  p(8, ty, 8, 8 - (address ? 0 : 0), shirt);
-  p(8, ty, 8, 8, shirt);
-  p(8, ty, 1, 8, shirtDk); // back shading
-  p(8, ty + 7, 8, 1, shirtDk);
-  // Named-cast outfit details: stripe, placket, vest or pocket make silhouettes
-  // recognizable beyond a simple palette swap while staying readable at 1px.
-  const outfit = identityHash % 4;
-  if (outfit === 0) p(11, ty + 1, 2, 6, shade(shirt, 1.22));
-  else if (outfit === 1) { p(9, ty + 2, 6, 1, shade(shirt, 1.2)); p(9, ty + 5, 6, 1, shirtDk); }
-  else if (outfit === 2) { p(9, ty + 1, 2, 6, shirtDk); p(14, ty + 1, 1, 6, shirtDk); }
-  else p(13, ty + 2, 2, 2, shade(shirt, 1.25));
+  const { torsoX, torsoW, headX, headW } = geometry;
+  const torsoRight = torsoX + torsoW;
+  const chestCenter = Math.floor(torsoX + torsoW / 2);
+  const frontArmX = torsoRight - 2;
+  p(torsoX, ty, torsoW, 8, shirt);
+  p(torsoX, ty, 1, 8, shirtDk); // back shading
+  p(torsoX, ty + 7, torsoW, 1, shirtDk);
+  // Named-cast outfit details: stripe, placket, vest or pocket reinforce the
+  // larger silhouette cues while staying readable at 1px.
+  if (appearance.outfit === 0) p(chestCenter - 1, ty + 1, 2, 6, shade(shirt, 1.22));
+  else if (appearance.outfit === 1) {
+    p(torsoX + 1, ty + 2, torsoW - 2, 1, shade(shirt, 1.2));
+    p(torsoX + 1, ty + 5, torsoW - 2, 1, shirtDk);
+  } else if (appearance.outfit === 2) {
+    p(torsoX + 1, ty + 1, 2, 6, shirtDk);
+    p(torsoRight - 2, ty + 1, 1, 6, shirtDk);
+  } else p(torsoRight - 3, ty + 2, 2, 2, shade(shirt, 1.25));
   // collar (not visible from behind)
-  if (!rear) p(11, ty - 1, 3, 1, '#f2f0e8');
+  if (!rear) p(chestCenter - 1, ty - 1, 3, 1, '#f2f0e8');
 
-  // head + cap
+  // Head, hair and headwear are deliberately stronger silhouette cues than the
+  // one-pixel facial details: they remain legible when the 24x32 art is zoomed out.
   const hy = address ? 4 : 3;
-  p(9, hy + 2, 6, 5, skin);
-  if (rear) {
-    // back of the head: no face, cap sits as a full dome with no separate brim
-    p(9, hy + 2, 6, 5, skinDk);
-    p(9, hy, 6, 3, cap);
-    p(9, hy, 1, 3, capDk);
+  const headRight = headX + headW;
+  if (appearance.hair === 'close') p(headX - 1, hy + 2, 1, 4, hair);
+  else if (appearance.hair === 'side-locks') {
+    p(headX - 1, hy + 2, 2, 5, hair);
+    p(headX, hy + 6, 2, 2, hair);
+  } else if (appearance.hair === 'curls') {
+    p(headX - 1, hy + 1, 2, 2, hair);
+    p(headX - 2, hy + 3, 2, 2, hair);
+    p(headX - 1, hy + 5, 2, 2, hair);
   } else {
-    p(9, hy + 2, 1, 5, skinDk);
-    p(13, hy + 4, 1, 1, '#26221e'); // eye
-    p(9, hy, 6, 2, cap);
-    p(9, hy, 1, 2, capDk);
-    p(14, hy + 1, 4, 1, capDk); // brim
-    const feature = (identityHash >>> 3) % 5;
-    if (feature === 0) { p(11, hy + 4, 4, 1, '#3b3028'); p(12, hy + 4, 1, 1, '#d8e6df'); }
-    else if (feature === 1) p(12, hy + 6, 3, 1, '#6a3f27');
-    else if (feature === 2) p(9, hy + 3, 1, 3, shade(cap, 0.48));
-    else if (feature === 3) p(14, hy + 5, 1, 1, '#c8786b');
-    else p(12, hy + 3, 3, 1, shade(cap, 0.5));
+    p(headX - 1, hy + 2, 2, 4, hair);
+    p(headX - 3, hy + 5, 3, 2, hair);
+    p(headX - 3, hy + 7, 2, 2, hair);
+  }
+  p(headX, hy + 2, headW, 5, skin);
+  if (rear) {
+    // Back of the head: no face. Hair and each hat keep their identity shape.
+    p(headX, hy + 2, headW, 5, skinDk);
+    p(headX, hy + 4, headW, 3, hair);
+  } else {
+    p(headX, hy + 2, 1, 5, skinDk);
+    p(headRight - 2, hy + 4, 1, 1, '#26221e'); // eye
+  }
+
+  if (appearance.headwear === 'cap') {
+    p(headX, hy, headW, rear ? 3 : 2, cap);
+    p(headX, hy, 1, rear ? 3 : 2, capDk);
+    if (!rear) p(headRight - 1, hy + 1, 4, 1, capDk);
+  } else if (appearance.headwear === 'visor') {
+    // Hair remains visible above the band; the long bill reads at course scale.
+    p(headX, hy, headW, 2, hair);
+    p(headX, hy + 1, headW, 1, cap);
+    p(headX, hy + 1, 1, 1, capDk);
+    if (!rear) p(headRight - 1, hy + 1, 4, 1, capDk);
+  } else if (appearance.headwear === 'flat-cap') {
+    p(headX, hy, Math.max(3, headW - 1), 1, cap);
+    p(headX - 1, hy + 1, headW + 1, 2, cap);
+    p(headX - 1, hy + 1, 1, 2, capDk);
+    if (!rear) p(headRight - 1, hy + 2, 3, 1, capDk);
+  } else {
+    p(headX, hy, headW, 2, cap);
+    p(headX, hy, 1, 2, capDk);
+    p(headX - 2, hy + 2, headW + 4, 1, capDk);
+  }
+
+  if (!rear) {
+    if (appearance.face === 0) {
+      p(Math.max(headX + 1, headRight - 4), hy + 4, Math.min(4, headW - 1), 1, '#3b3028');
+      p(headRight - 3, hy + 4, 1, 1, '#d8e6df');
+    } else if (appearance.face === 1) p(headRight - 3, hy + 6, 3, 1, '#6a3f27');
+    else if (appearance.face === 2) p(headX, hy + 3, 1, 3, hair);
+    else if (appearance.face === 3) p(headRight - 1, hy + 5, 1, 1, '#c8786b');
+    else p(headRight - 3, hy + 3, 3, 1, hair);
   }
 
   // arms + club
@@ -165,39 +273,39 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const steel = '#c9ced4';
   if (swingBack) {
     // arms up behind, club raised over the shoulder
-    p(8, ty - 3, 2, 4, shirt);
-    p(7, ty - 4, 2, 2, skin);
+    p(torsoX, ty - 3, 2, 4, shirt);
+    p(torsoX - 1, ty - 4, 2, 2, skin);
     ctx.strokeStyle = grey;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(7.5, ty - 4);
+    ctx.moveTo(torsoX - 0.5, ty - 4);
     ctx.lineTo(2.5, ty - 9);
     ctx.stroke();
     p(1, ty - 11, 2, 2, steel);
   } else if (follow) {
     // follow-through: club swung up in front
-    p(14, ty - 3, 2, 4, shirt);
-    p(15, ty - 4, 2, 2, skin);
+    p(frontArmX, ty - 3, 2, 4, shirt);
+    p(frontArmX + 1, ty - 4, 2, 2, skin);
     ctx.strokeStyle = grey;
     ctx.beginPath();
-    ctx.moveTo(16, ty - 4);
+    ctx.moveTo(frontArmX + 2, ty - 4);
     ctx.lineTo(21.5, ty - 9);
     ctx.stroke();
     p(21, ty - 11, 2, 2, steel);
   } else if (address) {
     // both arms down to the grip, club to the ball
-    p(14, ty + 1, 2, 5, shirt);
-    p(14, ty + 6, 2, 2, skin);
+    p(frontArmX, ty + 1, 2, 5, shirt);
+    p(frontArmX, ty + 6, 2, 2, skin);
     ctx.strokeStyle = grey;
     ctx.beginPath();
-    ctx.moveTo(15, ty + 8);
+    ctx.moveTo(frontArmX + 1, ty + 8);
     ctx.lineTo(putt ? 16 : 19, 29);
     ctx.stroke();
     p(putt ? 15 : 18, 29, 3, 1.5, steel);
   } else {
     // relaxed arm at the side
-    p(14, ty + 1, 2, 5, shirt);
-    p(14, ty + 6, 2, 2, skin);
+    p(frontArmX, ty + 1, 2, 5, shirt);
+    p(frontArmX, ty + 6, 2, 2, skin);
   }
 
   const done = outlined(art, '#20242b');

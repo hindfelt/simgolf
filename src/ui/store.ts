@@ -27,8 +27,12 @@ export interface PlayHudInfo {
   lie: string;
   pinDistance: number;
   clubRanges: Record<ClubId, number>;
+  clubOptions: Record<ClubId, { carry: number; available: boolean; reason: string | null; role: string }>;
   power: number | null;
   carry: number | null;
+  rollout: number | null;
+  finishDistance: number | null;
+  selectedRole: string;
   club: ClubId;
   shape: ShotShape;
   windSpeed: number;

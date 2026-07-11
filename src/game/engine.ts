@@ -33,6 +33,7 @@ import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesP
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 import { findPath } from './pathfind';
 import { isWaterBackedTile } from './bridges';
+import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -112,6 +113,14 @@ export function updatePlayHud() {
     iron: playerIntendedDistance(p.lie, 'iron', 1),
     wedge: playerIntendedDistance(p.lie, 'wedge', 1),
   };
+  const clubOptions = Object.fromEntries((['driver', 'iron', 'wedge'] as ClubId[]).map((clubId) => {
+    const profile = clubLieProfile(p.lie, clubId);
+    return [clubId, { carry: clubRanges[clubId], available: profile.available, reason: profile.reason, role: profile.role }];
+  })) as Record<ClubId, { carry: number; available: boolean; reason: string | null; role: string }>;
+  const plan = aim && p.ball ? playerShotPlan(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power) : null;
+  const landingLie = plan ? lieOf(plan.target.x, plan.target.y) : null;
+  const rollout = plan && p.lie !== 'green' && landingLie ? playerEstimatedRoll(landingLie, p.shape, p.club) : null;
+  const landingDistance = plan && p.ball ? dist(p.ball, plan.target) : null;
   ui.set({
     playHud: {
       holeLabel: 'Hole ' + (p.holeIdx + 1) + ' of ' + S.holes.length + ' · Par ' + h.par,
@@ -129,8 +138,12 @@ export function updatePlayHud() {
       lie: p.lie,
       pinDistance: dist(p.ball ?? h.tee, h.cup),
       clubRanges,
+      clubOptions,
       power,
-      carry: power === null ? null : playerIntendedDistance(p.lie, p.club, power),
+      carry: plan?.intend ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
+      rollout,
+      finishDistance: landingDistance === null ? null : landingDistance + (rollout ?? 0),
+      selectedRole: clubLieProfile(p.lie, p.club).role,
       club: p.club,
       shape: p.shape,
       windSpeed: S.wind.speed,
@@ -1201,14 +1214,19 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   d = Math.max(minD, d - (elevAt(lx, ly) - elevAt(from.x, from.y)) * slopePenalty);
   return { x: clamp(from.x + Math.cos(ang) * d, 0.6, W - 0.6), y: clamp(from.y + Math.sin(ang) * d, 0.6, H - 0.6), power: d };
 }
-type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance'>;
-function startBall(spec: BallSpec, heightMul = 1) {
+type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'rollMultiplier'>;
+/** Shared screen-space flight apex used by launched balls and the aim guide. */
+export function flightApexHeight(targetDistance: number, heightMultiplier = 1): number {
+  return Math.min(64, 10 + Math.max(0, targetDistance) * 4.5) * heightMultiplier;
+}
+
+function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number) {
   const d = dist({ x: spec.fx, y: spec.fy }, { x: spec.tx, y: spec.ty });
   const ball: Ball = {
     ...spec,
     t: 0,
     dur: spec.kind === 'fly' ? 0.45 + d * 0.055 : 0.25 + d * 0.1,
-    h: spec.kind === 'fly' ? Math.min(64, 10 + d * 4.5) * heightMul : 0,
+    h: spec.kind === 'fly' ? flightApexHeight(nominalFlightDistance ?? d, heightMul) : 0,
     x: spec.fx,
     y: spec.fy,
   };
@@ -1257,8 +1275,8 @@ function lostBallImpact(lie: 'water' | 'stream', pos: Vec) {
   }
 }
 
-function rollFrom(pos: Vec, dir: Vec, terrKey: string): { pos: Vec; hazard: ({ x: number; y: number; lie: 'water' | 'stream' }) | null } {
-  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rand(0.7, 1.3);
+function rollFrom(pos: Vec, dir: Vec, terrKey: string, rollMultiplier = 1): { pos: Vec; hazard: ({ x: number; y: number; lie: 'water' | 'stream' }) | null } {
+  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rollMultiplier * rand(0.7, 1.3);
   let p = { x: pos.x, y: pos.y };
   const d = { x: dir.x, y: dir.y };
   let guard = 60; // slope feedback could otherwise keep a ball rolling forever
@@ -1325,7 +1343,7 @@ function resolveFly(b: Ball) {
   const dd = dist(from, pos);
   if (dd > 0.2) {
     const dir = { x: (pos.x - from.x) / dd, y: (pos.y - from.y) / dd };
-    const r = rollFrom(pos, dir, lieOf(pos.x, pos.y));
+    const r = rollFrom(pos, dir, lieOf(pos.x, pos.y), b.rollMultiplier);
     if (r.hazard) {
       lostBallImpact(r.hazard.lie, r.hazard);
       events.push(r.hazard.lie);
@@ -2114,11 +2132,12 @@ export function playerIntendedDistance(lie: LieKey, clubId: ClubId, power: numbe
   const pro = activePlayingPro();
   const lieInfo = LIE[lie] || LIE.rough;
   const club = CLUBS[clubId];
+  const clubProfile = clubLieProfile(lie, clubId);
   const clubMul = lie === 'green' ? 1 : club.mul;
   const powerMul = 1 + pro.skills.powerHitter * 0.012;
   const driveMul = lie !== 'green' && clubId === 'driver' ? 1 + pro.skills.longDriver * 0.015 : 1;
   const recoveryMul = RECOVERY_LIES.has(lie) ? 1 + pro.skills.recovery * 0.018 : 1;
-  return clamp(power, lie === 'green' ? 0.02 : 0.08, 1) * lieInfo.max * clubMul * powerMul * driveMul * recoveryMul;
+  return clamp(power, lie === 'green' ? 0.02 : 0.08, 1) * lieInfo.max * clubMul * clubProfile.carryMultiplier * powerMul * driveMul * recoveryMul;
 }
 
 export function playerShotSkill(lie: LieKey, clubId: ClubId, shape: ShotShape): number {
@@ -2136,6 +2155,33 @@ export function playerShotSkill(lie: LieKey, clubId: ClubId, shape: ShotShape): 
   return clamp(skill, 0.58, 0.99);
 }
 
+export interface PlayerShotDispersion {
+  /** Effective accuracy skill used by aimShot; putting ignores hidden full-swing state. */
+  skill: number;
+  /** Multiplier passed directly to aimShot's angular Gaussian. */
+  angularScale: number;
+  /** One-standard-deviation forward/back distance in world tiles. */
+  distance: number;
+  /** One-standard-deviation lateral miss in world tiles. */
+  lateral: number;
+  /** Compact screen-space footprint used by the landing ellipse. */
+  previewRadius: number;
+}
+
+/** Shared player dispersion model, used by both the real shot and the aim ellipse. */
+export function playerShotDispersion(lie: LieKey, clubId: ClubId, shape: ShotShape, nominalTargetDistance: number): PlayerShotDispersion {
+  const L = LIE[lie] || LIE.rough;
+  const putting = lie === 'green';
+  const skill = playerShotSkill(lie, putting ? 'iron' : clubId, putting ? 'straight' : shape);
+  // Putter has one fixed control profile. The hidden full-swing club and shape remain
+  // selected for the next tee, but cannot alter either the preview or actual putt.
+  const angularScale = putting ? 0.8 : clubLieProfile(lie, clubId).dispersionMultiplier * (shape === 'punch' ? 0.55 : 1);
+  const angleStd = L.ang * (Math.PI / 180) * (1.35 - skill) * angularScale;
+  const distance = nominalTargetDistance * (L.dst + (1 - skill) * 0.05);
+  const lateral = nominalTargetDistance * Math.sin(angleStd);
+  return { skill, angularScale, distance, lateral, previewRadius: distance + lateral * 0.6 + 0.22 };
+}
+
 export interface PlayerShotPlan {
   from: Vec;
   dirX: number;
@@ -2148,6 +2194,8 @@ export interface PlayerShotPlan {
   perpY: number;
   shape: ShotShape;
   target: Vec;
+  /** Complete ideal landing chord, including wind and final curve displacement. */
+  targetDistance: number;
 }
 
 /** Shared ideal-flight plan used by both the guide and the launched ball. */
@@ -2170,6 +2218,10 @@ export function playerShotPlan(
   const perpY = nx;
   const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
   const curve = shapeCurveOffset(activeShape, intend, 1);
+  const target = {
+    x: from.x + nx * intend + wind.dx * windPush + perpX * curve,
+    y: from.y + ny * intend + wind.dy * windPush + perpY * curve,
+  };
   return {
     from: { ...from },
     dirX: nx,
@@ -2181,10 +2233,8 @@ export function playerShotPlan(
     perpX,
     perpY,
     shape: activeShape,
-    target: {
-      x: from.x + nx * intend + wind.dx * windPush + perpX * curve,
-      y: from.y + ny * intend + wind.dy * windPush + perpY * curve,
-    },
+    target,
+    targetDistance: dist(from, target),
   };
 }
 
@@ -2289,8 +2339,15 @@ export function startChampionshipRound(courseId: string, difficulty: Difficulty,
 /** Player-only club pick for the next non-putt shot (putts always use the green-lie path). */
 export function setClub(id: ClubId) {
   if (!S.player) return;
+  const profile = clubLieProfile(S.player.lie, id);
+  if (!profile.available) {
+    setHint(profile.reason ?? 'That club is unavailable from this lie.');
+    sfx.err();
+    return false;
+  }
   S.player.club = id;
   updatePlayHud();
+  return true;
 }
 /** Player-only shot technique pick for the next non-putt swing (manual p.21-22). */
 export function setShape(id: ShotShape) {
@@ -2298,8 +2355,8 @@ export function setShape(id: ShotShape) {
   S.player.shape = id;
   updatePlayHud();
 }
-export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape): number {
-  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3);
+export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'iron'): number {
+  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3) * clubLieProfile(landingLie, clubId).rolloutMultiplier;
 }
 function setupPlayerHole(i: number) {
   const p = S.player!;
@@ -2335,13 +2392,22 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   const p = S.player;
   const h = p ? S.holes[p.holeIdx] : null;
   if (!p || !h) return;
+  const clubProfile = p.lie === 'green' ? null : clubLieProfile(p.lie, p.club);
+  if (clubProfile && !clubProfile.available) {
+    p.club = fallbackClubForLie(p.lie, p.club);
+    p.aim = null;
+    setHint(clubProfile.reason ?? 'Choose a recovery club for this lie.');
+    updatePlayHud();
+    sfx.err();
+    return;
+  }
   const start = { ...p.ball! };
   const fromLie = p.lie;
   p.strokes++;
-  const club = CLUBS[p.club];
   const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dirX, dirY, power);
   const intend = plan.intend;
   const tgt = plan.target;
+  const dispersion = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance);
   const shot: PlayerShotRecord = {
     stroke: p.strokes,
     club: p.lie === 'green' ? 'putter' : p.club,
@@ -2362,24 +2428,24 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   p.pendingShot = shot;
   if (p.lie === 'green') {
     sfx.putt();
-    const land = aimShot(p.ball!, tgt, 'green', playerShotSkill('green', p.club, p.shape), 0.8);
+    const land = aimShot(p.ball!, tgt, 'green', dispersion.skill, dispersion.angularScale, undefined, plan.targetDistance);
     const holed = dist(land, h.cup) < 0.42;
     startBall({ kind: 'putt', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: holed ? h.cup.x : land.x, ty: holed ? h.cup.y : land.y, holed });
   } else {
     sfx.whoosh();
     sfx.hit();
-    // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover
-    const angScale = club.angScale * (p.shape === 'punch' ? 0.55 : 1);
+    // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover.
     // Preserve the guide's complete wind/shape displacement. Forcing only the raw
     // club carry would normalize the target and erase head/tail wind effects.
-    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale, undefined, dist(p.ball!, tgt));
+    const land = aimShot(p.ball!, tgt, p.lie, dispersion.skill, dispersion.angularScale, undefined, plan.targetDistance);
     startBall(
       {
         kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y,
         noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch', shotShape: p.shape,
-        curvePerpX: plan.perpX, curvePerpY: plan.perpY, curveDistance: intend,
+        curvePerpX: plan.perpX, curvePerpY: plan.perpY, curveDistance: intend, rollMultiplier: clubProfile!.rolloutMultiplier,
       },
-      SHOT_SHAPES[p.shape].heightMul
+      SHOT_SHAPES[p.shape].heightMul * clubProfile!.launchMultiplier,
+      plan.targetDistance,
     );
   }
   p.state = 'wait';
@@ -2426,6 +2492,7 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
   }
   p.ball = { x: pos.x, y: pos.y };
   p.lie = resultLie;
+  p.club = fallbackClubForLie(resultLie, p.club);
   centerCam(pos.x, pos.y); // follow the ball
   if (holed && h) {
     const diff = p.strokes - h.par;

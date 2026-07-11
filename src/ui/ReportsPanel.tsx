@@ -269,14 +269,14 @@ export default function ReportsPanel() {
             </div>
             <div className="holeStat">
               <span>Scenery</span>
-              <div className="beautyMeter" aria-label={`Hole ${i + 1} scenery ${Math.round(h.beauty * 100)} percent`}>
+              <div className="beautyMeter" role="meter" aria-label={`Hole ${i + 1} scenery ${Math.round(h.beauty * 100)} percent`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(h.beauty * 100)}>
                 <i style={{ width: `${Math.round(h.beauty * 100)}%` }} />
               </div>
               <em>{Math.round(h.beauty * 100)}%</em>
             </div>
             <div className="holeStat">
               <span>Excitement</span>
-              <div className="interestMeter" aria-label={`Hole ${i + 1} excitement ${Math.round(h.interest * 100)} percent`}>
+              <div className="interestMeter" role="meter" aria-label={`Hole ${i + 1} excitement ${Math.round(h.interest * 100)} percent`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(h.interest * 100)}>
                 <i style={{ width: `${Math.round(h.interest * 100)}%` }} />
               </div>
               <em>{Math.round(h.interest * 100)}%</em>
