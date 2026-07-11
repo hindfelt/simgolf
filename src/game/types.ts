@@ -341,6 +341,12 @@ export interface Aim {
   sy: number;
   cx: number;
   cy: number;
+  /** Pointer drags and keyboard-generated drags share the same shot-preview pipeline. */
+  kind?: 'pointer' | 'keyboard';
+  /** Camera-independent intent keeps keyboard previews stable during view changes. */
+  worldDirX?: number;
+  worldDirY?: number;
+  worldPower?: number;
 }
 
 export interface Camera {

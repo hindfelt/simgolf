@@ -126,12 +126,15 @@ export function propertyAvailability(property: PropertyDefinition, context: Prop
 export function sanitizeCareerProgress(value: unknown, accomplishments: readonly string[] = []): CareerProgress {
   const raw = value && typeof value === 'object' ? value as Partial<CareerProgress> : {};
   const inferredRep = accomplishments.includes('rep5') ? 5 : accomplishments.includes('rep4') ? 4 : accomplishments.includes('rep3') ? 3 : 2.5;
+  const sgaTop18Earned = raw.sgaTop18Earned === true;
   return {
     version: 1,
     bestReputation: Math.min(5, Math.max(inferredRep, finiteNonNegative(Number(raw.bestReputation)))),
     tournamentHosted: raw.tournamentHosted === true || accomplishments.includes('tournament'),
-    sgaTop100Earned: raw.sgaTop100Earned === true,
-    sgaTop18Earned: raw.sgaTop18Earned === true,
+    // Every Top 18 hole is necessarily also in the Top 100. Preserve that
+    // hierarchy when repairing older or partially-written profile data.
+    sgaTop100Earned: raw.sgaTop100Earned === true || sgaTop18Earned,
+    sgaTop18Earned,
   };
 }
 

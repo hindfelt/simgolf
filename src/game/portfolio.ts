@@ -31,11 +31,18 @@ export interface PortfolioManifest {
   resortIds: ResortId[];
 }
 
+export interface PortfolioEmergencyMirror {
+  version: 1;
+  resortId: ResortId;
+  savedAt: number;
+}
+
 const DB_NAME = 'fairway-mogul-portfolio';
 const DB_VERSION = 1;
 const RESORTS = 'resorts';
 const META = 'meta';
 const THEMES: CourseTheme[] = ['parklands', 'links', 'desert', 'tropical'];
+export const PORTFOLIO_MIRROR_KEY = 'fairway-mogul-portfolio-mirror-v1';
 
 export const portfolioSupported = () => typeof indexedDB !== 'undefined';
 
@@ -66,6 +73,40 @@ function resortId(): ResortId {
 function recordFor(id: ResortId, snapshot: CourseSnapshot, kind: ResortRecord['kind']): ResortRecord {
   const savedAt = Number(snapshot.savedAt);
   return { id, propertyId: snapshot.propertyId, kind, updatedAt: Number.isFinite(savedAt) ? savedAt : Date.now(), summary: resortSummary(snapshot), snapshot };
+}
+
+function readEmergencyMirror(): PortfolioEmergencyMirror | null {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(PORTFOLIO_MIRROR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PortfolioEmergencyMirror>;
+    return parsed.version === 1 && typeof parsed.resortId === 'string' && Number.isFinite(parsed.savedAt)
+      ? parsed as PortfolioEmergencyMirror
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeEmergencyMirror(resortId: ResortId, snapshot: CourseSnapshot): boolean {
+  try {
+    if (typeof localStorage === 'undefined') return false;
+    const savedAt = Number(snapshot.savedAt);
+    if (!Number.isFinite(savedAt)) return false;
+    // The normal compatibility save already contains the full snapshot. This
+    // small sidecar proves which resort that save belongs to without consuming
+    // local-storage quota for a second full copy.
+    localStorage.setItem(PORTFOLIO_MIRROR_KEY, JSON.stringify({ version: 1, resortId, savedAt } satisfies PortfolioEmergencyMirror));
+    return true;
+  } catch {
+    /* IndexedDB remains authoritative when the emergency mirror is unavailable. */
+    return false;
+  }
+}
+
+export function resortsForProperty(records: readonly ResortRecord[], propertyId: PropertyId): ResortRecord[] {
+  return records.filter((record) => record.propertyId === propertyId);
 }
 
 /** Career expansion moves operating capital; it never clones the source bank. */
@@ -109,12 +150,25 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 let dbPromise: Promise<IDBDatabase> | null = null;
 let writeQueue: Promise<void> = Promise.resolve();
 let exclusiveMutations = 0;
+let activeResortId: ResortId | null = null;
 
 function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
   const result = writeQueue.then(operation, operation);
   writeQueue = result.then(() => undefined, () => undefined);
   return result;
 }
+
+/**
+ * Tags the already-written synchronous compatibility save with its resort id.
+ * The full IndexedDB write may finish later; on a pagehide/crash this sidecar
+ * lets boot safely recover that exact snapshot. Travel operations deliberately
+ * refuse association because the live snapshot may still describe the source.
+ */
+export function associateActivePortfolioMirror(snapshot: unknown): boolean {
+  if (exclusiveMutations > 0 || !activeResortId || !isCourseSnapshot(snapshot)) return false;
+  return writeEmergencyMirror(activeResortId, snapshot);
+}
+
 function openPortfolio(): Promise<IDBDatabase> {
   if (!portfolioSupported()) return Promise.reject(new Error('IndexedDB is unavailable'));
   if (dbPromise) return dbPromise;
@@ -147,27 +201,46 @@ export async function bootstrapPortfolio(legacySnapshot: unknown): Promise<Resor
   const { transaction, manifest } = await readManifest(db, 'readwrite');
   const resorts = transaction.objectStore(RESORTS);
   const meta = transaction.objectStore(META);
+  const emergencyMirror = readEmergencyMirror();
   if (manifest) {
     const active = await requestResult(resorts.get(manifest.activeResortId)) as ResortRecord | undefined;
-    if (active && isCourseSnapshot(legacySnapshot) && Number(legacySnapshot.savedAt) > active.updatedAt) {
-      const recovered = recordFor(active.id, legacySnapshot, active.kind);
+    // An untagged legacy autosave cannot prove which portfolio resort it
+    // belongs to. Only recover a newer snapshot when its explicit resort id
+    // matches the active pointer; this prevents a pre-travel source mirror
+    // from replacing the destination after a crash during switching.
+    const taggedLegacySnapshot = emergencyMirror?.resortId === manifest.activeResortId && isCourseSnapshot(legacySnapshot) &&
+      Number(legacySnapshot.savedAt) === emergencyMirror.savedAt ? legacySnapshot : null;
+    if (taggedLegacySnapshot && (!active || Number(taggedLegacySnapshot.savedAt) > active.updatedAt)) {
+      const recovered = recordFor(manifest.activeResortId, taggedLegacySnapshot, active?.kind ?? (taggedLegacySnapshot.sandbox ? 'sandbox' : 'career'));
       resorts.put(recovered);
       await transactionDone(transaction);
+      activeResortId = recovered.id;
+      writeEmergencyMirror(recovered.id, recovered.snapshot);
       return recovered;
     }
     await transactionDone(transaction);
-    return active && isCourseSnapshot(active.snapshot) ? active : null;
+    if (active && isCourseSnapshot(active.snapshot)) {
+      activeResortId = active.id;
+      writeEmergencyMirror(active.id, active.snapshot);
+      return active;
+    }
+    activeResortId = null;
+    return null;
   }
-  if (!isCourseSnapshot(legacySnapshot)) {
+  const migrationSnapshot = isCourseSnapshot(legacySnapshot) ? legacySnapshot : null;
+  if (!migrationSnapshot) {
+    activeResortId = null;
     transaction.abort();
     return null;
   }
   const id = resortId();
-  const active = recordFor(id, legacySnapshot, legacySnapshot.sandbox ? 'sandbox' : 'career');
+  const active = recordFor(id, migrationSnapshot, migrationSnapshot.sandbox ? 'sandbox' : 'career');
   const next: PortfolioManifest = { key: 'manifest', version: 1, activeResortId: id, resortIds: [id] };
   resorts.put(active);
   meta.put(next);
   await transactionDone(transaction);
+  activeResortId = active.id;
+  writeEmergencyMirror(active.id, active.snapshot);
   return active;
 }
 
@@ -183,6 +256,8 @@ async function saveActivePortfolioResortImpl(snapshot: unknown): Promise<boolean
   const prior = await requestResult(store.get(manifest.activeResortId)) as ResortRecord | undefined;
   store.put(recordFor(manifest.activeResortId, snapshot, prior?.kind ?? (snapshot.sandbox ? 'sandbox' : 'career')));
   await transactionDone(transaction);
+  activeResortId = manifest.activeResortId;
+  writeEmergencyMirror(manifest.activeResortId, snapshot);
   return true;
 }
 
@@ -213,6 +288,8 @@ async function createPortfolioResortImpl(sourceSnapshot: unknown, targetSnapshot
   resortIds.push(id);
   meta.put({ key: 'manifest', version: 1, activeResortId: id, resortIds: [...new Set(resortIds)] } satisfies PortfolioManifest);
   await transactionDone(transaction);
+  activeResortId = target.id;
+  writeEmergencyMirror(target.id, target.snapshot);
   return target;
 }
 
@@ -222,13 +299,21 @@ export function createPortfolioResort(sourceSnapshot: unknown, targetSnapshot: u
 }
 
 /** Saves the current resort and changes the active pointer atomically before applying the target. */
-async function switchPortfolioResortSnapshotImpl(currentSnapshot: unknown, targetId: ResortId): Promise<ResortRecord> {
+async function switchPortfolioResortSnapshotImpl(currentSnapshot: unknown, targetId: ResortId, expectedActiveId: ResortId | null): Promise<ResortRecord> {
   if (!isCourseSnapshot(currentSnapshot)) throw new Error('Current resort snapshot is invalid');
   const db = await openPortfolio();
   const { transaction, manifest } = await readManifest(db, 'readwrite');
   if (!manifest || !manifest.resortIds.includes(targetId)) {
     transaction.abort();
     throw new Error('That resort is not in this portfolio');
+  }
+  if (expectedActiveId && manifest.activeResortId !== expectedActiveId) {
+    transaction.abort();
+    throw new Error('The active resort changed before travel completed');
+  }
+  if (manifest.activeResortId === targetId) {
+    transaction.abort();
+    throw new Error('That resort is already active');
   }
   const store = transaction.objectStore(RESORTS);
   const [target, current] = await Promise.all([
@@ -242,12 +327,15 @@ async function switchPortfolioResortSnapshotImpl(currentSnapshot: unknown, targe
   store.put(recordFor(manifest.activeResortId, currentSnapshot, current?.kind ?? (currentSnapshot.sandbox ? 'sandbox' : 'career')));
   transaction.objectStore(META).put({ ...manifest, activeResortId: targetId });
   await transactionDone(transaction);
+  activeResortId = target.id;
+  writeEmergencyMirror(target.id, target.snapshot);
   return target;
 }
 
 export function switchPortfolioResortSnapshot(currentSnapshot: unknown, targetId: ResortId): Promise<ResortRecord> {
+  const expectedActiveId = activeResortId;
   exclusiveMutations++;
-  return enqueueWrite(() => switchPortfolioResortSnapshotImpl(currentSnapshot, targetId)).finally(() => { exclusiveMutations--; });
+  return enqueueWrite(() => switchPortfolioResortSnapshotImpl(currentSnapshot, targetId, expectedActiveId)).finally(() => { exclusiveMutations--; });
 }
 
 export async function listPortfolioResorts(): Promise<ResortRecord[]> {
@@ -272,11 +360,13 @@ export async function resetPortfolioForTests(): Promise<void> {
   await writeQueue;
   writeQueue = Promise.resolve();
   exclusiveMutations = 0;
+  activeResortId = null;
   if (dbPromise) {
     try { (await dbPromise).close(); } catch { /* ignore failed test handles */ }
     dbPromise = null;
   }
   if (!portfolioSupported()) return;
+  try { if (typeof localStorage !== 'undefined') localStorage.removeItem(PORTFOLIO_MIRROR_KEY); } catch { /* ignore test storage */ }
   await new Promise<void>((resolve, reject) => {
     const request = indexedDB.deleteDatabase(DB_NAME);
     request.onsuccess = () => resolve();

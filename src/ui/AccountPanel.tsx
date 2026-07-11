@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { currentCourseHash, exportRoundHistoryText, exportSaveText, importRoundHistoryText, importSaveText, startCompetitionRound } from '../game/engine';
 import { S } from '../game/state';
 import type { RoundRecord } from '../game/types';
@@ -23,6 +23,7 @@ import {
 import Icon from './Icon';
 import OnlineSocial from './OnlineSocial';
 import { useUI } from './store';
+import { useFloatingPanelFocus } from './panelA11y';
 
 const CLOUD_SLOTS = [
   { id: 'cloud-a', label: 'A' },
@@ -53,6 +54,9 @@ export default function AccountPanel() {
   const [season, setSeason] = useState<Awaited<ReturnType<typeof getSeasonStandings>> | null>(null);
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ onlinePanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
 
   const refresh = useCallback(async () => {
     setNotice('');
@@ -166,11 +170,11 @@ export default function AccountPanel() {
   });
 
   return (
-    <section className="managementPanel onlinePanel" role="dialog" aria-modal="false" aria-labelledby="online-title">
+    <section className="managementPanel onlinePanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="online-title" tabIndex={-1}>
       <div className="panelHead">
         <span className="panelTitleMark onlineMark"><Icon name="account" size={20} /></span>
         <div><h2 id="online-title">Clubhouse Online</h2><p>Account · cloud locker · live events</p></div>
-        <button className="iconButton panelClose" aria-label="Close online clubhouse" onClick={() => setStore({ onlinePanel: false })}><Icon name="close" size={16} /></button>
+        <button className="iconButton panelClose" aria-label="Close online clubhouse" onClick={close}><Icon name="close" size={16} /></button>
       </div>
 
       {notice && <div className="onlineNotice" role="status">{notice}</div>}

@@ -3,8 +3,8 @@ import { Tile } from './types';
 import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
-import { P, PE, screenToWorld, viewXY } from './camera';
-import { activePlayingPro, parFor, playerEstimatedRoll, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
+import { P, PE, viewXY } from './camera';
+import { activePlayingPro, parFor, playerAimIntent, playerEstimatedRoll, playerShotPlan, playerShotPlanPosition, playerShotSkill } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
@@ -1877,22 +1877,12 @@ function drawFlyingBall(ctx: CanvasRenderingContext2D, b: Ball, u: number) {
 function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   const p = S.player;
   if (!p || p.state !== 'aim' || !p.aim || !p.aim.on) return;
-  const a = p.aim;
-  const w0 = screenToWorld(a.sx, a.sy);
-  const w1 = screenToWorld(a.cx, a.cy);
-  let dx = w0.x - w1.x;
-  let dy = w0.y - w1.y;
-  const pl = Math.hypot(dx, dy);
-  if (pl < 0.15) return;
-  dx /= pl;
-  dy /= pl;
+  const aim = playerAimIntent(p.aim, p.lie);
+  if (!aim) return;
+  const { dirX: dx, dirY: dy, power } = aim;
   const L = LIE[p.lie] || LIE.rough;
-  const power = clamp(pl / 9, 0.08, 1);
-  const intend = playerIntendedDistance(p.lie, p.club, power);
-  // mirrors playerFire()'s wind push + shape curve/height exactly, so the preview matches the real shot
-  const windPush = p.lie === 'green' ? 0 : S.wind.speed * intend * 0.35;
-  const perpX = -dy;
-  const perpY = dx;
+  const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dx, dy, power);
+  const intend = plan.intend;
   const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul;
   const bp = PE(p.ball!.x, p.ball!.y);
   ctx.setLineDash([5 * u, 5 * u]);
@@ -1901,17 +1891,14 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   ctx.beginPath();
   ctx.moveTo(bp.x, bp.y - 1 * u);
   for (let t = 0.1; t <= 1.001; t += 0.1) {
-    const curve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, t);
-    const wx = p.ball!.x + dx * intend * t + S.wind.dx * windPush * t + perpX * curve;
-    const wy = p.ball!.y + dy * intend * t + S.wind.dy * windPush * t + perpY * curve;
-    const q = PE(wx, wy);
+    const position = playerShotPlanPosition(plan, t);
+    const q = PE(position.x, position.y);
     ctx.lineTo(q.x, q.y - (p.lie === 'green' ? 0 : Math.sin(Math.PI * t) * intend * 3.4 * u * heightMul));
   }
   ctx.stroke();
   ctx.setLineDash([]);
-  const landCurve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, 1);
-  const landX = p.ball!.x + dx * intend + S.wind.dx * windPush + perpX * landCurve;
-  const landY = p.ball!.y + dy * intend + S.wind.dy * windPush + perpY * landCurve;
+  const landX = plan.target.x;
+  const landY = plan.target.y;
   const land = PE(landX, landY);
   const skill = playerShotSkill(p.lie, p.club, p.shape);
   const spread = intend * (L.dst * (1 - skill * 0.55) + 0.025) + intend * Math.sin((L.ang * (1 - skill * 0.65) * Math.PI) / 180) * 0.6 + 0.22;
@@ -1924,7 +1911,10 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
   const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape);
   if (rollLen > 0.15) {
-    const rollEnd = PE(landX + dx * rollLen, landY + dy * rollLen);
+    const landingDistance = Math.hypot(landX - p.ball!.x, landY - p.ball!.y) || 1;
+    const rollDx = (landX - p.ball!.x) / landingDistance;
+    const rollDy = (landY - p.ball!.y) / landingDistance;
+    const rollEnd = PE(landX + rollDx * rollLen, landY + rollDy * rollLen);
     ctx.setLineDash([3 * u, 4 * u]);
     ctx.strokeStyle = 'rgba(255,255,255,.4)';
     ctx.lineWidth = 1.3 * u;

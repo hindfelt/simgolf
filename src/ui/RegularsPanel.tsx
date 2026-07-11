@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react';
 import { useUI } from './store';
 import { S } from '../game/state';
 import Icon from './Icon';
@@ -5,6 +6,7 @@ import { financialYearAt } from '../game/finance';
 import { membershipActive } from '../game/memberships';
 import { fmt$ } from '../game/rng';
 import CharacterPortrait from './CharacterPortrait';
+import { useFloatingPanelFocus } from './panelA11y';
 
 const STAT_LABEL: { key: 'length' | 'accuracy' | 'imagination'; label: string }[] = [
   { key: 'length', label: 'Length' },
@@ -16,6 +18,9 @@ export default function RegularsPanel() {
   const open = useUI((s) => s.regularsPanel);
   useUI((s) => s.simTick); // subscribe so visit counts / relations stay live while open
   const setStore = useUI((s) => s.set);
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ regularsPanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
   if (!open) return null;
 
   const onCourse = new Set(S.golfers.map((g) => g.name));
@@ -23,14 +28,14 @@ export default function RegularsPanel() {
   const roster = S.regulars.slice().sort((a, b) => b.visits - a.visits);
 
   return (
-    <section className="managementPanel reportsPanel" role="dialog" aria-modal="false" aria-labelledby="regulars-title">
+    <section className="managementPanel reportsPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="regulars-title" tabIndex={-1}>
       <header className="panelHead">
         <div className="panelTitleMark"><Icon name="regulars" size={22} /></div>
         <div>
           <h2 id="regulars-title">Regulars</h2>
           <p>The club's named cast — {roster.length} on the books</p>
         </div>
-        <button className="iconButton panelClose" aria-label="Close regulars roster" onClick={() => setStore({ regularsPanel: false })}>
+        <button className="iconButton panelClose" aria-label="Close regulars roster" onClick={close}>
           <Icon name="close" size={16} />
         </button>
       </header>
@@ -61,7 +66,7 @@ export default function RegularsPanel() {
                 {STAT_LABEL.map(({ key, label }) => (
                   <div className="regularStat" key={key}>
                     <span>{label}</span>
-                    <div className="regularStatBar">
+                    <div className="regularStatBar" role="meter" aria-label={`${r.name} ${label}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(r[key] * 100)}>
                       <i style={{ width: `${Math.round(r[key] * 100)}%` }} />
                     </div>
                   </div>

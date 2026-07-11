@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { afterEach, beforeEach } from 'vitest';
 import { indexedDB as memoryIndexedDB } from 'fake-indexeddb';
 import {
+  associateActivePortfolioMirror,
   bootstrapPortfolio,
   createPortfolioResort,
   isCourseSnapshot,
   listPortfolioResorts,
+  PORTFOLIO_MIRROR_KEY,
   resetPortfolioForTests,
+  resortsForProperty,
   resortSummary,
   saveActivePortfolioResort,
   sourceAfterCapitalTransfer,
@@ -15,6 +18,18 @@ import {
   type CourseSnapshot,
 } from './portfolio';
 import { W, H } from './constants';
+
+function memoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => void store.set(key, value),
+    removeItem: (key) => void store.delete(key),
+    clear: () => store.clear(),
+    key: (index) => [...store.keys()][index] ?? null,
+    get length() { return store.size; },
+  } as Storage;
+}
 
 function snapshot(overrides: Partial<CourseSnapshot> = {}): CourseSnapshot {
   return {
@@ -69,10 +84,18 @@ describe('resort portfolio snapshots', () => {
     const career = snapshot({ cash: 10_000 });
     expect(sourceForPortfolioExpansion(career, 'Maple Sandbox', 'sandbox')).toBe(career);
   });
+
+  it('lists career and sandbox copies together for a property', () => {
+    const career = { id: 'career', propertyId: 'maple-crossing', kind: 'career', snapshot: snapshot(), summary: resortSummary(snapshot()), updatedAt: 1 } as const;
+    const sandbox = { id: 'sandbox', propertyId: 'maple-crossing', kind: 'sandbox', snapshot: snapshot({ sandbox: true }), summary: resortSummary(snapshot({ sandbox: true })), updatedAt: 2 } as const;
+    const other = { id: 'other', propertyId: 'donegal-point', kind: 'career', snapshot: snapshot({ propertyId: 'donegal-point', theme: 'links' }), summary: resortSummary(snapshot({ propertyId: 'donegal-point', theme: 'links' })), updatedAt: 3 } as const;
+    expect(resortsForProperty([career, sandbox, other], 'maple-crossing').map((resort) => resort.id)).toEqual(['career', 'sandbox']);
+  });
 });
 
 describe('transactional resort portfolio repository', () => {
   beforeEach(async () => {
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: memoryStorage() });
     Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: memoryIndexedDB });
     await resetPortfolioForTests();
   });
@@ -80,6 +103,7 @@ describe('transactional resort portfolio repository', () => {
   afterEach(async () => {
     await resetPortfolioForTests();
     delete (globalThis as { indexedDB?: IDBFactory }).indexedDB;
+    delete (globalThis as { localStorage?: Storage }).localStorage;
   });
 
   it('migrates one legacy autosave once and lets a newer emergency mirror win', async () => {
@@ -88,9 +112,46 @@ describe('transactional resort portfolio repository', () => {
     expect(migrated).toMatchObject({ propertyId: 'maple-crossing' });
     expect(await listPortfolioResorts()).toHaveLength(1);
 
-    const recovered = await bootstrapPortfolio(snapshot({ savedAt: 200, cash: 2222 }));
+    const emergency = snapshot({ savedAt: 200, cash: 2222 });
+    localStorage.setItem(PORTFOLIO_MIRROR_KEY, JSON.stringify({ version: 1, resortId: migrated!.id, savedAt: emergency.savedAt }));
+    const recovered = await bootstrapPortfolio(emergency);
     expect(recovered?.summary.cash).toBe(2222);
     expect((await listPortfolioResorts())[0]).toMatchObject({ active: true, summary: { cash: 2222 } });
+  });
+
+  it('recovers only an explicitly-associated emergency mirror for the active resort', async () => {
+    const active = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 1000 }));
+    const recoveredSnapshot = snapshot({ savedAt: 300, cash: 3333 });
+    localStorage.setItem(PORTFOLIO_MIRROR_KEY, JSON.stringify({ version: 1, resortId: active!.id, savedAt: recoveredSnapshot.savedAt }));
+
+    const recovered = await bootstrapPortfolio(recoveredSnapshot);
+    expect(recovered).toMatchObject({ id: active!.id, summary: { courseName: 'Maple House', cash: 3333 } });
+  });
+
+  it('associates the synchronous compatibility save before its queued IndexedDB autosave', async () => {
+    const active = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 1000 }));
+    const compatibilitySave = snapshot({ savedAt: 250, cash: 2525 });
+
+    expect(associateActivePortfolioMirror(compatibilitySave)).toBe(true);
+    expect(JSON.parse(localStorage.getItem(PORTFOLIO_MIRROR_KEY)!)).toEqual({ version: 1, resortId: active!.id, savedAt: 250 });
+    const recovered = await bootstrapPortfolio(compatibilitySave);
+    expect(recovered).toMatchObject({ id: active!.id, summary: { cash: 2525 } });
+  });
+
+  it('never lets a newer untagged source mirror overwrite a different active resort after travel', async () => {
+    const maple = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 500 }));
+    await createPortfolioResort(
+      snapshot({ savedAt: 120, cash: 500 }),
+      snapshot({ savedAt: 200, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 8000 }),
+      'career',
+    );
+    await switchPortfolioResortSnapshot(
+      snapshot({ savedAt: 500, propertyId: 'donegal-point', courseName: 'Donegal Source', theme: 'links', cash: 7777 }),
+      maple!.id,
+    );
+
+    const resumed = await bootstrapPortfolio(snapshot({ savedAt: 900, propertyId: 'donegal-point', courseName: 'STALE SOURCE MIRROR', theme: 'links', cash: 1 }));
+    expect(resumed).toMatchObject({ id: maple!.id, propertyId: 'maple-crossing', summary: { courseName: 'Maple House', cash: 500 } });
   });
 
   it('atomically stores source and destination without duplicating career capital', async () => {
@@ -128,10 +189,35 @@ describe('transactional resort portfolio repository', () => {
     expect((await listPortfolioResorts()).find((resort) => resort.active)?.id).toBe(active?.id);
   });
 
+  it('rejects switching to the already-active resort without overwriting it', async () => {
+    const active = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 500 }));
+    await expect(switchPortfolioResortSnapshot(snapshot({ savedAt: 200, courseName: 'SHOULD NOT WRITE', cash: 1 }), active!.id)).rejects.toThrow(/already active/);
+    expect((await listPortfolioResorts())[0]).toMatchObject({ id: active!.id, active: true, summary: { courseName: 'Maple House', cash: 500 } });
+  });
+
+  it('rejects a concurrent duplicate switch captured from stale active state', async () => {
+    const maple = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 500 }));
+    const donegal = await createPortfolioResort(
+      snapshot({ savedAt: 110, cash: 500 }),
+      snapshot({ savedAt: 200, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 8000 }),
+      'career',
+    );
+    const first = switchPortfolioResortSnapshot(snapshot({ savedAt: 300, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 7777 }), maple!.id);
+    const duplicate = switchPortfolioResortSnapshot(snapshot({ savedAt: 400, propertyId: 'donegal-point', courseName: 'STALE DUPLICATE', theme: 'links', cash: 1 }), maple!.id);
+
+    const [firstResult, duplicateResult] = await Promise.allSettled([first, duplicate]);
+    expect(firstResult).toMatchObject({ status: 'fulfilled', value: { id: maple!.id } });
+    expect(duplicateResult).toMatchObject({ status: 'rejected', reason: expect.objectContaining({ message: expect.stringMatching(/active resort changed/) }) });
+    const resorts = await listPortfolioResorts();
+    expect(resorts.find((resort) => resort.id === maple!.id)).toMatchObject({ active: true, summary: { courseName: 'Maple House', cash: 500 } });
+    expect(resorts.find((resort) => resort.id === donegal.id)).toMatchObject({ active: false, summary: { courseName: 'Donegal Club', cash: 7777 } });
+  });
+
   it('drops an autosave captured while an exclusive switch is in flight', async () => {
     const maple = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 500 }));
     const donegal = await createPortfolioResort(snapshot({ savedAt: 110, cash: 500 }), snapshot({ savedAt: 200, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 8000 }), 'career');
     const switching = switchPortfolioResortSnapshot(snapshot({ savedAt: 220, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 7777 }), maple!.id);
+    expect(associateActivePortfolioMirror(snapshot({ savedAt: 225, propertyId: 'donegal-point', courseName: 'STALE SOURCE MIRROR', theme: 'links', cash: 2 }))).toBe(false);
     const staleAutosave = await saveActivePortfolioResort(snapshot({ savedAt: 230, propertyId: 'donegal-point', courseName: 'STALE SOURCE', theme: 'links', cash: 1 }));
     expect(staleAutosave).toBe(false);
     await switching;

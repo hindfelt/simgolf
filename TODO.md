@@ -10,7 +10,7 @@ Theme Packs are implemented as modular player/story/celebrity/pro/course bundles
 
 ## Current visual verification
 
-- [ ] **Browser-QA the new presentation work.** Automated coverage is green, but the sixteen-property World Screen still needs desktop/tablet/phone and keyboard-only checks; water/stream bridges need multi-tile, zoom and all-four-rotation inspection; and the five/three/two/one-column facility catalog plus staff actions need responsive layout checks. Do not treat typecheck, bundling or Vitest as visual approval.
+- [ ] **Browser-QA the new presentation work.** Automated coverage is green, but the sixteen-property World Screen still needs desktop/tablet/phone and keyboard-only checks; water/stream bridges need multi-tile, zoom and all-four-rotation inspection; and the horizontal Field Desk facility strip plus staff actions need responsive layout checks. Do not treat typecheck, bundling or Vitest as visual approval.
 
 ## Online play and long-term progression
 

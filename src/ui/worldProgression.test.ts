@@ -29,7 +29,8 @@ describe('World Screen career progression presentation', () => {
 
   it('shows developed resorts as visitable portfolio deeds instead of destructive replacements', () => {
     expect(source).toContain('portfolioResorts()');
-    expect(source).toContain('switchPortfolioResort(ownedResort.id)');
+    expect(source).toContain('switchPortfolioResort(resort.id)');
+    expect(source).toContain('propertyResorts.map((resort) =>');
     expect(source).toContain('className="bigbtn portfolioVisit"');
     expect(source).not.toContain('permanently leave');
     expect(css).toMatch(/\.portfolioDeed/);

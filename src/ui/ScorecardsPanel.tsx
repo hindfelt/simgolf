@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { S } from '../game/state';
 import { currentCourseHash, exportRoundHistoryText, importRoundHistoryText } from '../game/engine';
 import { compareRoundScore, isCourseRecord, isPersonalBest, relativeScoreLabel, roundToCsv } from '../game/scorecards';
@@ -6,6 +6,7 @@ import type { RoundRecord } from '../game/types';
 import { useUI } from './store';
 import Icon from './Icon';
 import Scorecard, { sourceLabel } from './Scorecard';
+import { useFloatingPanelFocus } from './panelA11y';
 
 type HistoryFilter = 'all' | 'course' | 'competition';
 
@@ -31,6 +32,9 @@ export default function ScorecardsPanel() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedHole, setSelectedHole] = useState(1);
   const fileRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ scorecardsPanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
   const currentHash = currentCourseHash();
   const history = useMemo(() => [...S.roundHistory].sort((a, b) => b.completedAt - a.completedAt), [version, open]);
   const filtered = history.filter((record) => filter === 'all' || (filter === 'course' ? record.courseHash === currentHash : record.source !== 'exhibition'));
@@ -55,14 +59,14 @@ export default function ScorecardsPanel() {
   };
 
   return (
-    <section className="managementPanel scorecardsPanel" role="dialog" aria-modal="false" aria-labelledby="scorecards-title">
+    <section className="managementPanel scorecardsPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="scorecards-title" tabIndex={-1}>
       <header className="panelHead">
         <div className="panelTitleMark scorecardMark"><Icon name="scorecard" size={22} /></div>
         <div>
           <h2 id="scorecards-title">Player scorecards</h2>
           <p>Permanent round history · competition-ready records</p>
         </div>
-        <button className="iconButton panelClose" aria-label="Close scorecards" onClick={() => setStore({ scorecardsPanel: false })}><Icon name="close" size={16} /></button>
+        <button className="iconButton panelClose" aria-label="Close scorecards" onClick={close}><Icon name="close" size={16} /></button>
       </header>
 
       <div className="scoreHistoryHero">

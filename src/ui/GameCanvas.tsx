@@ -78,7 +78,8 @@ export default function GameCanvas() {
       ref={ref}
       className="game"
       tabIndex={0}
-      aria-label="Interactive isometric golf course. Choose a construction tool, then use pointer or touch controls on the course."
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
+      aria-label="Interactive isometric golf course. Use pointer or touch controls. While playing, focus the course, use left and right arrows to aim, up and down arrows for power, and Enter to swing."
     />
   );
 }

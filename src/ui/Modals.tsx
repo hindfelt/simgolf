@@ -12,7 +12,7 @@ import { relativeScoreLabel } from '../game/scorecards';
 import { THEME_PACKS, themePackById } from '../game/themePacks';
 import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAvailability, propertyById } from '../game/properties';
 import CharacterPortrait from './CharacterPortrait';
-import type { ResortRecord } from '../game/portfolio';
+import { portfolioSupported, resortsForProperty, type ResortRecord } from '../game/portfolio';
 
 const SLOT_IDS = ['A', 'B', 'C'];
 const WORLD_THEME_ORDER = [
@@ -49,7 +49,9 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
     progress: careerProgress,
     proProfile: S.proProfile,
     purchased: S.propertiesPurchased,
-    currentPropertyId: initial ? null : S.propertyId,
+    // A sandbox is a separate copy, not ownership of the underlying career
+    // deed. Keep that deed purchasable while its sandbox is currently open.
+    currentPropertyId: initial || S.sandbox ? null : S.propertyId,
   });
   const firstAvailable = WORLD_PROPERTIES.find((candidate) => availabilityFor(candidate).canPurchase) ?? propertyById(S.propertyId);
   const [propertyId, setPropertyId] = useState<PropertyId>(firstAvailable.id);
@@ -57,22 +59,25 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
   const property = propertyById(propertyId);
   const availability = availabilityFor(property);
   const purchased = availability.status === 'purchased' || availability.status === 'current';
-  const ownedResort = resorts.find((resort) => resort.kind === 'career' && resort.propertyId === property.id);
+  const propertyResorts = resortsForProperty(resorts, property.id);
+  const careerResort = propertyResorts.find((resort) => resort.kind === 'career');
   const start = async (sandbox: boolean) => {
     if (!sandbox && !availability.canPurchase) return;
     const action = sandbox ? `Start a sandbox on ${property.name}` : `Purchase ${property.name}`;
-    const detail = sandbox
-      ? `${action} as a separate portfolio resort? ${S.courseName} will remain exactly as it is.`
-      : `${action} and transfer the available ${fmt$(availableFunds)} development fund? ${S.courseName} will remain in your portfolio, with its operating cash moved to the new project.`;
+    const detail = !portfolioSupported()
+      ? `${action}? This browser cannot keep a switchable resort portfolio. Continuing will replace ${S.courseName}; save it to a named slot or export it first.`
+      : sandbox
+        ? `${action} as a separate portfolio resort? ${S.courseName} will remain exactly as it is.`
+        : `${action} and transfer the available ${fmt$(availableFunds)} development fund? ${S.courseName} will remain in your portfolio, with its operating cash moved to the new project.`;
     if (!initial && !window.confirm(detail)) return;
     setTravelling(true);
     await createPortfolioCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds, !initial);
     setTravelling(false);
   };
-  const visit = async () => {
-    if (!ownedResort || ownedResort.active) return;
+  const visit = async (resort: ResortRecord) => {
+    if (resort.active) return;
     setTravelling(true);
-    await switchPortfolioResort(ownedResort.id);
+    await switchPortfolioResort(resort.id);
     setTravelling(false);
   };
   return (
@@ -136,17 +141,21 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
                   : isPurchased ? 'Purchased'
                   : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, available` : 'Inherited property, available'
                   : `Locked. ${candidateAvailability.missing.map((requirement) => requirement.label).join(', ')}`;
-                const portfolioResort = resorts.find((resort) => resort.kind === 'career' && resort.propertyId === candidate.id);
+                const candidateResorts = resortsForProperty(resorts, candidate.id);
+                const portfolioResort = candidateResorts.find((resort) => resort.kind === 'career');
+                const sandboxCount = candidateResorts.filter((resort) => resort.kind === 'sandbox').length;
+                const sandboxStatus = sandboxCount ? `${sandboxCount} saved sandbox ${sandboxCount === 1 ? 'copy' : 'copies'}.` : '';
                 const cardBadge = isCurrent
                   ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE'
                   : isPurchased ? portfolioResort ? 'PORTFOLIO RESORT' : 'PURCHASED'
+                  : sandboxCount ? `${sandboxCount} SANDBOX${sandboxCount === 1 ? '' : 'ES'}`
                   : candidateAvailability.canPurchase ? candidate.price ? fmt$(candidate.price) : 'INHERITED'
                   : prestigeMissing.length ? `LOCKED · ${prestigeMissing[0].label}` : `${fmt$(candidateAvailability.cashShortfall)} SHORT`;
                 return (
                   <button
                     key={candidate.id}
                     className={`worldProperty ${state}${lockClass}${isCurrent ? ' current' : ''}${propertyId === candidate.id ? ' selected' : ''}`}
-                    aria-label={`${candidate.name}, ${candidate.region}. ${cardStatus}.`}
+                    aria-label={`${candidate.name}, ${candidate.region}. ${cardStatus}. ${sandboxStatus}`.trim()}
                     aria-pressed={propertyId === candidate.id}
                     onClick={() => setPropertyId(candidate.id)}
                   >
@@ -163,13 +172,21 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
           <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : availability.canPurchase ? property.price ? 'Ready to purchase' : 'Inheritance ready' : 'Career locked'}</strong></div>
           <p>{property.description}</p>
-          {ownedResort && (
-            <div className={'portfolioDeed' + (ownedResort.active ? ' active' : '')}>
-              <span><small>{ownedResort.active ? 'Current resort' : 'Portfolio resort'}</small><b>{ownedResort.summary.courseName}</b></span>
-              <span><b>{fmt$(ownedResort.summary.cash)}</b><small>operating cash</small></span>
-              <span><b>{ownedResort.summary.rep.toFixed(1)}★</b><small>{ownedResort.summary.holes} holes</small></span>
-            </div>
-          )}
+          {propertyResorts.map((resort) => (
+            <button
+              type="button"
+              key={resort.id}
+              className={'portfolioDeed' + (resort.active ? ' active' : '')}
+              disabled={travelling || resort.active}
+              aria-current={resort.active ? 'page' : undefined}
+              aria-label={`${resort.active ? 'Current' : 'Visit'} ${resort.kind} resort ${resort.summary.courseName}, ${fmt$(resort.summary.cash)}, ${resort.summary.rep.toFixed(1)} stars, ${resort.summary.holes} holes`}
+              onClick={() => void visit(resort)}
+            >
+              <span><small>{resort.active ? `Current ${resort.kind}` : `${resort.kind} resort · select to visit`}</small><b>{resort.summary.courseName}</b></span>
+              <span><b>{fmt$(resort.summary.cash)}</b><small>{resort.kind === 'sandbox' ? 'unlimited treasury' : 'operating cash'}</small></span>
+              <span><b>{resort.summary.rep.toFixed(1)}★</b><small>{resort.summary.holes} holes</small></span>
+            </button>
+          ))}
           <div className="propertyUnlocks" aria-label={`${property.name} deed requirements`}>
             <header><b>Deed requirements</b><span>{availability.requirements.filter((requirement) => requirement.met).length} / {availability.requirements.length} complete</span></header>
             <ul>
@@ -201,8 +218,8 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         </>
       )}
       {purchased ? (
-        <button className="bigbtn portfolioVisit" disabled={travelling || !ownedResort || ownedResort.active} onClick={visit}>
-          {travelling ? 'Preparing resort…' : ownedResort?.active ? `${ownedResort.summary.courseName} is open` : ownedResort ? `Visit ${ownedResort.summary.courseName}` : 'Legacy deed owned · local resort save unavailable'}
+        <button className="bigbtn portfolioVisit" disabled={travelling || !careerResort || careerResort.active} onClick={() => careerResort && void visit(careerResort)}>
+          {travelling ? 'Preparing resort…' : careerResort?.active ? `${careerResort.summary.courseName} is open` : careerResort ? `Visit ${careerResort.summary.courseName}` : 'Legacy deed owned · local resort save unavailable'}
         </button>
       ) : (
         <button className="bigbtn" disabled={travelling || !availability.canPurchase} onClick={() => void start(false)}>{travelling ? 'Preparing resort…' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>

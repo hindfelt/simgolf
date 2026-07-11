@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, ballFlightPosition, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerEstimatedRoll, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud } from './engine';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
+import { P } from './camera';
 import { idx, idxC } from './rng';
 import { S, caches } from './state';
 import { Tile } from './types';
 import type { Golfer, Hole, ProChallengeOffer } from './types';
+import { ui } from '../ui/store';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -358,6 +360,33 @@ describe('save / load round-trip', () => {
     expect(S.activeChampionship).toBeNull();
   });
 
+  it('credits a completed championship prize to the restored home resort and finance ledger', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.courseName = 'Prize Links';
+    const retired = retireCourseForChampionship()!;
+    S.courseName = 'Working Home';
+    S.cash = 22_222;
+    const startsBefore = S.proProfile.starts;
+
+    expect(startChampionshipRound(retired.id, 'difficult', true)).toBe(true);
+    const cup = S.holes[0].cup;
+    S.player!.ball = { x: cup.x - 0.2, y: cup.y };
+    S.player!.lie = 'green';
+    playerFire(1, 0, 0.02);
+    update(5);
+
+    expect(S.player).toBeNull();
+    expect(S.courseName).toBe('Working Home');
+    const result = S.championshipHistory[0];
+    expect(result.prize).toBeGreaterThan(0);
+    expect(S.cash).toBe(22_222 + result.prize);
+    expect(S.financeLedger).toContainEqual(expect.objectContaining({ category: 'tournament', amount: result.prize, detail: `${result.title} prize` }));
+    expect(S.proProfile.starts).toBe(startsBefore + 1);
+    expect(S.proProfile.careerEarnings).toBe(result.prize);
+    expect(S.roundHistory.at(-1)?.payout).toBe(result.prize);
+    random.mockRestore();
+  });
+
   it('makes allocated power and driving skills change the shared shot-distance math', () => {
     S.proProfile.skills.powerHitter = 0;
     S.proProfile.skills.longDriver = 0;
@@ -374,6 +403,58 @@ describe('save / load round-trip', () => {
     expect(shapeCurveOffset('hook', carry, 1)).toBeLessThan(shapeCurveOffset('draw', carry, 1));
     expect(Math.abs(shapeCurveOffset('fade', carry, 0.5))).toBeLessThan(Math.abs(shapeCurveOffset('fade', carry, 1)));
     expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
+  });
+
+  it('keeps putting accuracy independent of the hidden full-swing shape', () => {
+    S.proProfile.skills.drawShot = 0;
+    S.proProfile.skills.fadeShot = 0;
+    S.proProfile.skills.highBackspin = 0;
+    const straight = playerShotSkill('green', 'iron', 'straight');
+    expect(playerShotSkill('green', 'iron', 'draw')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'fade')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'hook')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'backspin')).toBe(straight);
+  });
+
+  it('uses the same complete wind and hook endpoint for the guide and launched ball', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 94, tee: { x: 12, y: 20 }, cup: { x: 40, y: 20 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.elevC.fill(0);
+    startRound();
+    S.wind = { dx: 1, dy: 0, speed: 0.5 };
+    setClub('iron');
+    setShape('hook');
+    const start = { ...S.player!.ball! };
+    const plan = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1);
+    const calm = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1, { dx: 1, dy: 0, speed: 0 });
+    const headwind = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1, { dx: -1, dy: 0, speed: 0.5 });
+    expect(plan.target.x).toBeGreaterThan(calm.target.x);
+    expect(headwind.target.x).toBeLessThan(calm.target.x);
+    expect(playerShotPlanPosition(plan, 1)).toEqual(plan.target);
+
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.tx).toBeCloseTo(plan.target.x, 6);
+    expect(S.balls.at(-1)!.ty).toBeCloseTo(plan.target.y, 6);
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('preserves sub-eight-percent power in the shared short-putt aim intent', () => {
+    startRound();
+    S.player!.lie = 'green';
+    S.rot = 0;
+    S.cam = { x: 120, y: 80, z: 1 };
+    const start = P(10, 10);
+    const current = P(9.73, 10);
+    const aim = { on: true, sx: start.x, sy: start.y, cx: current.x, cy: current.y, kind: 'keyboard' as const };
+    expect(playerAimIntent(aim, 'green')?.power).toBeCloseTo(0.03, 6);
+    expect(playerAimIntent(aim, 'tee')?.power).toBe(0.08);
+    S.player!.aim = aim;
+    updatePlayHud();
+    expect(ui.get().playHud?.power).toBeCloseTo(0.03, 6);
+    expect(ui.get().playHud?.coach).toContain('Keyboard aim');
+    expect(ui.get().playHud?.coach).toContain('3% power');
+    quitRound();
   });
 
   it('moves the real flying ball along the shaped curve instead of a straight endpoint chord', () => {

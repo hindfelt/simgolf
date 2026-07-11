@@ -117,7 +117,7 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — 154 browser-game tests covering course construction,
+- **Regression coverage** — 177 browser-game tests covering course construction,
   simulation, persistence, the World Screen/property lifecycle, bridge pricing,
   restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,

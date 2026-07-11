@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
@@ -61,7 +61,7 @@ import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
 import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
-import { bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
+import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -105,12 +105,8 @@ export function updatePlayHud() {
   if (!p) return;
   const h = S.holes[p.holeIdx];
   if (!h) return;
-  let power: number | null = null;
-  if (p.aim?.on) {
-    const start = screenToWorld(p.aim.sx, p.aim.sy);
-    const current = screenToWorld(p.aim.cx, p.aim.cy);
-    power = clamp(dist(start, current) / 9, p.lie === 'green' ? 0.02 : 0.08, 1);
-  }
+  const aim = p.aim?.on ? playerAimIntent(p.aim, p.lie) : null;
+  const power = aim?.power ?? null;
   const clubRanges = {
     driver: playerIntendedDistance(p.lie, 'driver', 1),
     iron: playerIntendedDistance(p.lie, 'iron', 1),
@@ -124,6 +120,8 @@ export function updatePlayHud() {
         (p.lie === 'green' ? 'on the green · drag to putt' : 'lie: ' + p.lie + ' · drag back to swing'),
       coach: p.state === 'wait'
         ? 'Track the ball, then plan the next lie.'
+        : p.aim?.kind === 'keyboard' && aim
+          ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing.`
         : p.lie === 'green'
           ? 'Drag against the putting line, then release.'
           : 'Choose club and flight, drag back, then release.',
@@ -2089,6 +2087,28 @@ export function activePlayingPro(): ProProfile {
 
 const RECOVERY_LIES = new Set<LieKey>(['deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rock', 'tree']);
 
+/** Resolves either a real pointer drag or a keyboard-generated drag into one shot intent. */
+export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: number; power: number } | null {
+  if (aim.kind === 'keyboard' && Number.isFinite(aim.worldDirX) && Number.isFinite(aim.worldDirY) && Number.isFinite(aim.worldPower)) {
+    const magnitude = Math.hypot(aim.worldDirX!, aim.worldDirY!);
+    if (magnitude < 0.001) return null;
+    return {
+      dirX: aim.worldDirX! / magnitude,
+      dirY: aim.worldDirY! / magnitude,
+      power: clamp(aim.worldPower!, lie === 'green' ? 0.02 : 0.08, 1),
+    };
+  }
+  const start = screenToWorld(aim.sx, aim.sy);
+  const current = screenToWorld(aim.cx, aim.cy);
+  let dirX = start.x - current.x;
+  let dirY = start.y - current.y;
+  const drag = Math.hypot(dirX, dirY);
+  if (drag < 0.001) return null;
+  dirX /= drag;
+  dirY /= drag;
+  return { dirX, dirY, power: clamp(drag / 9, lie === 'green' ? 0.02 : 0.08, 1) };
+}
+
 /** Shared by fire + renderer preview so pro skill changes never make the guide lie. */
 export function playerIntendedDistance(lie: LieKey, clubId: ClubId, power: number): number {
   const pro = activePlayingPro();
@@ -2105,12 +2125,76 @@ export function playerShotSkill(lie: LieKey, clubId: ClubId, shape: ShotShape): 
   const pro = activePlayingPro();
   const accuracyLevel = lie === 'green' ? pro.skills.accuratePutter : clubId === 'driver' ? pro.skills.accurateDriver : pro.skills.accurateIrons;
   let skill = 0.82 + accuracyLevel * 0.014 + pro.skills.luck * 0.004;
+  // The last full-swing shape remains selected while putting controls are hidden. It
+  // must not silently penalize an otherwise identical putt.
+  if (lie === 'green') return clamp(skill, 0.58, 0.99);
   const shapeSkill: Partial<Record<ShotShape, ProSkillId>> = { draw: 'drawShot', hook: 'drawShot', fade: 'fadeShot', backspin: 'highBackspin' };
   const skillId = shapeSkill[shape];
   if (skillId) skill -= (10 - pro.skills[skillId]) * 0.009;
   if (shape === 'hook') skill -= 0.08; // intentionally dramatic and harder to control than a draw
   if (RECOVERY_LIES.has(lie)) skill += pro.skills.recovery * 0.006;
   return clamp(skill, 0.58, 0.99);
+}
+
+export interface PlayerShotPlan {
+  from: Vec;
+  dirX: number;
+  dirY: number;
+  intend: number;
+  windPush: number;
+  windDx: number;
+  windDy: number;
+  perpX: number;
+  perpY: number;
+  shape: ShotShape;
+  target: Vec;
+}
+
+/** Shared ideal-flight plan used by both the guide and the launched ball. */
+export function playerShotPlan(
+  from: Vec,
+  lie: LieKey,
+  clubId: ClubId,
+  shape: ShotShape,
+  dirX: number,
+  dirY: number,
+  power: number,
+  wind: { dx: number; dy: number; speed: number } = S.wind,
+): PlayerShotPlan {
+  const magnitude = Math.hypot(dirX, dirY) || 1;
+  const nx = dirX / magnitude;
+  const ny = dirY / magnitude;
+  const intend = playerIntendedDistance(lie, clubId, power);
+  const windPush = lie === 'green' ? 0 : wind.speed * intend * 0.35;
+  const perpX = -ny;
+  const perpY = nx;
+  const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
+  const curve = shapeCurveOffset(activeShape, intend, 1);
+  return {
+    from: { ...from },
+    dirX: nx,
+    dirY: ny,
+    intend,
+    windPush,
+    windDx: wind.dx,
+    windDy: wind.dy,
+    perpX,
+    perpY,
+    shape: activeShape,
+    target: {
+      x: from.x + nx * intend + wind.dx * windPush + perpX * curve,
+      y: from.y + ny * intend + wind.dy * windPush + perpY * curve,
+    },
+  };
+}
+
+export function playerShotPlanPosition(plan: PlayerShotPlan, t: number): Vec {
+  const progress = clamp(t, 0, 1);
+  const curve = shapeCurveOffset(plan.shape, plan.intend, progress);
+  return {
+    x: plan.from.x + plan.dirX * plan.intend * progress + plan.windDx * plan.windPush * progress + plan.perpX * curve,
+    y: plan.from.y + plan.dirY * plan.intend * progress + plan.windDy * plan.windPush * progress + plan.perpY * curve,
+  };
 }
 
 export function startRound(options?: { source: RoundSource; competitionId?: string; challengeId?: string; localEvent?: 'championship' | 'proChallenge' }) {
@@ -2255,16 +2339,9 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   const fromLie = p.lie;
   p.strokes++;
   const club = CLUBS[p.club];
-  const intend = playerIntendedDistance(p.lie, p.club, power);
-  // wind only pushes the ball in flight, not a putt rolling on the green, and scales with shot length
-  const windPush = p.lie === 'green' ? 0 : S.wind.speed * intend * 0.35;
-  const perpX = -dirY;
-  const perpY = dirX;
-  const curve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, 1);
-  const tgt = {
-    x: p.ball!.x + dirX * intend + S.wind.dx * windPush + perpX * curve,
-    y: p.ball!.y + dirY * intend + S.wind.dy * windPush + perpY * curve,
-  };
+  const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dirX, dirY, power);
+  const intend = plan.intend;
+  const tgt = plan.target;
   const shot: PlayerShotRecord = {
     stroke: p.strokes,
     club: p.lie === 'green' ? 'putter' : p.club,
@@ -2293,12 +2370,14 @@ export function playerFire(dirX: number, dirY: number, power: number) {
     sfx.hit();
     // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover
     const angScale = club.angScale * (p.shape === 'punch' ? 0.55 : 1);
-    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale, undefined, intend);
+    // Preserve the guide's complete wind/shape displacement. Forcing only the raw
+    // club carry would normalize the target and erase head/tail wind effects.
+    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale, undefined, dist(p.ball!, tgt));
     startBall(
       {
         kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y,
         noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch', shotShape: p.shape,
-        curvePerpX: perpX, curvePerpY: perpY, curveDistance: intend,
+        curvePerpX: plan.perpX, curvePerpY: plan.perpY, curveDistance: intend,
       },
       SHOT_SHAPES[p.shape].heightMul
     );
@@ -2416,15 +2495,36 @@ function endRound() {
       ],
     });
     record.payout = championshipResult.prize;
-    S.championshipHistory.unshift(championshipResult);
-    if (S.championshipHistory.length > 30) S.championshipHistory.length = 30;
-    if (championship.usesResidentPro) {
-      applyChampionshipCareer(S.proProfile, championshipResult);
-    }
   }
   if (proChallenge) {
     proChallengeResult = resolveProChallenge(record, proChallenge, S.holes);
     record.payout = Math.max(0, proChallengeResult.net);
+  }
+  const priorHistory = [...S.roundHistory];
+  const courseRecord = isCourseRecord(record, priorHistory);
+  const personalBest = isPersonalBest(record, priorHistory);
+  if (!onlineCompetition && !championship && !proChallenge) {
+    S.cash += cashOut;
+    recordFinance(cashOut, 'roundBonuses', `${S.proProfile.name} owner round`);
+    S.rep = clamp(S.rep + birdies * 0.03, 0.3, 5);
+  }
+  const restoredHome = !!isolatedReturnSave;
+  if (isolatedReturnSave) {
+    const homeCourse = isolatedReturnSave;
+    isolatedReturnSave = null;
+    applySaveData(homeCourse);
+  }
+  // Apply event rewards only after an isolated retired/online course has restored the
+  // live resort. Otherwise the advertised prize, career progress and ledger entry are
+  // immediately overwritten by the home snapshot.
+  if (championshipResult && championship) {
+    S.championshipHistory.unshift(championshipResult);
+    if (S.championshipHistory.length > 30) S.championshipHistory.length = 30;
+    if (championship.usesResidentPro) applyChampionshipCareer(S.proProfile, championshipResult);
+    S.cash += championshipResult.prize;
+    recordFinance(championshipResult.prize, 'tournament', `${championshipResult.title} prize`);
+  }
+  if (proChallengeResult) {
     S.proChallengeHistory.unshift(proChallengeResult);
     if (S.proChallengeHistory.length > 30) S.proChallengeHistory.length = 30;
     const before = S.cash;
@@ -2432,23 +2532,10 @@ function endRound() {
     recordFinance(S.cash - before, 'proChallenge', `${S.proProfile.name} vs ${proChallengeResult.opponent.name}`);
     S.proProfile.fame += proChallengeResult.outcome === 'won' ? 25 : proChallengeResult.outcome === 'tied' ? 6 : 0;
   }
-  const priorHistory = [...S.roundHistory];
-  const courseRecord = isCourseRecord(record, priorHistory);
-  const personalBest = isPersonalBest(record, priorHistory);
   S.roundHistory.push(record);
   if (S.roundHistory.length > ROUND_HISTORY_LIMIT) S.roundHistory.splice(0, S.roundHistory.length - ROUND_HISTORY_LIMIT);
   saveRoundHistory();
-  if (!onlineCompetition && !championship && !proChallenge) {
-    S.cash += cashOut;
-    recordFinance(cashOut, 'roundBonuses', `${S.proProfile.name} owner round`);
-    S.rep = clamp(S.rep + birdies * 0.03, 0.3, 5);
-  }
-  if (isolatedReturnSave) {
-    const homeCourse = isolatedReturnSave;
-    isolatedReturnSave = null;
-    applySaveData(homeCourse);
-    saveGame();
-  }
+  if (restoredHome) saveGame();
   S.mode = 'build';
   S.player = null;
   S.activeChampionship = null;
@@ -2998,7 +3085,7 @@ export function saveGame() {
   // Event play is a temporary guest course. Autosave must keep protecting the
   // owner's captured home course even if the browser reloads mid-round.
   const snapshot = isolatedReturnSave ?? buildSaveData();
-  persistCourseSave(snapshot);
+  if (persistCourseSave(snapshot)) associateActivePortfolioMirror(snapshot);
   saveRoundHistory();
   if (portfolioReady && portfolioSupported()) {
     setPortfolioStatus('saving');

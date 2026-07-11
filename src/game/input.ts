@@ -2,9 +2,72 @@ import { S } from './state';
 import { screenToWorld, screenToWorldT, zoomAt, rotateView } from './camera';
 import { lerp } from './rng';
 import { ensureAudio } from './audio';
-import { paintAt, holeToolTap, buildTap, buyLandTap, playerFire, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
+import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
+import type { Aim } from './types';
 
 const HOLE_HINT = 'Tap the map to place the TEE.';
+
+/** Game-wide shortcuts must never steal activation or text entry from UI controls. */
+export function isInteractiveShortcutTarget(target: EventTarget | null): boolean {
+  const candidate = target as { closest?: (selector: string) => unknown; isContentEditable?: boolean } | null;
+  if (!candidate) return false;
+  if (candidate.isContentEditable) return true;
+  return typeof candidate.closest === 'function' && !!candidate.closest('button, input, select, textarea, summary, a[href], [role="button"], [contenteditable="true"]');
+}
+
+export function isCanvasShortcutTarget(target: EventTarget | null, canvas: EventTarget, activeElement: EventTarget | null): boolean {
+  return !isInteractiveShortcutTarget(target) && target === canvas && activeElement === canvas;
+}
+
+export function isGameShortcutSurface(
+  target: EventTarget | null,
+  canvas: EventTarget,
+  activeElement: EventTarget | null,
+  body: EventTarget | null,
+  documentElement: EventTarget | null,
+): boolean {
+  const bodyFocused = target === body && (activeElement === body || activeElement === null);
+  const documentFocused = target === documentElement && (activeElement === documentElement || activeElement === null);
+  return !isInteractiveShortcutTarget(target) && (
+    isCanvasShortcutTarget(target, canvas, activeElement) || bodyFocused || documentFocused
+  );
+}
+
+export function keyboardAimState(angle: number, power: number): Aim {
+  return {
+    on: true,
+    sx: 0,
+    sy: 0,
+    cx: 0,
+    cy: 0,
+    kind: 'keyboard',
+    worldDirX: Math.cos(angle),
+    worldDirY: Math.sin(angle),
+    worldPower: power,
+  };
+}
+
+export function updatePointerAim(aim: Aim | null, x: number, y: number): boolean {
+  if (!aim?.on || aim.kind === 'keyboard') return false;
+  aim.cx = x;
+  aim.cy = y;
+  return true;
+}
+
+export function spaceHeldAfterKeyUp(held: boolean, key: string): boolean {
+  return key === ' ' ? false : held;
+}
+
+export interface KeyboardAimMemory {
+  angle: number | null;
+  power: number;
+  origin: string;
+}
+
+export function resetKeyboardAimMemory(memory: KeyboardAimMemory): void {
+  memory.angle = null;
+  memory.origin = '';
+}
 
 /** Binds pointer/wheel/keyboard handlers to the canvas. Returns a cleanup fn. */
 export function bindInput(cv: HTMLCanvasElement): () => void {
@@ -14,9 +77,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   let lastPaint: { x: number; y: number } | null = null;
   let pinch: { d: number; mx: number; my: number } | null = null;
   let spaceHeld = false;
-  let keyboardAimAngle: number | null = null;
-  let keyboardPower = 0.75;
-  let keyboardAimOrigin = '';
+  const keyboardAim: KeyboardAimMemory = { angle: null, power: 0.75, origin: '' };
   let elevationDelay: number | null = null;
   let elevationRepeat: number | null = null;
   let elevationHold: { pointerId: number; x: number; y: number } | null = null;
@@ -50,6 +111,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
 
   function onDown(e: PointerEvent) {
     ensureAudio();
+    cv.focus({ preventScroll: true });
     cv.setPointerCapture?.(e.pointerId);
     pointers.set(e.pointerId, pos(e));
     if (pointers.size === 2) {
@@ -69,7 +131,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       return;
     }
     if (S.mode === 'play' && S.player && S.player.state === 'aim') {
-      S.player.aim = { on: true, sx: p.x, sy: p.y, cx: p.x, cy: p.y };
+      S.player.aim = { on: true, sx: p.x, sy: p.y, cx: p.x, cy: p.y, kind: 'pointer' };
       updatePlayHud();
       return;
     }
@@ -120,9 +182,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       pinch = { d, mx, my };
       return;
     }
-    if (S.player && S.player.aim && S.player.aim.on) {
-      S.player.aim.cx = p.x;
-      S.player.aim.cy = p.y;
+    if (S.player && updatePointerAim(S.player.aim, p.x, p.y)) {
       updatePlayHud();
       return;
     }
@@ -142,7 +202,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     if (elevationHold?.pointerId === e.pointerId) cancelElevationHold();
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
-    if (S.player && S.player.aim && S.player.aim.on && pointers.size === 0) {
+    if (S.player && S.player.aim && S.player.aim.on && S.player.aim.kind !== 'keyboard' && pointers.size === 0) {
       const a = S.player.aim;
       const w0 = screenToWorld(a.sx, a.sy);
       const w1 = screenToWorld(a.cx, a.cy);
@@ -165,42 +225,53 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     e.preventDefault();
   }
   function onKey(e: KeyboardEvent) {
+    const doc = typeof document !== 'undefined' ? document : null;
+    const activeElement = doc?.activeElement ?? null;
+    const canvasFocused = isCanvasShortcutTarget(e.target, cv, activeElement);
+    if (!isGameShortcutSurface(e.target, cv, activeElement, doc?.body ?? null, doc?.documentElement ?? null)) return;
     if (e.key === 'Escape') {
-      if (S.player && S.player.aim) S.player.aim = null;
+      if (S.player && S.player.aim) {
+        S.player.aim = null;
+        resetKeyboardAimMemory(keyboardAim);
+        updatePlayHud();
+      }
       else if (S.holeDraft) {
         S.holeDraft = null;
         setHint(HOLE_HINT);
       }
     }
-    if (S.mode === 'play' && S.player?.state === 'aim' && S.player.ball) {
+    if (canvasFocused && S.mode === 'play' && S.player?.state === 'aim' && S.player.ball) {
       const hole = S.holes[S.player.holeIdx];
       const aimOrigin = `${S.player.holeIdx}:${S.player.ball.x.toFixed(3)}:${S.player.ball.y.toFixed(3)}`;
-      if (aimOrigin !== keyboardAimOrigin) {
-        keyboardAimOrigin = aimOrigin;
-        keyboardAimAngle = hole ? Math.atan2(hole.cup.y - S.player.ball.y, hole.cup.x - S.player.ball.x) : null;
-        keyboardPower = 0.75;
+      if (aimOrigin !== keyboardAim.origin) {
+        keyboardAim.origin = aimOrigin;
+        keyboardAim.angle = hole ? Math.atan2(hole.cup.y - S.player.ball.y, hole.cup.x - S.player.ball.x) : null;
+        keyboardAim.power = 0.75;
       }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault();
-        keyboardAimAngle = (keyboardAimAngle ?? 0) + (e.key === 'ArrowLeft' ? -Math.PI / 18 : Math.PI / 18);
-        setHint(`Keyboard aim ${Math.round((((keyboardAimAngle * 180) / Math.PI) + 360) % 360)}° · ${Math.round(keyboardPower * 100)}% power · Enter to swing.`);
+        keyboardAim.angle = (keyboardAim.angle ?? 0) + (e.key === 'ArrowLeft' ? -Math.PI / 18 : Math.PI / 18);
+        setKeyboardAim(keyboardAim.angle, keyboardAim.power);
         return;
       }
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
-        keyboardPower = Math.max(0.1, Math.min(1, keyboardPower + (e.key === 'ArrowUp' ? 0.1 : -0.1)));
-        setHint(`Keyboard aim ${Math.round(((((keyboardAimAngle ?? 0) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(keyboardPower * 100)}% power · Enter to swing.`);
+        const step = S.player.lie === 'green' ? 0.05 : 0.1;
+        const minimum = S.player.lie === 'green' ? 0.02 : 0.08;
+        keyboardAim.power = Math.max(minimum, Math.min(1, keyboardAim.power + (e.key === 'ArrowUp' ? step : -step)));
+        setKeyboardAim(keyboardAim.angle ?? 0, keyboardAim.power);
         return;
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        const angle = keyboardAimAngle ?? 0;
-        playerFire(Math.cos(angle), Math.sin(angle), keyboardPower);
-        keyboardAimAngle = null;
+        const keyboardIntent = S.player.aim?.kind === 'keyboard' ? playerAimIntent(S.player.aim, S.player.lie) : null;
+        const angle = keyboardAim.angle ?? 0;
+        playerFire(keyboardIntent?.dirX ?? Math.cos(angle), keyboardIntent?.dirY ?? Math.sin(angle), keyboardIntent?.power ?? keyboardAim.power);
+        resetKeyboardAimMemory(keyboardAim);
         return;
       }
     }
-    if (e.key === ' ') {
+    if (canvasFocused && e.key === ' ') {
       e.preventDefault();
       spaceHeld = true; // hold to pan
     }
@@ -209,7 +280,15 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     if (e.key === 'R') rotateView(-1);
   }
   function onKeyUp(e: KeyboardEvent) {
-    if (e.key === ' ') spaceHeld = false;
+    spaceHeld = spaceHeldAfterKeyUp(spaceHeld, e.key);
+    if (isInteractiveShortcutTarget(e.target)) return;
+  }
+
+  function setKeyboardAim(angle: number, power: number) {
+    const player = S.player;
+    if (!player?.ball) return;
+    player.aim = keyboardAimState(angle, power);
+    updatePlayHud();
   }
 
   cv.addEventListener('pointerdown', onDown);

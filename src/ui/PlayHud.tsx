@@ -15,7 +15,12 @@ const SHAPE_MARKS: Record<ShotShape, { mark: string; note: string }> = {
   backspin: { mark: '⤓', note: 'stop fast' },
   punch: { mark: '→', note: 'low flight' },
 };
-const lieLabel = (lie: string) => lie.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (letter) => letter.toUpperCase());
+const LIE_LABELS: Record<string, string> = {
+  tee: 'Tee', fair: 'Fairway', firmfair: 'Firm fairway', rough: 'Rough', deeprough: 'Deep rough',
+  sand: 'Sand', waste: 'Waste bunker', pot: 'Pot bunker', stream: 'Stream', brush: 'Brush',
+  rock: 'Rock', tree: 'Trees', green: 'Green', flower: 'Flowers', water: 'Water', bridge: 'Bridge',
+};
+const lieLabel = (lie: string) => LIE_LABELS[lie] ?? lie.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (letter) => letter.toUpperCase());
 const yards = (tiles: number) => Math.max(1, Math.round(tiles * YARDS_PER_TILE));
 
 export default function PlayHud() {
@@ -33,13 +38,13 @@ export default function PlayHud() {
         <small>On the course</small>
         <span>{playHud.holeLabel}</span>
         <div className="sub">{playHud.strokeLabel}</div>
-        <div className="playCoach" role="status" aria-live="polite">{playHud.coach}</div>
+        <div className="playCoach" role="status" aria-live="polite" aria-atomic="true">{playHud.coach}</div>
       </div>
       <div className="shotTelemetry" aria-label="Shot information">
         <span><small>To pin</small><b>{yards(playHud.pinDistance)} yd</b></span>
         <span><small>Lie</small><b>{lieLabel(playHud.lie)}</b></span>
         <span className="powerTelemetry"><small>Power</small><b>{playHud.power === null ? 'Ready' : `${Math.round(playHud.power * 100)}%`}</b><i><em style={{ width: `${Math.round((playHud.power ?? 0) * 100)}%` }} /></i></span>
-        <span><small>Carry</small><b>{playHud.carry === null ? '—' : `${yards(playHud.carry)} yd`}</b></span>
+        <span><small>{playHud.onGreen ? 'Putt' : 'Carry'}</small><b>{playHud.carry === null ? '—' : `${yards(playHud.carry)} yd`}</b></span>
       </div>
       {!playHud.onGreen && <div className="shotWorkbench">
         <div className="shotControlGroup">

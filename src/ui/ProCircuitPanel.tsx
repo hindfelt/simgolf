@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { S } from '../game/state';
 import {
   changeResidentProSkill,
@@ -18,6 +18,7 @@ import { fmt$ } from '../game/rng';
 import { useUI } from './store';
 import Icon from './Icon';
 import CharacterPortrait from './CharacterPortrait';
+import { useFloatingPanelFocus } from './panelA11y';
 
 const SHIRTS = ['#e9b53c', '#d0453a', '#3f7fd0', '#2fa48a', '#8e5bc0', '#efefef'];
 const CAPS = ['#fffdf2', '#e9b53c', '#3f7fd0', '#d0453a', '#263b31', '#8e5bc0'];
@@ -37,6 +38,9 @@ export default function ProCircuitPanel() {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [useResident, setUseResident] = useState(true);
   const proFileRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ proPanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
 
   useEffect(() => setName(S.proProfile.name), [version, open]);
   useEffect(() => {
@@ -69,11 +73,11 @@ export default function ProCircuitPanel() {
   };
 
   return (
-    <section className="managementPanel proCircuitPanel" role="dialog" aria-modal="false" aria-labelledby="pro-circuit-title">
+    <section className="managementPanel proCircuitPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="pro-circuit-title" tabIndex={-1}>
       <header className="panelHead">
         <div className="panelTitleMark proMark"><Icon name="trophy" size={22} /></div>
         <div><h2 id="pro-circuit-title">Resident pro &amp; championship</h2><p>Build a golfer · retire a course · compete for money and fame</p></div>
-        <button className="iconButton panelClose" aria-label="Close pro circuit" onClick={() => setStore({ proPanel: false })}><Icon name="close" size={16} /></button>
+        <button className="iconButton panelClose" aria-label="Close pro circuit" onClick={close}><Icon name="close" size={16} /></button>
       </header>
       <div className="proTabs" role="tablist" aria-label="Pro circuit sections">
         <button role="tab" aria-selected={tab === 'pro'} className={tab === 'pro' ? 'active' : ''} onClick={() => setTab('pro')}>{S.proProfile.name}</button>
@@ -134,10 +138,12 @@ export default function ProCircuitPanel() {
             <div className="retiredCourseList">
               {!S.retiredCourses.length && <div className="circuitEmpty"><Icon name="course" size={26} /><b>No championship courses</b><span>Retire the current course to make it available on the pro circuit.</span></div>}
               {S.retiredCourses.map((course) => (
-                <button key={course.id} className={'retiredCourseCard' + (selectedCourseId === course.id ? ' active' : '')} onClick={() => setSelectedCourseId(course.id)}>
-                  <i style={{ background: THEME_COLOR[course.theme] }} /><span><b>{course.name}</b><small>{course.holes} holes · par {course.par} · {course.theme}</small></span>
-                  <em title="Remove course" onClick={(event) => { event.stopPropagation(); if (window.confirm(`Remove ${course.name} from Championship Mode?`)) deleteRetiredCourse(course.id); }}>×</em>
-                </button>
+                <div key={course.id} className={'retiredCourseCard' + (selectedCourseId === course.id ? ' active' : '')}>
+                  <button className="retiredCourseSelect" aria-pressed={selectedCourseId === course.id} onClick={() => setSelectedCourseId(course.id)}>
+                    <i style={{ background: THEME_COLOR[course.theme] }} /><span><b>{course.name}</b><small>{course.holes} holes · par {course.par} · {course.theme}</small></span>
+                  </button>
+                  <button className="retiredCourseRemove" aria-label={`Remove ${course.name} from Championship Mode`} title="Remove course" onClick={() => { if (window.confirm(`Remove ${course.name} from Championship Mode?`)) deleteRetiredCourse(course.id); }}>×</button>
+                </div>
               ))}
             </div>
           </section>
@@ -148,12 +154,12 @@ export default function ProCircuitPanel() {
               <small>12-player stroke-play field · one official card</small>
             </div>
             <h3>Difficulty</h3>
-            <div className="circuitDifficulty">{DIFFICULTIES.map((item) => <button key={item.id} className={difficulty === item.id ? 'active' : ''} onClick={() => setDifficulty(item.id)}><b>{item.label}</b><span>{'◆'.repeat(DIFFICULTIES.indexOf(item) + 1)}</span></button>)}</div>
+            <div className="circuitDifficulty" role="group" aria-label="Championship difficulty">{DIFFICULTIES.map((item) => <button key={item.id} aria-pressed={difficulty === item.id} className={difficulty === item.id ? 'active' : ''} onClick={() => setDifficulty(item.id)}><b>{item.label}</b><span>{'◆'.repeat(DIFFICULTIES.indexOf(item) + 1)}</span></button>)}</div>
             <p>{difficultyDefinition(difficulty).description} Stronger fields award larger purses.</p>
             <h3>Pro golfer</h3>
-            <div className="proChoice">
-              <button className={useResident ? 'active' : ''} onClick={() => setUseResident(true)}><span style={{ background: pro.shirt }} /><b>{pro.name}</b><small>Your saved skills · {pro.unspentSkillPoints} points free</small></button>
-              <button className={!useResident ? 'active' : ''} onClick={() => setUseResident(false)}><span style={{ background: '#3f7fd0' }} /><b>Gary Golf</b><small>Default balanced pro</small></button>
+            <div className="proChoice" role="group" aria-label="Championship golfer">
+              <button aria-label={`${pro.name}, your saved golfer with ${pro.unspentSkillPoints} unspent skill points`} aria-pressed={useResident} className={useResident ? 'active' : ''} onClick={() => setUseResident(true)}><CharacterPortrait name={pro.name} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} className="proChoicePortrait" /><span><b>{pro.name}</b><small>Your saved skills · {pro.unspentSkillPoints} points free</small></span></button>
+              <button aria-label="Gary Golf, default balanced golfer" aria-pressed={!useResident} className={!useResident ? 'active' : ''} onClick={() => setUseResident(false)}><CharacterPortrait name="Gary Golf" shirt="#3f7fd0" skin="#f1c6a0" cap="#efefef" className="proChoicePortrait" /><span><b>Gary Golf</b><small>Default balanced pro</small></span></button>
             </div>
             <button className="startChampionship" disabled={!selectedCourse} onClick={() => selectedCourse && startChampionshipRound(selectedCourse.id, difficulty, useResident) && setStore({ proPanel: false })}><Icon name="trophy" size={17} /> Play championship</button>
           </section>
