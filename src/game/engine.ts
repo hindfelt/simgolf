@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Ball, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
+import type { Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
@@ -60,7 +60,7 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, isPropertyId, propertyById, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -2552,16 +2552,45 @@ const SLOTS_KEY = 'fairway-mogul-slots-v1';
 const PROFILE_KEY = 'fairway-mogul-profile-v1';
 const slotDataKey = (id: string) => 'fairway-mogul-slot-' + id + '-v1';
 
+function snapshotHasSgaFlag(snapshot: unknown, flag: 'top100' | 'top18'): boolean {
+  if (!snapshot || typeof snapshot !== 'object') return false;
+  const holes = (snapshot as { holes?: unknown }).holes;
+  return Array.isArray(holes) && holes.some((hole) => !!hole && typeof hole === 'object' && (hole as Record<string, unknown>)[flag] === true);
+}
+
+/** Current sticky portfolio milestones, including achievements earned since the last autosave. */
+export function careerProgressSnapshot(): CareerProgress {
+  const existing = sanitizeCareerProgress(S.careerProgress, S.proProfile.accomplishments);
+  const historyBest = S.history.reduce((best, entry) => Math.max(best, Number.isFinite(entry.rep) ? entry.rep : 0), 0);
+  const currentTop100 = S.holes.some((hole) => hole.top100 || hole.top18);
+  const currentTop18 = S.holes.some((hole) => hole.top18);
+  const retiredTop100 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top100') || snapshotHasSgaFlag(course.snapshot, 'top18'));
+  const retiredTop18 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top18'));
+  return {
+    version: 1,
+    bestReputation: clamp(Math.max(existing.bestReputation, Number.isFinite(S.rep) ? S.rep : 0, historyBest), 0, 5),
+    tournamentHosted: existing.tournamentHosted || S.tournamentHostedEver || S.goalsAchieved.tournament === true,
+    sgaTop100Earned: existing.sgaTop100Earned || currentTop100 || retiredTop100,
+    sgaTop18Earned: existing.sgaTop18Earned || currentTop18 || retiredTop18,
+  };
+}
+
+function captureCareerProgress() {
+  S.careerProgress = careerProgressSnapshot();
+}
+
 function saveRoundHistory(): boolean {
+  captureCareerProgress();
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify({
-      version: 2,
+      version: 3,
       rounds: S.roundHistory,
       proProfile: S.proProfile,
       retiredCourses: S.retiredCourses,
       championshipHistory: S.championshipHistory,
       proChallengeHistory: S.proChallengeHistory,
       propertiesPurchased: S.propertiesPurchased,
+      careerProgress: S.careerProgress,
     }));
     return true;
   } catch {
@@ -2614,6 +2643,7 @@ export function loadRoundHistory() {
     S.championshipHistory = sanitizeChampionshipHistory(parsed?.championshipHistory);
     S.proChallengeHistory = sanitizeProChallengeHistory(parsed?.proChallengeHistory);
     S.propertiesPurchased = sanitizePropertyHistory(parsed?.propertiesPurchased);
+    S.careerProgress = sanitizeCareerProgress(parsed?.careerProgress, S.proProfile.accomplishments);
   } catch {
     S.roundHistory = [];
     S.proProfile = createResidentPro();
@@ -2621,6 +2651,7 @@ export function loadRoundHistory() {
     S.championshipHistory = [];
     S.proChallengeHistory = [];
     S.propertiesPurchased = [];
+    S.careerProgress = sanitizeCareerProgress(null);
   }
 }
 
@@ -2918,6 +2949,7 @@ function applySaveData(d: any): boolean {
   if (!activeSpecials.has('picky') && !S.specialVisitors.landOffer && S.specialVisitors.pickyCooldown > 600) S.specialVisitors.pickyCooldown = 30;
   if (!activeSpecials.has('ivana') && !S.specialVisitors.landmarkDonated && S.specialVisitors.ivanaCooldown > 600) S.specialVisitors.ivanaCooldown = 45;
   recomputeAllBeauty();
+  captureCareerProgress();
   rebuildStatics();
   updateTopbar();
   return true;
@@ -3046,13 +3078,24 @@ export function newCourse(
 ): boolean {
   const property = propertyId ? propertyById(propertyId) : starterPropertyForTheme(theme);
   const funds = Math.max(0, Math.trunc(!sandbox && S.sandbox ? PROPERTY_INHERITANCE : availableFunds));
+  captureCareerProgress();
   if (!sandbox && propertyId && S.propertiesPurchased.includes(property.id)) {
     setHint(`${property.name} is already developed. Choose an undeveloped property or open it in Sandbox Mode.`);
     sfx.err();
     return false;
   }
-  if (!sandbox && funds < property.price) {
-    setHint(`${property.name} costs ${fmt$(property.price)}; only ${fmt$(funds)} is available.`);
+  const availability = propertyAvailability(property, {
+    funds,
+    progress: S.careerProgress,
+    proProfile: S.proProfile,
+    purchased: S.propertiesPurchased,
+    sandbox,
+  });
+  if (!sandbox && !availability.canPurchase) {
+    const prestigeMissing = availability.missing.filter((requirement) => requirement.id !== 'cash');
+    setHint(prestigeMissing.length
+      ? `${property.name} is still locked: ${prestigeMissing.map((requirement) => requirement.label).join(' · ')}.`
+      : `${property.name} costs ${fmt$(property.price)}; only ${fmt$(funds)} is available.`);
     sfx.err();
     return false;
   }

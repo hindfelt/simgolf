@@ -862,7 +862,7 @@ canvas.game {
 .worldScreenHead span,
 .worldScreenHead b,
 .worldScreenHead small { display: block; }
-.worldScreenHead span:last-child { text-align: right; }
+.worldScreenHead > span:last-child { text-align: right; }
 .worldScreenHead b {
   font-family: Copperplate, 'Bookman Old Style', Georgia, serif;
   font-size: 13px;
@@ -877,6 +877,23 @@ canvas.game {
   letter-spacing: .11em;
   text-transform: uppercase;
 }
+.worldCareerStrip {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  align-items: center;
+  gap: 5px;
+}
+.worldCareerStrip > span {
+  min-width: 62px;
+  padding: 4px 7px;
+  border: 1px solid rgba(226,198,105,.32);
+  border-radius: 6px;
+  background: rgba(10,16,42,.24);
+  text-align: right;
+}
+.worldCareerStrip > span:first-child { min-width: 82px; }
+.worldCareerStrip b { color: #ffe48c; font-size: 9px; letter-spacing: .03em; }
+.worldCareerStrip small { color: #aeb5d4; font-size: 5.5px; }
 .worldScreenBody {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(245px, .78fr);
@@ -1031,6 +1048,15 @@ canvas.game {
 }
 .worldProperty.locked .propertyPin { border-color: #665f57; background: #a6a093; box-shadow: none; }
 .worldProperty.locked em { color: #9a493d; }
+.worldProperty.prestigeLocked {
+  border-color: rgba(82,69,113,.62);
+  background:
+    repeating-linear-gradient(-35deg, transparent 0 7px, rgba(77,62,103,.045) 7px 10px),
+    linear-gradient(180deg, rgba(235,229,219,.9), rgba(203,195,190,.8));
+}
+.worldProperty.prestigeLocked .propertyPin { border-color: #433554; background: linear-gradient(135deg, #9b8daf, #5e5072); }
+.worldProperty.prestigeLocked em { color: #655077; font-size: 6.5px; }
+.worldProperty.cashLocked .propertyPin { border-color: #6d4a33; background: linear-gradient(135deg, #c6a272, #8e6544); }
 .worldProperty.purchased {
   border-color: #52566f;
   background: repeating-linear-gradient(-45deg, #d8d5c8 0 6px, #c9c7bb 6px 12px);
@@ -1136,6 +1162,48 @@ canvas.game {
   font-size: 10px !important;
   line-height: 1.4 !important;
 }
+.propertyUnlocks {
+  margin: 0 0 7px;
+  padding: 7px;
+  border: 1px solid rgba(77,69,48,.25);
+  border-radius: 8px;
+  background: rgba(255,253,235,.68);
+}
+.propertyUnlocks header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--property-dark), transparent 78%);
+}
+.propertyUnlocks header b { color: var(--property-dark); font-family: Copperplate, 'Bookman Old Style', Georgia, serif; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
+.propertyUnlocks header span { color: #6c6758; font-size: 7px; font-weight: 800; }
+.propertyUnlocks ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.propertyUnlocks li {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  font-size: 7px;
+  font-weight: 800;
+}
+.propertyUnlocks li i { flex: 0 0 13px; height: 13px; display: grid; place-items: center; border-radius: 50%; font-size: 8px; font-style: normal; }
+.propertyUnlocks li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.propertyUnlocks li.met { background: rgba(93,138,79,.14); color: #3f6b39; }
+.propertyUnlocks li.met i { background: #4e8750; color: #fffde8; }
+.propertyUnlocks li.missing { background: rgba(132,69,62,.1); color: #85483f; }
+.propertyUnlocks li.missing i { border: 1px solid #9b685e; background: #f3e1d5; color: #8c5148; }
 .propertyFacts {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);
@@ -3683,10 +3751,16 @@ canvas.game:focus-visible {
   .setupModal { max-height: 94vh; padding: 13px 11px 12px; }
   .worldScreenHead { padding-left: 39px; }
   .worldScreenHead b { font-size: 10px; }
+  .worldScreenHead { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .worldCareerStrip { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .worldCareerStrip > span,
+  .worldCareerStrip > span:first-child { min-width: 0; padding-inline: 4px; text-align: left; }
+  .worldCareerStrip b { font-size: 7px; }
   .worldScreenBody { padding: 6px; }
   .worldMap { grid-template-columns: 1fr; padding: 6px; }
   .worldProperty { min-height: 49px; }
   .propertyFacts { grid-template-columns: 72px minmax(0, 1fr); }
+  .propertyUnlocks ul { grid-template-columns: 1fr; }
   .parcelDeed { grid-row: 1 / 5; width: 72px; }
   .gauges {
     gap: 3px;

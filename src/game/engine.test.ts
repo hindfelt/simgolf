@@ -123,6 +123,7 @@ describe('save / load round-trip', () => {
     S.theme = 'tropical';
     S.propertyId = 'fiji-lagoon';
     S.propertiesPurchased = ['fiji-lagoon'];
+    S.careerProgress = { version: 1, bestReputation: 4.2, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false };
     S.themePackId = 'neighborhood-nine';
     S.themeCourseId = 'garden-loop';
     S.difficulty = 'difficult';
@@ -201,6 +202,7 @@ describe('save / load round-trip', () => {
     S.tournamentHostedEver = false;
     S.comments = [];
     S.proProfile.name = 'Mutated Pro';
+    S.careerProgress = { version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
 
     const resumed = loadGame();
 
@@ -224,6 +226,8 @@ describe('save / load round-trip', () => {
     expect(S.comments).toHaveLength(1);
     expect(S.comments[0].txt).toBe('Frame that scorecard!');
     expect(S.proProfile.name).toBe('Ada Irons');
+    expect(S.careerProgress).toEqual({ version: 1, bestReputation: 4.2, tournamentHosted: true, sgaTop100Earned: true, sgaTop18Earned: false });
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).version).toBe(3);
     expect(S.specialVisitors.landmarkDonated).toBe(true);
     expect(S.specialVisitors.landmarkCredits).toBe(1);
     expect(S.specialVisitors.landPurchased).toBe(true);

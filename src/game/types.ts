@@ -486,6 +486,15 @@ export interface ProProfile {
   fame: number;
 }
 
+/** Non-spendable portfolio milestones that survive moving between courses. */
+export interface CareerProgress {
+  version: 1;
+  bestReputation: number;
+  tournamentHosted: boolean;
+  sgaTop100Earned: boolean;
+  sgaTop18Earned: boolean;
+}
+
 export interface RetiredCourse {
   id: string;
   name: string;
@@ -631,6 +640,8 @@ export interface GameState {
   proProfile: ProProfile;
   /** Profile-level World Screen history used for magenta purchased pins. */
   propertiesPurchased: PropertyId[];
+  /** Sticky World Screen unlock milestones; money remains course-local and spendable. */
+  careerProgress: CareerProgress;
   retiredCourses: RetiredCourse[];
   championshipHistory: ChampionshipResult[];
   /** Ephemeral isolated pro-circuit round; never written into a course save. */

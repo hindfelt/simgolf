@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useUI } from './store';
 import { fmt$ } from '../game/rng';
-import { newCourse, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
+import { careerProgressSnapshot, newCourse, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
 import type { Difficulty, PropertyId, ThemePackId } from '../game/types';
 import { DIFFICULTIES } from '../game/difficulty';
 import { S } from '../game/state';
@@ -10,7 +10,7 @@ import Scorecard from './Scorecard';
 import { submitChallengeRound, submitCompetitionRound } from '../online/api';
 import { relativeScoreLabel } from '../game/scorecards';
 import { THEME_PACKS, themePackById } from '../game/themePacks';
-import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAffordable, propertyById } from '../game/properties';
+import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAvailability, propertyById } from '../game/properties';
 import CharacterPortrait from './CharacterPortrait';
 
 const SLOT_IDS = ['A', 'B', 'C'];
@@ -34,14 +34,22 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
   const [themePackId, setThemePackId] = useState<ThemePackId>(currentThemePack);
   const [themeCourseId, setThemeCourseId] = useState<string | null>(S.themePackId === currentThemePack ? S.themeCourseId : null);
   const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : S.cash;
-  const firstAvailable = WORLD_PROPERTIES.find((candidate) => !S.propertiesPurchased.includes(candidate.id) && propertyAffordable(candidate, availableFunds)) ?? propertyById(S.propertyId);
+  const careerProgress = careerProgressSnapshot();
+  const availabilityFor = (candidate: (typeof WORLD_PROPERTIES)[number]) => propertyAvailability(candidate, {
+    funds: availableFunds,
+    progress: careerProgress,
+    proProfile: S.proProfile,
+    purchased: S.propertiesPurchased,
+    currentPropertyId: initial ? null : S.propertyId,
+  });
+  const firstAvailable = WORLD_PROPERTIES.find((candidate) => availabilityFor(candidate).canPurchase) ?? propertyById(S.propertyId);
   const [propertyId, setPropertyId] = useState<PropertyId>(firstAvailable.id);
   const themePack = themePackById(themePackId);
   const property = propertyById(propertyId);
-  const purchased = S.propertiesPurchased.includes(property.id);
-  const affordable = propertyAffordable(property, availableFunds);
+  const availability = availabilityFor(property);
+  const purchased = availability.status === 'purchased' || availability.status === 'current';
   const start = (sandbox: boolean) => {
-    if (!sandbox && (purchased || !affordable)) return;
+    if (!sandbox && !availability.canPurchase) return;
     const action = sandbox ? `Start a sandbox on ${property.name}` : `Purchase ${property.name}`;
     if (!initial && !window.confirm(`${action} and permanently leave ${S.courseName}? The current autosave will be replaced.`)) return;
     newCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds);
@@ -50,7 +58,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
     <>
       <h1 id="modal-title">Choose your property</h1>
       <div className="tag">New resort setup</div>
-      <p className="setupIntro">Choose a Theme Pack and difficulty, then purchase one of sixteen properties around the world. Location controls terrain, deed size, construction budget and the land you own on day one.</p>
+      <p className="setupIntro">Choose a Theme Pack and difficulty, then open one of sixteen properties around the world. New deeds release as your portfolio earns stronger ratings, SGA recognition, tournament prestige and pro fame.</p>
       <h2 className="setupLabel">Theme pack</h2>
       <div className="themePackGrid">
         {THEME_PACKS.map((pack) => {
@@ -83,7 +91,12 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
 
       <div className="worldScreenHead">
         <span><b>World Screen</b><small>16 development opportunities</small></span>
-        <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
+        <div className="worldCareerStrip" aria-label="Portfolio career progress">
+          <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
+          <span><small>Best rating</small><b>{careerProgress.bestReputation.toFixed(1)}★</b></span>
+          <span><small>Pro fame</small><b>{S.proProfile.fame}</b></span>
+          <span><small>Deeds</small><b>{S.propertiesPurchased.length} / 16</b></span>
+        </div>
       </div>
       <div className="worldScreenBody">
         <div className="worldMap" role="group" aria-label="Worldwide property market">
@@ -91,23 +104,33 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
             <section className={`worldRegion world-${group.id}`} key={group.id} aria-labelledby={`world-region-${group.id}`}>
               <header><i aria-hidden="true">{group.mark}</i><b id={`world-region-${group.id}`}>{group.label}</b></header>
               {WORLD_PROPERTIES.filter((candidate) => candidate.theme === group.id).map((candidate) => {
-                const isPurchased = S.propertiesPurchased.includes(candidate.id);
                 const isCurrent = !initial && S.propertyId === candidate.id;
-                const canAfford = propertyAffordable(candidate, availableFunds);
-                const state = isPurchased ? 'purchased' : canAfford ? 'affordable' : 'locked';
-                const shortfall = Math.max(0, candidate.price - availableFunds);
-                const cardStatus = isCurrent ? S.sandbox ? 'Current sandbox property' : 'Current course, already purchased' : isPurchased ? 'Purchased' : canAfford ? candidate.price ? `${fmt$(candidate.price)} property` : 'Inherited property' : `${fmt$(shortfall)} short`;
+                const candidateAvailability = availabilityFor(candidate);
+                const isPurchased = candidateAvailability.status === 'purchased' || candidateAvailability.status === 'current';
+                const prestigeMissing = candidateAvailability.missing.filter((requirement) => requirement.id !== 'cash');
+                const state = isPurchased ? 'purchased' : candidateAvailability.canPurchase ? 'affordable' : 'locked';
+                const lockClass = prestigeMissing.length ? ' prestigeLocked' : candidateAvailability.cashShortfall ? ' cashLocked' : '';
+                const cardStatus = isCurrent
+                  ? S.sandbox ? 'Current sandbox property' : 'Current course, already purchased'
+                  : isPurchased ? 'Purchased'
+                  : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, available` : 'Inherited property, available'
+                  : `Locked. ${candidateAvailability.missing.map((requirement) => requirement.label).join(', ')}`;
+                const cardBadge = isCurrent
+                  ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE'
+                  : isPurchased ? 'PURCHASED'
+                  : candidateAvailability.canPurchase ? candidate.price ? fmt$(candidate.price) : 'INHERITED'
+                  : prestigeMissing.length ? `LOCKED · ${prestigeMissing[0].label}` : `${fmt$(candidateAvailability.cashShortfall)} SHORT`;
                 return (
                   <button
                     key={candidate.id}
-                    className={`worldProperty ${state}${isCurrent ? ' current' : ''}${propertyId === candidate.id ? ' selected' : ''}`}
+                    className={`worldProperty ${state}${lockClass}${isCurrent ? ' current' : ''}${propertyId === candidate.id ? ' selected' : ''}`}
                     aria-label={`${candidate.name}, ${candidate.region}. ${cardStatus}.`}
                     aria-pressed={propertyId === candidate.id}
                     onClick={() => setPropertyId(candidate.id)}
                   >
                     <i className="propertyPin" aria-hidden="true" />
                     <span><b>{candidate.name}</b><small>{candidate.region}</small></span>
-                    <em>{isCurrent ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE' : isPurchased ? 'PURCHASED' : canAfford ? candidate.price ? fmt$(candidate.price) : 'INHERITED' : `${fmt$(shortfall)} SHORT`}</em>
+                    <em>{cardBadge}</em>
                   </button>
                 );
               })}
@@ -116,8 +139,18 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         </div>
 
         <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
-          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : affordable ? property.price ? fmt$(property.price) : 'Inheritance' : `Need ${fmt$(property.price - availableFunds)} more`}</strong></div>
+          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : availability.canPurchase ? property.price ? 'Ready to purchase' : 'Inheritance ready' : 'Career locked'}</strong></div>
           <p>{property.description}</p>
+          <div className="propertyUnlocks" aria-label={`${property.name} deed requirements`}>
+            <header><b>Deed requirements</b><span>{availability.requirements.filter((requirement) => requirement.met).length} / {availability.requirements.length} complete</span></header>
+            <ul>
+              {availability.requirements.map((requirement) => (
+                <li className={requirement.met ? 'met' : 'missing'} key={requirement.id}>
+                  <i aria-hidden="true">{requirement.met ? '✓' : '○'}</i><span>{requirement.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div className="propertyFacts">
             <div className="parcelDeed" role="img" aria-label={`${property.ownedParcels.length} of ${PW * PH} parcels included in the starting deed`} style={{ gridTemplateColumns: `repeat(${PW}, 1fr)` }}>{Array.from({ length: PW * PH }, (_, parcel) => <i key={parcel} className={property.ownedParcels.includes(parcel) ? 'owned' : ''} />)}</div>
             <span><b>{property.ownedParcels.length} / {PW * PH}</b><small>starting parcels</small></span>
@@ -138,7 +171,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
           </div>
         </>
       )}
-      <button className="bigbtn" disabled={purchased || !affordable} onClick={() => start(false)}>{purchased ? 'Choose an undeveloped property' : !affordable ? 'This property is outside your budget' : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
+      <button className="bigbtn" disabled={!availability.canPurchase} onClick={() => start(false)}>{purchased ? 'Choose an undeveloped property' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
       <button className="bigbtn secondarySetup" onClick={() => start(true)}>Sandbox on {property.name} — unlimited funds &amp; land</button>
       {!initial && <button className="textBtn" onClick={close}>Keep current course</button>}
     </>

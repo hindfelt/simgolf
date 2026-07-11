@@ -4,13 +4,35 @@ import { GOAL_DEFS, acceptLandOffer, newCourse } from './engine';
 import {
   PROPERTY_INHERITANCE,
   WORLD_PROPERTIES,
+  propertyAvailability,
   propertyAffordable,
   propertyById,
+  sanitizeCareerProgress,
   sanitizePropertyHistory,
   starterPropertyForTheme,
 } from './properties';
 import { S } from './state';
 import { Tile } from './types';
+import type { CareerProgress, ProProfile, PropertyId } from './types';
+import { createResidentPro } from './proCircuit';
+
+const emptyProgress = (): CareerProgress => ({ version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false });
+
+function unlockedContext(propertyId: PropertyId) {
+  const property = propertyById(propertyId);
+  const progress = emptyProgress();
+  const proProfile = createResidentPro();
+  const unlock = property.unlock ?? {};
+  progress.bestReputation = unlock.reputation ?? 2.5;
+  progress.tournamentHosted = !!unlock.tournament;
+  progress.sgaTop100Earned = !!unlock.sgaTop100 || !!unlock.sgaTop18;
+  progress.sgaTop18Earned = !!unlock.sgaTop18;
+  proProfile.fame = unlock.fame ?? 0;
+  proProfile.starts = unlock.championshipStart ? 1 : 0;
+  proProfile.podiums = unlock.championshipPodium ? 1 : 0;
+  proProfile.wins = unlock.championshipWin ? 1 : 0;
+  return { funds: property.price, progress, proProfile, purchased: [] as PropertyId[] };
+}
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -52,6 +74,76 @@ describe('World Screen property catalog', () => {
     expect(starterPropertyForTheme('desert').id).toBe('red-mesa');
     expect(sanitizePropertyHistory(['fiji-lagoon', 'bad-id', 'fiji-lagoon', 'donegal-point'])).toEqual(['fiji-lagoon', 'donegal-point']);
   });
+
+  it('uses six starter deeds followed by the exact rating, fame and championship career ladder', () => {
+    const expected = {
+      'maple-crossing': undefined,
+      'donegal-point': undefined,
+      'red-mesa': undefined,
+      'maui-grove': undefined,
+      'kyoto-gardens': undefined,
+      'skagen-dunes': undefined,
+      'atacama-wash': { reputation: 3 },
+      'fiji-lagoon': { fame: 25 },
+      'bavarian-vale': { reputation: 3.5, tournament: true },
+      'cape-breton-links': { reputation: 3.5, fame: 50 },
+      'namib-canyon': { reputation: 4, sgaTop100: true },
+      'palawan-bay': { reputation: 4, fame: 100, sgaTop100: true },
+      'ontario-lakes': { reputation: 4.5, fame: 125 },
+      'wadi-rum-reserve': { reputation: 4.5, fame: 175, sgaTop18: true, championshipStart: true },
+      'hebridean-reach': { reputation: 5, fame: 225, sgaTop18: true, championshipPodium: true },
+      'seychelles-crown': { reputation: 5, fame: 300, sgaTop18: true, championshipWin: true },
+    } satisfies Record<PropertyId, (typeof WORLD_PROPERTIES)[number]['unlock']>;
+
+    for (const property of WORLD_PROPERTIES) {
+      expect(property.unlock, property.id).toEqual(expected[property.id]);
+      expect(propertyAvailability(property, unlockedContext(property.id)).canPurchase, property.id).toBe(true);
+    }
+  });
+
+  it('reports every unmet milestone independently and unlocks exactly at each threshold', () => {
+    for (const property of WORLD_PROPERTIES.filter((candidate) => candidate.unlock)) {
+      const context = unlockedContext(property.id);
+      const unlock = property.unlock!;
+      for (const key of Object.keys(unlock) as (keyof NonNullable<typeof property.unlock>)[]) {
+        const failing = {
+          ...context,
+          progress: { ...context.progress },
+          proProfile: { ...context.proProfile } as ProProfile,
+        };
+        if (key === 'reputation') failing.progress.bestReputation = unlock.reputation! - 0.1;
+        if (key === 'fame') failing.proProfile.fame = unlock.fame! - 1;
+        if (key === 'tournament') failing.progress.tournamentHosted = false;
+        if (key === 'sgaTop100') failing.progress.sgaTop100Earned = false;
+        if (key === 'sgaTop18') failing.progress.sgaTop18Earned = false;
+        if (key === 'championshipStart') failing.proProfile.starts = 0;
+        if (key === 'championshipPodium') failing.proProfile.podiums = 0;
+        if (key === 'championshipWin') failing.proProfile.wins = 0;
+        const result = propertyAvailability(property, failing);
+        expect(result.canPurchase, `${property.id}:${key}`).toBe(false);
+        expect(result.missing.some((requirement) => requirement.id === key), `${property.id}:${key}`).toBe(true);
+      }
+    }
+  });
+
+  it('distinguishes current, purchased, locked, available, and sandbox states without spending prestige', () => {
+    const property = propertyById('seychelles-crown');
+    const locked = propertyAvailability(property, { ...unlockedContext(property.id), funds: property.price - 1 });
+    expect(locked).toMatchObject({ status: 'locked', canPurchase: false, cashShortfall: 1 });
+
+    const available = propertyAvailability(property, unlockedContext(property.id));
+    expect(available).toMatchObject({ status: 'available', canPurchase: true, cashShortfall: 0 });
+    expect(available.requirements.every((requirement) => requirement.met)).toBe(true);
+
+    expect(propertyAvailability(property, { ...unlockedContext(property.id), purchased: [property.id] })).toMatchObject({ status: 'purchased', canPurchase: false });
+    expect(propertyAvailability(property, { ...unlockedContext(property.id), currentPropertyId: property.id })).toMatchObject({ status: 'current', canPurchase: false });
+    expect(propertyAvailability(property, { funds: 0, progress: emptyProgress(), proProfile: createResidentPro(), purchased: [], sandbox: true })).toMatchObject({ status: 'available', canPurchase: true });
+  });
+
+  it('migrates legacy career accomplishments conservatively and clamps malformed progress', () => {
+    expect(sanitizeCareerProgress(null, ['rep4', 'tournament'])).toEqual({ version: 1, bestReputation: 4, tournamentHosted: true, sgaTop100Earned: false, sgaTop18Earned: false });
+    expect(sanitizeCareerProgress({ bestReputation: 99, tournamentHosted: 'yes', sgaTop100Earned: true, sgaTop18Earned: 1 })).toEqual({ version: 1, bestReputation: 5, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false });
+  });
 });
 
 describe('property purchase flow', () => {
@@ -59,6 +151,8 @@ describe('property purchase flow', () => {
     (globalThis as { localStorage?: Storage }).localStorage = memoryStorage();
     S.propertiesPurchased = [];
     S.sandbox = false;
+    S.proProfile = createResidentPro();
+    S.careerProgress = emptyProgress();
   });
 
   afterEach(() => {
@@ -67,6 +161,7 @@ describe('property purchase flow', () => {
 
   it('charges the deed, grants its starting parcels, and records profile ownership', () => {
     const property = propertyById('fiji-lagoon');
+    S.proProfile.fame = 25;
     expect(newCourse(false, 'moderate', property.theme, 'standard', null, property.id, PROPERTY_INHERITANCE)).toBe(true);
 
     expect(S.propertyId).toBe(property.id);
@@ -87,6 +182,19 @@ describe('property purchase flow', () => {
     expect(S.courseName).toBe('Existing Course');
   });
 
+  it('enforces prestige gates in the engine and leaves the live course untouched on rejection', () => {
+    S.courseName = 'Existing Course';
+    S.cash = 50_000;
+    expect(newCourse(false, 'moderate', 'desert', 'standard', null, 'atacama-wash', 50_000)).toBe(false);
+    expect(S.courseName).toBe('Existing Course');
+    expect(S.propertiesPurchased).toEqual([]);
+
+    S.careerProgress.bestReputation = 3;
+    expect(newCourse(false, 'moderate', 'desert', 'standard', null, 'atacama-wash', 50_000)).toBe(true);
+    expect(S.propertyId).toBe('atacama-wash');
+    expect(S.cash).toBe(50_000 - propertyById('atacama-wash').price);
+  });
+
   it('allows a purchased property in Sandbox Mode without altering purchase history', () => {
     S.propertiesPurchased = ['fiji-lagoon'];
     expect(newCourse(true, 'moderate', 'tropical', 'standard', null, 'fiji-lagoon', 0)).toBe(true);
@@ -99,12 +207,15 @@ describe('property purchase flow', () => {
   it('does not carry an unlimited Sandbox treasury into a normal property purchase', () => {
     expect(newCourse(true, 'moderate', 'parklands', 'standard', null, 'maple-crossing', 0)).toBe(true);
     S.propertiesPurchased = [];
+    S.proProfile.fame = 25;
 
     expect(newCourse(false, 'moderate', 'tropical', 'standard', null, 'fiji-lagoon', S.cash)).toBe(true);
     expect(S.cash).toBe(PROPERTY_INHERITANCE - propertyById('fiji-lagoon').price);
   });
 
   it('awards county-expansion progress only after a Picky parcel purchase', () => {
+    S.careerProgress = { version: 1, bestReputation: 4.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.proProfile.fame = 125;
     expect(newCourse(false, 'moderate', 'parklands', 'standard', null, 'ontario-lakes', PROPERTY_INHERITANCE)).toBe(true);
     const pickyLand = GOAL_DEFS.find((goal) => goal.id === 'pickyLand')!;
 
@@ -121,6 +232,8 @@ describe('property purchase flow', () => {
     const mapleElevation = Array.from(S.elevC);
 
     S.propertiesPurchased = [];
+    S.careerProgress = { version: 1, bestReputation: 4.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.proProfile.fame = 125;
     expect(newCourse(false, 'moderate', 'parklands', 'standard', null, 'ontario-lakes', PROPERTY_INHERITANCE)).toBe(true);
     const ontarioWater = Array.from(S.tiles).filter((tile) => tile === Tile.WATER).length;
 

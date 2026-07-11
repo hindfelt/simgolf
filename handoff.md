@@ -72,7 +72,7 @@ Then read, in this order:
 - Multi-step terrain elevations and course wildlife/grounds ambience.
 - Improved original facility sprites plus aircraft, marina traffic and course flyovers.
 - Google OIDC, secure sessions, cloud slots, published courses, profiles/follows, asynchronous challenges, daily/weekly competitions, Club Championship, leaderboards and season points.
-- A sixteen-property World Screen with distinct terrain/deed profiles, purchase-history persistence and guarded new-course replacement.
+- A sixteen-property World Screen with distinct terrain/deed profiles, six starter deeds, ten enforced career-gated locations, purchase-history persistence and guarded new-course replacement.
 - Connected water/stream bridge tiles with automatic Pathway conversion, wooden-deck rendering, routing value and bulldoze restoration.
 - A responsive fifteen-item Resort catalog with category filters, explicit availability and aligned staff actions.
 
@@ -148,7 +148,7 @@ The in-app Browser/Chrome surface was unavailable during the final session, so d
 
 Current continuation checks:
 
-- `npm test` — 126/126 browser-game tests pass across 20 files, including bridge/property regressions, dedicated staff art, and direct shot-shape behavior.
+- `npm test` — 135/135 browser-game tests pass across 21 files, including bridge/property regressions, career unlock boundaries, dedicated staff art, and direct shot-shape behavior.
 - `npm run test:api` — 7/7 Worker/D1 integration tests pass.
 - Browser screenshots, the remaining typecheck/build matrix and Snyk scans are still pending; no visual QA is claimed for this round.
 
@@ -157,7 +157,7 @@ These were run immediately before the handoff commit:
 - `npm run typecheck` — passes after restoring the missing theme metadata used by the Help modal.
 - `npm run typecheck:api` — passes.
 - `npm run test:api` — 7/7 passed at the earlier handoff and again in the current continuation.
-- `npm test` — the earlier handoff passed 86/86; the expanded current suite now passes 126/126.
+- `npm test` — the earlier handoff passed 86/86; the expanded current suite now passes 135/135.
 - `npm run build` — passes.
 - `npm run build:api` — Wrangler production dry-run passes.
 - `npm audit` and `snyk test` — no vulnerable dependency paths.

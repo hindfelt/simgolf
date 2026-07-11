@@ -72,9 +72,11 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
 - **World Screen property market** — sixteen original properties across
   Parklands, Links, Desert, and Tropical regions, each with its own deed price,
   starting parcels, relief, water/woodland profile, and terrain seed. The setup
-  flow distinguishes affordable, short-of-funds, purchased, current, and selected
-  properties; purchase history survives new courses, while Sandbox Mode can
-  deliberately revisit an already-developed property.
+  flow distinguishes available, cash-short, career-locked, purchased, current,
+  and selected properties. Six starter deeds are open immediately; the remaining
+  locations require sticky rating, tournament, SGA, pro-fame, and championship
+  milestones. Purchase history and career prestige survive new courses, while
+  Sandbox Mode can deliberately revisit an already-developed property.
 - **Water-crossing bridges** — painting Pathway over water or a stream converts
   it to a priced, connected wooden bridge; continuous deck direction follows the
   neighboring path network, the underlying channel remains visible, and
@@ -113,7 +115,7 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — 126 browser-game tests covering course construction,
+- **Regression coverage** — 135 browser-game tests covering course construction,
   simulation, persistence, the World Screen/property lifecycle, bridge pricing,
   restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,
