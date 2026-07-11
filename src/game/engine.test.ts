@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, exportSaveText, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerEstimatedRoll, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { idx, idxC } from './rng';
 import { S, caches } from './state';
@@ -367,12 +367,65 @@ describe('save / load round-trip', () => {
     expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(base * 1.25);
   });
 
-  it('curves fade and draw to opposite sides with increasing flight progress', () => {
+  it('curves fade, draw, and the stronger hook to their intended sides', () => {
     const carry = 12;
     expect(shapeCurveOffset('fade', carry, 1)).toBeGreaterThan(0);
     expect(shapeCurveOffset('draw', carry, 1)).toBeLessThan(0);
+    expect(shapeCurveOffset('hook', carry, 1)).toBeLessThan(shapeCurveOffset('draw', carry, 1));
     expect(Math.abs(shapeCurveOffset('fade', carry, 0.5))).toBeLessThan(Math.abs(shapeCurveOffset('fade', carry, 1)));
     expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
+  });
+
+  it('moves the real flying ball along the shaped curve instead of a straight endpoint chord', () => {
+    const curveBall = {
+      fx: 0, fy: 0, tx: 12, ty: -2.64,
+      shotShape: 'draw' as const, curvePerpX: 0, curvePerpY: 1, curveDistance: 12,
+    };
+    const halfway = ballFlightPosition(curveBall, 0.5);
+    const chordY = curveBall.fy + (curveBall.ty - curveBall.fy) * 0.5;
+    expect(halfway.y).not.toBeCloseTo(chordY);
+    expect(ballFlightPosition(curveBall, 0)).toEqual({ x: 0, y: 0 });
+    expect(ballFlightPosition(curveBall, 1)).toEqual({ x: 12, y: -2.64 });
+  });
+
+  it('lands a full driver beyond an iron and preserves real power-skill distance gains', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 92, tee: { x: 8, y: 8 }, cup: { x: 40, y: 8 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.elevC.fill(0);
+    S.proProfile.skills.powerHitter = 0;
+    S.proProfile.skills.longDriver = 0;
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('iron');
+    playerFire(1, 0, 1);
+    const ironCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 1);
+    const baseDriverCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+    expect(baseDriverCarry).toBeGreaterThan(ironCarry * 1.2);
+
+    S.proProfile.skills.powerHitter = 10;
+    S.proProfile.skills.longDriver = 10;
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 1);
+    const skilledDriverCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+    expect(skilledDriverCarry).toBeGreaterThan(baseDriverCarry * 1.25);
+    random.mockRestore();
+  });
+
+  it('uses landing-lie rollout scale and stops backspin instead of scaling roll by carry', () => {
+    expect(playerEstimatedRoll('fair', 'straight')).toBeCloseTo(0.9);
+    expect(playerEstimatedRoll('firmfair', 'straight')).toBeCloseTo(1.5);
+    expect(playerEstimatedRoll('fair', 'backspin')).toBe(0);
   });
 
   it('puts backspin and punch behavior directly on the launched ball', () => {

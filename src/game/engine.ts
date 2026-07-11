@@ -61,7 +61,7 @@ import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
 import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
-import { bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceAfterCapitalTransfer, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
+import { bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -1183,7 +1183,7 @@ interface ShotTraits {
  * on uphill lies). Omitting `traits` reproduces the original skill-only formula
  * exactly, so the player's own shots are unaffected.
  */
-function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: number, traits?: ShotTraits) {
+function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: number, traits?: ShotTraits, forcedDistance?: number) {
   const L = LIE[lie] || LIE.rough;
   const minD = lie === 'green' ? 0.15 : 0.6; // putts can be tap-ins
   const remaining = dist(from, target);
@@ -1192,7 +1192,7 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   const imgS = traits?.imagination ?? skill;
   const lengthBase = traits ? 0.82 : 0.9;
   const lengthSpread = traits ? 0.34 : 0.15;
-  const intend = Math.min(L.max * (lengthBase + lengthS * lengthSpread), remaining);
+  const intend = forcedDistance === undefined ? Math.min(L.max * (lengthBase + lengthS * lengthSpread), remaining) : Math.max(minD, forcedDistance);
   let ang = Math.atan2(target.y - from.y, target.x - from.x);
   ang += gauss() * L.ang * (Math.PI / 180) * (1.35 - accS) * (angScale || 1);
   let d = Math.max(minD, intend * (1 + gauss() * (L.dst + (1 - accS) * 0.05)));
@@ -1203,7 +1203,7 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   d = Math.max(minD, d - (elevAt(lx, ly) - elevAt(from.x, from.y)) * slopePenalty);
   return { x: clamp(from.x + Math.cos(ang) * d, 0.6, W - 0.6), y: clamp(from.y + Math.sin(ang) * d, 0.6, H - 0.6), power: d };
 }
-type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight'>;
+type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance'>;
 function startBall(spec: BallSpec, heightMul = 1) {
   const d = dist({ x: spec.fx, y: spec.fy }, { x: spec.tx, y: spec.ty });
   const ball: Ball = {
@@ -1225,7 +1225,21 @@ function startBall(spec: BallSpec, heightMul = 1) {
 export function shapeCurveOffset(shape: ShotShape, intend: number, t: number): number {
   if (shape === 'fade') return intend * 0.22 * Math.pow(t, 1.5);
   if (shape === 'draw') return -intend * 0.22 * Math.pow(t, 1.5);
+  if (shape === 'hook') return -intend * 0.38 * Math.pow(t, 1.35);
   return 0;
+}
+
+export function ballFlightPosition(ball: Pick<Ball, 'fx' | 'fy' | 'tx' | 'ty' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance'>, t: number): Vec {
+  const progress = clamp(t, 0, 1);
+  let x = lerp(ball.fx, ball.tx, progress);
+  let y = lerp(ball.fy, ball.ty, progress);
+  if (ball.shotShape && ball.curveDistance && ball.curvePerpX !== undefined && ball.curvePerpY !== undefined) {
+    const desired = shapeCurveOffset(ball.shotShape, ball.curveDistance, progress);
+    const chord = shapeCurveOffset(ball.shotShape, ball.curveDistance, 1) * progress;
+    x += ball.curvePerpX * (desired - chord);
+    y += ball.curvePerpY * (desired - chord);
+  }
+  return { x, y };
 }
 function elevGrad(x: number, y: number): Vec {
   return {
@@ -1811,8 +1825,9 @@ function updateBalls(dt: number) {
       if (b.kind === 'fly') resolveFly(b);
       else settleShot(b, { x: b.tx, y: b.ty }, b.events || [], !!b.holed);
     } else {
-      b.x = lerp(b.fx, b.tx, b.t);
-      b.y = lerp(b.fy, b.ty, b.t);
+      const position = b.kind === 'fly' ? ballFlightPosition(b, b.t) : { x: lerp(b.fx, b.tx, b.t), y: lerp(b.fy, b.ty, b.t) };
+      b.x = position.x;
+      b.y = position.y;
     }
   }
 }
@@ -2090,9 +2105,10 @@ export function playerShotSkill(lie: LieKey, clubId: ClubId, shape: ShotShape): 
   const pro = activePlayingPro();
   const accuracyLevel = lie === 'green' ? pro.skills.accuratePutter : clubId === 'driver' ? pro.skills.accurateDriver : pro.skills.accurateIrons;
   let skill = 0.82 + accuracyLevel * 0.014 + pro.skills.luck * 0.004;
-  const shapeSkill: Partial<Record<ShotShape, ProSkillId>> = { draw: 'drawShot', fade: 'fadeShot', backspin: 'highBackspin' };
+  const shapeSkill: Partial<Record<ShotShape, ProSkillId>> = { draw: 'drawShot', hook: 'drawShot', fade: 'fadeShot', backspin: 'highBackspin' };
   const skillId = shapeSkill[shape];
   if (skillId) skill -= (10 - pro.skills[skillId]) * 0.009;
+  if (shape === 'hook') skill -= 0.08; // intentionally dramatic and harder to control than a draw
   if (RECOVERY_LIES.has(lie)) skill += pro.skills.recovery * 0.006;
   return clamp(skill, 0.58, 0.99);
 }
@@ -2198,6 +2214,9 @@ export function setShape(id: ShotShape) {
   S.player.shape = id;
   updatePlayHud();
 }
+export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape): number {
+  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3);
+}
 function setupPlayerHole(i: number) {
   const p = S.player!;
   const h = S.holes[i];
@@ -2274,9 +2293,13 @@ export function playerFire(dirX: number, dirY: number, power: number) {
     sfx.hit();
     // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover
     const angScale = club.angScale * (p.shape === 'punch' ? 0.55 : 1);
-    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale);
+    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale, undefined, intend);
     startBall(
-      { kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y, noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch' },
+      {
+        kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y,
+        noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch', shotShape: p.shape,
+        curvePerpX: perpX, curvePerpY: perpY, curveDistance: intend,
+      },
       SHOT_SHAPES[p.shape].heightMul
     );
   }
@@ -3263,7 +3286,7 @@ export async function createPortfolioCourse(
 
   try {
     setPortfolioStatus('saving');
-    const persistedSource = source && !sandbox ? sourceAfterCapitalTransfer(source, property.name) : source;
+    const persistedSource = source ? sourceForPortfolioExpansion(source, property.name, sandbox ? 'sandbox' : 'career') : source;
     await createPortfolioResort(persistedSource, target, sandbox ? 'sandbox' : 'career');
     portfolioReady = true;
     saveRoundHistory();

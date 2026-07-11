@@ -87,6 +87,10 @@ export function sourceAfterCapitalTransfer(snapshot: CourseSnapshot, destination
   return { ...snapshot, cash: 0, financeLedger: ledger };
 }
 
+export function sourceForPortfolioExpansion(snapshot: CourseSnapshot, destinationName: string, destinationKind: ResortRecord['kind']): CourseSnapshot {
+  return snapshot.sandbox === true || destinationKind === 'sandbox' ? snapshot : sourceAfterCapitalTransfer(snapshot, destinationName);
+}
+
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
@@ -103,6 +107,14 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
+let exclusiveMutations = 0;
+
+function enqueueWrite<T>(operation: () => Promise<T>): Promise<T> {
+  const result = writeQueue.then(operation, operation);
+  writeQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
 function openPortfolio(): Promise<IDBDatabase> {
   if (!portfolioSupported()) return Promise.reject(new Error('IndexedDB is unavailable'));
   if (dbPromise) return dbPromise;
@@ -159,7 +171,7 @@ export async function bootstrapPortfolio(legacySnapshot: unknown): Promise<Resor
   return active;
 }
 
-export async function saveActivePortfolioResort(snapshot: unknown): Promise<boolean> {
+async function saveActivePortfolioResortImpl(snapshot: unknown): Promise<boolean> {
   if (!isCourseSnapshot(snapshot) || !portfolioSupported()) return false;
   const db = await openPortfolio();
   const { transaction, manifest } = await readManifest(db, 'readwrite');
@@ -174,8 +186,15 @@ export async function saveActivePortfolioResort(snapshot: unknown): Promise<bool
   return true;
 }
 
+export function saveActivePortfolioResort(snapshot: unknown): Promise<boolean> {
+  // An autosave captured during travel still describes the source resort. Drop it;
+  // the exclusive transaction already writes the source before flipping active.
+  if (exclusiveMutations > 0) return Promise.resolve(false);
+  return enqueueWrite(() => saveActivePortfolioResortImpl(snapshot));
+}
+
 /** Persists source + destination + active pointer in one IndexedDB transaction. */
-export async function createPortfolioResort(sourceSnapshot: unknown, targetSnapshot: unknown, kind: ResortRecord['kind']): Promise<ResortRecord> {
+async function createPortfolioResortImpl(sourceSnapshot: unknown, targetSnapshot: unknown, kind: ResortRecord['kind']): Promise<ResortRecord> {
   if (!isCourseSnapshot(targetSnapshot)) throw new Error('New resort snapshot is invalid');
   const db = await openPortfolio();
   const { transaction, manifest } = await readManifest(db, 'readwrite');
@@ -197,8 +216,13 @@ export async function createPortfolioResort(sourceSnapshot: unknown, targetSnaps
   return target;
 }
 
+export function createPortfolioResort(sourceSnapshot: unknown, targetSnapshot: unknown, kind: ResortRecord['kind']): Promise<ResortRecord> {
+  exclusiveMutations++;
+  return enqueueWrite(() => createPortfolioResortImpl(sourceSnapshot, targetSnapshot, kind)).finally(() => { exclusiveMutations--; });
+}
+
 /** Saves the current resort and changes the active pointer atomically before applying the target. */
-export async function switchPortfolioResortSnapshot(currentSnapshot: unknown, targetId: ResortId): Promise<ResortRecord> {
+async function switchPortfolioResortSnapshotImpl(currentSnapshot: unknown, targetId: ResortId): Promise<ResortRecord> {
   if (!isCourseSnapshot(currentSnapshot)) throw new Error('Current resort snapshot is invalid');
   const db = await openPortfolio();
   const { transaction, manifest } = await readManifest(db, 'readwrite');
@@ -221,6 +245,11 @@ export async function switchPortfolioResortSnapshot(currentSnapshot: unknown, ta
   return target;
 }
 
+export function switchPortfolioResortSnapshot(currentSnapshot: unknown, targetId: ResortId): Promise<ResortRecord> {
+  exclusiveMutations++;
+  return enqueueWrite(() => switchPortfolioResortSnapshotImpl(currentSnapshot, targetId)).finally(() => { exclusiveMutations--; });
+}
+
 export async function listPortfolioResorts(): Promise<ResortRecord[]> {
   if (!portfolioSupported()) return [];
   const db = await openPortfolio();
@@ -240,6 +269,9 @@ export async function listPortfolioResorts(): Promise<ResortRecord[]> {
 
 /** Test-only database reset; kept explicit so production code never clears a portfolio accidentally. */
 export async function resetPortfolioForTests(): Promise<void> {
+  await writeQueue;
+  writeQueue = Promise.resolve();
+  exclusiveMutations = 0;
   if (dbPromise) {
     try { (await dbPromise).close(); } catch { /* ignore failed test handles */ }
     dbPromise = null;

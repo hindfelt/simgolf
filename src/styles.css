@@ -3143,6 +3143,8 @@ canvas.game:focus-visible {
 .proIdentityCard,.proSkillsBoard,.retiredCourseSection,.championshipSetup,.circuitHistory { border: 1px solid rgba(59,61,92,.32); border-radius: 13px; background: linear-gradient(180deg,#f8f3df,#ddd9c5); box-shadow: inset 0 1px rgba(255,255,255,.7); }
 .proIdentityCard { padding: 10px; }
 .proPortrait { position: relative; height: 126px; overflow: hidden; margin-bottom: 9px; border: 2px solid #283f31; border-radius: 11px; background: radial-gradient(circle at 58% 28%,#c6d89e,#668d55 65%,#3c5938); box-shadow: inset 0 -18px rgba(30,55,37,.22); }
+.characterPortrait.proPortrait { width: 100%; height: 126px; border-radius: 11px; }
+.characterPortrait.proPortrait canvas { width: 92px; height: 122px; }
 .proPortrait::before { content:""; position:absolute; left:0; right:0; bottom:17px; height:4px; background:repeating-linear-gradient(90deg,rgba(255,255,255,.32) 0 18px,transparent 18px 37px); transform:skewY(-7deg); }
 .proHead { position:absolute; left:50%; top:31px; width:29px; height:34px; margin-left:-13px; border:3px solid #26382e; border-radius:45% 45% 40% 42%; background:var(--skin); z-index:2; }
 .proHead::after { content:""; position:absolute; right:3px; top:14px; width:3px; height:3px; border-radius:50%; background:#28342c; box-shadow:8px 3px 0 -1px #6d412a; }
@@ -3187,9 +3189,8 @@ canvas.game:focus-visible {
 .proChallengeOffer { grid-column:1/-1; min-height:54px; display:flex; align-items:center; justify-content:center; gap:9px; padding:8px 10px; border:1px dashed #85828f; border-radius:12px; background:rgba(255,255,255,.28); color:#6d697a; }
 .proChallengeOffer > div > b,.proChallengeOffer > div > span { display:block; }.proChallengeOffer > div > b { color:#424755; font-size:10px; }.proChallengeOffer > div > span { margin-top:2px; font-size:7px; }
 .proChallengeOffer.live { display:grid; grid-template-columns:64px 1fr 180px; justify-content:stretch; min-height:112px; border:2px solid #7b451e; background:linear-gradient(135deg,#f3e5c5,#d8b57e); box-shadow:inset 0 1px #fff7df,0 3px 0 #70421f; }
-.touringProPortrait { position:relative; width:58px; height:92px; overflow:hidden; border:2px solid #45372e; border-radius:23px 23px 9px 9px; background:linear-gradient(180deg,#a3b985,#637a50); }
-.touringProPortrait span { position:absolute; left:16px; top:17px; width:25px; height:27px; border:2px solid #2f342f; border-radius:45%; background:var(--tour-skin); z-index:2; }.touringProPortrait span::before { content:""; position:absolute; left:-5px; top:-7px; width:32px; height:12px; border:2px solid #2f342f; border-radius:60% 60% 20% 20%; background:var(--tour-cap); }.touringProPortrait span::after { content:""; position:absolute; right:-9px; top:1px; width:16px; height:5px; border:2px solid #2f342f; border-radius:0 80% 20% 0; background:var(--tour-cap); }
-.touringProPortrait i { position:absolute; left:8px; right:7px; bottom:-6px; height:55px; border:2px solid #2f342f; border-radius:14px 14px 0 0; background:var(--tour-shirt); transform:skewX(-4deg); }.touringProPortrait b { position:absolute; right:7px; top:34px; width:2px; height:60px; background:#e4dfca; transform:rotate(-13deg); box-shadow:0 0 0 1px #42483f; }
+.characterPortrait.touringProPortrait { width:58px; height:92px; overflow:hidden; border:2px solid #45372e; border-radius:23px 23px 9px 9px; background:linear-gradient(180deg,#a3b985,#637a50); }
+.characterPortrait.touringProPortrait canvas { width:54px; height:88px; }
 .proChallengeCopy > span { color:#8a5220!important; font-size:7px!important; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }.proChallengeCopy h3 { margin:2px 0 0; color:#3e342c; font-size:15px; }.proChallengeCopy > b { color:#855b27!important; font-size:8px!important; text-transform:uppercase; }.proChallengeCopy p { margin:5px 0; color:#675b4f; font-size:7px; }
 .touringSkills { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }.touringSkills i { position:relative; height:16px; overflow:hidden; padding:2px 4px; box-sizing:border-box; border:1px solid #967b58; border-radius:5px; background:#c7b591; color:#493f36; font-size:6px; font-style:normal; font-weight:900; text-align:center; text-transform:uppercase; }.touringSkills i span { position:absolute; inset:0 auto 0 0; background:rgba(89,134,75,.52); }.touringSkills i::after { content:attr(data-label); position:relative; z-index:1; }
 .challengeTerms { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px; border:1px solid #8a6839; border-radius:10px; background:rgba(255,249,224,.6); text-align:center; }.challengeTerms > span,.challengeTerms > strong,.challengeTerms > small { grid-column:1/-1; display:block; }.challengeTerms > span { color:#7a6545; font-size:6px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }.challengeTerms > strong { color:#68460b; font-size:18px; }.challengeTerms > small { color:#796b57; font-size:6px; }.challengeTerms button { padding:6px 4px; border:1px solid #58684a; border-radius:6px; background:#6e955b; color:#fffbe4; font-size:7px; font-weight:900; cursor:pointer; }.challengeTerms button.decline { border-color:#8a5a4f; background:#d6b6a3; color:#69392e; }.challengeTerms button:disabled { opacity:.45; cursor:default; }
@@ -4275,7 +4276,15 @@ canvas.game:focus-visible {
 .facilityPreview { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .catalogMode .bpIdentity b { color: #26372c; font-size: 9px; white-space: normal; }
 .catalogMode .bpIdentity small { color: #61705c; font-size: 6px; }
-.catalogMode .catalogCard .bpBlurb { display: none; }
+.catalogMode .catalogCard .bpBlurb {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .catalogMode .bpMeta strong { color: #695015; font-size: 8px; }
 .catalogMode .bpMeta span { padding: 1px 4px; font-size: 7px; }
 .catalogMode .bpAvailability { min-height: 20px; font-size: 7px; }

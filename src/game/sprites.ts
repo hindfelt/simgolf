@@ -60,8 +60,8 @@ function hashStr(s: string): number {
  * 24x32 golfer, drawn facing right. `view: 'rear'` is used while walking away from the
  * camera (up-screen) — no face or cap brim visible, so it doesn't read as still facing us.
  */
-export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front'): HTMLCanvasElement {
-  const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view;
+export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front', identity = ''): HTMLCanvasElement {
+  const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -76,6 +76,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const putt = frame === 'putt';
   const address = frame === 'address' || putt;
   const rear = view === 'rear' && !address && !swingBack && !follow; // swing poses always show the front
+  const identityHash = hashStr(identity || shirt + skin + cap);
 
   // golf bag on the back while walking
   if (walking) {
@@ -127,6 +128,13 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   p(8, ty, 8, 8, shirt);
   p(8, ty, 1, 8, shirtDk); // back shading
   p(8, ty + 7, 8, 1, shirtDk);
+  // Named-cast outfit details: stripe, placket, vest or pocket make silhouettes
+  // recognizable beyond a simple palette swap while staying readable at 1px.
+  const outfit = identityHash % 4;
+  if (outfit === 0) p(11, ty + 1, 2, 6, shade(shirt, 1.22));
+  else if (outfit === 1) { p(9, ty + 2, 6, 1, shade(shirt, 1.2)); p(9, ty + 5, 6, 1, shirtDk); }
+  else if (outfit === 2) { p(9, ty + 1, 2, 6, shirtDk); p(14, ty + 1, 1, 6, shirtDk); }
+  else p(13, ty + 2, 2, 2, shade(shirt, 1.25));
   // collar (not visible from behind)
   if (!rear) p(11, ty - 1, 3, 1, '#f2f0e8');
 
@@ -144,6 +152,12 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(9, hy, 6, 2, cap);
     p(9, hy, 1, 2, capDk);
     p(14, hy + 1, 4, 1, capDk); // brim
+    const feature = (identityHash >>> 3) % 5;
+    if (feature === 0) { p(11, hy + 4, 4, 1, '#3b3028'); p(12, hy + 4, 1, 1, '#d8e6df'); }
+    else if (feature === 1) p(12, hy + 6, 3, 1, '#6a3f27');
+    else if (feature === 2) p(9, hy + 3, 1, 3, shade(cap, 0.48));
+    else if (feature === 3) p(14, hy + 5, 1, 1, '#c8786b');
+    else p(12, hy + 3, 3, 1, shade(cap, 0.5));
   }
 
   // arms + club

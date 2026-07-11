@@ -10,6 +10,7 @@ import {
   resortSummary,
   saveActivePortfolioResort,
   sourceAfterCapitalTransfer,
+  sourceForPortfolioExpansion,
   switchPortfolioResortSnapshot,
   type CourseSnapshot,
 } from './portfolio';
@@ -60,6 +61,13 @@ describe('resort portfolio snapshots', () => {
     expect(transferred.financeLedger).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 5, amount: -10_000, category: 'capital', detail: 'Development capital transferred to Donegal Point' }),
     ]));
+  });
+
+  it('never transfers funds out of a sandbox or into another sandbox', () => {
+    const sandbox = snapshot({ cash: 9_999_999, sandbox: true });
+    expect(sourceForPortfolioExpansion(sandbox, 'Donegal Point', 'career')).toBe(sandbox);
+    const career = snapshot({ cash: 10_000 });
+    expect(sourceForPortfolioExpansion(career, 'Maple Sandbox', 'sandbox')).toBe(career);
   });
 });
 
@@ -118,6 +126,18 @@ describe('transactional resort portfolio repository', () => {
     const active = await bootstrapPortfolio(snapshot());
     await expect(switchPortfolioResortSnapshot(snapshot({ cash: 456 }), 'missing-resort')).rejects.toThrow(/not in this portfolio/);
     expect((await listPortfolioResorts()).find((resort) => resort.active)?.id).toBe(active?.id);
+  });
+
+  it('drops an autosave captured while an exclusive switch is in flight', async () => {
+    const maple = await bootstrapPortfolio(snapshot({ savedAt: 100, cash: 500 }));
+    const donegal = await createPortfolioResort(snapshot({ savedAt: 110, cash: 500 }), snapshot({ savedAt: 200, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 8000 }), 'career');
+    const switching = switchPortfolioResortSnapshot(snapshot({ savedAt: 220, propertyId: 'donegal-point', courseName: 'Donegal Club', theme: 'links', cash: 7777 }), maple!.id);
+    const staleAutosave = await saveActivePortfolioResort(snapshot({ savedAt: 230, propertyId: 'donegal-point', courseName: 'STALE SOURCE', theme: 'links', cash: 1 }));
+    expect(staleAutosave).toBe(false);
+    await switching;
+    const resorts = await listPortfolioResorts();
+    expect(resorts.find((resort) => resort.id === maple!.id)?.summary.courseName).toBe('Maple House');
+    expect(resorts.find((resort) => resort.id === donegal.id)?.summary.cash).toBe(7777);
   });
 
   it('keeps same-property sandbox copies distinct from the career resort', async () => {

@@ -211,6 +211,11 @@ export interface Ball {
   noRoll?: boolean;
   /** Low Punch shot: flies under branch cover, never deflects off a tree. */
   lowFlight?: boolean;
+  /** Player-shaped flight follows the same curve as the aim guide, not a straight chord. */
+  shotShape?: ShotShape;
+  curvePerpX?: number;
+  curvePerpY?: number;
+  curveDistance?: number;
 }
 
 export interface Floater {
@@ -236,7 +241,7 @@ export interface Particle {
 
 export type ClubId = 'driver' | 'iron' | 'wedge';
 /** Manual (p.21-22): shot techniques the player picks before each swing. */
-export type ShotShape = 'straight' | 'fade' | 'draw' | 'backspin' | 'punch';
+export type ShotShape = 'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch';
 
 /** Immutable evidence for one completed player stroke. This is deliberately richer
  * than the HUD needs because online competitions will submit this same record shape. */

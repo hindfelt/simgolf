@@ -169,13 +169,14 @@ export const CLUBS: Record<'driver' | 'iron' | 'wedge', { label: string; mul: nu
 /**
  * Player-only shot technique (manual p.21-22), picked before each full swing (hidden on
  * the green — putts don't have a shape). `heightMul` scales the drawn/flown arc height;
- * curvature (fade/draw) and the no-roll/no-tree-deflect effects (backspin/punch) are
+ * curvature (fade/draw/hook) and the no-roll/no-tree-deflect effects (backspin/punch) are
  * applied directly in `playerFire`/`resolveFly`, not here.
  */
-export const SHOT_SHAPES: Record<'straight' | 'fade' | 'draw' | 'backspin' | 'punch', { label: string; heightMul: number }> = {
+export const SHOT_SHAPES: Record<'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch', { label: string; heightMul: number }> = {
   straight: { label: 'Straight', heightMul: 1 },
   fade: { label: 'Fade', heightMul: 1 },
   draw: { label: 'Draw', heightMul: 1 },
+  hook: { label: 'Hook', heightMul: 0.9 },
   backspin: { label: 'Backspin', heightMul: 1.3 },
   punch: { label: 'Punch', heightMul: 0.45 },
 };

@@ -5,12 +5,13 @@ import type { ClubId, ShotShape } from '../game/types';
 import { S } from '../game/state';
 
 const CLUB_IDS: ClubId[] = ['driver', 'iron', 'wedge'];
-const SHAPE_IDS: ShotShape[] = ['straight', 'fade', 'draw', 'backspin', 'punch'];
+const SHAPE_IDS: ShotShape[] = ['straight', 'fade', 'draw', 'hook', 'backspin', 'punch'];
 const YARDS_PER_TILE = 18;
 const SHAPE_MARKS: Record<ShotShape, { mark: string; note: string }> = {
   straight: { mark: '↑', note: 'neutral' },
   fade: { mark: '↗', note: 'curve right' },
   draw: { mark: '↖', note: 'curve left' },
+  hook: { mark: '⤺', note: 'hard left' },
   backspin: { mark: '⤓', note: 'stop fast' },
   punch: { mark: '→', note: 'low flight' },
 };
@@ -22,6 +23,8 @@ export default function PlayHud() {
   if (!playHud) return null;
   const windDeg = (Math.atan2(playHud.windDy, playHud.windDx) * 180) / Math.PI;
   const windMph = Math.round(playHud.windSpeed * 25);
+  const windPoints = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+  const windPoint = windPoints[Math.round(((windDeg + 360) % 360) / 45) % 8];
   return (
     <div className="playHud">
       {S.activeChampionship && <div className="championshipHud"><b>PRO CIRCUIT</b><span>{S.activeChampionship.title}</span><em>{S.activeChampionship.pro.name} · {S.activeChampionship.difficulty}</em></div>}
@@ -47,6 +50,7 @@ export default function PlayHud() {
                 key={id}
                 type="button"
                 className={'clubBtn' + (playHud.club === id ? ' on' : '')}
+                aria-pressed={playHud.club === id}
                 onClick={() => setClub(id)}
               >
                 <span>{CLUBS[id].label}</span>
@@ -63,6 +67,7 @@ export default function PlayHud() {
                 key={id}
                 type="button"
                 className={'shapeBtn' + (playHud.shape === id ? ' on' : '')}
+                aria-pressed={playHud.shape === id}
                 onClick={() => setShape(id)}
               >
                 <i aria-hidden="true">{SHAPE_MARKS[id].mark}</i>
@@ -74,9 +79,9 @@ export default function PlayHud() {
         </div>
       </div>}
       {windMph > 1 && (
-        <div className="windReadout" title={`Wind ${windMph} mph`}>
+        <div className="windReadout" title={`Wind ${windMph} mph toward ${windPoint}`} aria-label={`Wind ${windMph} miles per hour toward ${windPoint}`}>
           <span className="windArrow" style={{ transform: `rotate(${windDeg}deg)` }}>➤</span>
-          {windMph} mph
+          {windMph} mph · {windPoint}
         </div>
       )}
       <button className="quitBtn" onClick={() => quitRound()}>

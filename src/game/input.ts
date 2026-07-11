@@ -14,6 +14,9 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   let lastPaint: { x: number; y: number } | null = null;
   let pinch: { d: number; mx: number; my: number } | null = null;
   let spaceHeld = false;
+  let keyboardAimAngle: number | null = null;
+  let keyboardPower = 0.75;
+  let keyboardAimOrigin = '';
   let elevationDelay: number | null = null;
   let elevationRepeat: number | null = null;
   let elevationHold: { pointerId: number; x: number; y: number } | null = null;
@@ -167,6 +170,34 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       else if (S.holeDraft) {
         S.holeDraft = null;
         setHint(HOLE_HINT);
+      }
+    }
+    if (S.mode === 'play' && S.player?.state === 'aim' && S.player.ball) {
+      const hole = S.holes[S.player.holeIdx];
+      const aimOrigin = `${S.player.holeIdx}:${S.player.ball.x.toFixed(3)}:${S.player.ball.y.toFixed(3)}`;
+      if (aimOrigin !== keyboardAimOrigin) {
+        keyboardAimOrigin = aimOrigin;
+        keyboardAimAngle = hole ? Math.atan2(hole.cup.y - S.player.ball.y, hole.cup.x - S.player.ball.x) : null;
+        keyboardPower = 0.75;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        keyboardAimAngle = (keyboardAimAngle ?? 0) + (e.key === 'ArrowLeft' ? -Math.PI / 18 : Math.PI / 18);
+        setHint(`Keyboard aim ${Math.round((((keyboardAimAngle * 180) / Math.PI) + 360) % 360)}° · ${Math.round(keyboardPower * 100)}% power · Enter to swing.`);
+        return;
+      }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        keyboardPower = Math.max(0.1, Math.min(1, keyboardPower + (e.key === 'ArrowUp' ? 0.1 : -0.1)));
+        setHint(`Keyboard aim ${Math.round(((((keyboardAimAngle ?? 0) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(keyboardPower * 100)}% power · Enter to swing.`);
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const angle = keyboardAimAngle ?? 0;
+        playerFire(Math.cos(angle), Math.sin(angle), keyboardPower);
+        keyboardAimAngle = null;
+        return;
       }
     }
     if (e.key === ' ') {

@@ -1,10 +1,10 @@
-import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, LIE, ROLL, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
+import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, LIE, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
 import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
 import { S, caches } from './state';
-import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$ } from './rng';
+import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
 import { P, PE, screenToWorld, viewXY } from './camera';
-import { activePlayingPro, parFor, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
+import { activePlayingPro, parFor, playerEstimatedRoll, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
@@ -1768,13 +1768,14 @@ function drawGolferSprite(
   frame: GolferFrame,
   face: number,
   bob: number,
-  view: 'front' | 'rear' = 'front'
+  view: 'front' | 'rear' = 'front',
+  identity = ''
 ) {
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
   ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
-  const spr = golferSprite(shirt, skin, cap, frame, view);
+  const spr = golferSprite(shirt, skin, cap, frame, view, identity);
   const spriteUnit = clamp(u, 0.62, 1.75);
   const k = spriteUnit * 0.84;
   ctx.save();
@@ -1822,7 +1823,7 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
   const view = walking && g.facingAway ? 'rear' : 'front';
-  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view);
+  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
   if ((g.specialGuest && S.cam.z > 0.58) || hovered) {
     drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * Math.max(u, 0.62) - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
@@ -1837,7 +1838,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const py = bp.y - 1 * u;
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
   const pro = activePlayingPro();
-  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0);
+  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0, 'front', pro.name);
   drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - 31 * u, u, 'gold');
 }
 
@@ -1921,7 +1922,7 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   ctx.stroke();
   // roll-out preview: a dimmer dashed line continuing the shot direction along the ground
   // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
-  const rollLen = p.lie !== 'green' && p.shape === 'backspin' ? 0 : intend * 0.5 * (ROLL[p.lie] ?? 0.3);
+  const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape);
   if (rollLen > 0.15) {
     const rollEnd = PE(landX + dx * rollLen, landY + dy * rollLen);
     ctx.setLineDash([3 * u, 4 * u]);

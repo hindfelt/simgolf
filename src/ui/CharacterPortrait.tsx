@@ -25,8 +25,10 @@ export default function CharacterPortrait({ name, shirt, skin, cap, frame = 'idl
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(golferSprite(shirt, skin, cap, frame), 0, 0, canvas.width, canvas.height);
-  }, [cap, frame, shirt, skin]);
+    // Head-and-shoulders crop, not a stretched full-body thumbnail. The same
+    // identity seed adds matching face/outfit details on the course and in UI.
+    ctx.drawImage(golferSprite(shirt, skin, cap, frame, 'front', name), 4, 0, 16, 24, 0, 0, canvas.width, canvas.height);
+  }, [cap, frame, name, shirt, skin]);
 
   return (
     <span className={`characterPortrait ${className}`.trim()} title={name} aria-label={`${name} portrait`}>

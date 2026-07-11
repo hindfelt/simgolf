@@ -17,6 +17,7 @@ import type { CourseTheme, Difficulty } from '../game/types';
 import { fmt$ } from '../game/rng';
 import { useUI } from './store';
 import Icon from './Icon';
+import CharacterPortrait from './CharacterPortrait';
 
 const SHIRTS = ['#e9b53c', '#d0453a', '#3f7fd0', '#2fa48a', '#8e5bc0', '#efefef'];
 const CAPS = ['#fffdf2', '#e9b53c', '#3f7fd0', '#d0453a', '#263b31', '#8e5bc0'];
@@ -82,13 +83,11 @@ export default function ProCircuitPanel() {
       {tab === 'pro' ? (
         <div className="proWorkspace">
           <aside className="proIdentityCard">
-            <div className="proPortrait" style={{ '--shirt': pro.shirt, '--skin': pro.skin, '--cap': pro.cap } as React.CSSProperties}>
-              <span className="proCap" /><span className="proHead" /><span className="proBody" /><i className="proClub" />
-            </div>
+            <CharacterPortrait name={pro.name} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} frame="idle" className="proPortrait" />
             <label>Resident pro<input value={name} maxLength={28} onChange={(event) => setName(event.target.value)} onBlur={() => updateResidentPro({ name })} /></label>
-            <div className="proPalette"><b>Shirt</b>{SHIRTS.map((color) => <button key={color} aria-label={`Shirt ${color}`} className={pro.shirt === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ shirt: color })} />)}</div>
-            <div className="proPalette"><b>Cap</b>{CAPS.map((color) => <button key={color} aria-label={`Cap ${color}`} className={pro.cap === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ cap: color })} />)}</div>
-            <div className="proPalette"><b>Skin</b>{SKINS.map((color) => <button key={color} aria-label={`Skin ${color}`} className={pro.skin === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ skin: color })} />)}</div>
+            <div className="proPalette"><b>Shirt</b>{SHIRTS.map((color) => <button key={color} aria-label={`Shirt ${color}`} aria-pressed={pro.shirt === color} className={pro.shirt === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ shirt: color })} />)}</div>
+            <div className="proPalette"><b>Cap</b>{CAPS.map((color) => <button key={color} aria-label={`Cap ${color}`} aria-pressed={pro.cap === color} className={pro.cap === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ cap: color })} />)}</div>
+            <div className="proPalette"><b>Skin</b>{SKINS.map((color) => <button key={color} aria-label={`Skin ${color}`} aria-pressed={pro.skin === color} className={pro.skin === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ skin: color })} />)}</div>
             <div className="proCareer">
               <div><span>Starts</span><b>{pro.starts}</b></div><div><span>Wins</span><b>{pro.wins}</b></div><div><span>Podiums</span><b>{pro.podiums}</b></div>
               <div><span>Earnings</span><b>{fmt$(pro.careerEarnings)}</b></div><div><span>Fame</span><b>{pro.fame}</b></div><div><span>Accomplishments</span><b>{pro.accomplishments.length}</b></div>
@@ -104,7 +103,7 @@ export default function ProCircuitPanel() {
                 return (
                   <article key={skill.id}>
                     <div><b>{skill.label}</b><small>{skill.description}</small></div>
-                    <div className="skillMeter" aria-label={`${skill.label} ${level * 10}%`}><i style={{ width: `${level * 10}%` }} /></div>
+                    <div className="skillMeter" role="meter" aria-label={`${skill.label} ${level * 10}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={level * 10}><i style={{ width: `${level * 10}%` }} /></div>
                     <div className="skillStepper"><button disabled={level <= 0} onClick={() => changeResidentProSkill(skill.id, -1)}>−</button><strong>{level * 10}%</strong><button disabled={level >= 10 || pro.unspentSkillPoints <= 0} onClick={() => changeResidentProSkill(skill.id, 1)}>+</button></div>
                   </article>
                 );
@@ -116,7 +115,14 @@ export default function ProCircuitPanel() {
         <div className="championshipWorkspace">
           <section className={'proChallengeOffer' + (S.proChallengeOffer ? ' live' : '')}>
             {S.proChallengeOffer ? <>
-              <div className="touringProPortrait" style={{ '--tour-shirt': S.proChallengeOffer.opponent.shirt, '--tour-skin': S.proChallengeOffer.opponent.skin, '--tour-cap': S.proChallengeOffer.opponent.cap } as React.CSSProperties}><span /><i /><b /></div>
+              <CharacterPortrait
+                name={S.proChallengeOffer.opponent.name}
+                shirt={S.proChallengeOffer.opponent.shirt}
+                skin={S.proChallengeOffer.opponent.skin}
+                cap={S.proChallengeOffer.opponent.cap}
+                frame="idle"
+                className="touringProPortrait"
+              />
               <div className="proChallengeCopy"><span>Incoming SGA pro challenge</span><h3>{S.proChallengeOffer.opponent.name}</h3><b>{S.proChallengeOffer.opponent.title}</b><p>One round on your current course. Every hole won or lost transfers the wager.</p>
                 <div className="touringSkills"><i data-label="Length"><span style={{ width: `${S.proChallengeOffer.opponent.length * 100}%` }} /></i><i data-label="Accuracy"><span style={{ width: `${S.proChallengeOffer.opponent.accuracy * 100}%` }} /></i><i data-label="Imagination"><span style={{ width: `${S.proChallengeOffer.opponent.imagination * 100}%` }} /></i></div>
               </div>
