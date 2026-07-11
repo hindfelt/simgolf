@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadGame, newCourse, paintAt, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, startChallengeRound, startChampionshipRound, startCompetitionRound, update } from './engine';
+import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadGame, newCourse, paintAt, playerFire, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update } from './engine';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { idx, idxC } from './rng';
 import { S, caches } from './state';
@@ -120,6 +120,9 @@ describe('save / load round-trip', () => {
     S.cash = 12_345;
     S.time = 410;
     S.courseName = 'Home Course';
+    S.theme = 'tropical';
+    S.propertyId = 'fiji-lagoon';
+    S.propertiesPurchased = ['fiji-lagoon'];
     S.themePackId = 'neighborhood-nine';
     S.themeCourseId = 'garden-loop';
     S.difficulty = 'difficult';
@@ -173,6 +176,7 @@ describe('save / load round-trip', () => {
       ivanaVisits: 1,
       landmarkDonated: true,
       landmarkCredits: 1,
+      landPurchased: true,
       landOffer: { id: 7, parcelIndices: [], price: 3500, remaining: 44 },
     };
     S.goalsAchieved = { rep3: true };
@@ -202,6 +206,7 @@ describe('save / load round-trip', () => {
 
     expect(resumed).toBe(true);
     expect(S.cash).toBe(12_345);
+    expect(S.propertyId).toBe('fiji-lagoon');
     expect(S.themePackId).toBe('neighborhood-nine');
     expect(S.themeCourseId).toBe('garden-loop');
     expect(S.fee).toBe(27);
@@ -221,12 +226,34 @@ describe('save / load round-trip', () => {
     expect(S.proProfile.name).toBe('Ada Irons');
     expect(S.specialVisitors.landmarkDonated).toBe(true);
     expect(S.specialVisitors.landmarkCredits).toBe(1);
+    expect(S.specialVisitors.landPurchased).toBe(true);
     expect(S.specialVisitors.pickyVisits).toBe(2);
     expect(S.time).toBe(410);
     expect(S.financeLedger).toHaveLength(2);
     expect(S.financeLedger[1]).toMatchObject({ year: 2, amount: 2345, category: 'greenFees' });
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
+  });
+
+  it('round-trips bridge backing types, connectivity, and bulldozer restoration', () => {
+    S.tiles[idx(2, 5)] = Tile.BRIDGE_WATER;
+    S.tiles[idx(2, 6)] = Tile.BRIDGE_STREAM;
+    S.tiles[idx(2, 7)] = Tile.PATH;
+    saveGame();
+    S.tiles.fill(Tile.ROUGH);
+
+    expect(loadGame()).toBe(true);
+    expect(S.tiles[idx(2, 5)]).toBe(Tile.BRIDGE_WATER);
+    expect(S.tiles[idx(2, 6)]).toBe(Tile.BRIDGE_STREAM);
+    expect(caches.pathConnected).toEqual(new Set(['2,5', '2,6', '2,7']));
+
+    S.tool = 'dozer';
+    beginPaintStroke();
+    paintAt(2.2, 5.2);
+    beginPaintStroke();
+    paintAt(2.2, 6.2);
+    expect(S.tiles[idx(2, 5)]).toBe(Tile.WATER);
+    expect(S.tiles[idx(2, 6)]).toBe(Tile.STREAM);
   });
 
   it('rejects a save whose tile-array size no longer matches the current map', () => {
@@ -240,6 +267,19 @@ describe('save / load round-trip', () => {
 
     expect(resumed).toBe(false);
     expect(S.cash).toBe(999); // untouched — loadGame bailed before overwriting anything
+  });
+
+  it('migrates a propertyless save to the starter deed for its terrain theme', () => {
+    saveGame();
+    const raw = JSON.parse(localStorage.getItem('fairway-mogul-save-v1')!);
+    delete raw.propertyId;
+    raw.theme = 'desert';
+    localStorage.setItem('fairway-mogul-save-v1', JSON.stringify(raw));
+
+    expect(loadGame()).toBe(true);
+    expect(S.propertyId).toBe('red-mesa');
+    expect(S.propertiesPurchased).toContain('red-mesa');
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).propertiesPurchased).toContain('red-mesa');
   });
 
   it('persists a live SGA pro-challenge offer with the course', () => {
@@ -311,6 +351,29 @@ describe('save / load round-trip', () => {
     S.proProfile.skills.powerHitter = 10;
     S.proProfile.skills.longDriver = 10;
     expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(base * 1.25);
+  });
+
+  it('curves fade and draw to opposite sides with increasing flight progress', () => {
+    const carry = 12;
+    expect(shapeCurveOffset('fade', carry, 1)).toBeGreaterThan(0);
+    expect(shapeCurveOffset('draw', carry, 1)).toBeLessThan(0);
+    expect(Math.abs(shapeCurveOffset('fade', carry, 0.5))).toBeLessThan(Math.abs(shapeCurveOffset('fade', carry, 1)));
+    expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
+  });
+
+  it('puts backspin and punch behavior directly on the launched ball', () => {
+    S.holes = [{ id: 91, tee: { x: 5.5, y: 5.5 }, cup: { x: 24.5, y: 5.5 }, par: 4, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    startRound();
+    setShape('backspin');
+    playerFire(1, 0, 0.4);
+    expect(S.balls.at(-1)).toMatchObject({ noRoll: true, lowFlight: false });
+    quitRound();
+
+    startRound();
+    setShape('punch');
+    playerFire(1, 0, 0.4);
+    expect(S.balls.at(-1)).toMatchObject({ noRoll: false, lowFlight: true });
+    quitRound();
   });
 
   it('accepts an affordable touring-pro challenge as a wagered resident-pro round', () => {

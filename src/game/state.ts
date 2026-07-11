@@ -36,6 +36,7 @@ export const S: GameState = {
     ivanaVisits: 0,
     landmarkDonated: false,
     landmarkCredits: 0,
+    landPurchased: false,
     landOffer: null,
   },
   proProfile: createResidentPro(),

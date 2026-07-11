@@ -10,6 +10,7 @@ interface ToolDef {
   id: ToolId;
   nm: string;
   ct?: string;
+  tip?: string;
   icon: IconName;
   bg?: string;
   gold?: boolean;
@@ -20,6 +21,7 @@ type GroupId = 'course' | 'terrain' | 'resort' | 'play';
 
 const grass = `linear-gradient(180deg, ${TINFO[Tile.ROUGH].c1}, ${TINFO[Tile.ROUGH].c2})`;
 const $ = (n: number) => '$' + n.toLocaleString('en-US');
+const pathwayCost = `${$(TINFO[Tile.PATH].cost)} land · ${$(TINFO[Tile.BRIDGE_WATER].cost)} water · ${$(TINFO[Tile.BRIDGE_STREAM].cost)} stream`;
 
 const TOOLS: ToolDef[] = [
   { id: 'pan', nm: 'Pan', icon: 'pan', bg: 'linear-gradient(180deg,#c9c6e0,#9a96bf)' },
@@ -37,7 +39,7 @@ const TOOLS: ToolDef[] = [
   { id: 'water', nm: 'Water', ct: $(TINFO[Tile.WATER].cost), icon: 'water', bg: `linear-gradient(180deg,#5a9cd8,${TINFO[Tile.WATER].c2})` },
   { id: 'tree', nm: 'Trees', ct: $(TINFO[Tile.TREE].cost), icon: 'tree', bg: grass },
   { id: 'flower', nm: 'Flowers', ct: $(TINFO[Tile.FLOWER].cost), icon: 'flower', bg: grass },
-  { id: 'path', nm: 'Pathway', ct: $(TINFO[Tile.PATH].cost), icon: 'path', bg: `linear-gradient(180deg,#d9bb8d,${TINFO[Tile.PATH].c2})` },
+  { id: 'path', nm: 'Pathway', ct: `${$(TINFO[Tile.PATH].cost)} / ${$(Math.min(TINFO[Tile.BRIDGE_WATER].cost, TINFO[Tile.BRIDGE_STREAM].cost))}+`, tip: pathwayCost, icon: 'path', bg: `linear-gradient(180deg,#d9bb8d,${TINFO[Tile.PATH].c2})` },
   { id: 'raise', nm: 'Raise', ct: $(ELEV_COST) + '+ / step', icon: 'raise', bg: grass },
   { id: 'lower', nm: 'Lower', ct: $(ELEV_COST) + '+ / step', icon: 'lower', bg: grass },
   { id: 'dozer', nm: 'Bulldoze', ct: '$10', icon: 'dozer', bg: 'linear-gradient(180deg,#c2a06a,#a5804f)' },
@@ -49,11 +51,12 @@ const TOOLS: ToolDef[] = [
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
   { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
   { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
-  { id: 'resort', label: 'Resort', icon: 'resort', tools: ['build'] },
+  { id: 'resort', label: 'Resort', icon: 'resort', tools: [] },
   { id: 'play', label: 'Play', icon: 'play', tools: ['play'] },
 ];
 
 function groupForTool(tool: ToolId): GroupId {
+  if (tool === 'build') return 'resort';
   return GROUPS.find((group) => group.tools.includes(tool))?.id ?? 'course';
 }
 
@@ -61,6 +64,7 @@ export default function Toolbar() {
   const tool = useUI((s) => s.tool);
   const mode = useUI((s) => s.mode);
   const buildPanel = useUI((s) => s.buildPanel);
+  const hint = useUI((s) => s.hint);
   const courseTheme = useUI((s) => s.courseTheme);
   const setStore = useUI((s) => s.set);
   const [group, setGroup] = useState<GroupId>(() => groupForTool(tool));
@@ -85,7 +89,7 @@ export default function Toolbar() {
             key={item.id}
             onClick={() => {
               setGroup(item.id);
-              if (item.id === 'resort') setStore({ buildPanel: true, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+              if (item.id === 'resort') setStore({ buildPanel: !(group === 'resort' && buildPanel), staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
               else setStore({ buildPanel: false });
             }}
           >
@@ -95,15 +99,27 @@ export default function Toolbar() {
         ))}
       </div>
       <div className="toolbar" role="tabpanel">
+        {group === 'resort' && visible.length === 0 && (
+          <button
+            type="button"
+            className="dockPrompt"
+            aria-label={buildPanel ? 'Facility catalog is open' : 'Open the facility catalog'}
+            onClick={() => setStore({ buildPanel: !buildPanel })}
+          >
+            <Icon name="resort" size={19} />
+            <span><b>{buildPanel ? 'Facility tray open' : tool === 'build' ? 'Facility selected' : 'Open facility tray'}</b><small>{tool === 'build' && !buildPanel ? hint : 'Choose a building, then place it directly on the course.'}</small></span>
+          </button>
+        )}
         {visible.map((item) => {
           const active = tool === item.id || (item.id === 'build' && buildPanel);
           const label = item.tile === undefined ? item.nm : themedTerrainName(item.tile, courseTheme);
+          const detail = item.tip ?? item.ct;
           return (
             <button
               type="button"
               key={item.id}
-              title={`${label}${item.ct ? ` · ${item.ct}` : ''}`}
-              aria-label={`${label}${item.ct ? `, ${item.ct}` : ''}`}
+              title={`${label}${detail ? ` · ${detail}` : ''}`}
+              aria-label={`${label}${detail ? `, ${detail}` : ''}`}
               aria-pressed={active}
               className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
               onClick={(event) => {

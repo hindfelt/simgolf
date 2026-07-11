@@ -7,11 +7,13 @@ import { P, PE, screenToWorld, viewXY } from './camera';
 import { activePlayingPro, parFor, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
+import type { CourseStaffFrame, CourseStaffKind } from './sprites';
 import type { GolferFrame, TreeKind, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp } from './employees';
+import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -74,12 +76,14 @@ function groupOf(t: number): Grp {
     case Tile.POT_BUNKER:
       return Grp.POT;
     case Tile.STREAM:
+    case Tile.BRIDGE_STREAM:
       return Grp.STREAM;
     case Tile.BRUSH:
       return Grp.BRUSH;
     case Tile.ROCK:
       return Grp.ROCK;
     case Tile.WATER:
+    case Tile.BRIDGE_WATER:
       return Grp.WATER;
     case Tile.PATH:
       return Grp.PATH;
@@ -345,14 +349,14 @@ function drawOrtho() {
   c.lineJoin = 'round';
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      if (S.tiles[idx(x, y)] !== Tile.STREAM) continue;
+      if (!isStreamBackedTile(S.tiles[idx(x, y)])) continue;
       const cx = x * RES + RES / 2;
       const cy = y * RES + RES / 2;
       const joins: [number, number][] = [];
-      if (y > 0 && S.tiles[idx(x, y - 1)] === Tile.STREAM) joins.push([cx, y * RES]);
-      if (y + 1 < H && S.tiles[idx(x, y + 1)] === Tile.STREAM) joins.push([cx, (y + 1) * RES]);
-      if (x > 0 && S.tiles[idx(x - 1, y)] === Tile.STREAM) joins.push([x * RES, cy]);
-      if (x + 1 < W && S.tiles[idx(x + 1, y)] === Tile.STREAM) joins.push([(x + 1) * RES, cy]);
+      if (y > 0 && isStreamBackedTile(S.tiles[idx(x, y - 1)])) joins.push([cx, y * RES]);
+      if (y + 1 < H && isStreamBackedTile(S.tiles[idx(x, y + 1)])) joins.push([cx, (y + 1) * RES]);
+      if (x > 0 && isStreamBackedTile(S.tiles[idx(x - 1, y)])) joins.push([x * RES, cy]);
+      if (x + 1 < W && isStreamBackedTile(S.tiles[idx(x + 1, y)])) joins.push([(x + 1) * RES, cy]);
       const channel = new Path2D();
       if (!joins.length) {
         channel.moveTo(cx - RES * 0.12, cy + RES * 0.12);
@@ -894,6 +898,109 @@ function buildGround() {
   caches.groundDirty = false;
 }
 
+function drawBridge(ctx: CanvasRenderingContext2D, x: number, y: number, u: number) {
+  type WorldPoint = { x: number; y: number };
+  type Rail = [WorldPoint, WorldPoint];
+  const connections = bridgeConnectionsAt(S.tiles, x, y);
+  const h = BRIDGE_HALF_WIDTH;
+  const cx = x + 0.5;
+  const cy = y + 0.5;
+  const rect = (x0: number, y0: number, x1: number, y1: number): WorldPoint[] => [
+    { x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 },
+  ];
+  const decks = [rect(cx - h, cy - h, cx + h, cy + h)];
+  if (connections.west) decks.push(rect(x, cy - h, cx, cy + h));
+  if (connections.east) decks.push(rect(cx, cy - h, x + 1, cy + h));
+  if (connections.north) decks.push(rect(cx - h, y, cx + h, cy));
+  if (connections.south) decks.push(rect(cx - h, cy, cx + h, y + 1));
+  const lift = 2.2 * u;
+  const project = (point: WorldPoint) => {
+    const screen = PE(point.x, point.y);
+    return { x: screen.x, y: screen.y - lift };
+  };
+  const polygon = (points: { x: number; y: number }[]) => {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+  };
+
+  ctx.save();
+  ctx.lineCap = 'square';
+  ctx.lineJoin = 'round';
+  for (const deck of decks) {
+    polygon(deck.map(project).map((point) => ({ x: point.x, y: point.y + 3.2 * u })));
+    ctx.fillStyle = '#4b3120';
+    ctx.fill();
+  }
+  for (const deck of decks) {
+    polygon(deck.map(project));
+    ctx.fillStyle = '#a86d3e';
+    ctx.fill();
+  }
+
+  const plank = (a: WorldPoint, b: WorldPoint) => {
+    const pa = project(a);
+    const pb = project(b);
+    ctx.strokeStyle = 'rgba(69,38,21,.72)';
+    ctx.lineWidth = Math.max(0.8, 0.9 * u);
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
+  };
+  if (connections.west) for (const step of [0.08, 0.2, 0.34]) plank({ x: x + step, y: cy - h }, { x: x + step, y: cy + h });
+  if (connections.east) for (const step of [0.66, 0.8, 0.92]) plank({ x: x + step, y: cy - h }, { x: x + step, y: cy + h });
+  if (connections.north) for (const step of [0.08, 0.2, 0.34]) plank({ x: cx - h, y: y + step }, { x: cx + h, y: y + step });
+  if (connections.south) for (const step of [0.66, 0.8, 0.92]) plank({ x: cx - h, y: y + step }, { x: cx + h, y: y + step });
+  if (connections.west || connections.east) plank({ x: cx, y: cy - h }, { x: cx, y: cy + h });
+  if (connections.north || connections.south) plank({ x: cx - h, y: cy }, { x: cx + h, y: cy });
+
+  const railSides: Rail[] = [];
+  if (connections.west) railSides.push([{ x, y: cy - h }, { x: cx - h, y: cy - h }], [{ x, y: cy + h }, { x: cx - h, y: cy + h }]);
+  if (connections.east) railSides.push([{ x: cx + h, y: cy - h }, { x: x + 1, y: cy - h }], [{ x: cx + h, y: cy + h }, { x: x + 1, y: cy + h }]);
+  if (connections.north) railSides.push([{ x: cx - h, y }, { x: cx - h, y: cy - h }], [{ x: cx + h, y }, { x: cx + h, y: cy - h }]);
+  if (connections.south) railSides.push([{ x: cx - h, y: cy + h }, { x: cx - h, y: y + 1 }], [{ x: cx + h, y: cy + h }, { x: cx + h, y: y + 1 }]);
+  if (!connections.north) railSides.push([{ x: cx - h, y: cy - h }, { x: cx + h, y: cy - h }]);
+  if (!connections.south) railSides.push([{ x: cx - h, y: cy + h }, { x: cx + h, y: cy + h }]);
+  if (!connections.west) railSides.push([{ x: cx - h, y: cy - h }, { x: cx - h, y: cy + h }]);
+  if (!connections.east) railSides.push([{ x: cx + h, y: cy - h }, { x: cx + h, y: cy + h }]);
+  const railHeight = 6.8 * u;
+  for (const [start, end] of railSides) {
+    const a = project(start);
+    const b = project(end);
+    ctx.strokeStyle = '#51331f';
+    ctx.lineWidth = Math.max(1, 1.4 * u);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    for (const width of [Math.max(2, 2.5 * u), Math.max(0.9, 1.15 * u)]) {
+      ctx.strokeStyle = width > 1.5 * u ? '#3a271b' : '#d29a58';
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y - railHeight);
+      ctx.lineTo(b.x, b.y - railHeight);
+      ctx.stroke();
+    }
+    for (const t of [0, 0.5, 1]) {
+      const wx = start.x + (end.x - start.x) * t;
+      const wy = start.y + (end.y - start.y) * t;
+      const p = project({ x: wx, y: wy });
+      ctx.strokeStyle = '#3a271b';
+      ctx.lineWidth = Math.max(2, 2.5 * u);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y + 1.2 * u);
+      ctx.lineTo(p.x, p.y - railHeight - 0.8 * u);
+      ctx.stroke();
+      ctx.strokeStyle = '#c4894c';
+      ctx.lineWidth = Math.max(0.9, 1.1 * u);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 /* ================= main draw ================= */
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
@@ -953,6 +1060,10 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     D.push({ z: dep(pose.x, pose.y) + 0.05, f: () => drawCourseStaff(ctx, staffKind, pose, u) });
   }
   for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (S.tiles[idx(x, y)] === Tile.BRIDGE_WATER || S.tiles[idx(x, y)] === Tile.BRIDGE_STREAM)
+        D.push({ z: dep(x + 0.5, y + 0.5) - 0.08, f: () => drawBridge(ctx, x, y, u) });
   S.holes.forEach((h, i) => {
     D.push({ z: dep(h.cup.x, h.cup.y), f: () => drawFlag(ctx, h, i + 1, u) });
     D.push({ z: dep(h.tee.x, h.tee.y) - 0.01, f: () => drawTeeSign(ctx, h, i + 1, u) });
@@ -1168,13 +1279,34 @@ function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind']
   ctx.imageSmoothingEnabled = true;
 }
 
-function courseStaffPose(id: number, kind: 'ranger' | 'groundskeeper' | 'turftech', index: number) {
+function courseStaffPose(id: number, kind: CourseStaffKind, index: number) {
   const targets = kind === 'ranger' ? caches.wildlife : caches.naturePatches;
   const target = targets.length ? targets[Math.abs(Math.floor(id + index * 7)) % targets.length] : { x: CH.x + 4, y: CH.y + 3 };
-  const cycle = (S.time * (0.045 + index * 0.004) + (Math.abs(id) % 97) / 97) % 2;
-  const t0 = cycle <= 1 ? cycle : 2 - cycle;
-  const t = t0 * t0 * (3 - 2 * t0);
-  return { x: CH.x + (target.x - CH.x) * t, y: CH.y + (target.y - CH.y) * t, phase: S.time * 7 + index, face: cycle <= 1 ? 1 : -1 };
+  const cycle = (S.time * (0.023 + index * 0.002) + (Math.abs(id) % 97) / 97) % 1;
+  const smoothStep = (n: number) => n * n * (3 - 2 * n);
+  let t = 0;
+  let working = false;
+  let outbound = true;
+  if (cycle < 0.4) t = smoothStep(cycle / 0.4);
+  else if (cycle < 0.58) {
+    t = 1;
+    working = true;
+  } else if (cycle < 0.98) {
+    t = 1 - smoothStep((cycle - 0.58) / 0.4);
+    outbound = false;
+  }
+  const phase = S.time * (working ? 5.2 : 7.4) + index * 1.7;
+  const startScreen = P(CH.x, CH.y);
+  const targetScreen = P(target.x, target.y);
+  const outwardFace = targetScreen.x >= startScreen.x ? 1 : -1;
+  return {
+    x: CH.x + (target.x - CH.x) * t,
+    y: CH.y + (target.y - CH.y) * t,
+    phase,
+    face: outbound || working ? outwardFace : -outwardFace,
+    frame: courseStaffAnimationFrame(working, phase),
+    working,
+  };
 }
 
 /** Terrain-following tile outline. */
@@ -1643,7 +1775,8 @@ function drawGolferSprite(
   ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame, view);
-  const k = u * 0.8;
+  const spriteUnit = clamp(u, 0.62, 1.75);
+  const k = spriteUnit * 0.84;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y - bob);
@@ -1655,43 +1788,25 @@ function drawGolferSprite(
 
 function drawCourseStaff(
   ctx: CanvasRenderingContext2D,
-  kind: 'ranger' | 'groundskeeper' | 'turftech',
-  pose: { x: number; y: number; phase: number; face: number },
+  kind: CourseStaffKind,
+  pose: { x: number; y: number; phase: number; face: number; frame: CourseStaffFrame; working: boolean },
   u: number
 ) {
   const p = PE(pose.x, pose.y);
-  const frame: GolferFrame = Math.sin(pose.phase) > 0 ? 'walkA' : 'walkB';
-  const shirt = kind === 'ranger' ? '#456b3b' : kind === 'turftech' ? '#2f8172' : '#c98236';
-  const cap = kind === 'ranger' ? '#d0ad58' : kind === 'turftech' ? '#e8eee4' : '#f0d36b';
-  const bob = Math.abs(Math.sin(pose.phase)) * 1.1 * u;
-  drawGolferSprite(ctx, p.x, p.y, u * 0.92, shirt, '#c98a5e', cap, frame, pose.face, bob);
-
+  const k = clamp(u, 0.65, 1.75) * 0.82;
+  const bob = pose.working ? 0 : Math.abs(Math.sin(pose.phase)) * 1.05 * u;
+  const shadowWidth = kind === 'groundskeeper' ? 8.2 : 7.2;
+  ctx.fillStyle = 'rgba(5,22,17,.23)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + 2.5 * u, p.y + 1.5 * u, shadowWidth * u, 2.6 * u, 0.1, 0, Math.PI * 2);
+  ctx.fill();
   ctx.save();
-  ctx.translate(p.x, p.y - 8 * u);
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(p.x, p.y - bob);
   ctx.scale(pose.face, 1);
-  if (kind === 'ranger') {
-    ctx.strokeStyle = '#283d35';
-    ctx.lineWidth = Math.max(1, 1.2 * u);
-    ctx.beginPath();
-    ctx.moveTo(4 * u, -5 * u);
-    ctx.lineTo(9 * u, -8 * u);
-    ctx.stroke();
-    ctx.fillStyle = '#263c39';
-    ctx.fillRect(8 * u, -10 * u, 4 * u, 3 * u);
-  } else {
-    ctx.strokeStyle = '#79532c';
-    ctx.lineWidth = Math.max(1, 1.2 * u);
-    ctx.beginPath();
-    ctx.moveTo(4 * u, -4 * u);
-    ctx.lineTo(12 * u, 8 * u);
-    ctx.stroke();
-    ctx.strokeStyle = '#60676a';
-    ctx.beginPath();
-    ctx.moveTo(9 * u, 8 * u);
-    ctx.lineTo(15 * u, 8 * u);
-    ctx.stroke();
-  }
+  ctx.drawImage(courseStaffSprite(kind, pose.frame), -15 * k, -35 * k, 30 * k, 36 * k);
   ctx.restore();
+  ctx.imageSmoothingEnabled = true;
 }
 
 function golferFrame(g: Golfer): GolferFrame {
@@ -1708,7 +1823,10 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
   const view = walking && g.facingAway ? 'rear' : 'front';
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view);
-  if (g.specialGuest && S.cam.z > 0.58) drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * u - bob, u * 0.88, 'gold');
+  const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
+  if ((g.specialGuest && S.cam.z > 0.58) || hovered) {
+    drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * Math.max(u, 0.62) - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
+  }
 }
 
 function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {

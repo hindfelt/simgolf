@@ -1,9 +1,11 @@
+import { useCallback, useRef } from 'react';
 import { useUI } from './store';
 import { hireEmployee, fireEmployee } from '../game/engine';
 import { EMP_CATALOG, hireCost, countEmp, skilledUnlocked, empWagesPerSec } from '../game/employees';
 import { fmt$ } from '../game/rng';
 import type { EmployeeKind } from '../game/types';
 import Icon, { type IconName } from './Icon';
+import { staffRecruitmentCopy, useFloatingPanelFocus } from './panelA11y';
 
 const ORDER: EmployeeKind[] = ['clubpro', 'ranger', 'groundskeeper', 'sodavendor', 'celebrity', 'marshall', 'turftech', 'refreshment'];
 
@@ -23,18 +25,21 @@ export default function StaffPanel() {
   const cash = useUI((s) => s.cash);
   useUI((s) => s.staffVersion); // subscribe so roster edits re-render
   const setStore = useUI((s) => s.set);
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ staffPanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
   if (open === false) return null;
 
   const locked = !skilledUnlocked();
 
   return (
-    <section className="buildPanel" role="dialog" aria-modal="false" aria-labelledby="staff-title">
+    <section className="buildPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="staff-title" tabIndex={-1}>
       <div className="bpHead">
         <b id="staff-title">Staff</b>
         <span>
           Total wages: {fmt$(empWagesPerSec())}/s{locked ? ' · skilled staff unlock at 6 holes' : ''}
         </span>
-        <button className="bpClose" aria-label="Close staff" onClick={() => setStore({ staffPanel: false })}>
+        <button className="bpClose" aria-label="Close staff" onClick={close}>
           <Icon name="close" size={14} />
         </button>
       </div>
@@ -44,8 +49,9 @@ export default function StaffPanel() {
           const n = countEmp(k);
           const cost = hireCost(k);
           const cantHire = (d.skilled && locked) || cash < cost;
+          const recruitment = staffRecruitmentCopy({ name: d.name, wage: d.wage, count: n, cost, cash, skilledLocked: d.skilled && locked });
           return (
-            <div key={k} className="bpItem staffCard">
+            <article key={k} className={'bpItem staffCard' + (d.skilled && locked ? ' staffLocked' : '')}>
               <div className="bpIc"><Icon name={ICONS[k]} size={22} /></div>
               <div className="bpName">
                 {d.name}
@@ -56,17 +62,17 @@ export default function StaffPanel() {
               </div>
               <div className="bpBlurb">
                 {d.blurb}
-                {d.skilled && locked ? ' (needs 6 holes)' : ''}
               </div>
+              <div className={'staffStatus' + (cantHire ? ' locked' : '')}>{recruitment.status}</div>
               <div className="bpBtns">
-                <button disabled={cantHire} onClick={() => hireEmployee(k)}>
+                <button disabled={cantHire} aria-label={recruitment.hireLabel} onClick={() => hireEmployee(k)}>
                   Hire
                 </button>
-                <button disabled={n === 0} onClick={() => fireEmployee(k)}>
+                <button disabled={n === 0} aria-label={`Fire one ${d.name}`} onClick={() => fireEmployee(k)}>
                   Fire
                 </button>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>

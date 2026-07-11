@@ -4,6 +4,7 @@ import Icon from './Icon';
 import { financialYearAt } from '../game/finance';
 import { membershipActive } from '../game/memberships';
 import { fmt$ } from '../game/rng';
+import CharacterPortrait from './CharacterPortrait';
 
 const STAT_LABEL: { key: 'length' | 'accuracy' | 'imagination'; label: string }[] = [
   { key: 'length', label: 'Length' },
@@ -39,30 +40,33 @@ export default function RegularsPanel() {
       <div className="regularsList">
         {roster.map((r) => (
           <div className="regularCard" key={r.name}>
-            <div className="regularHead">
-              <b className={onCourse.has(r.name) ? 'regularOnCourse' : ''}>{r.name}</b>
-              {membershipActive(r.membership, year) && (
-                <span className="regularTag regularMember" title={r.membership?.tier === 'lifetime' ? 'Lifetime member' : `Annual member through year ${r.membership?.expiresYear}`}>
-                  {r.membership?.tier === 'lifetime' ? 'Lifetime' : 'Member'}
-                </span>
-              )}
-              {r.celebrity && <span className="regularTag regularCeleb" title="Local celebrity">🌟</span>}
-              {r.relation && (
-                <span className={`regularTag regular-${r.relation.type}`} title={`${r.relation.type} of ${r.relation.withName}`}>
-                  {r.relation.type === 'rival' ? '⚔️' : '💛'} {r.relation.withName}
-                </span>
-              )}
-              <span className="regularVisits">{r.visits} visit{r.visits === 1 ? '' : 's'} · {r.holesPlayed ?? 0} holes · {fmt$(r.lifetimeSpend ?? 0)}</span>
-            </div>
-            <div className="regularStats">
-              {STAT_LABEL.map(({ key, label }) => (
-                <div className="regularStat" key={key}>
-                  <span>{label}</span>
-                  <div className="regularStatBar">
-                    <i style={{ width: `${Math.round(r[key] * 100)}%` }} />
+            <CharacterPortrait name={r.name} shirt={r.shirt} skin={r.skin} cap={r.cap} className={onCourse.has(r.name) ? 'onCourse' : ''} />
+            <div className="regularCardBody">
+              <div className="regularHead">
+                <b className={onCourse.has(r.name) ? 'regularOnCourse' : ''}>{r.name}</b>
+                {membershipActive(r.membership, year) && (
+                  <span className="regularTag regularMember" title={r.membership?.tier === 'lifetime' ? 'Lifetime member' : `Annual member through year ${r.membership?.expiresYear}`}>
+                    {r.membership?.tier === 'lifetime' ? 'Lifetime' : 'Member'}
+                  </span>
+                )}
+                {r.celebrity && <span className="regularTag regularCeleb" title="Local celebrity">🌟</span>}
+                {r.relation && (
+                  <span className={`regularTag regular-${r.relation.type}`} title={`${r.relation.type} of ${r.relation.withName}`}>
+                    {r.relation.type === 'rival' ? '⚔️' : '💛'} {r.relation.withName}
+                  </span>
+                )}
+                <span className="regularVisits">{r.visits} visit{r.visits === 1 ? '' : 's'} · {r.holesPlayed ?? 0} holes · {fmt$(r.lifetimeSpend ?? 0)}</span>
+              </div>
+              <div className="regularStats">
+                {STAT_LABEL.map(({ key, label }) => (
+                  <div className="regularStat" key={key}>
+                    <span>{label}</span>
+                    <div className="regularStatBar">
+                      <i style={{ width: `${Math.round(r[key] * 100)}%` }} />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         ))}

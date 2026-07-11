@@ -11,6 +11,7 @@ import { submitChallengeRound, submitCompetitionRound } from '../online/api';
 import { relativeScoreLabel } from '../game/scorecards';
 import { THEME_PACKS, themePackById } from '../game/themePacks';
 import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAffordable, propertyById } from '../game/properties';
+import CharacterPortrait from './CharacterPortrait';
 
 const SLOT_IDS = ['A', 'B', 'C'];
 const WORLD_THEME_ORDER = [
@@ -32,7 +33,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
   const [difficulty, setDifficulty] = useState<Difficulty>(currentDifficulty);
   const [themePackId, setThemePackId] = useState<ThemePackId>(currentThemePack);
   const [themeCourseId, setThemeCourseId] = useState<string | null>(S.themePackId === currentThemePack ? S.themeCourseId : null);
-  const availableFunds = initial ? PROPERTY_INHERITANCE : S.cash;
+  const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : S.cash;
   const firstAvailable = WORLD_PROPERTIES.find((candidate) => !S.propertiesPurchased.includes(candidate.id) && propertyAffordable(candidate, availableFunds)) ?? propertyById(S.propertyId);
   const [propertyId, setPropertyId] = useState<PropertyId>(firstAvailable.id);
   const themePack = themePackById(themePackId);
@@ -41,7 +42,8 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
   const affordable = propertyAffordable(property, availableFunds);
   const start = (sandbox: boolean) => {
     if (!sandbox && (purchased || !affordable)) return;
-    if (!initial && !window.confirm(`Purchase ${property.name} and permanently leave ${S.courseName}? The current autosave will be replaced.`)) return;
+    const action = sandbox ? `Start a sandbox on ${property.name}` : `Purchase ${property.name}`;
+    if (!initial && !window.confirm(`${action} and permanently leave ${S.courseName}? The current autosave will be replaced.`)) return;
     newCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds);
   };
   return (
@@ -58,6 +60,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
               key={pack.id}
               className={'themePackBtn' + (themePackId === pack.id ? ' active' : '')}
               style={{ '--pack-accent': pack.accent } as CSSProperties}
+              aria-pressed={themePackId === pack.id}
               onClick={() => { setThemePackId(pack.id); setThemeCourseId(null); }}
             >
               <i aria-hidden="true" />
@@ -71,7 +74,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
       <h2 className="setupLabel">Gameplay mode</h2>
       <div className="difficultyGrid">
         {DIFFICULTIES.map((item) => (
-          <button key={item.id} className={'difficultyBtn difficulty-' + item.id + (difficulty === item.id ? ' active' : '')} onClick={() => setDifficulty(item.id)}>
+          <button key={item.id} className={'difficultyBtn difficulty-' + item.id + (difficulty === item.id ? ' active' : '')} aria-pressed={difficulty === item.id} onClick={() => setDifficulty(item.id)}>
             <span className="difficultyPips" aria-hidden="true">{'◆'.repeat(DIFFICULTIES.indexOf(item) + 1)}</span>
             <b>{item.label}</b><small>{item.description}</small>
           </button>
@@ -82,33 +85,47 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <span><b>World Screen</b><small>16 development opportunities</small></span>
         <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
       </div>
-      <div className="worldMap" aria-label="Worldwide property market">
-        {WORLD_THEME_ORDER.map((group) => (
-          <section className={`worldRegion world-${group.id}`} key={group.id}>
-            <header><i>{group.mark}</i><b>{group.label}</b></header>
-            {WORLD_PROPERTIES.filter((candidate) => candidate.theme === group.id).map((candidate) => {
-              const isPurchased = S.propertiesPurchased.includes(candidate.id);
-              const canAfford = propertyAffordable(candidate, availableFunds);
-              const state = isPurchased ? 'purchased' : canAfford ? 'affordable' : 'locked';
-              return (
-                <button key={candidate.id} className={`worldProperty ${state}${propertyId === candidate.id ? ' selected' : ''}`} aria-pressed={propertyId === candidate.id} onClick={() => setPropertyId(candidate.id)}>
-                  <i className="propertyPin" aria-hidden="true" />
-                  <span><b>{candidate.name}</b><small>{candidate.region}</small></span>
-                  <em>{isPurchased ? 'PURCHASED' : candidate.price ? fmt$(candidate.price) : 'INHERITED'}</em>
-                </button>
-              );
-            })}
-          </section>
-        ))}
-      </div>
+      <div className="worldScreenBody">
+        <div className="worldMap" role="group" aria-label="Worldwide property market">
+          {WORLD_THEME_ORDER.map((group) => (
+            <section className={`worldRegion world-${group.id}`} key={group.id} aria-labelledby={`world-region-${group.id}`}>
+              <header><i aria-hidden="true">{group.mark}</i><b id={`world-region-${group.id}`}>{group.label}</b></header>
+              {WORLD_PROPERTIES.filter((candidate) => candidate.theme === group.id).map((candidate) => {
+                const isPurchased = S.propertiesPurchased.includes(candidate.id);
+                const isCurrent = !initial && S.propertyId === candidate.id;
+                const canAfford = propertyAffordable(candidate, availableFunds);
+                const state = isPurchased ? 'purchased' : canAfford ? 'affordable' : 'locked';
+                const shortfall = Math.max(0, candidate.price - availableFunds);
+                const cardStatus = isCurrent ? S.sandbox ? 'Current sandbox property' : 'Current course, already purchased' : isPurchased ? 'Purchased' : canAfford ? candidate.price ? `${fmt$(candidate.price)} property` : 'Inherited property' : `${fmt$(shortfall)} short`;
+                return (
+                  <button
+                    key={candidate.id}
+                    className={`worldProperty ${state}${isCurrent ? ' current' : ''}${propertyId === candidate.id ? ' selected' : ''}`}
+                    aria-label={`${candidate.name}, ${candidate.region}. ${cardStatus}.`}
+                    aria-pressed={propertyId === candidate.id}
+                    onClick={() => setPropertyId(candidate.id)}
+                  >
+                    <i className="propertyPin" aria-hidden="true" />
+                    <span><b>{candidate.name}</b><small>{candidate.region}</small></span>
+                    <em>{isCurrent ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE' : isPurchased ? 'PURCHASED' : canAfford ? candidate.price ? fmt$(candidate.price) : 'INHERITED' : `${fmt$(shortfall)} SHORT`}</em>
+                  </button>
+                );
+              })}
+            </section>
+          ))}
+        </div>
 
-      <div className={`propertyInspector inspector-${property.theme}`}>
-        <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : affordable ? property.price ? fmt$(property.price) : 'Inheritance' : `Need ${fmt$(property.price - availableFunds)} more`}</strong></div>
-        <p>{property.description}</p>
-        <div className="propertyFacts">
-          <div className="parcelDeed" style={{ gridTemplateColumns: `repeat(${PW}, 1fr)` }}>{Array.from({ length: PW * PH }, (_, parcel) => <i key={parcel} className={property.ownedParcels.includes(parcel) ? 'owned' : ''} />)}</div>
-          <span><b>{property.ownedParcels.length} / {PW * PH}</b><small>starting parcels</small></span>
-          {(['relief', 'water', 'woodland'] as const).map((metric) => <span key={metric}><b className="propertyMeter"><i style={{ width: `${Math.round(property.terrain[metric] * 100)}%` }} /></b><small>{metric}</small></span>)}
+        <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
+          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : affordable ? property.price ? fmt$(property.price) : 'Inheritance' : `Need ${fmt$(property.price - availableFunds)} more`}</strong></div>
+          <p>{property.description}</p>
+          <div className="propertyFacts">
+            <div className="parcelDeed" role="img" aria-label={`${property.ownedParcels.length} of ${PW * PH} parcels included in the starting deed`} style={{ gridTemplateColumns: `repeat(${PW}, 1fr)` }}>{Array.from({ length: PW * PH }, (_, parcel) => <i key={parcel} className={property.ownedParcels.includes(parcel) ? 'owned' : ''} />)}</div>
+            <span><b>{property.ownedParcels.length} / {PW * PH}</b><small>starting parcels</small></span>
+            {(['relief', 'water', 'woodland'] as const).map((metric) => {
+              const value = Math.round(property.terrain[metric] * 100);
+              return <span key={metric}><b className="propertyMeter" role="meter" aria-label={`${metric} ${value}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}><i style={{ width: `${value}%` }} /></b><small>{metric}</small></span>;
+            })}
+          </div>
         </div>
       </div>
 
@@ -116,8 +133,8 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <>
           <h2 className="setupLabel">Bundled course</h2>
           <div className="themeCourseGrid">
-            <button className={themeCourseId === null ? 'active' : ''} onClick={() => setThemeCourseId(null)}><b>Fresh property</b><span>One starter hole · build from scratch</span></button>
-            {themePack.courses.map((course) => <button key={course.id} className={themeCourseId === course.id ? 'active' : ''} onClick={() => setThemeCourseId(course.id)}><b>{course.name}</b><span>{course.description}</span></button>)}
+            <button className={themeCourseId === null ? 'active' : ''} aria-pressed={themeCourseId === null} onClick={() => setThemeCourseId(null)}><b>Fresh property</b><span>One starter hole · build from scratch</span></button>
+            {themePack.courses.map((course) => <button key={course.id} className={themeCourseId === course.id ? 'active' : ''} aria-pressed={themeCourseId === course.id} onClick={() => setThemeCourseId(course.id)}><b>{course.name}</b><span>{course.description}</span></button>)}
           </div>
         </>
       )}
@@ -133,7 +150,7 @@ function LandOfferPanel({ close }: { close: () => void }) {
   const offer = S.specialVisitors.landOffer;
   return (
     <>
-      <div className="guestHeading pickyHeading"><span className="guestPortrait">IM</span><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
+      <div className="guestHeading pickyHeading"><CharacterPortrait name="I.M. Picky" shirt="#71845d" skin="#d9aa7c" cap="#d0ad58" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
       {offer ? (
         <>
           <p>Your course passed inspection. Choose any adjoining highlighted plot before the offer expires.</p>
@@ -257,12 +274,33 @@ export default function Modals() {
   const modalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!modal) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     modalRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !(modal.kind === 'newCourse' && modal.initial)) setStore({ modal: null });
+      if (event.key !== 'Tab' || !modalRef.current) return;
+      const focusable = [...modalRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) {
+        event.preventDefault();
+        modalRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === modalRef.current || document.activeElement === first || !modalRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === modalRef.current || document.activeElement === last)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previousFocus?.focus();
+    };
   }, [modal, setStore]);
   useEffect(() => setSubmission('idle'), [modal]);
   if (!modal) return null;
@@ -425,7 +463,7 @@ export default function Modals() {
         {modal.kind === 'landOffer' && <LandOfferPanel close={close} />}
         {modal.kind === 'landmarkGift' && (
           <>
-            <div className="guestHeading ivanaHeading"><span className="guestPortrait">IR</span><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
+            <div className="guestHeading ivanaHeading"><CharacterPortrait name="Ivana Richman" shirt="#bd6f9f" skin="#e0a878" cap="#f2d688" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
             <p>“I adored my round. Please accept this Landmark as a gift to the resort.”</p>
             <div className="landmarkGiftArt" aria-hidden="true"><span>★</span><i /><b>LANDMARK</b></div>
             <p className="fine">The first Landmark is free. After it is placed, additional Landmarks can be purchased from Resort &amp; Facilities.</p>

@@ -5,6 +5,7 @@ Everything implemented as of this session. Grouped by system. See `design-and-ar
 ## Core building loop
 
 - Isometric terrain painting: Rough, Fairway, Firm Fairway, Deep Rough, Green, Tee, Sandtrap, Waste Bunker, Pot Bunker, Water, Stream, Brush, Rocks, Trees, Flowers, Pathway — distinct procedural materials and per-tile costs.
+- Water/stream crossings automatically become separately priced wooden bridge tiles when Pathway is painted across them. Bridges join the same orthogonal route network, preserve the visible and economic character of the underlying channel, align consecutive deck spans to their neighbors, and bulldoze back to Water or Stream.
 - Manual-faithful hazard play: Streams and water lose the ball with a stroke penalty and safe drop, Rocks kick the ball in a random direction, Pot Bunkers severely restrict recovery distance, and Deep Rough/Brush/Waste Bunkers each have distinct accuracy, carry and roll penalties.
 - Corner-heightfield terraforming (raise/lower), ≤1-step adjacency enforced, pinned-corner protection (buildings/water/holes never tilt).
 - Hole creation (tee → green drag), auto par from distance, green growing/shrinking, flag move by tapping an existing green, bulldozer.
@@ -15,6 +16,8 @@ Everything implemented as of this session. Grouped by system. See `design-and-ar
 ## Course themes
 
 - 4 selectable themes (Parklands/Links/Desert/Tropical), manual-confirmed: distinct ground palette per theme (`THEME_TINFO`), tree species mix shift (round/pine/blossom weighting per theme), picked in the welcome modal, recolors live, round-trips through save.
+- Sixteen-property World Screen: four original deeds per terrain region, each with a distinct price, starting-parcel footprint, relief, water, woodland and deterministic terrain profile. The responsive atlas/deed UI exposes affordability, purchase/current/selection state and accessible terrain values; normal play prevents redeveloping a purchased deed while Sandbox Mode intentionally permits it.
+- Property replacement persists the new course before recording profile ownership, migrates legacy saves to a matching starter deed, carries purchase history across courses, and never converts a Sandbox treasury into normal purchase funds.
 - Terrain substitutions from the manual: Stream→Burn and Brush→Gorse on Links; Stream→Ravine and the Rough/Desert ground pair on Desert courses. Construction labels and terrain art both change with the theme.
 - Theme-based building reskin: Snack Bar→Pub, Tennis Court→Stable/Spa/Swim Club, Marina→Church/Helipad, Airstrip→Castle/Casino/Theme Park — name/blurb swap at every display site (build panel, placement hint, refund floater, ticker, in-world label).
 
@@ -27,7 +30,8 @@ Everything implemented as of this session. Grouped by system. See `design-and-ar
 
 ## Buildings & facilities
 
-- Catalog: Pro Shop, Snack Bar, Driving Range, Putting Green, Cart Garage, Resort Hotel, Tennis Court, Marina, Airstrip, Building Lot, Bench, Flower Bed, Landmark, Ballwasher, Scenic Bridge.
+- Catalog: Pro Shop, Snack Bar, Driving Range, Putting Green, Cart Garage, Resort Hotel, Tennis Court, Marina, Airstrip, Building Lot, Bench, Flower Bed, Landmark, Ballwasher, Scenic Bridge. The compact responsive catalog uses five columns at wide widths, then three/two/one columns, with Resort/Travel/Property/Scenery filters and aligned price, footprint, description and availability fields.
+- Locked and unaffordable catalog entries remain legible and explain their unlock or funding shortfall; staff cards likewise expose employment/unlock status and keep Hire/Fire actions aligned.
 - Path connectivity (orthogonal-edge BFS from clubhouse); benches/flowerbeds/landmark/ballwasher/scenicbridge are always-open scenery.
 - Facility-proximity need satisfaction (snack bar radius-based hunger/thirst relief, not a flat global buff).
 - Building lots develop over time (empty → cottage → estate); actual income scales with the site's Routing Map Home Value (nearby water, trees, scenery and fun holes), then receives facility multipliers.
@@ -112,7 +116,7 @@ Everything implemented as of this session. Grouped by system. See `design-and-ar
 
 ## Persistence
 
-- localStorage autosave (10s interval), format v2: tiles, elevC, owned, holes, buildings (including upgrade branch/progress), employees, golfers, regulars/memberships, financial time/ledger, Theme Pack/course provenance, comments, history, terrain theme, difficulty, special-visitor progression, sandbox flag, course name.
+- localStorage autosave (10s interval), format v2: tiles, elevC, owned, holes, buildings (including upgrade branch/progress), employees, golfers, regulars/memberships, financial time/ledger, Theme Pack/course provenance, World Screen property/deed ownership, comments, history, terrain theme, difficulty, special-visitor progression, sandbox flag, course name.
 - Incompatible/old-format saves surface a ticker message instead of failing silently.
 - 3 named save slots + file export/import (JSON).
 - Separate local player profile (`fairway-mogul-profile-v1`, backward-compatible v2 payload) preserves up to 200 detailed rounds, the resident pro, eight retired championship courses, 30 championship results and 30 local Pro Challenge results across new courses and save-slot changes; signed-in players can merge scorecards bidirectionally with the capped D1 profile archive.
@@ -133,5 +137,5 @@ Everything implemented as of this session. Grouped by system. See `design-and-ar
 
 ## Testing
 
-- Vitest: 86 browser-game tests plus 7 Workers-runtime/D1 integration tests — course footprints, connectivity, wildlife, facilities, difficulty, special visitors, Routing Map values/economy, exact SGA classes/fees, financial-year accounting, membership eligibility/renewal, modular Theme Pack fallback/course/pro integration, resident-pro skills, deterministic championships and local Pro Challenges, profile persistence, scorecards, hazards, isolated course restoration and golfer transitions; plus OAuth transactions, authentication/CSRF, account lifecycle/profile migration, conflict-safe saves, publishing, scheduled tournaments, follows, online challenges, head-to-head cards, idempotent season awards and global/friends ranking.
+- Vitest: 126 browser-game tests plus 7 Workers-runtime/D1 integration tests — course footprints, connectivity, wildlife, facilities, difficulty, special visitors, Routing Map values/economy, bridge conversion/pricing/restoration/direction, the sixteen-property catalog and purchase lifecycle, exact SGA classes/fees, financial-year accounting, membership eligibility/renewal, modular Theme Pack fallback/course/pro integration, resident-pro skills, deterministic championships and local Pro Challenges, profile persistence, scorecards, hazards, isolated course restoration, golfer transitions, dedicated staff identities, and direct shot-shape behavior; plus OAuth transactions, authentication/CSRF, account lifecycle/profile migration, conflict-safe saves, publishing, scheduled tournaments, follows, online challenges, head-to-head cards, idempotent season awards and global/friends ranking.
 - `window.__sim = { S, P, PE, screenToWorld }` exposed in dev builds for Playwright-driven manual verification.

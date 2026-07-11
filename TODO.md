@@ -4,10 +4,13 @@ Everything shipped so far is in `featurelist.md`. This file is remaining work on
 
 ## Confirmed manual gaps
 
-- [ ] **World Screen property market** (manual p.7) — the original offers sixteen worldwide properties with different location, size and cost, shows affordable/unaffordable/already-purchased pins, and permanently leaves the current course after a purchase. The clone has four terrain themes and buyable expansion parcels, but only one new-course property footprint/generation profile.
 - [ ] **Complete keyboard/report hotkey parity** (manual p.3–4) — core pan/pause/rotate shortcuts exist, but the F1–F10 report map, terrain shortcuts and open-hole/name toggles are not complete.
 
 Theme Packs are implemented as modular player/story/celebrity/pro/course bundles with per-section Standard fallback. Further fidelity gaps should be added here only after verifying them against the manual or original behavior.
+
+## Current visual verification
+
+- [ ] **Browser-QA the new presentation work.** Automated coverage is green, but the sixteen-property World Screen still needs desktop/tablet/phone and keyboard-only checks; water/stream bridges need multi-tile, zoom and all-four-rotation inspection; and the five/three/two/one-column facility catalog plus staff actions need responsive layout checks. Do not treat typecheck, bundling or Vitest as visual approval.
 
 ## Online play and long-term progression
 

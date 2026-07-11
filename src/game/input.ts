@@ -2,7 +2,7 @@ import { S } from './state';
 import { screenToWorld, screenToWorldT, zoomAt, rotateView } from './camera';
 import { lerp } from './rng';
 import { ensureAudio } from './audio';
-import { paintAt, holeToolTap, buildTap, buyLandTap, playerFire, setSpeed, setHint, beginPaintStroke } from './engine';
+import { paintAt, holeToolTap, buildTap, buyLandTap, playerFire, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
 
 const HOLE_HINT = 'Tap the map to place the TEE.';
 
@@ -67,6 +67,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     }
     if (S.mode === 'play' && S.player && S.player.state === 'aim') {
       S.player.aim = { on: true, sx: p.x, sy: p.y, cx: p.x, cy: p.y };
+      updatePlayHud();
       return;
     }
     const w = screenToWorldT(p.x, p.y);
@@ -119,6 +120,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     if (S.player && S.player.aim && S.player.aim.on) {
       S.player.aim.cx = p.x;
       S.player.aim.cy = p.y;
+      updatePlayHud();
       return;
     }
     if (panDrag) {

@@ -82,6 +82,8 @@ describe('manual hazard terrain', () => {
     expect(Tile.STREAM).toBe(13);
     expect(Tile.BRUSH).toBe(14);
     expect(Tile.ROCK).toBe(15);
+    expect(Tile.BRIDGE_WATER).toBe(16);
+    expect(Tile.BRIDGE_STREAM).toBe(17);
   });
 
   it('paints every hazard and maps it to a distinct gameplay lie', () => {

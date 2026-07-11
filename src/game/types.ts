@@ -586,6 +586,8 @@ export interface SpecialVisitorState {
   ivanaVisits: number;
   landmarkDonated: boolean;
   landmarkCredits: number;
+  /** True only after buying a county parcel offered by I.M. Picky. */
+  landPurchased?: boolean;
   landOffer: LandOffer | null;
 }
 

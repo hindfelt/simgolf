@@ -191,6 +191,188 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   return done;
 }
 
+/* ================= course staff =================
+   Staff use their own silhouettes instead of borrowing the golfer sprite. That
+   keeps golf bags and clubs off the maintenance crew, and lets each profession
+   carry a readable tool even at normal zoom. */
+
+export type CourseStaffKind = 'ranger' | 'groundskeeper' | 'turftech';
+export type CourseStaffFrame = 'walkA' | 'walkB' | 'workA' | 'workB';
+
+export interface CourseStaffArchetype {
+  label: string;
+  primary: string;
+  secondary: string;
+  trousers: string;
+  headwear: 'ranger-hat' | 'work-cap' | 'sun-hat';
+  tool: 'binoculars' | 'rake' | 'watering-can';
+}
+
+/** Public metadata keeps profession identity testable without needing a DOM canvas. */
+export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchetype> = {
+  ranger: {
+    label: 'Course Ranger',
+    primary: '#456b3b',
+    secondary: '#d0ad58',
+    trousers: '#4a4435',
+    headwear: 'ranger-hat',
+    tool: 'binoculars',
+  },
+  groundskeeper: {
+    label: 'Groundskeeper',
+    primary: '#c98236',
+    secondary: '#f0d36b',
+    trousers: '#405946',
+    headwear: 'work-cap',
+    tool: 'rake',
+  },
+  turftech: {
+    label: 'Turf Gardener',
+    primary: '#2f8172',
+    secondary: '#eef0df',
+    trousers: '#31534f',
+    headwear: 'sun-hat',
+    tool: 'watering-can',
+  },
+};
+
+export const COURSE_STAFF_SPRITE_SIZE = { width: 30, height: 36 } as const;
+
+export function courseStaffAnimationFrame(working: boolean, phase: number): CourseStaffFrame {
+  const alternate = Math.sin(phase) < 0;
+  return working ? (alternate ? 'workB' : 'workA') : alternate ? 'walkB' : 'walkA';
+}
+
+function staffLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, color: string, width = 1) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'square';
+  ctx.beginPath();
+  ctx.moveTo(x0 + 0.5, y0 + 0.5);
+  ctx.lineTo(x1 + 0.5, y1 + 0.5);
+  ctx.stroke();
+}
+
+/**
+ * Original 30x36 profession sprites, drawn facing right. Work frames raise the
+ * ranger's binoculars, sweep the groundskeeper's rake and tip the gardener's
+ * watering can. Walking frames keep the same tools in a safe carrying pose.
+ */
+export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame): HTMLCanvasElement {
+  const key = `course-staff-v1|${kind}|${frame}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const spec = COURSE_STAFF_ARCHETYPES[kind];
+  const [art, ctx, p] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
+  const skin = kind === 'ranger' ? '#b9784e' : kind === 'groundskeeper' ? '#e0a878' : '#8d5a3a';
+  const skinDark = shade(skin, 0.78);
+  const shirtDark = shade(spec.primary, 0.72);
+  const trouserDark = shade(spec.trousers, 0.7);
+  const working = frame === 'workA' || frame === 'workB';
+  const alternate = frame === 'walkB' || frame === 'workB';
+
+  // Work boots and a wide, grounded stance. Staff are a touch broader than golfers.
+  const leftLegY = frame === 'walkA' ? 29 : frame === 'walkB' ? 28 : 29;
+  const rightLegY = frame === 'walkA' ? 28 : frame === 'walkB' ? 29 : 29;
+  p(10, 25, 3, leftLegY - 25, spec.trousers);
+  p(16, 25, 3, rightLegY - 25, spec.trousers);
+  p(9, leftLegY, 5, 3, '#34302a');
+  p(16, rightLegY, 5, 3, '#34302a');
+  p(10, 25, 1, Math.max(3, leftLegY - 25), trouserDark);
+  p(16, 25, 1, Math.max(3, rightLegY - 25), trouserDark);
+
+  // Torso, shoulders, utility belt and high-contrast collar.
+  p(9, 13, 11, 12, spec.primary);
+  p(9, 13, 2, 12, shirtDark);
+  p(9, 23, 11, 2, shirtDark);
+  p(10, 12, 9, 2, spec.secondary);
+  p(9, 22, 11, 2, '#574733');
+  p(12, 22, 2, 2, '#d6b75b');
+
+  // Head and profession-specific hat silhouette.
+  p(11, 6, 7, 7, skin);
+  p(11, 7, 1, 6, skinDark);
+  p(16, 9, 1, 1, '#24231f');
+  if (spec.headwear === 'ranger-hat') {
+    p(8, 4, 13, 2, spec.secondary);
+    p(11, 1, 7, 4, spec.secondary);
+    p(11, 4, 7, 1, shade(spec.secondary, 0.7));
+  } else if (spec.headwear === 'work-cap') {
+    p(10, 3, 9, 4, spec.secondary);
+    p(10, 3, 2, 4, shade(spec.secondary, 0.74));
+    p(18, 5, 5, 2, shade(spec.secondary, 0.78));
+  } else {
+    p(8, 4, 14, 2, spec.secondary);
+    p(11, 1, 8, 4, spec.secondary);
+    p(11, 4, 8, 1, shade(spec.secondary, 0.76));
+    p(9, 6, 1, 3, '#d8c58c'); // chin cord
+  }
+
+  // A small badge/apron detail keeps the torso readable under the carried tools.
+  if (kind === 'ranger') {
+    p(11, 15, 2, 2, '#e1c465');
+    p(18, 15, 2, 3, '#303b36'); // shoulder radio
+    staffLine(ctx, 19, 14, 19, 11, '#303b36');
+  } else if (kind === 'groundskeeper') {
+    p(11, 15, 2, 7, '#ead8b4');
+    p(17, 15, 2, 7, '#ead8b4');
+  } else {
+    p(11, 15, 7, 7, '#d9e2bd'); // gardener's apron
+    p(12, 19, 5, 1, '#6b7d55');
+  }
+
+  if (kind === 'ranger') {
+    if (working) {
+      // Arms lift binoculars to the face; the two bright lenses stay legible.
+      p(8, 14, 3, 3, spec.primary);
+      p(18, 13, 3, 3, spec.primary);
+      p(9, 12, 3, 2, skin);
+      p(18, 11, 3, 2, skin);
+      p(14, alternate ? 8 : 9, 7, 4, '#263c39');
+      p(15, alternate ? 8 : 9, 2, 2, '#7eb0b2');
+      p(19, alternate ? 8 : 9, 2, 2, '#7eb0b2');
+    } else {
+      p(18, 15, 3, 6, spec.primary);
+      p(19, 21, 2, 2, skin);
+      p(13, 17, 6, 4, '#263c39');
+      p(14, 18, 2, 2, '#7eb0b2');
+      p(17, 18, 2, 2, '#7eb0b2');
+      staffLine(ctx, 14, 16, 13, 14, '#303b36');
+      staffLine(ctx, 18, 16, 19, 14, '#303b36');
+    }
+  } else if (kind === 'groundskeeper') {
+    // A long wooden rake gives a much clearer silhouette than a golf club.
+    const tipX = working ? (alternate ? 25 : 27) : 25;
+    const tipY = working ? (alternate ? 31 : 28) : 33;
+    p(18, 15, 3, 6, spec.primary);
+    p(19, 20, 2, 3, skin);
+    staffLine(ctx, 19, 20, tipX, tipY, '#79532c', 2);
+    staffLine(ctx, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
+    for (let i = -3; i <= 2; i += 2) staffLine(ctx, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
+  } else {
+    p(18, 15, 3, 6, spec.primary);
+    p(19, 20, 2, 3, skin);
+    // Chunky watering can + spout; work frames tip it and add animated droplets.
+    const canX = working ? 21 : 19;
+    const canY = working ? (alternate ? 22 : 21) : 23;
+    p(canX, canY, 6, 5, '#668fa0');
+    p(canX + 1, canY + 1, 4, 2, '#91bac0');
+    staffLine(ctx, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
+    staffLine(ctx, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
+    staffLine(ctx, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
+    if (working) {
+      p(28, canY + 6 + Number(alternate), 1, 2, '#7fc3d2');
+      p(26, canY + 8 - Number(alternate), 1, 2, '#7fc3d2');
+      p(29, canY + 10, 1, 1, '#7fc3d2');
+    }
+  }
+
+  const done = outlined(art, '#202b28');
+  cache.set(key, done);
+  return done;
+}
+
 /* ================= buildings =================
    Facilities are baked as isometric pixel sprites: 1 sprite px = 1 css px at
    zoom 1 (TWs/THs match the tile size), so zooming in gives chunky pixels

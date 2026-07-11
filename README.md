@@ -34,6 +34,8 @@ src/
   game/                 # framework-free simulation + canvas renderer
     types.ts            # domain types (POC + reserved shapes for clone features)
     constants.ts        # grid, tile info, lie/roll tables, names, chatter
+    properties.ts       # sixteen-property World Screen catalog + terrain profiles
+    bridges.ts          # water/stream bridge helpers and deck-axis selection
     state.ts            # S — the single mutable sim state + geometry caches
     rng.ts              # helpers: hashes, clamp/lerp, lie lookup
     camera.ts           # isometric projection, zoom, pan, fit
@@ -61,10 +63,22 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   green-fee economy, reputation, play-your-own-round, audio, mobile touch.
 - **Buildings & facilities** (`buildings.ts`) — pro shop, snack bar, driving
   range, putting green, cart garage, hotel, tennis, marina, airstrip, building
-  lots, benches, flower beds. Pathway painting + connect-to-clubhouse rule
-  (unconnected renders as mud), placement ghost, costs, bulldoze/refund. Effects:
-  green-fee multiplier, spawn mood, walk speed, per-hole amenity mood, passive
-  lot income.
+  lots, benches, flower beds, landmark, ballwasher, and scenic bridge. The
+  responsive Resort catalog groups all fifteen choices into Resort, Travel,
+  Property, and Scenery filters with aligned price, footprint, and unlock status.
+  Pathway painting + connect-to-clubhouse rule (unconnected renders as mud),
+  placement ghost, costs, bulldoze/refund. Effects: green-fee multiplier, spawn
+  mood, walk speed, per-hole amenity mood, passive lot income.
+- **World Screen property market** — sixteen original properties across
+  Parklands, Links, Desert, and Tropical regions, each with its own deed price,
+  starting parcels, relief, water/woodland profile, and terrain seed. The setup
+  flow distinguishes affordable, short-of-funds, purchased, current, and selected
+  properties; purchase history survives new courses, while Sandbox Mode can
+  deliberately revisit an already-developed property.
+- **Water-crossing bridges** — painting Pathway over water or a stream converts
+  it to a priced, connected wooden bridge; continuous deck direction follows the
+  neighboring path network, the underlying channel remains visible, and
+  bulldozing restores the original water or stream.
 - **Employees** (`employees.ts`) — club pro, ranger, groundskeeper, soda vendor,
   and skilled tier (celebrity, marshall, turf tech, refreshment) gated behind a
   6-hole course. Per-second wages net against income; effects on mood/pace.
@@ -99,8 +113,9 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — map-edge and full-footprint hole validation plus
-  strict orthogonal facility-path connectivity.
+- **Regression coverage** — 126 browser-game tests covering course construction,
+  simulation, persistence, the World Screen/property lifecycle, bridge pricing,
+  restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,
   player discovery/follows, asynchronous one-card challenges with hole-by-hole
   cards, daily/weekly leaderboards, a scheduled Club Championship, event history,
@@ -108,7 +123,8 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   management and account deletion.
 
 **Roadmap**
-1. Sixteen-property World Screen and complete manual hotkey parity
+1. Complete manual hotkey parity and browser-verify the World Screen, bridges,
+   and responsive facility catalog across target sizes and camera rotations
 2. Server-replayed score validation and multi-stage online tournaments
 3. Invite links, notifications, match chat and real-time synchronized golfers
 4. Past-season rewards and in-game unlocks

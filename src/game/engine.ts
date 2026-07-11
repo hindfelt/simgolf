@@ -3,7 +3,7 @@ import { Tile } from './types';
 import type { Ball, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
-import { isoOf } from './camera';
+import { isoOf, screenToWorld } from './camera';
 import { sfx } from './audio';
 import { ui } from '../ui/store';
 import {
@@ -32,6 +32,7 @@ import type { Building, BuildingKind, EmployeeKind, CourseTheme, FacilityBranch 
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 import { findPath } from './pathfind';
+import { isWaterBackedTile } from './bridges';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -83,6 +84,7 @@ function freshSpecialVisitors(): SpecialVisitorState {
     ivanaVisits: 0,
     landmarkDonated: false,
     landmarkCredits: 0,
+    landPurchased: false,
     landOffer: null,
   };
 }
@@ -97,18 +99,39 @@ export function setCourseTheme(theme: CourseTheme) {
   caches.groundDirty = true;
   updateTopbar();
 }
-function updatePlayHud() {
+export function updatePlayHud() {
   const p = S.player;
   if (!p) return;
   const h = S.holes[p.holeIdx];
   if (!h) return;
+  let power: number | null = null;
+  if (p.aim?.on) {
+    const start = screenToWorld(p.aim.sx, p.aim.sy);
+    const current = screenToWorld(p.aim.cx, p.aim.cy);
+    power = clamp(dist(start, current) / 9, p.lie === 'green' ? 0.02 : 0.08, 1);
+  }
+  const clubRanges = {
+    driver: playerIntendedDistance(p.lie, 'driver', 1),
+    iron: playerIntendedDistance(p.lie, 'iron', 1),
+    wedge: playerIntendedDistance(p.lie, 'wedge', 1),
+  };
   ui.set({
     playHud: {
       holeLabel: 'Hole ' + (p.holeIdx + 1) + ' of ' + S.holes.length + ' · Par ' + h.par,
       strokeLabel:
         'Stroke ' + (p.strokes + 1) + ' · ' +
         (p.lie === 'green' ? 'on the green · drag to putt' : 'lie: ' + p.lie + ' · drag back to swing'),
+      coach: p.state === 'wait'
+        ? 'Track the ball, then plan the next lie.'
+        : p.lie === 'green'
+          ? 'Drag against the putting line, then release.'
+          : 'Choose club and flight, drag back, then release.',
       onGreen: p.lie === 'green',
+      lie: p.lie,
+      pinDistance: dist(p.ball ?? h.tee, h.cup),
+      clubRanges,
+      power,
+      carry: power === null ? null : playerIntendedDistance(p.lie, p.club, power),
       club: p.club,
       shape: p.shape,
       windSpeed: S.wind.speed,
@@ -470,7 +493,7 @@ export function rebuildStatics() {
       if (t === Tile.WATER || t === Tile.BRIDGE_WATER) caches.waterTiles.push({ x, y });
       if (!ownedAt(x, y)) continue;
       const s = hash2(x * 23 + 17, y * 31 + 9);
-      if (t === Tile.WATER || t === Tile.BRIDGE_WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
       if (t === Tile.TREE) deer.push({ kind: 'deer', x: x + 0.5, y: y + 0.5, s });
       if (t === Tile.TREE) squirrels.push({ kind: 'squirrel', x: x + 0.5, y: y + 0.5, s: hash2(x * 7 + 3, y * 13 + 5) });
       if (t === Tile.ROUGH || t === Tile.DEEP_ROUGH || t === Tile.BRUSH || t === Tile.FLOWER) rabbits.push({ kind: 'rabbit', x: x + 0.5, y: y + 0.5, s });
@@ -809,7 +832,7 @@ function cornerPins(exclude?: Set<number>): Set<number> {
   };
   for (const b of S.buildings) for (let dy = 0; dy < b.h; dy++) for (let dx = 0; dx < b.w; dx++) pinTile(b.x + dx, b.y + dy);
   for (const [cx, cy] of CH_TILES) pinTile(cx, cy);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (S.tiles[idx(x, y)] === Tile.WATER) pinTile(x, y);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (isWaterBackedTile(S.tiles[idx(x, y)])) pinTile(x, y);
   for (const h of S.holes)
     for (const k of h.teeTiles.concat(h.greenTiles)) {
       const [a, b] = k.split(',');
@@ -870,7 +893,7 @@ function featureTilesAt(x: number, y: number): string[] | null {
 function terraform(x: number, y: number, dir: 1 | -1): void {
   const k = x + ',' + y;
   if (strokeTiles.has(k)) return;
-  if (tileAt(x, y) === Tile.WATER) {
+  if (isWaterBackedTile(tileAt(x, y))) {
     setHint('Water finds its own level — drain it with the bulldozer first.');
     return;
   }
@@ -1058,6 +1081,7 @@ export function acceptLandOffer(parcel: number): boolean {
   if (!offer || !offer.parcelIndices.includes(parcel) || S.owned[parcel]) return false;
   if (!spend(offer.price, 'land', 'County expansion parcel')) return false;
   S.owned[parcel] = 1;
+  S.specialVisitors.landPurchased = true;
   offer.parcelIndices = offer.parcelIndices.filter((candidate) => candidate !== parcel);
   caches.orthoDirty = true; // ownership dimming/dashed borders live on the ortho layer
   caches.groundDirty = true;
@@ -1939,7 +1963,7 @@ export const GOAL_DEFS: GoalDef[] = [
   { id: 'facilities5', label: 'Open 5 resort facilities', check: () => S.buildings.filter((building) => isUpgradeableFacility(building.kind) && building.open).length >= 5 },
   { id: 'upgrade1', label: 'Complete a facility upgrade', check: () => upgradedFacilityCount() >= 1 },
   { id: 'facility3', label: 'Raise a facility to level III', check: () => S.buildings.some((building) => isUpgradeableFacility(building.kind) && facilityLevel(building) >= 3) },
-  { id: 'pickyLand', label: 'Earn and buy county expansion land', check: () => S.owned.reduce((sum, owned) => sum + owned, 0) > 4 },
+  { id: 'pickyLand', label: 'Earn and buy county expansion land', check: () => S.specialVisitors.landPurchased === true },
   { id: 'ivanaLandmark', label: "Receive Ivana Richman's Landmark", check: () => S.specialVisitors.landmarkDonated },
   { id: 'ownerRound', label: 'Complete a resident-pro round', check: () => S.roundHistory.some((round) => round.source === 'exhibition') },
   { id: 'eagle', label: 'Card an eagle or better', check: () => S.roundHistory.some((round) => round.eagles > 0) },
@@ -2257,6 +2281,7 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   }
   p.state = 'wait';
   p.aim = null;
+  updatePlayHud();
 }
 function scoreName(diff: number): string {
   return diff <= -3 ? 'ALBATROSS?!' : diff === -2 ? 'EAGLE!' : diff === -1 ? 'BIRDIE!' : diff === 0 ? 'Par' : diff === 1 ? 'Bogey' : diff === 2 ? 'Double bogey' : '+' + diff;
@@ -2454,7 +2479,7 @@ const HINTS: Record<string, string> = {
   rocks: 'Rocks cause a hard, random ricochet when struck.',
   tree: 'Trees add beauty and bounce shots into next week.',
   flower: 'Flower beds. Pure beauty, zero mercy required.',
-  path: 'Drag to lay pathway. Connect facilities to the clubhouse to open them.',
+  path: `Drag to lay pathway (${fmt$(TINFO[Tile.PATH].cost)} on land). Water and streams automatically become ${fmt$(TINFO[Tile.BRIDGE_WATER].cost)} and ${fmt$(TINFO[Tile.BRIDGE_STREAM].cost)} bridges.`,
   raise: 'Click repeatedly or hold to raise several levels. Drag to sculpt larger slopes.',
   lower: 'Click repeatedly or hold to lower several levels. Drag to carve valleys and bowls.',
   build: 'Pick a facility, then tap the course to place it.',
@@ -2835,6 +2860,7 @@ function applySaveData(d: any): boolean {
     ivanaVisits: Math.max(0, Math.trunc(savedVisitors.ivanaVisits ?? 0)),
     landmarkDonated: !!savedVisitors.landmarkDonated,
     landmarkCredits: clamp(Math.trunc(savedVisitors.landmarkCredits ?? 0), 0, 1),
+    landPurchased: !!savedVisitors.landPurchased || !!d.goalsAchieved?.pickyLand,
     landOffer: savedVisitors.landOffer && Array.isArray(savedVisitors.landOffer.parcelIndices) ? {
       id: Number(savedVisitors.landOffer.id) || Date.now(),
       parcelIndices: savedVisitors.landOffer.parcelIndices.filter((parcel: unknown) => Number.isInteger(parcel) && Number(parcel) >= 0 && Number(parcel) < PW * PH && !S.owned[Number(parcel)]),
@@ -2896,15 +2922,19 @@ function applySaveData(d: any): boolean {
   updateTopbar();
   return true;
 }
-export function saveGame() {
+function persistCourseSave(data: ReturnType<typeof buildSaveData>): boolean {
   try {
-    // Event play is a temporary guest course. Autosave must keep protecting the
-    // owner's captured home course even if the browser reloads mid-round.
-    localStorage.setItem(SAVE_KEY, JSON.stringify(isolatedReturnSave ?? buildSaveData()));
-    saveRoundHistory();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    return true;
   } catch {
-    /* storage full or unavailable — skip silently */
+    return false;
   }
+}
+export function saveGame() {
+  // Event play is a temporary guest course. Autosave must keep protecting the
+  // owner's captured home course even if the browser reloads mid-round.
+  persistCourseSave(isolatedReturnSave ?? buildSaveData());
+  saveRoundHistory();
 }
 export function loadGame(): boolean {
   loadRoundHistory();
@@ -2914,6 +2944,10 @@ export function loadGame(): boolean {
     if (!applySaveData(JSON.parse(raw))) {
       ticker('Course Ops', "Your saved course is incompatible with this version and couldn't be loaded — starting fresh.", 'bad');
       return false;
+    }
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) {
+      S.propertiesPurchased.push(S.propertyId);
+      saveRoundHistory();
     }
     return true;
   } catch {
@@ -3011,13 +3045,17 @@ export function newCourse(
   availableFunds = PROPERTY_INHERITANCE,
 ): boolean {
   const property = propertyId ? propertyById(propertyId) : starterPropertyForTheme(theme);
-  const funds = Math.max(0, Math.trunc(availableFunds));
+  const funds = Math.max(0, Math.trunc(!sandbox && S.sandbox ? PROPERTY_INHERITANCE : availableFunds));
+  if (!sandbox && propertyId && S.propertiesPurchased.includes(property.id)) {
+    setHint(`${property.name} is already developed. Choose an undeveloped property or open it in Sandbox Mode.`);
+    sfx.err();
+    return false;
+  }
   if (!sandbox && funds < property.price) {
     setHint(`${property.name} costs ${fmt$(property.price)}; only ${fmt$(funds)} is available.`);
     sfx.err();
     return false;
   }
-  localStorage.removeItem(SAVE_KEY);
   S.courseName = property.name;
   S.theme = property.theme;
   S.propertyId = property.id;
@@ -3071,10 +3109,10 @@ export function newCourse(
     caches.groundDirty = true;
   }
   centerCam(S.holes[0]?.tee.x ?? CH.x, S.holes[0]?.tee.y ?? CH.y);
-  if (!sandbox && !S.propertiesPurchased.includes(property.id)) {
-    S.propertiesPurchased.push(property.id);
-    saveRoundHistory();
-  }
+  const purchasedProperty = !sandbox && !S.propertiesPurchased.includes(property.id);
+  if (purchasedProperty) S.propertiesPurchased.push(property.id);
+  const courseSaved = persistCourseSave(buildSaveData());
+  if (purchasedProperty && courseSaved) saveRoundHistory();
   updateTopbar();
   ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, sandbox, difficulty, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId });
   setTool('hole');

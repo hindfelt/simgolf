@@ -1,7 +1,8 @@
-import { H, W } from './constants';
+import { H, PARCEL_H, PARCEL_W, PW, W } from './constants';
 import { Tile } from './types';
 import type { GameState } from './types';
 import { clamp } from './rng';
+import { isBridgeTile, isStreamBackedTile, isWaterBackedTile } from './bridges';
 
 export type RoutingOverlayMode = 'course' | 'aura' | 'homeValue';
 type RoutingState = Pick<GameState, 'tiles' | 'elevC' | 'owned' | 'holes' | 'buildings' | 'golfers'>;
@@ -11,6 +12,8 @@ const terrainAura: Partial<Record<Tile, number>> = {
   [Tile.TREE]: 0.12,
   [Tile.WATER]: 0.14,
   [Tile.STREAM]: 0.1,
+  [Tile.BRIDGE_WATER]: 0.14,
+  [Tile.BRIDGE_STREAM]: 0.1,
   [Tile.ROCK]: -0.08,
   [Tile.BRUSH]: -0.1,
   [Tile.POT_BUNKER]: -0.12,
@@ -60,13 +63,10 @@ export function auraAt(state: RoutingState, x: number, y: number): number {
 
 function tileBlocked(state: RoutingState, x: number, y: number): boolean {
   if (x < 0 || y < 0 || x >= W || y >= H) return true;
-  const parcelWidth = 16;
-  const parcelHeight = 16;
-  const parcelColumns = W / parcelWidth;
-  const parcel = Math.floor(y / parcelHeight) * parcelColumns + Math.floor(x / parcelWidth);
+  const parcel = Math.floor(y / PARCEL_H) * PW + Math.floor(x / PARCEL_W);
   if (!state.owned[parcel]) return true;
   const terrain = state.tiles[tileIndex(x, y)] as Tile;
-  if ([Tile.WATER, Tile.STREAM, Tile.POT_BUNKER, Tile.ROCK, Tile.BRUSH].includes(terrain)) return true;
+  if (!isBridgeTile(terrain) && [Tile.WATER, Tile.STREAM, Tile.POT_BUNKER, Tile.ROCK, Tile.BRUSH].includes(terrain)) return true;
   const key = `${x},${y}`;
   if (state.holes.some((hole) => hole.teeTiles.includes(key) || hole.greenTiles.includes(key))) return true;
   return state.buildings.some((building) => building.kind !== 'buildinglot' && x >= building.x && y >= building.y && x < building.x + building.w && y < building.y + building.h);
@@ -90,7 +90,7 @@ export function homeValueAt(state: RoutingState, x: number, y: number): number {
       if (distance > 7.5) continue;
       const falloff = (1 - distance / 8) * 0.035;
       const terrain = state.tiles[tileIndex(nx, ny)] as Tile;
-      if (terrain === Tile.WATER || terrain === Tile.STREAM) value += falloff * 2.1;
+      if (isWaterBackedTile(terrain) || isStreamBackedTile(terrain)) value += falloff * 2.1;
       else if (terrain === Tile.TREE) value += falloff * 1.2;
       else if (terrain === Tile.FLOWER) value += falloff * 1.6;
       else if (terrain === Tile.GREEN || terrain === Tile.TEE) value += falloff * 0.9;

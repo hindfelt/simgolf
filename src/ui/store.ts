@@ -22,7 +22,13 @@ export type ModalDescriptor =
 export interface PlayHudInfo {
   holeLabel: string;
   strokeLabel: string;
+  coach: string;
   onGreen: boolean;
+  lie: string;
+  pinDistance: number;
+  clubRanges: Record<ClubId, number>;
+  power: number | null;
+  carry: number | null;
   club: ClubId;
   shape: ShotShape;
   windSpeed: number;

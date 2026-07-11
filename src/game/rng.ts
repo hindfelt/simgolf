@@ -2,6 +2,7 @@ import { W, H, PARCEL_W, PARCEL_H, PW } from './constants';
 import { Tile } from './types';
 import type { Vec, LieKey } from './types';
 import { S } from './state';
+import { isPointOnBridgeDeck } from './bridges';
 
 export const idx = (x: number, y: number) => y * W + x;
 export const inb = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H;
@@ -61,7 +62,8 @@ export function lieOf(x: number, y: number): LieKey {
     : t === Tile.WASTE_BUNKER ? 'waste'
     : t === Tile.POT_BUNKER ? 'pot'
     : t === Tile.STREAM ? 'stream'
-    : t === Tile.BRIDGE_WATER || t === Tile.BRIDGE_STREAM ? 'bridge'
+    : t === Tile.BRIDGE_WATER ? (isPointOnBridgeDeck(S.tiles, x, y) ? 'bridge' : 'water')
+    : t === Tile.BRIDGE_STREAM ? (isPointOnBridgeDeck(S.tiles, x, y) ? 'bridge' : 'stream')
     : t === Tile.BRUSH ? 'brush'
     : t === Tile.ROCK ? 'rock'
     : t === Tile.TREE ? 'tree'
