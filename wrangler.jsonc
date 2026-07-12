@@ -28,9 +28,6 @@
       "migrations_dir": "worker/migrations"
     }
   ],
-  "triggers": {
-    "crons": ["5 0 * * *", "10 0 * * 1", "15 3 * * *"]
-  },
   "observability": {
     "enabled": true,
     "logs": {
