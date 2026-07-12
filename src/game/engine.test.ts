@@ -9,6 +9,7 @@ import { S, caches } from './state';
 import { Tile } from './types';
 import type { Golfer, Hole, ProChallengeOffer } from './types';
 import { ui } from '../ui/store';
+import { CLEAR_WEATHER } from './weather';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -451,6 +452,7 @@ describe('save / load round-trip', () => {
   it('publishes club availability, role, and carry-to-finish forecast through the live HUD', () => {
     startRound();
     S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
     S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
     updatePlayHud();
     const teeHud = ui.get().playHud!;
@@ -690,6 +692,7 @@ describe('save / load round-trip', () => {
     S.elevC.fill(0);
     startRound();
     S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
     setClub('iron');
     playerFire(1, 0, 1);
     expect(S.balls.at(-1)!.canopyImpact).toMatchObject({ treeX: 6, treeY: 1, kind: 'pine' });
@@ -754,6 +757,7 @@ describe('save / load round-trip', () => {
     S.elevC.fill(0);
     startRound();
     S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
     setClub('iron');
     playerFire(1, 0, 1);
     expect(S.balls.at(-1)!.canopyImpact).toMatchObject({ treeX: 17, treeY: 5 });
@@ -791,6 +795,26 @@ describe('save / load round-trip', () => {
     expect(shapeCurveOffset('hook', carry, 1)).toBeLessThan(shapeCurveOffset('draw', carry, 1));
     expect(Math.abs(shapeCurveOffset('fade', carry, 0.5))).toBeLessThan(Math.abs(shapeCurveOffset('fade', carry, 1)));
     expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
+  });
+
+  it('composes opposite draw and fade curves with the same crosswind while rain changes carry and control', () => {
+    const from = { x: 10, y: 10 };
+    const crosswind = { dx: 0, dy: 1, speed: 0.4 };
+    const rain = { condition: 'rain' as const, intensity: 0.9, wetness: 1 };
+    const fade = playerShotPlan(from, 'tee', 'iron', 'fade', 1, 0, 1, crosswind, CLEAR_WEATHER);
+    const draw = playerShotPlan(from, 'tee', 'iron', 'draw', 1, 0, 1, crosswind, CLEAR_WEATHER);
+    const wetFade = playerShotPlan(from, 'tee', 'iron', 'fade', 1, 0, 1, crosswind, rain);
+
+    expect(fade.target.y).toBeGreaterThan(draw.target.y);
+    expect(fade.windPush).toBeCloseTo(draw.windPush, 10);
+    expect(wetFade.intend).toBeLessThan(fade.intend);
+    expect(playerShotDispersion('tee', 'iron', 'fade', fade.targetDistance, rain).previewRadius)
+      .toBeGreaterThan(playerShotDispersion('tee', 'iron', 'fade', fade.targetDistance, CLEAR_WEATHER).previewRadius);
+    expect(playerShotDispersion('green', 'iron', 'fade', 4, rain))
+      .toEqual(playerShotDispersion('green', 'iron', 'fade', 4, CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', rain))
+      .toBeLessThan(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'backspin', 'iron', rain)).toBe(0);
   });
 
   it('uses one putter dispersion profile independent of hidden full-swing club and shape', () => {
@@ -925,11 +949,11 @@ describe('save / load round-trip', () => {
   });
 
   it('uses landing-lie rollout scale and stops backspin instead of scaling roll by carry', () => {
-    expect(playerEstimatedRoll('fair', 'straight')).toBeCloseTo(0.9);
-    expect(playerEstimatedRoll('firmfair', 'straight')).toBeCloseTo(1.5);
-    expect(playerEstimatedRoll('fair', 'straight', 'driver')).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'iron'));
-    expect(playerEstimatedRoll('fair', 'straight', 'iron')).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'wedge'));
-    expect(playerEstimatedRoll('fair', 'backspin')).toBe(0);
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER)).toBeCloseTo(0.9);
+    expect(playerEstimatedRoll('firmfair', 'straight', 'iron', CLEAR_WEATHER)).toBeCloseTo(1.5);
+    expect(playerEstimatedRoll('fair', 'straight', 'driver', CLEAR_WEATHER)).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER)).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'wedge', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'backspin', 'iron', CLEAR_WEATHER)).toBe(0);
   });
 
   it('puts backspin and punch behavior directly on the launched ball', () => {

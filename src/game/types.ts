@@ -257,6 +257,15 @@ export interface Particle {
 export type ClubId = 'driver' | 'iron' | 'wedge';
 /** Manual (p.21-22): shot techniques the player picks before each swing. */
 export type ShotShape = 'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch';
+export type WeatherCondition = 'clear' | 'overcast' | 'drizzle' | 'rain';
+
+/** Stable conditions for one player hole. Wetness changes carry and ground release;
+ * intensity controls the rain treatment without introducing per-frame simulation state. */
+export interface WeatherState {
+  condition: WeatherCondition;
+  intensity: number;
+  wetness: number;
+}
 
 /** Immutable evidence for one completed player stroke. This is deliberately richer
  * than the HUD needs because online competitions will submit this same record shape. */
@@ -290,6 +299,8 @@ export interface PlayerHoleScore {
   greenInRegulation: boolean;
   hazards: string[];
   wind: { dx: number; dy: number; speed: number };
+  /** Present on new rounds; optional so version-1 scorecards saved before weather remain readable. */
+  weather?: WeatherState;
   shots: PlayerShotRecord[];
 }
 
@@ -706,6 +717,8 @@ export interface GameState {
   camShake: number;
   /** Per-hole wind for the player's own round — a unit direction plus a 0..1 speed, redrawn each hole. */
   wind: { dx: number; dy: number; speed: number };
+  /** Per-hole sky and turf conditions for the player's round. */
+  weather: WeatherState;
   /** Persistent history of golfer/staff/system chatter, newest last — mirrors the original's Player Comments report. */
   comments: CommentEntry[];
   /** Periodic snapshots for the Histograph trend chart — reputation/cash/golfers over time, newest last. */

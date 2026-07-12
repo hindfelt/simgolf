@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
@@ -33,6 +33,7 @@ import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesP
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 import { findPath } from './pathfind';
 import { isWaterBackedTile } from './bridges';
+import { generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
 import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
 import type { FlightPath } from './flightPath';
@@ -111,10 +112,11 @@ export function updatePlayHud() {
   if (!h) return;
   const aim = p.aim?.on ? playerAimIntent(p.aim, p.lie) : null;
   const power = aim?.power ?? null;
+  const weatherCarry = p.lie === 'green' ? 1 : weatherCarryMultiplier(S.weather);
   const clubRanges = {
-    driver: playerIntendedDistance(p.lie, 'driver', 1),
-    iron: playerIntendedDistance(p.lie, 'iron', 1),
-    wedge: playerIntendedDistance(p.lie, 'wedge', 1),
+    driver: playerIntendedDistance(p.lie, 'driver', 1) * weatherCarry,
+    iron: playerIntendedDistance(p.lie, 'iron', 1) * weatherCarry,
+    wedge: playerIntendedDistance(p.lie, 'wedge', 1) * weatherCarry,
   };
   const clubOptions = Object.fromEntries((['driver', 'iron', 'wedge'] as ClubId[]).map((clubId) => {
     const profile = clubLieProfile(p.lie, clubId);
@@ -179,6 +181,9 @@ export function updatePlayHud() {
       windSpeed: S.wind.speed,
       windDx: S.wind.dx,
       windDy: S.wind.dy,
+      weatherCondition: S.weather.condition,
+      weatherIntensity: S.weather.intensity,
+      weatherWetness: S.weather.wetness,
     },
   });
 }
@@ -1285,7 +1290,7 @@ function lostBallImpact(lie: 'water' | 'stream', pos: Vec) {
 }
 
 function rollFrom(pos: Vec, dir: Vec, terrKey: string, rollMultiplier = 1): { pos: Vec; hazard: ({ x: number; y: number; lie: 'water' | 'stream' }) | null } {
-  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rollMultiplier * rand(0.7, 1.3);
+  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rollMultiplier * weatherRollMultiplier(S.weather) * rand(0.7, 1.3);
   let p = { x: pos.x, y: pos.y };
   const d = { x: dir.x, y: dir.y };
   let guard = 60; // slope feedback could otherwise keep a ball rolling forever
@@ -2196,13 +2201,13 @@ export interface PlayerShotDispersion {
 }
 
 /** Shared player dispersion model, used by both the real shot and the aim ellipse. */
-export function playerShotDispersion(lie: LieKey, clubId: ClubId, shape: ShotShape, nominalTargetDistance: number): PlayerShotDispersion {
+export function playerShotDispersion(lie: LieKey, clubId: ClubId, shape: ShotShape, nominalTargetDistance: number, weather: WeatherState = S.weather): PlayerShotDispersion {
   const L = LIE[lie] || LIE.rough;
   const putting = lie === 'green';
   const skill = playerShotSkill(lie, putting ? 'iron' : clubId, putting ? 'straight' : shape);
   // Putter has one fixed control profile. The hidden full-swing club and shape remain
   // selected for the next tee, but cannot alter either the preview or actual putt.
-  const angularScale = putting ? 0.8 : clubLieProfile(lie, clubId).dispersionMultiplier * (shape === 'punch' ? 0.55 : 1);
+  const angularScale = putting ? 0.8 : clubLieProfile(lie, clubId).dispersionMultiplier * (shape === 'punch' ? 0.55 : 1) * weatherDispersionMultiplier(weather);
   const angleStd = L.ang * (Math.PI / 180) * (1.35 - skill) * angularScale;
   const distance = nominalTargetDistance * (L.dst + (1 - skill) * 0.05);
   const lateral = nominalTargetDistance * Math.sin(angleStd);
@@ -2235,12 +2240,14 @@ export function playerShotPlan(
   dirY: number,
   power: number,
   wind: { dx: number; dy: number; speed: number } = S.wind,
+  weather: WeatherState = S.weather,
 ): PlayerShotPlan {
   const magnitude = Math.hypot(dirX, dirY) || 1;
   const nx = dirX / magnitude;
   const ny = dirY / magnitude;
   const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
-  const intend = playerIntendedDistance(lie, clubId, power) * SHOT_SHAPES[activeShape].carryMul;
+  const carryWeather = lie === 'green' ? 1 : weatherCarryMultiplier(weather);
+  const intend = playerIntendedDistance(lie, clubId, power) * SHOT_SHAPES[activeShape].carryMul * carryWeather;
   const windPush = lie === 'green' ? 0 : wind.speed * intend * 0.35;
   const perpX = -ny;
   const perpY = nx;
@@ -2349,6 +2356,7 @@ export function cachedPlayerShotForecast(player: PlayerRound, intent: PlayerShot
     player.ball.x, player.ball.y, player.lie, player.club, player.shape,
     intent.dirX, intent.dirY, intent.power,
     S.wind.dx, S.wind.dy, S.wind.speed, S.theme,
+    S.weather.condition, S.weather.intensity, S.weather.wetness,
     elevationStateSignature(), activeProSkillSignature(),
   ].join('|');
   if (sharedPlayerForecastCache?.key === key) return sharedPlayerForecastCache.forecast;
@@ -2490,8 +2498,8 @@ export function setShape(id: ShotShape) {
   S.player.shape = id;
   updatePlayHud();
 }
-export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'iron'): number {
-  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3) * clubLieProfile(landingLie, clubId).rolloutMultiplier;
+export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'iron', weather: WeatherState = S.weather): number {
+  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3) * clubLieProfile(landingLie, clubId).rolloutMultiplier * weatherRollMultiplier(weather);
 }
 function setupPlayerHole(i: number) {
   const p = S.player!;
@@ -2502,8 +2510,9 @@ function setupPlayerHole(i: number) {
   p.state = 'aim';
   p.aim = null;
   p.ball = { x: h.tee.x, y: h.tee.y };
-  const windAngle = rand(0, Math.PI * 2);
-  S.wind = { dx: Math.cos(windAngle), dy: Math.sin(windAngle), speed: rand(0, 0.6) };
+  const conditions = generateHoleConditions(S.theme);
+  S.wind = conditions.wind;
+  S.weather = conditions.weather;
   p.currentHole = {
     hole: i + 1,
     holeId: h.id,
@@ -2517,6 +2526,7 @@ function setupPlayerHole(i: number) {
     greenInRegulation: false,
     hazards: [],
     wind: { ...S.wind },
+    weather: { ...S.weather },
     shots: [],
   };
   p.pendingShot = null;

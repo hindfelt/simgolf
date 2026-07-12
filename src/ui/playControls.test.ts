@@ -23,6 +23,17 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain('miles per hour toward ${windPoint}');
   });
 
+  it('exposes playable weather conditions without obscuring shot feedback', () => {
+    expect(hud).toContain('role="group" aria-label="Course conditions"');
+    expect(hud).toContain('weatherDescription(weather)');
+    expect(hud).toContain('weather-${weather.condition}');
+    expect(store).toContain('weatherCondition: WeatherCondition;');
+    expect(render).toContain('function drawWeather(');
+    expect(render).toContain('drawWeather(ctx, cssW, cssH);');
+    expect(render.indexOf('drawWeather(ctx, cssW, cssH);')).toBeLessThan(render.indexOf('drawAim(ctx, u);'));
+    expect(css).toContain('.playHud .weather-rain');
+  });
+
   it('presents club strategy, lie restrictions, and shot forecasts as grouped controls', () => {
     expect(hud).toContain('role="region" aria-label="Player round controls"');
     expect(hud).toContain('role="group" aria-label="Shot setup"');

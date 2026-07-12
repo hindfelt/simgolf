@@ -3,6 +3,7 @@ import { quitRound, setClub, setShape } from '../game/engine';
 import { CLUBS, SHOT_SHAPES } from '../game/constants';
 import type { ClubId, ShotShape } from '../game/types';
 import { S } from '../game/state';
+import { weatherDescription, weatherLabel } from '../game/weather';
 
 const CLUB_IDS: ClubId[] = ['driver', 'iron', 'wedge'];
 const SHAPE_IDS: ShotShape[] = ['straight', 'fade', 'draw', 'hook', 'backspin', 'punch'];
@@ -22,6 +23,7 @@ const LIE_LABELS: Record<string, string> = {
 };
 const lieLabel = (lie: string) => LIE_LABELS[lie] ?? lie.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (letter) => letter.toUpperCase());
 const yards = (tiles: number) => Math.max(1, Math.round(tiles * YARDS_PER_TILE));
+const WEATHER_MARKS = { clear: '☀', overcast: '☁', drizzle: '☂', rain: '☔' } as const;
 
 export default function PlayHud() {
   const playHud = useUI((s) => s.playHud);
@@ -30,6 +32,9 @@ export default function PlayHud() {
   const windMph = Math.round(playHud.windSpeed * 25);
   const windPoints = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
   const windPoint = windPoints[Math.round(((windDeg + 360) % 360) / 45) % 8];
+  const weather = { condition: playHud.weatherCondition, intensity: playHud.weatherIntensity, wetness: playHud.weatherWetness };
+  const conditionLabel = weatherLabel(weather.condition);
+  const conditionDescription = weatherDescription(weather);
   const canopyDescription = [
     playHud.canopyLabel ? 'canopy-status' : null,
     playHud.canopyAdvice ? 'canopy-advice' : null,
@@ -105,12 +110,17 @@ export default function PlayHud() {
           {playHud.canopyAdvice && <p id="canopy-advice" className={`canopyAdvice canopy-${playHud.canopyStatus}`}><strong>Caddie:</strong> {playHud.canopyAdvice}</p>}
         </div>
       </div>}
-      {windMph > 1 && (
-        <div className="windReadout" title={`Wind ${windMph} mph toward ${windPoint}`} aria-label={`Wind ${windMph} miles per hour toward ${windPoint}`}>
-          <span className="windArrow" style={{ transform: `rotate(${windDeg}deg)` }}>➤</span>
-          {windMph} mph · {windPoint}
+      <div className="conditionsReadout" role="group" aria-label="Course conditions">
+        <div className={`weatherReadout weather-${weather.condition}`} title={conditionDescription} aria-label={`${conditionLabel}. ${conditionDescription}`}>
+          <span aria-hidden="true">{WEATHER_MARKS[weather.condition]}</span>
+          <b>{conditionLabel}</b>
+          {weather.wetness > 0.3 && <small>{Math.round(weather.wetness * 100)}% wet</small>}
         </div>
-      )}
+        <div className="windReadout" title={windMph > 1 ? `Wind ${windMph} mph toward ${windPoint}` : 'Calm wind'} aria-label={windMph > 1 ? `Wind ${windMph} miles per hour toward ${windPoint}` : 'Calm wind'}>
+          <span className="windArrow" style={{ transform: `rotate(${windDeg}deg)` }}>➤</span>
+          {windMph > 1 ? `${windMph} mph · ${windPoint}` : 'Calm'}
+        </div>
+      </div>
       <button className="quitBtn" onClick={() => quitRound()}>
         Quit round
       </button>

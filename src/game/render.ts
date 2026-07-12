@@ -1004,6 +1004,36 @@ function drawBridge(ctx: CanvasRenderingContext2D, x: number, y: number, u: numb
 }
 
 /* ================= main draw ================= */
+function drawWeather(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
+  if (S.mode !== 'play' || S.weather.condition === 'clear') return;
+  const { intensity, wetness } = S.weather;
+  ctx.save();
+  ctx.fillStyle = `rgba(17,34,45,${(0.045 + wetness * 0.075).toFixed(3)})`;
+  ctx.fillRect(0, 0, cssW, cssH);
+  if (intensity > 0.01) {
+    const count = Math.min(150, Math.max(18, Math.round((cssW * cssH) / 12500 * intensity)));
+    const spanX = cssW + 180;
+    const spanY = cssH + 120;
+    const drift = S.time * (55 + S.wind.speed * 150) * S.wind.dx;
+    const fall = S.time * (360 + intensity * 260);
+    const slant = 9 + S.wind.dx * (15 + S.wind.speed * 24);
+    ctx.strokeStyle = `rgba(210,235,244,${(0.16 + intensity * 0.26).toFixed(3)})`;
+    ctx.lineWidth = Math.max(0.75, 0.8 + intensity * 0.65);
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const rawX = hash2(i * 19 + 7, 31) * spanX + drift;
+      const rawY = hash2(i * 29 + 13, 47) * spanY + fall;
+      const x = ((rawX % spanX) + spanX) % spanX - 90;
+      const y = ((rawY % spanY) + spanY) % spanY - 60;
+      const length = 8 + hash2(i * 11 + 3, 71) * (12 + intensity * 14);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + slant, y + length);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
   const u = z;
@@ -1102,6 +1132,9 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     if (facility) drawFacilityPlane(ctx, facilityActivityPose(activity, facility), u);
   }
 
+  // Weather sits over the course but below aiming and feedback, keeping the shot
+  // guide crisp while the scene still reads as wet and windswept.
+  drawWeather(ctx, cssW, cssH);
   drawAim(ctx, u);
   drawParticles(ctx, u);
   drawFloaters(ctx, u);

@@ -390,6 +390,28 @@ canvas.game {
   color: var(--dim);
   white-space: nowrap;
 }
+.conditionsReadout {
+  display: flex;
+  align-items: stretch;
+  gap: 5px;
+}
+.weatherReadout {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid rgba(37, 55, 65, .32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .42);
+  color: var(--dim);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.weatherReadout > span { font-size: 13px; line-height: 1; }
+.weatherReadout small { opacity: .72; font-size: 8px; }
+.weather-drizzle,
+.weather-rain { background: rgba(154, 190, 206, .4); color: #183b4b; }
+.weather-rain { border-color: rgba(33, 87, 112, .55); }
 .windArrow {
   display: inline-block;
   font-size: 13px;
@@ -4469,7 +4491,23 @@ canvas.game:focus-visible {
   opacity: .72;
 }
 .playHud .clubBtn:disabled small { color: #5d625b; }
-.playHud .windReadout { color: #d3ded4; font-size: 9px; }
+.playHud .conditionsReadout {
+  align-self: stretch;
+  padding: 3px;
+  border: 1px solid rgba(184, 163, 98, .3);
+  border-radius: 5px;
+  background: rgba(5, 20, 15, .3);
+}
+.playHud .weatherReadout {
+  border-color: rgba(214, 195, 132, .34);
+  border-radius: 3px;
+  background: rgba(211, 222, 212, .1);
+  color: #e2eadf;
+  font-size: 9px;
+}
+.playHud .weather-drizzle,
+.playHud .weather-rain { background: rgba(60, 102, 121, .42); color: #e7f6fb; }
+.playHud .windReadout { padding: 0 4px; color: #d3ded4; font-size: 9px; }
 .playHud .quitBtn { min-height:34px; border-radius: 5px; background: var(--desk-oxblood); font-size: 9px; }
 .playControls { bottom: 8px; }
 

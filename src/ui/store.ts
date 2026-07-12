@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from '../game/types';
+import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition } from '../game/types';
 
 export interface TickerItem {
   id: number;
@@ -41,6 +41,9 @@ export interface PlayHudInfo {
   windSpeed: number;
   windDx: number;
   windDy: number;
+  weatherCondition: WeatherCondition;
+  weatherIntensity: number;
+  weatherWetness: number;
 }
 
 interface UIStore {
