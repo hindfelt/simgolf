@@ -1,11 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { H, MAXE, PW, PH, W } from './constants';
-import { acceptProChallenge, beginPaintStroke, exportSaveText, holeToolTap, loadGame, newCourse, paintAt, playerIntendedDistance, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, startChallengeRound, startChampionshipRound, startCompetitionRound, update } from './engine';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { H, LIE, MAXE, PW, PH, SHOT_SHAPES, W } from './constants';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, cachedPlayerShotForecast, exportSaveText, flightApexHeight, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotForecast, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud, usesLegacyEndpointTreeDeflection } from './engine';
+import { clubLieProfile, fallbackClubForLie, SEVERE_RECOVERY_LIES } from './clubProfiles';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
+import { P } from './camera';
 import { idx, idxC } from './rng';
 import { S, caches } from './state';
 import { Tile } from './types';
 import type { Golfer, Hole, ProChallengeOffer } from './types';
+import { ui } from '../ui/store';
+import { CLEAR_WEATHER } from './weather';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -120,6 +124,10 @@ describe('save / load round-trip', () => {
     S.cash = 12_345;
     S.time = 410;
     S.courseName = 'Home Course';
+    S.theme = 'tropical';
+    S.propertyId = 'fiji-lagoon';
+    S.propertiesPurchased = ['fiji-lagoon'];
+    S.careerProgress = { version: 1, bestReputation: 4.2, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false };
     S.themePackId = 'neighborhood-nine';
     S.themeCourseId = 'garden-loop';
     S.difficulty = 'difficult';
@@ -173,6 +181,7 @@ describe('save / load round-trip', () => {
       ivanaVisits: 1,
       landmarkDonated: true,
       landmarkCredits: 1,
+      landPurchased: true,
       landOffer: { id: 7, parcelIndices: [], price: 3500, remaining: 44 },
     };
     S.goalsAchieved = { rep3: true };
@@ -197,11 +206,13 @@ describe('save / load round-trip', () => {
     S.tournamentHostedEver = false;
     S.comments = [];
     S.proProfile.name = 'Mutated Pro';
+    S.careerProgress = { version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
 
     const resumed = loadGame();
 
     expect(resumed).toBe(true);
     expect(S.cash).toBe(12_345);
+    expect(S.propertyId).toBe('fiji-lagoon');
     expect(S.themePackId).toBe('neighborhood-nine');
     expect(S.themeCourseId).toBe('garden-loop');
     expect(S.fee).toBe(27);
@@ -219,14 +230,48 @@ describe('save / load round-trip', () => {
     expect(S.comments).toHaveLength(1);
     expect(S.comments[0].txt).toBe('Frame that scorecard!');
     expect(S.proProfile.name).toBe('Ada Irons');
+    expect(S.careerProgress).toEqual({ version: 1, bestReputation: 4.2, tournamentHosted: true, sgaTop100Earned: true, sgaTop18Earned: false });
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).version).toBe(3);
     expect(S.specialVisitors.landmarkDonated).toBe(true);
     expect(S.specialVisitors.landmarkCredits).toBe(1);
+    expect(S.specialVisitors.landPurchased).toBe(true);
     expect(S.specialVisitors.pickyVisits).toBe(2);
     expect(S.time).toBe(410);
     expect(S.financeLedger).toHaveLength(2);
     expect(S.financeLedger[1]).toMatchObject({ year: 2, amount: 2345, category: 'greenFees' });
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
+  });
+
+  it('round-trips bridge backing types, connectivity, and bulldozer restoration', () => {
+    S.tiles[idx(2, 5)] = Tile.BRIDGE_WATER;
+    S.tiles[idx(2, 6)] = Tile.BRIDGE_STREAM;
+    S.tiles[idx(2, 7)] = Tile.PATH;
+    saveGame();
+    S.tiles.fill(Tile.ROUGH);
+
+    expect(loadGame()).toBe(true);
+    expect(S.tiles[idx(2, 5)]).toBe(Tile.BRIDGE_WATER);
+    expect(S.tiles[idx(2, 6)]).toBe(Tile.BRIDGE_STREAM);
+    expect(caches.pathConnected).toEqual(new Set(['2,5', '2,6', '2,7']));
+
+    S.tool = 'dozer';
+    beginPaintStroke();
+    paintAt(2.2, 5.2);
+    beginPaintStroke();
+    paintAt(2.2, 6.2);
+    expect(S.tiles[idx(2, 5)]).toBe(Tile.WATER);
+    expect(S.tiles[idx(2, 6)]).toBe(Tile.STREAM);
+  });
+
+  it('immediately replaces the active autosave after loading a named slot', () => {
+    saveToSlot('A', 'Before renovation');
+    S.cash = 17;
+    saveGame();
+
+    expect(loadFromSlot('A')).toBe(true);
+    expect(S.cash).toBe(12_345);
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-save-v1')!).cash).toBe(12_345);
   });
 
   it('rejects a save whose tile-array size no longer matches the current map', () => {
@@ -240,6 +285,19 @@ describe('save / load round-trip', () => {
 
     expect(resumed).toBe(false);
     expect(S.cash).toBe(999); // untouched — loadGame bailed before overwriting anything
+  });
+
+  it('migrates a propertyless save to the starter deed for its terrain theme', () => {
+    saveGame();
+    const raw = JSON.parse(localStorage.getItem('fairway-mogul-save-v1')!);
+    delete raw.propertyId;
+    raw.theme = 'desert';
+    localStorage.setItem('fairway-mogul-save-v1', JSON.stringify(raw));
+
+    expect(loadGame()).toBe(true);
+    expect(S.propertyId).toBe('red-mesa');
+    expect(S.propertiesPurchased).toContain('red-mesa');
+    expect(JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).propertiesPurchased).toContain('red-mesa');
   });
 
   it('persists a live SGA pro-challenge offer with the course', () => {
@@ -304,6 +362,33 @@ describe('save / load round-trip', () => {
     expect(S.activeChampionship).toBeNull();
   });
 
+  it('credits a completed championship prize to the restored home resort and finance ledger', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.courseName = 'Prize Links';
+    const retired = retireCourseForChampionship()!;
+    S.courseName = 'Working Home';
+    S.cash = 22_222;
+    const startsBefore = S.proProfile.starts;
+
+    expect(startChampionshipRound(retired.id, 'difficult', true)).toBe(true);
+    const cup = S.holes[0].cup;
+    S.player!.ball = { x: cup.x - 0.2, y: cup.y };
+    S.player!.lie = 'green';
+    playerFire(1, 0, 0.02);
+    update(5);
+
+    expect(S.player).toBeNull();
+    expect(S.courseName).toBe('Working Home');
+    const result = S.championshipHistory[0];
+    expect(result.prize).toBeGreaterThan(0);
+    expect(S.cash).toBe(22_222 + result.prize);
+    expect(S.financeLedger).toContainEqual(expect.objectContaining({ category: 'tournament', amount: result.prize, detail: `${result.title} prize` }));
+    expect(S.proProfile.starts).toBe(startsBefore + 1);
+    expect(S.proProfile.careerEarnings).toBe(result.prize);
+    expect(S.roundHistory.at(-1)?.payout).toBe(result.prize);
+    random.mockRestore();
+  });
+
   it('makes allocated power and driving skills change the shared shot-distance math', () => {
     S.proProfile.skills.powerHitter = 0;
     S.proProfile.skills.longDriver = 0;
@@ -311,6 +396,579 @@ describe('save / load round-trip', () => {
     S.proProfile.skills.powerHitter = 10;
     S.proProfile.skills.longDriver = 10;
     expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(base * 1.25);
+  });
+
+  it('gives every club a distinct lie-aware strategic profile', () => {
+    expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'iron', 1));
+    expect(playerIntendedDistance('tee', 'iron', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'wedge', 1));
+
+    const driver = clubLieProfile('tee', 'driver');
+    const iron = clubLieProfile('tee', 'iron');
+    const wedge = clubLieProfile('tee', 'wedge');
+    expect(driver.launchMultiplier).toBeLessThan(iron.launchMultiplier);
+    expect(iron.launchMultiplier).toBeLessThan(wedge.launchMultiplier);
+    expect(driver.rolloutMultiplier).toBeGreaterThan(iron.rolloutMultiplier);
+    expect(iron.rolloutMultiplier).toBeGreaterThan(wedge.rolloutMultiplier);
+
+    for (const lie of SEVERE_RECOVERY_LIES) expect(clubLieProfile(lie, 'driver')).toMatchObject({ available: false });
+    expect(clubLieProfile('pot', 'driver').reason).toContain('pot bunker');
+    expect(clubLieProfile('rough', 'driver')).toMatchObject({ available: true });
+    expect(fallbackClubForLie('sand', 'driver')).toBe('wedge');
+
+    const ironRetention = clubLieProfile('sand', 'iron');
+    const wedgeRetention = clubLieProfile('sand', 'wedge');
+    expect(wedgeRetention.carryMultiplier).toBeGreaterThan(ironRetention.carryMultiplier);
+    expect(wedgeRetention.dispersionMultiplier).toBeLessThan(ironRetention.dispersionMultiplier);
+  });
+
+  it('uses the same club-aware dispersion model for wide Driver and tight Wedge shots', () => {
+    const driver = playerShotDispersion('tee', 'driver', 'straight', 6);
+    const iron = playerShotDispersion('tee', 'iron', 'straight', 6);
+    const wedge = playerShotDispersion('tee', 'wedge', 'straight', 6);
+    expect(driver.angularScale).toBeGreaterThan(iron.angularScale);
+    expect(iron.angularScale).toBeGreaterThan(wedge.angularScale);
+    expect(driver.lateral).toBeGreaterThan(iron.lateral);
+    expect(iron.lateral).toBeGreaterThan(wedge.lateral);
+    expect(playerShotDispersion('tee', 'iron', 'punch', 6).angularScale).toBeLessThan(iron.angularScale);
+  });
+
+  it('rejects Driver from a severe recovery lie without charging a stroke and falls back to Wedge', () => {
+    startRound();
+    S.player!.lie = 'sand';
+    S.player!.club = 'iron';
+    expect(setClub('driver')).toBe(false);
+    expect(S.player!.club).toBe('iron');
+
+    S.player!.club = 'driver'; // simulate a stale selection from an older save
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
+    playerFire(1, 0, 0.5);
+    expect(S.player!.club).toBe('wedge');
+    expect(S.player!.aim).toBeNull();
+    expect(S.player!.strokes).toBe(0);
+    expect(S.balls.filter((ball) => ball.owner === 'P')).toHaveLength(0);
+    quitRound();
+  });
+
+  it('publishes club availability, role, and carry-to-finish forecast through the live HUD', () => {
+    startRound();
+    S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
+    updatePlayHud();
+    const teeHud = ui.get().playHud!;
+    expect(teeHud.clubOptions.driver).toMatchObject({ available: true, role: 'Low · runs' });
+    expect(teeHud.clubOptions.wedge).toMatchObject({ available: true, role: 'High · checks' });
+    expect(teeHud.finishDistance).toBeGreaterThan(teeHud.carry!);
+
+    S.player!.lie = 'pot';
+    S.player!.club = 'wedge';
+    updatePlayHud();
+    const recoveryHud = ui.get().playHud!;
+    expect(recoveryHud.clubOptions.driver.available).toBe(false);
+    expect(recoveryHud.clubOptions.driver.reason).toContain('pot bunker');
+    expect(recoveryHud.selectedRole).toBe('High · checks');
+    quitRound();
+  });
+
+  it('publishes ideal-line tree risk and the deterministic resting finish through the live HUD', () => {
+    S.theme = 'parklands';
+    S.holes = [{ id: 98, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    rebuildStatics();
+    startRound();
+    S.wind = { dx: 1, dy: 0, speed: 0 };
+    setClub('driver');
+    setShape('straight');
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 1 };
+    const start = { ...S.player!.ball! };
+    const forecast = playerShotForecast(start, 'tee', 'driver', 'straight', 1, 0, 1, S.wind);
+
+    updatePlayHud();
+    const keyboardHud = ui.get().playHud!;
+    expect(forecast.restingPoint).not.toBeNull();
+    expect(keyboardHud.canopyStatus).toBe(forecast.canopyStatus);
+    expect(keyboardHud.canopyLabel).toMatch(/risk$/);
+    expect(keyboardHud.canopyAdvice).toContain('Ideal line');
+    expect(keyboardHud.canopyAdvice).toContain('dispersion may miss');
+    expect(keyboardHud.rollout).toBeNull();
+    expect(keyboardHud.finishDistance).toBeCloseTo(Math.hypot(forecast.restingPoint!.x - start.x, forecast.restingPoint!.y - start.y), 10);
+    expect(keyboardHud.coach).toContain(keyboardHud.canopyLabel!);
+
+    S.rot = 0;
+    S.cam = { x: 100, y: 80, z: 1 };
+    const screenStart = P(start.x, start.y);
+    const screenDrag = P(start.x - 9, start.y);
+    S.player!.aim = { on: true, sx: screenStart.x, sy: screenStart.y, cx: screenDrag.x, cy: screenDrag.y, kind: 'pointer' };
+    updatePlayHud();
+    expect(ui.get().playHud!.canopyLabel).toBe(keyboardHud.canopyLabel);
+    expect(ui.get().playHud!.coach).not.toContain(keyboardHud.canopyLabel!);
+    quitRound();
+  });
+
+  it('keeps clear shots and putts free of blocked-risk advice', () => {
+    S.holes = [{ id: 99, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.elevC.fill(0);
+    rebuildStatics();
+    startRound();
+    S.wind = { dx: 1, dy: 0, speed: 0 };
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
+
+    updatePlayHud();
+    const clearHud = ui.get().playHud!;
+    expect(clearHud.canopyStatus).toBe('clear');
+    expect(clearHud.canopyLabel).toBe('Canopy clear');
+    expect(clearHud.canopyAdvice).toBeNull();
+    expect(clearHud.rollout).not.toBeNull();
+    expect(clearHud.finishDistance).toBeGreaterThan(clearHud.carry!);
+    expect(clearHud.coach).not.toContain('Canopy clear');
+
+    S.player!.ball = { x: 29, y: 5.5 };
+    S.player!.lie = 'green';
+    updatePlayHud();
+    const greenHud = ui.get().playHud!;
+    expect(greenHud.canopyStatus).toBeNull();
+    expect(greenHud.canopyLabel).toBeNull();
+    expect(greenHud.canopyAdvice).toBeNull();
+    expect(greenHud.rollout).toBeNull();
+    expect(greenHud.finishDistance).toBeCloseTo(greenHud.carry!, 10);
+    quitRound();
+  });
+
+  it('gives pointer and keyboard aim the same ideal canopy forecast', () => {
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    S.rot = 0;
+    S.cam = { x: 100, y: 80, z: 1 };
+    const from = { x: 5.5, y: 5.5 };
+    const screenStart = P(from.x, from.y);
+    const screenDrag = P(from.x - 4.5, from.y);
+    const pointer = playerAimIntent({ on: true, sx: screenStart.x, sy: screenStart.y, cx: screenDrag.x, cy: screenDrag.y, kind: 'pointer' }, 'tee')!;
+    const keyboard = playerAimIntent({ on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 }, 'tee')!;
+    expect(pointer).toEqual(keyboard);
+    expect(playerShotForecast(from, 'tee', 'driver', 'straight', pointer.dirX, pointer.dirY, pointer.power, { dx: 1, dy: 0, speed: 0 }))
+      .toEqual(playerShotForecast(from, 'tee', 'driver', 'straight', keyboard.dirX, keyboard.dirY, keyboard.power, { dx: 1, dy: 0, speed: 0 }));
+  });
+
+  it('shares one cached current-player forecast and invalidates terrain-safe state', () => {
+    S.holes = [{ id: 87, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    rebuildStatics();
+    startRound();
+    S.wind = { dx: 1, dy: 0, speed: 0 };
+    const intent = { dirX: 1, dirY: 0, power: 1 };
+    const first = cachedPlayerShotForecast(S.player!, intent)!;
+    expect(cachedPlayerShotForecast(S.player!, intent)).toBe(first);
+    S.elevC[0] = 1;
+    expect(cachedPlayerShotForecast(S.player!, intent)).not.toBe(first);
+    const elevated = cachedPlayerShotForecast(S.player!, intent)!;
+    rebuildStatics();
+    expect(cachedPlayerShotForecast(S.player!, intent)).not.toBe(elevated);
+    quitRound();
+  });
+
+  it('applies club launch and rollout profiles to real equal-carry shots', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 93, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.elevC.fill(0);
+    const results = {} as Record<'driver' | 'iron' | 'wedge', { height: number; finish: number }>;
+
+    for (const club of ['driver', 'iron', 'wedge'] as const) {
+      startRound();
+      S.wind.speed = 0;
+      setClub(club);
+      const power = 5 / playerIntendedDistance('tee', club, 1);
+      const start = { ...S.player!.ball! };
+      playerFire(1, 0, power);
+      results[club] = { height: S.balls.at(-1)!.h, finish: 0 };
+      expect(S.balls.at(-1)!.rollMultiplier).toBe(clubLieProfile('tee', club).rolloutMultiplier);
+      update(5);
+      update(5);
+      results[club].finish = S.player!.ball!.x - start.x;
+      quitRound();
+    }
+
+    expect(results.driver.height).toBeLessThan(results.iron.height);
+    expect(results.iron.height).toBeLessThan(results.wedge.height);
+    expect(results.driver.finish).toBeGreaterThan(results.iron.finish);
+    expect(results.iron.finish).toBeGreaterThan(results.wedge.finish);
+    random.mockRestore();
+  });
+
+  it('makes club height and shaped routing change the ideal canopy forecast', () => {
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    const from = { x: 5.5, y: 5.5 };
+    const calm = { dx: 1, dy: 0, speed: 0 };
+    const driver = playerShotForecast(from, 'tee', 'driver', 'straight', 1, 0, 1, calm);
+    const wedge = playerShotForecast(from, 'tee', 'wedge', 'straight', 1, 0, 1, calm);
+    const hook = playerShotForecast(from, 'tee', 'driver', 'hook', 1, 0, 1, calm);
+
+    expect(driver.canopyStatus).not.toBe('clear');
+    expect(wedge.canopyStatus).toBe('clear');
+    expect(hook.canopyStatus).toBe('clear');
+  });
+
+  it('uses the forecasted curved path for actual Fade, Draw, and Hook impacts', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    for (const shape of ['fade', 'draw', 'hook'] as const) {
+      S.holes = [{ id: 95, tee: { x: 5.5, y: 10.5 }, cup: { x: 35.5, y: 10.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+      S.tiles.fill(Tile.FAIR);
+      S.elevC.fill(0);
+      startRound();
+      S.wind = { dx: 1, dy: 0, speed: 0 };
+      setClub('driver');
+      setShape(shape);
+      const start = { ...S.player!.ball! };
+      const plan = playerShotPlan(start, 'tee', 'driver', shape, 1, 0, 1, S.wind);
+      let tree = playerShotPlanPosition(plan, 0.22);
+      for (let t = 0.16; t <= 0.35; t += 0.01) {
+        const candidate = playerShotPlanPosition(plan, t);
+        if (Math.hypot(candidate.x - (Math.floor(candidate.x) + 0.5), candidate.y - (Math.floor(candidate.y) + 0.5)) < 0.22) {
+          tree = candidate;
+          break;
+        }
+      }
+      S.tiles[idx(Math.floor(tree.x), Math.floor(tree.y))] = Tile.TREE;
+      const forecast = playerShotForecast(start, 'tee', 'driver', shape, 1, 0, 1, S.wind);
+      expect(forecast.canopyImpact, shape).not.toBeNull();
+      playerFire(1, 0, 1);
+      expect(S.balls.at(-1)!.canopyImpact, shape).toEqual(forecast.canopyImpact ?? undefined);
+      quitRound();
+    }
+    random.mockRestore();
+  });
+
+  it('applies actual Wedge height and Punch trajectory without collision exemptions', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 96, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('wedge');
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.canopyImpact).toBeUndefined();
+    quitRound();
+
+    S.tiles[idx(8, 5)] = Tile.FAIR;
+    S.tiles[idx(6, 5)] = Tile.TREE;
+    startRound();
+    S.wind.speed = 0;
+    S.player!.ball = { x: 5.5, y: 5.99 };
+    S.player!.lie = 'tee';
+    setClub('iron');
+    setShape('punch');
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.canopyImpact).toBeUndefined();
+    quitRound();
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('iron');
+    setShape('punch');
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.canopyImpact).toMatchObject({ kind: 'trunk' });
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('uses the actual tapered pine profile and resolves tree before downstream water', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.theme = 'links';
+    S.holes = [{ id: 97, tee: { x: 4.5, y: 1.5 }, cup: { x: 30.5, y: 1.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(6, 1)] = Tile.TREE;
+    S.tiles[idx(16, 1)] = Tile.WATER;
+    S.elevC.fill(0);
+    startRound();
+    S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
+    setClub('iron');
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.canopyImpact).toMatchObject({ treeX: 6, treeY: 1, kind: 'pine' });
+    update(99);
+    expect(S.player!.currentHole!.shots[0]).toMatchObject({ events: ['tree'], penalty: 0, resultLie: 'tree' });
+    expect(S.player!.strokes).toBe(1);
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('charges Punch carry in the shared plan instead of granting a free low flight', () => {
+    const from = { x: 5.5, y: 5.5 };
+    const calm = { dx: 1, dy: 0, speed: 0 };
+    const straight = playerShotPlan(from, 'tee', 'iron', 'straight', 1, 0, 1, calm);
+    const punch = playerShotPlan(from, 'tee', 'iron', 'punch', 1, 0, 1, calm);
+    expect(punch.intend).toBeCloseTo(straight.intend * 0.82, 10);
+    expect(punch.targetDistance).toBeCloseTo(punch.intend, 10);
+  });
+
+  it('precomputes the same zero-noise canopy impact and resolves it without tunneling, rollout, or penalty', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 89, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(8, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    setShape('straight');
+    const start = { ...S.player!.ball! };
+    const forecast = playerShotForecast(start, 'tee', 'driver', 'straight', 1, 0, 1, S.wind);
+
+    playerFire(1, 0, 1);
+    const launched = S.balls.at(-1)!;
+    expect(forecast.canopyImpact).not.toBeNull();
+    expect(launched.canopyImpact?.t).toBeCloseTo(forecast.canopyImpact!.t, 10);
+    expect(launched.canopyImpact?.x).toBeCloseTo(forecast.canopyImpact!.x, 10);
+    expect(launched.canopyImpact?.y).toBeCloseTo(forecast.canopyImpact!.y, 10);
+    expect(forecast.restingPoint).not.toBeNull();
+
+    update(99); // one large frame cannot tunnel through the sampled obstruction
+    const shot = S.player!.currentHole!.shots[0];
+    expect(S.player!.strokes).toBe(1);
+    expect(shot.events).toContain('tree');
+    expect(shot.penalty).toBe(0);
+    expect(shot.resultLie).toBe('tree');
+    expect(shot.end.x).toBeCloseTo(forecast.restingPoint!.x, 10);
+    expect(shot.end.y).toBeCloseTo(forecast.restingPoint!.y, 10);
+    expect(shot.end.x).toBeLessThan(forecast.plan.target.x);
+    expect(S.player!.currentHole!.hazards).toContain('tree');
+    expect(S.player!.club).toBe('wedge');
+    expect(S.balls.filter((ball) => ball.owner === 'P')).toHaveLength(0);
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('deterministically resolves a descending destination tree for the player', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 88, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.FAIR);
+    S.tiles[idx(17, 5)] = Tile.TREE;
+    S.elevC.fill(0);
+    startRound();
+    S.wind.speed = 0;
+    S.weather = { ...CLEAR_WEATHER };
+    setClub('iron');
+    playerFire(1, 0, 1);
+    expect(S.balls.at(-1)!.canopyImpact).toMatchObject({ treeX: 17, treeY: 5 });
+    update(5);
+    expect(S.player!.currentHole!.shots[0]).toMatchObject({ resultLie: 'tree', events: ['tree'], penalty: 0 });
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('retains legacy random endpoint tree deflection for AI only', () => {
+    expect(usesLegacyEndpointTreeDeflection({ owner: 'P', lowFlight: false })).toBe(false);
+    expect(usesLegacyEndpointTreeDeflection({ owner: {} as Golfer, lowFlight: false })).toBe(true);
+    expect(usesLegacyEndpointTreeDeflection({ owner: {} as Golfer, lowFlight: true })).toBe(false);
+  });
+
+  it('automatically selects Wedge after a Driver lands in a severe recovery lie', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 90, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.tiles.fill(Tile.SAND);
+    S.elevC.fill(0);
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 0.25);
+    update(5);
+    expect(S.player).toMatchObject({ lie: 'sand', club: 'wedge', strokes: 1 });
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('curves fade, draw, and the stronger hook to their intended sides', () => {
+    const carry = 12;
+    expect(shapeCurveOffset('fade', carry, 1)).toBeGreaterThan(0);
+    expect(shapeCurveOffset('draw', carry, 1)).toBeLessThan(0);
+    expect(shapeCurveOffset('hook', carry, 1)).toBeLessThan(shapeCurveOffset('draw', carry, 1));
+    expect(Math.abs(shapeCurveOffset('fade', carry, 0.5))).toBeLessThan(Math.abs(shapeCurveOffset('fade', carry, 1)));
+    expect(shapeCurveOffset('straight', carry, 1)).toBe(0);
+  });
+
+  it('composes opposite draw and fade curves with the same crosswind while rain changes carry and control', () => {
+    const from = { x: 10, y: 10 };
+    const crosswind = { dx: 0, dy: 1, speed: 0.4 };
+    const rain = { condition: 'rain' as const, intensity: 0.9, wetness: 1 };
+    const fade = playerShotPlan(from, 'tee', 'iron', 'fade', 1, 0, 1, crosswind, CLEAR_WEATHER);
+    const draw = playerShotPlan(from, 'tee', 'iron', 'draw', 1, 0, 1, crosswind, CLEAR_WEATHER);
+    const wetFade = playerShotPlan(from, 'tee', 'iron', 'fade', 1, 0, 1, crosswind, rain);
+
+    expect(fade.target.y).toBeGreaterThan(draw.target.y);
+    expect(fade.windPush).toBeCloseTo(draw.windPush, 10);
+    expect(wetFade.intend).toBeLessThan(fade.intend);
+    expect(playerShotDispersion('tee', 'iron', 'fade', fade.targetDistance, rain).previewRadius)
+      .toBeGreaterThan(playerShotDispersion('tee', 'iron', 'fade', fade.targetDistance, CLEAR_WEATHER).previewRadius);
+    expect(playerShotDispersion('green', 'iron', 'fade', 4, rain))
+      .toEqual(playerShotDispersion('green', 'iron', 'fade', 4, CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', rain))
+      .toBeLessThan(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'backspin', 'iron', rain)).toBe(0);
+  });
+
+  it('uses one putter dispersion profile independent of hidden full-swing club and shape', () => {
+    S.proProfile.skills.drawShot = 0;
+    S.proProfile.skills.fadeShot = 0;
+    S.proProfile.skills.highBackspin = 0;
+    const straight = playerShotSkill('green', 'iron', 'straight');
+    expect(playerShotSkill('green', 'iron', 'draw')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'fade')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'hook')).toBe(straight);
+    expect(playerShotSkill('green', 'iron', 'backspin')).toBe(straight);
+    const baseline = playerShotDispersion('green', 'iron', 'straight', 3.5);
+    expect(baseline.angularScale).toBe(0.8);
+    expect(playerShotDispersion('green', 'driver', 'hook', 3.5)).toEqual(baseline);
+    expect(playerShotDispersion('green', 'wedge', 'punch', 3.5)).toEqual(baseline);
+  });
+
+  it('launches identical putts when only hidden full-swing club and shape differ', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.75);
+    const putt = (club: 'driver' | 'wedge', shape: 'hook' | 'punch') => {
+      startRound();
+      S.player!.ball = { x: 8, y: 8 };
+      S.player!.lie = 'green';
+      S.player!.club = club;
+      S.player!.shape = shape;
+      playerFire(1, 0, 0.4);
+      const ball = S.balls.at(-1)!;
+      const landing = { x: ball.tx, y: ball.ty };
+      quitRound();
+      return landing;
+    };
+    expect(putt('driver', 'hook')).toEqual(putt('wedge', 'punch'));
+    random.mockRestore();
+  });
+
+  it('uses the complete wind/curve target chord for preview, actual dispersion, and flight apex', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.75);
+    S.holes = [{ id: 94, tee: { x: 12, y: 20 }, cup: { x: 40, y: 20 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.elevC.fill(0);
+    startRound();
+    S.wind = { dx: 1, dy: 0, speed: 0.5 };
+    setClub('iron');
+    setShape('hook');
+    const start = { ...S.player!.ball! };
+    const plan = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1);
+    const calm = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1, { dx: 1, dy: 0, speed: 0 });
+    const headwind = playerShotPlan(start, 'tee', 'iron', 'hook', 1, 0, 1, { dx: -1, dy: 0, speed: 0.5 });
+    expect(plan.target.x).toBeGreaterThan(calm.target.x);
+    expect(headwind.target.x).toBeLessThan(calm.target.x);
+    expect(playerShotPlanPosition(plan, 1)).toEqual(plan.target);
+    expect(plan.targetDistance).toBeCloseTo(Math.hypot(plan.target.x - start.x, plan.target.y - start.y), 10);
+    expect(plan.targetDistance).toBeGreaterThan(plan.intend);
+    const dispersion = playerShotDispersion('tee', 'iron', 'hook', plan.targetDistance);
+    expect(dispersion.previewRadius).toBeGreaterThan(playerShotDispersion('tee', 'iron', 'hook', plan.intend).previewRadius);
+
+    const targetAngle = Math.atan2(plan.target.y - start.y, plan.target.x - start.x);
+    const expectedAngle = targetAngle + 0.5 * LIE.tee.ang * (Math.PI / 180) * (1.35 - dispersion.skill) * dispersion.angularScale;
+    const expectedDistance = plan.targetDistance * (1 + 0.5 * (LIE.tee.dst + (1 - dispersion.skill) * 0.05));
+
+    playerFire(1, 0, 1);
+    const ball = S.balls.at(-1)!;
+    expect(ball.tx).toBeCloseTo(start.x + Math.cos(expectedAngle) * expectedDistance, 6);
+    expect(ball.ty).toBeCloseTo(start.y + Math.sin(expectedAngle) * expectedDistance, 6);
+    const heightMultiplier = SHOT_SHAPES.hook.heightMul * clubLieProfile('tee', 'iron').launchMultiplier;
+    expect(ball.h).toBeCloseTo(flightApexHeight(plan.targetDistance, heightMultiplier), 10);
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('preserves sub-eight-percent power in the shared short-putt aim intent', () => {
+    startRound();
+    S.player!.lie = 'green';
+    S.rot = 0;
+    S.cam = { x: 120, y: 80, z: 1 };
+    const start = P(10, 10);
+    const current = P(9.73, 10);
+    const aim = { on: true, sx: start.x, sy: start.y, cx: current.x, cy: current.y, kind: 'keyboard' as const };
+    expect(playerAimIntent(aim, 'green')?.power).toBeCloseTo(0.03, 6);
+    expect(playerAimIntent(aim, 'tee')?.power).toBe(0.08);
+    S.player!.aim = aim;
+    updatePlayHud();
+    expect(ui.get().playHud?.power).toBeCloseTo(0.03, 6);
+    expect(ui.get().playHud?.coach).toContain('Keyboard aim');
+    expect(ui.get().playHud?.coach).toContain('3% power');
+    quitRound();
+  });
+
+  it('moves the real flying ball along the shaped curve instead of a straight endpoint chord', () => {
+    const curveBall = {
+      fx: 0, fy: 0, tx: 12, ty: -2.64,
+      shotShape: 'draw' as const, curvePerpX: 0, curvePerpY: 1, curveDistance: 12,
+    };
+    const halfway = ballFlightPosition(curveBall, 0.5);
+    const chordY = curveBall.fy + (curveBall.ty - curveBall.fy) * 0.5;
+    expect(halfway.y).not.toBeCloseTo(chordY);
+    expect(ballFlightPosition(curveBall, 0)).toEqual({ x: 0, y: 0 });
+    expect(ballFlightPosition(curveBall, 1)).toEqual({ x: 12, y: -2.64 });
+  });
+
+  it('lands a full driver beyond an iron and preserves real power-skill distance gains', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.holes = [{ id: 92, tee: { x: 8, y: 8 }, cup: { x: 40, y: 8 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    S.elevC.fill(0);
+    S.proProfile.skills.powerHitter = 0;
+    S.proProfile.skills.longDriver = 0;
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('iron');
+    playerFire(1, 0, 1);
+    const ironCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 1);
+    const baseDriverCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+    expect(baseDriverCarry).toBeGreaterThan(ironCarry * 1.2);
+
+    S.proProfile.skills.powerHitter = 10;
+    S.proProfile.skills.longDriver = 10;
+    startRound();
+    S.wind.speed = 0;
+    setClub('driver');
+    playerFire(1, 0, 1);
+    const skilledDriverCarry = Math.hypot(S.balls.at(-1)!.tx - S.balls.at(-1)!.fx, S.balls.at(-1)!.ty - S.balls.at(-1)!.fy);
+    quitRound();
+    expect(skilledDriverCarry).toBeGreaterThan(baseDriverCarry * 1.25);
+    random.mockRestore();
+  });
+
+  it('uses landing-lie rollout scale and stops backspin instead of scaling roll by carry', () => {
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER)).toBeCloseTo(0.9);
+    expect(playerEstimatedRoll('firmfair', 'straight', 'iron', CLEAR_WEATHER)).toBeCloseTo(1.5);
+    expect(playerEstimatedRoll('fair', 'straight', 'driver', CLEAR_WEATHER)).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'straight', 'iron', CLEAR_WEATHER)).toBeGreaterThan(playerEstimatedRoll('fair', 'straight', 'wedge', CLEAR_WEATHER));
+    expect(playerEstimatedRoll('fair', 'backspin', 'iron', CLEAR_WEATHER)).toBe(0);
+  });
+
+  it('puts backspin and punch behavior directly on the launched ball', () => {
+    S.holes = [{ id: 91, tee: { x: 5.5, y: 5.5 }, cup: { x: 24.5, y: 5.5 }, par: 4, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
+    startRound();
+    setShape('backspin');
+    playerFire(1, 0, 0.4);
+    expect(S.balls.at(-1)).toMatchObject({ noRoll: true, lowFlight: false });
+    quitRound();
+
+    startRound();
+    setShape('punch');
+    playerFire(1, 0, 0.4);
+    expect(S.balls.at(-1)).toMatchObject({ noRoll: false, lowFlight: true });
+    quitRound();
   });
 
   it('accepts an affordable touring-pro challenge as a wagered resident-pro round', () => {

@@ -47,6 +47,7 @@ function holeScore(overrides: Partial<PlayerHoleScore> = {}): PlayerHoleScore {
     greenInRegulation: true,
     hazards: [],
     wind: { dx: 1, dy: 0, speed: 0.2 },
+    weather: { condition: 'drizzle', intensity: 0.35, wetness: 0.5 },
     shots: [shot()],
     ...overrides,
   };
@@ -129,6 +130,8 @@ describe('persistent scorecards', () => {
     expect(csv).toContain('"Fairway Mogul scorecard"');
     expect(csv).toContain('"CSV Club"');
     expect(csv).toContain('"Hole","Par","Score"');
+    expect(csv).toContain('"Weather","Wind"');
+    expect(csv).toContain('"drizzle"');
   });
 
   it('exports and restores a portable profile archive without duplicating round ids', () => {

@@ -1,6 +1,7 @@
 import { W, H, PW, PH } from './constants';
 import type { GameState } from './types';
 import { createResidentPro } from './proCircuit';
+import { CLEAR_WEATHER } from './weather';
 
 /** The single mutable simulation state, shared by engine + renderer. */
 export const S: GameState = {
@@ -36,10 +37,12 @@ export const S: GameState = {
     ivanaVisits: 0,
     landmarkDonated: false,
     landmarkCredits: 0,
+    landPurchased: false,
     landOffer: null,
   },
   proProfile: createResidentPro(),
   propertiesPurchased: [],
+  careerProgress: { version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false },
   retiredCourses: [],
   championshipHistory: [],
   activeChampionship: null,
@@ -69,6 +72,7 @@ export const S: GameState = {
   goalsAchieved: {},
   camShake: 0,
   wind: { dx: 1, dy: 0, speed: 0 },
+  weather: { ...CLEAR_WEATHER },
   comments: [],
   history: [],
   roundHistory: [],

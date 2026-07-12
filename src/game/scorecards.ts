@@ -18,6 +18,7 @@ export function buildRoundRecord({ player, playerName = 'Course Owner', courseNa
   const card = player.card.map((hole) => ({
     ...hole,
     wind: { ...hole.wind },
+    ...(hole.weather ? { weather: { ...hole.weather } } : {}),
     hazards: [...hole.hazards],
     shots: hole.shots.map((shot) => ({ ...shot, start: { ...shot.start }, end: { ...shot.end }, events: [...shot.events] })),
   }));
@@ -118,7 +119,7 @@ export function roundToCsv(record: RoundRecord): string {
     ['Completed', new Date(record.completedAt).toISOString()],
     ['Source', record.source],
     [],
-    ['Hole', 'Par', 'Score', '+/-', 'Putts', 'Penalties', 'Fairway', 'GIR', 'Wind', 'Hazards'],
+    ['Hole', 'Par', 'Score', '+/-', 'Putts', 'Penalties', 'Fairway', 'GIR', 'Weather', 'Wind', 'Hazards'],
     ...record.card.map((hole) => [
       hole.hole,
       hole.par,
@@ -128,6 +129,7 @@ export function roundToCsv(record: RoundRecord): string {
       hole.penalties,
       hole.fairwayHit === null ? 'N/A' : hole.fairwayHit ? 'Hit' : 'Miss',
       hole.greenInRegulation ? 'Yes' : 'No',
+      hole.weather?.condition ?? 'clear',
       Math.round(hole.wind.speed * 25) + ' mph',
       hole.hazards.join('; '),
     ]),

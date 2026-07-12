@@ -1,9 +1,9 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Ball, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
-import { isoOf } from './camera';
+import { isoOf, screenToWorld } from './camera';
 import { sfx } from './audio';
 import { ui } from '../ui/store';
 import {
@@ -32,6 +32,12 @@ import type { Building, BuildingKind, EmployeeKind, CourseTheme, FacilityBranch 
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 import { findPath } from './pathfind';
+import { isWaterBackedTile } from './bridges';
+import { generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
+import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
+import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
+import type { FlightPath } from './flightPath';
+export { ballFlightPosition, flightApexHeight, shapeCurveOffset } from './flightPath';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -59,7 +65,8 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, isPropertyId, propertyById, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -83,6 +90,7 @@ function freshSpecialVisitors(): SpecialVisitorState {
     ivanaVisits: 0,
     landmarkDonated: false,
     landmarkCredits: 0,
+    landPurchased: false,
     landOffer: null,
   };
 }
@@ -97,23 +105,85 @@ export function setCourseTheme(theme: CourseTheme) {
   caches.groundDirty = true;
   updateTopbar();
 }
-function updatePlayHud() {
+export function updatePlayHud() {
   const p = S.player;
   if (!p) return;
   const h = S.holes[p.holeIdx];
   if (!h) return;
+  const aim = p.aim?.on ? playerAimIntent(p.aim, p.lie) : null;
+  const power = aim?.power ?? null;
+  const weatherCarry = p.lie === 'green' ? 1 : weatherCarryMultiplier(S.weather);
+  const clubRanges = {
+    driver: playerIntendedDistance(p.lie, 'driver', 1) * weatherCarry,
+    iron: playerIntendedDistance(p.lie, 'iron', 1) * weatherCarry,
+    wedge: playerIntendedDistance(p.lie, 'wedge', 1) * weatherCarry,
+  };
+  const clubOptions = Object.fromEntries((['driver', 'iron', 'wedge'] as ClubId[]).map((clubId) => {
+    const profile = clubLieProfile(p.lie, clubId);
+    return [clubId, { carry: clubRanges[clubId], available: profile.available, reason: profile.reason, role: profile.role }];
+  })) as Record<ClubId, { carry: number; available: boolean; reason: string | null; role: string }>;
+  // The shared cache wraps the former direct call:
+  // playerShotForecast(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power)
+  const forecast = aim ? cachedPlayerShotForecast(p, aim) : null;
+  const plan = forecast?.plan ?? null;
+  const landingLie = plan ? lieOf(plan.target.x, plan.target.y) : null;
+  const rollout = plan && p.lie !== 'green' && landingLie && !forecast?.canopyImpact ? playerEstimatedRoll(landingLie, p.shape, p.club) : null;
+  const landingDistance = plan && p.ball ? dist(p.ball, plan.target) : null;
+  const restingDistance = forecast?.restingPoint && p.ball ? dist(p.ball, forecast.restingPoint) : null;
+  const canopyStatus = forecast && p.lie !== 'green' ? forecast.canopyStatus : null;
+  const canopyLabel = canopyStatus === 'clear'
+    ? 'Canopy clear'
+    : canopyStatus === 'canopy'
+      ? 'Canopy risk'
+      : canopyStatus === 'trunk'
+        ? 'Trunk risk'
+        : canopyStatus === 'pine'
+          ? 'Pine risk'
+          : null;
+  const canopyAdvice = canopyStatus === 'canopy'
+    ? p.shape === 'punch'
+      ? 'Ideal line for Punch clips high branches; dispersion may miss. Shape around them or switch to Wedge for height.'
+      : 'Ideal line clips the canopy; dispersion may miss. Try Punch under open branches, shape around the crown, or switch to Wedge for height.'
+    : canopyStatus === 'trunk'
+      ? 'Ideal line meets the trunk; dispersion may miss. Shape around it or switch to Wedge—Punch cannot go through wood.'
+      : canopyStatus === 'pine'
+        ? 'Ideal line clips low pine cover; dispersion may miss. Shape around it or choose a higher flight—Punch stays blocked.'
+        : null;
+  const keyboardRisk = canopyStatus && canopyStatus !== 'clear' && canopyLabel ? ` · ${canopyLabel}` : '';
   ui.set({
     playHud: {
       holeLabel: 'Hole ' + (p.holeIdx + 1) + ' of ' + S.holes.length + ' · Par ' + h.par,
       strokeLabel:
         'Stroke ' + (p.strokes + 1) + ' · ' +
         (p.lie === 'green' ? 'on the green · drag to putt' : 'lie: ' + p.lie + ' · drag back to swing'),
+      coach: p.state === 'wait'
+        ? 'Track the ball, then plan the next lie.'
+        : p.aim?.kind === 'keyboard' && aim
+          ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing${keyboardRisk}.`
+        : p.lie === 'green'
+          ? 'Drag against the putting line, then release.'
+          : 'Choose club and flight, drag back, then release.',
       onGreen: p.lie === 'green',
+      lie: p.lie,
+      pinDistance: dist(p.ball ?? h.tee, h.cup),
+      clubRanges,
+      clubOptions,
+      power,
+      carry: forecast?.plan.intend ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
+      rollout,
+      finishDistance: restingDistance ?? (landingDistance === null ? null : landingDistance + (rollout ?? 0)),
+      canopyStatus,
+      canopyLabel,
+      canopyAdvice,
+      selectedRole: clubLieProfile(p.lie, p.club).role,
       club: p.club,
       shape: p.shape,
       windSpeed: S.wind.speed,
       windDx: S.wind.dx,
       windDy: S.wind.dy,
+      weatherCondition: S.weather.condition,
+      weatherIntensity: S.weather.intensity,
+      weatherWetness: S.weather.wetness,
     },
   });
 }
@@ -470,7 +540,7 @@ export function rebuildStatics() {
       if (t === Tile.WATER || t === Tile.BRIDGE_WATER) caches.waterTiles.push({ x, y });
       if (!ownedAt(x, y)) continue;
       const s = hash2(x * 23 + 17, y * 31 + 9);
-      if (t === Tile.WATER || t === Tile.BRIDGE_WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
+      if (t === Tile.WATER) ducks.push({ kind: 'duck', x: x + 0.5, y: y + 0.5, s });
       if (t === Tile.TREE) deer.push({ kind: 'deer', x: x + 0.5, y: y + 0.5, s });
       if (t === Tile.TREE) squirrels.push({ kind: 'squirrel', x: x + 0.5, y: y + 0.5, s: hash2(x * 7 + 3, y * 13 + 5) });
       if (t === Tile.ROUGH || t === Tile.DEEP_ROUGH || t === Tile.BRUSH || t === Tile.FLOWER) rabbits.push({ kind: 'rabbit', x: x + 0.5, y: y + 0.5, s });
@@ -809,7 +879,7 @@ function cornerPins(exclude?: Set<number>): Set<number> {
   };
   for (const b of S.buildings) for (let dy = 0; dy < b.h; dy++) for (let dx = 0; dx < b.w; dx++) pinTile(b.x + dx, b.y + dy);
   for (const [cx, cy] of CH_TILES) pinTile(cx, cy);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (S.tiles[idx(x, y)] === Tile.WATER) pinTile(x, y);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (isWaterBackedTile(S.tiles[idx(x, y)])) pinTile(x, y);
   for (const h of S.holes)
     for (const k of h.teeTiles.concat(h.greenTiles)) {
       const [a, b] = k.split(',');
@@ -870,7 +940,7 @@ function featureTilesAt(x: number, y: number): string[] | null {
 function terraform(x: number, y: number, dir: 1 | -1): void {
   const k = x + ',' + y;
   if (strokeTiles.has(k)) return;
-  if (tileAt(x, y) === Tile.WATER) {
+  if (isWaterBackedTile(tileAt(x, y))) {
     setHint('Water finds its own level — drain it with the bulldozer first.');
     return;
   }
@@ -1058,6 +1128,7 @@ export function acceptLandOffer(parcel: number): boolean {
   if (!offer || !offer.parcelIndices.includes(parcel) || S.owned[parcel]) return false;
   if (!spend(offer.price, 'land', 'County expansion parcel')) return false;
   S.owned[parcel] = 1;
+  S.specialVisitors.landPurchased = true;
   offer.parcelIndices = offer.parcelIndices.filter((candidate) => candidate !== parcel);
   caches.orthoDirty = true; // ownership dimming/dashed borders live on the ortho layer
   caches.groundDirty = true;
@@ -1158,7 +1229,7 @@ interface ShotTraits {
  * on uphill lies). Omitting `traits` reproduces the original skill-only formula
  * exactly, so the player's own shots are unaffected.
  */
-function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: number, traits?: ShotTraits) {
+function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: number, traits?: ShotTraits, forcedDistance?: number) {
   const L = LIE[lie] || LIE.rough;
   const minD = lie === 'green' ? 0.15 : 0.6; // putts can be tap-ins
   const remaining = dist(from, target);
@@ -1167,7 +1238,7 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   const imgS = traits?.imagination ?? skill;
   const lengthBase = traits ? 0.82 : 0.9;
   const lengthSpread = traits ? 0.34 : 0.15;
-  const intend = Math.min(L.max * (lengthBase + lengthS * lengthSpread), remaining);
+  const intend = forcedDistance === undefined ? Math.min(L.max * (lengthBase + lengthS * lengthSpread), remaining) : Math.max(minD, forcedDistance);
   let ang = Math.atan2(target.y - from.y, target.x - from.x);
   ang += gauss() * L.ang * (Math.PI / 180) * (1.35 - accS) * (angScale || 1);
   let d = Math.max(minD, intend * (1 + gauss() * (L.dst + (1 - accS) * 0.05)));
@@ -1178,17 +1249,20 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   d = Math.max(minD, d - (elevAt(lx, ly) - elevAt(from.x, from.y)) * slopePenalty);
   return { x: clamp(from.x + Math.cos(ang) * d, 0.6, W - 0.6), y: clamp(from.y + Math.sin(ang) * d, 0.6, H - 0.6), power: d };
 }
-type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight'>;
-function startBall(spec: BallSpec, heightMul = 1) {
+type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'rollMultiplier'>;
+function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number) {
   const d = dist({ x: spec.fx, y: spec.fy }, { x: spec.tx, y: spec.ty });
   const ball: Ball = {
     ...spec,
     t: 0,
     dur: spec.kind === 'fly' ? 0.45 + d * 0.055 : 0.25 + d * 0.1,
-    h: spec.kind === 'fly' ? Math.min(64, 10 + d * 4.5) * heightMul : 0,
+    h: spec.kind === 'fly' ? flightApexHeight(nominalFlightDistance ?? d, heightMul) : 0,
     x: spec.fx,
     y: spec.fy,
   };
+  if (ball.kind === 'fly') {
+    ball.canopyImpact = playerOnlyTreeCanopyImpact(ball, { theme: S.theme, tileAt, elevationAt: elevAt }) ?? undefined;
+  }
   S.balls.push(ball);
 }
 /**
@@ -1197,11 +1271,6 @@ function startBall(spec: BallSpec, heightMul = 1) {
  * aim instead of following it exactly. `t` is 0 at the tee, 1 at landing — used both
  * here (t=1, for the actual landing point) and in `drawAim`'s preview (stepped 0..1).
  */
-export function shapeCurveOffset(shape: ShotShape, intend: number, t: number): number {
-  if (shape === 'fade') return intend * 0.22 * Math.pow(t, 1.5);
-  if (shape === 'draw') return -intend * 0.22 * Math.pow(t, 1.5);
-  return 0;
-}
 function elevGrad(x: number, y: number): Vec {
   return {
     x: (elevAt(x + 1, y) - elevAt(x - 1, y)) / 2,
@@ -1220,8 +1289,8 @@ function lostBallImpact(lie: 'water' | 'stream', pos: Vec) {
   }
 }
 
-function rollFrom(pos: Vec, dir: Vec, terrKey: string): { pos: Vec; hazard: ({ x: number; y: number; lie: 'water' | 'stream' }) | null } {
-  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rand(0.7, 1.3);
+function rollFrom(pos: Vec, dir: Vec, terrKey: string, rollMultiplier = 1): { pos: Vec; hazard: ({ x: number; y: number; lie: 'water' | 'stream' }) | null } {
+  let len = (ROLL[terrKey] !== undefined ? ROLL[terrKey] : 0.3) * rollMultiplier * weatherRollMultiplier(S.weather) * rand(0.7, 1.3);
   let p = { x: pos.x, y: pos.y };
   const d = { x: dir.x, y: dir.y };
   let guard = 60; // slope feedback could otherwise keep a ball rolling forever
@@ -1249,7 +1318,15 @@ function resolveFly(b: Ball) {
   const from = { x: b.fx, y: b.fy };
   let pos = { x: b.tx, y: b.ty };
   const events: string[] = [];
-  if (lieOf(pos.x, pos.y) === 'tree' && !b.lowFlight && Math.random() < 0.5) {
+  if (b.canopyImpact) {
+    pos = treeDropPosition(b, b.canopyImpact);
+    events.push('tree');
+    sfx.thunk();
+    // A canopy strike drops immediately: no ground release, no extra stroke penalty.
+    settleShot(b, pos, events, false, 'tree');
+    return;
+  }
+  if (usesLegacyEndpointTreeDeflection(b) && lieOf(pos.x, pos.y) === 'tree' && Math.random() < 0.5) {
     const back = rand(0.55, 0.75);
     pos = { x: lerp(from.x, b.tx, back), y: lerp(from.y, b.ty, back) };
     events.push('tree');
@@ -1288,7 +1365,7 @@ function resolveFly(b: Ball) {
   const dd = dist(from, pos);
   if (dd > 0.2) {
     const dir = { x: (pos.x - from.x) / dd, y: (pos.y - from.y) / dd };
-    const r = rollFrom(pos, dir, lieOf(pos.x, pos.y));
+    const r = rollFrom(pos, dir, lieOf(pos.x, pos.y), b.rollMultiplier);
     if (r.hazard) {
       lostBallImpact(r.hazard.lie, r.hazard);
       events.push(r.hazard.lie);
@@ -1302,15 +1379,20 @@ function resolveFly(b: Ball) {
   }
   settleShot(b, pos, events, false);
 }
-function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean) {
+export function usesLegacyEndpointTreeDeflection(ball: Pick<Ball, 'owner' | 'lowFlight'>): boolean {
+  return ball.owner !== 'P' && !ball.lowFlight;
+}
+
+function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, forcedLie?: LieKey) {
   let holed = holedFlag;
-  if (!holed && b.cup && lieOf(pos.x, pos.y) === 'green' && dist(pos, b.cup) < 0.45) {
+  const resultLie = forcedLie ?? lieOf(pos.x, pos.y);
+  if (!holed && b.cup && resultLie === 'green' && dist(pos, b.cup) < 0.45) {
     holed = true;
     events.push('chip');
   }
   if (holed && b.cup) pos = { x: b.cup.x, y: b.cup.y };
   if (b.owner === 'P') {
-    onPlayerLand(pos, events, holed);
+    onPlayerLand(pos, events, holed, forcedLie);
     return;
   }
   onGolferLand(b.owner, pos, events, holed);
@@ -1781,13 +1863,19 @@ function updateBalls(dt: number) {
     const b = S.balls[i];
     const spd = b.owner === 'P' ? Math.max(1, S.speed) : S.speed;
     b.t += (dt * spd) / b.dur;
-    if (b.t >= 1) {
+    const endT = b.kind === 'fly' ? b.canopyImpact?.t ?? 1 : 1;
+    if (b.t >= endT) {
+      b.t = endT;
+      const finalPosition = b.kind === 'fly' ? ballFlightPosition(b, endT) : { x: b.tx, y: b.ty };
+      b.x = finalPosition.x;
+      b.y = finalPosition.y;
       S.balls.splice(i, 1);
       if (b.kind === 'fly') resolveFly(b);
       else settleShot(b, { x: b.tx, y: b.ty }, b.events || [], !!b.holed);
     } else {
-      b.x = lerp(b.fx, b.tx, b.t);
-      b.y = lerp(b.fy, b.ty, b.t);
+      const position = b.kind === 'fly' ? ballFlightPosition(b, b.t) : { x: lerp(b.fx, b.tx, b.t), y: lerp(b.fy, b.ty, b.t) };
+      b.x = position.x;
+      b.y = position.y;
     }
   }
 }
@@ -1939,7 +2027,7 @@ export const GOAL_DEFS: GoalDef[] = [
   { id: 'facilities5', label: 'Open 5 resort facilities', check: () => S.buildings.filter((building) => isUpgradeableFacility(building.kind) && building.open).length >= 5 },
   { id: 'upgrade1', label: 'Complete a facility upgrade', check: () => upgradedFacilityCount() >= 1 },
   { id: 'facility3', label: 'Raise a facility to level III', check: () => S.buildings.some((building) => isUpgradeableFacility(building.kind) && facilityLevel(building) >= 3) },
-  { id: 'pickyLand', label: 'Earn and buy county expansion land', check: () => S.owned.reduce((sum, owned) => sum + owned, 0) > 4 },
+  { id: 'pickyLand', label: 'Earn and buy county expansion land', check: () => S.specialVisitors.landPurchased === true },
   { id: 'ivanaLandmark', label: "Receive Ivana Richman's Landmark", check: () => S.specialVisitors.landmarkDonated },
   { id: 'ownerRound', label: 'Complete a resident-pro round', check: () => S.roundHistory.some((round) => round.source === 'exhibition') },
   { id: 'eagle', label: 'Card an eagle or better', check: () => S.roundHistory.some((round) => round.eagles > 0) },
@@ -2049,27 +2137,257 @@ export function activePlayingPro(): ProProfile {
 
 const RECOVERY_LIES = new Set<LieKey>(['deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rock', 'tree']);
 
+/** Resolves either a real pointer drag or a keyboard-generated drag into one shot intent. */
+export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: number; power: number } | null {
+  if (aim.kind === 'keyboard' && Number.isFinite(aim.worldDirX) && Number.isFinite(aim.worldDirY) && Number.isFinite(aim.worldPower)) {
+    const magnitude = Math.hypot(aim.worldDirX!, aim.worldDirY!);
+    if (magnitude < 0.001) return null;
+    return {
+      dirX: aim.worldDirX! / magnitude,
+      dirY: aim.worldDirY! / magnitude,
+      power: clamp(aim.worldPower!, lie === 'green' ? 0.02 : 0.08, 1),
+    };
+  }
+  const start = screenToWorld(aim.sx, aim.sy);
+  const current = screenToWorld(aim.cx, aim.cy);
+  let dirX = start.x - current.x;
+  let dirY = start.y - current.y;
+  const drag = Math.hypot(dirX, dirY);
+  if (drag < 0.001) return null;
+  dirX /= drag;
+  dirY /= drag;
+  return { dirX, dirY, power: clamp(drag / 9, lie === 'green' ? 0.02 : 0.08, 1) };
+}
+
 /** Shared by fire + renderer preview so pro skill changes never make the guide lie. */
 export function playerIntendedDistance(lie: LieKey, clubId: ClubId, power: number): number {
   const pro = activePlayingPro();
   const lieInfo = LIE[lie] || LIE.rough;
   const club = CLUBS[clubId];
+  const clubProfile = clubLieProfile(lie, clubId);
   const clubMul = lie === 'green' ? 1 : club.mul;
   const powerMul = 1 + pro.skills.powerHitter * 0.012;
   const driveMul = lie !== 'green' && clubId === 'driver' ? 1 + pro.skills.longDriver * 0.015 : 1;
   const recoveryMul = RECOVERY_LIES.has(lie) ? 1 + pro.skills.recovery * 0.018 : 1;
-  return clamp(power, lie === 'green' ? 0.02 : 0.08, 1) * lieInfo.max * clubMul * powerMul * driveMul * recoveryMul;
+  return clamp(power, lie === 'green' ? 0.02 : 0.08, 1) * lieInfo.max * clubMul * clubProfile.carryMultiplier * powerMul * driveMul * recoveryMul;
 }
 
 export function playerShotSkill(lie: LieKey, clubId: ClubId, shape: ShotShape): number {
   const pro = activePlayingPro();
   const accuracyLevel = lie === 'green' ? pro.skills.accuratePutter : clubId === 'driver' ? pro.skills.accurateDriver : pro.skills.accurateIrons;
   let skill = 0.82 + accuracyLevel * 0.014 + pro.skills.luck * 0.004;
-  const shapeSkill: Partial<Record<ShotShape, ProSkillId>> = { draw: 'drawShot', fade: 'fadeShot', backspin: 'highBackspin' };
+  // The last full-swing shape remains selected while putting controls are hidden. It
+  // must not silently penalize an otherwise identical putt.
+  if (lie === 'green') return clamp(skill, 0.58, 0.99);
+  const shapeSkill: Partial<Record<ShotShape, ProSkillId>> = { draw: 'drawShot', hook: 'drawShot', fade: 'fadeShot', backspin: 'highBackspin' };
   const skillId = shapeSkill[shape];
   if (skillId) skill -= (10 - pro.skills[skillId]) * 0.009;
+  if (shape === 'hook') skill -= 0.08; // intentionally dramatic and harder to control than a draw
   if (RECOVERY_LIES.has(lie)) skill += pro.skills.recovery * 0.006;
   return clamp(skill, 0.58, 0.99);
+}
+
+export interface PlayerShotDispersion {
+  /** Effective accuracy skill used by aimShot; putting ignores hidden full-swing state. */
+  skill: number;
+  /** Multiplier passed directly to aimShot's angular Gaussian. */
+  angularScale: number;
+  /** One-standard-deviation forward/back distance in world tiles. */
+  distance: number;
+  /** One-standard-deviation lateral miss in world tiles. */
+  lateral: number;
+  /** Compact screen-space footprint used by the landing ellipse. */
+  previewRadius: number;
+}
+
+/** Shared player dispersion model, used by both the real shot and the aim ellipse. */
+export function playerShotDispersion(lie: LieKey, clubId: ClubId, shape: ShotShape, nominalTargetDistance: number, weather: WeatherState = S.weather): PlayerShotDispersion {
+  const L = LIE[lie] || LIE.rough;
+  const putting = lie === 'green';
+  const skill = playerShotSkill(lie, putting ? 'iron' : clubId, putting ? 'straight' : shape);
+  // Putter has one fixed control profile. The hidden full-swing club and shape remain
+  // selected for the next tee, but cannot alter either the preview or actual putt.
+  const angularScale = putting ? 0.8 : clubLieProfile(lie, clubId).dispersionMultiplier * (shape === 'punch' ? 0.55 : 1) * weatherDispersionMultiplier(weather);
+  const angleStd = L.ang * (Math.PI / 180) * (1.35 - skill) * angularScale;
+  const distance = nominalTargetDistance * (L.dst + (1 - skill) * 0.05);
+  const lateral = nominalTargetDistance * Math.sin(angleStd);
+  return { skill, angularScale, distance, lateral, previewRadius: distance + lateral * 0.6 + 0.22 };
+}
+
+export interface PlayerShotPlan {
+  from: Vec;
+  dirX: number;
+  dirY: number;
+  intend: number;
+  windPush: number;
+  windDx: number;
+  windDy: number;
+  perpX: number;
+  perpY: number;
+  shape: ShotShape;
+  target: Vec;
+  /** Complete ideal landing chord, including wind and final curve displacement. */
+  targetDistance: number;
+}
+
+/** Shared ideal-flight plan used by both the guide and the launched ball. */
+export function playerShotPlan(
+  from: Vec,
+  lie: LieKey,
+  clubId: ClubId,
+  shape: ShotShape,
+  dirX: number,
+  dirY: number,
+  power: number,
+  wind: { dx: number; dy: number; speed: number } = S.wind,
+  weather: WeatherState = S.weather,
+): PlayerShotPlan {
+  const magnitude = Math.hypot(dirX, dirY) || 1;
+  const nx = dirX / magnitude;
+  const ny = dirY / magnitude;
+  const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
+  const carryWeather = lie === 'green' ? 1 : weatherCarryMultiplier(weather);
+  const intend = playerIntendedDistance(lie, clubId, power) * SHOT_SHAPES[activeShape].carryMul * carryWeather;
+  const windPush = lie === 'green' ? 0 : wind.speed * intend * 0.35;
+  const perpX = -ny;
+  const perpY = nx;
+  const curve = shapeCurveOffset(activeShape, intend, 1);
+  const target = {
+    x: from.x + nx * intend + wind.dx * windPush + perpX * curve,
+    y: from.y + ny * intend + wind.dy * windPush + perpY * curve,
+  };
+  return {
+    from: { ...from },
+    dirX: nx,
+    dirY: ny,
+    intend,
+    windPush,
+    windDx: wind.dx,
+    windDy: wind.dy,
+    perpX,
+    perpY,
+    shape: activeShape,
+    target,
+    targetDistance: dist(from, target),
+  };
+}
+
+export interface PlayerShotForecast {
+  plan: PlayerShotPlan;
+  path: FlightPath;
+  canopyImpact: TreeCanopyImpact | null;
+  /** Deterministic physical finish used by both preview and impact resolution. */
+  restingPoint: Vec | null;
+  canopyStatus: 'clear' | 'canopy' | 'trunk' | 'pine';
+}
+
+/** Pure ideal-flight forecast shared by pointer and keyboard UI paths. */
+export function playerShotForecast(
+  from: Vec,
+  lie: LieKey,
+  clubId: ClubId,
+  shape: ShotShape,
+  dirX: number,
+  dirY: number,
+  power: number,
+  wind: { dx: number; dy: number; speed: number } = S.wind,
+): PlayerShotForecast {
+  const plan = playerShotPlan(from, lie, clubId, shape, dirX, dirY, power, wind);
+  const heightMultiplier = lie === 'green' ? 0 : SHOT_SHAPES[plan.shape].heightMul * clubLieProfile(lie, clubId).launchMultiplier;
+  const path: FlightPath = {
+    fx: from.x,
+    fy: from.y,
+    tx: plan.target.x,
+    ty: plan.target.y,
+    h: lie === 'green' ? 0 : flightApexHeight(plan.targetDistance, heightMultiplier),
+    shotShape: plan.shape,
+    curvePerpX: plan.perpX,
+    curvePerpY: plan.perpY,
+    curveDistance: plan.intend,
+    lowFlight: plan.shape === 'punch',
+  };
+  const canopyImpact = lie === 'green' ? null : firstTreeCanopyImpact(path, { theme: S.theme, tileAt, elevationAt: elevAt });
+  return {
+    plan,
+    path,
+    canopyImpact,
+    restingPoint: canopyImpact ? treeDropPosition(path, canopyImpact) : null,
+    canopyStatus: canopyImpact?.kind ?? 'clear',
+  };
+}
+
+export interface PlayerShotIntent {
+  dirX: number;
+  dirY: number;
+  power: number;
+}
+
+let nextTreeCacheIdentity = 1;
+const treeCacheIdentities = new WeakMap<object, number>();
+let sharedPlayerForecastCache: { key: string; forecast: PlayerShotForecast } | null = null;
+
+function treeCacheIdentity(): number {
+  let identity = treeCacheIdentities.get(caches.trees);
+  if (!identity) {
+    identity = nextTreeCacheIdentity++;
+    treeCacheIdentities.set(caches.trees, identity);
+  }
+  return identity;
+}
+
+function elevationStateSignature(): number {
+  // Elevation arrays are mutable, so object identity alone can make a cached arc
+  // stale after landscaping. This compact hash keeps the cache terrain-safe.
+  let signature = 2166136261;
+  for (const height of S.elevC) signature = Math.imul(signature ^ height, 16777619);
+  return signature >>> 0;
+}
+
+function activeProSkillSignature(): string {
+  const skills = activePlayingPro().skills;
+  return Object.keys(skills).sort().map((skill) => skills[skill as ProSkillId]).join(',');
+}
+
+/** Cached shared forecast for a supplied current player state and normalized intent. */
+export function cachedPlayerShotForecast(player: PlayerRound, intent: PlayerShotIntent): PlayerShotForecast | null {
+  if (!player.ball) return null;
+  const key = [
+    treeCacheIdentity(), caches.trees.length,
+    player.ball.x, player.ball.y, player.lie, player.club, player.shape,
+    intent.dirX, intent.dirY, intent.power,
+    S.wind.dx, S.wind.dy, S.wind.speed, S.theme,
+    S.weather.condition, S.weather.intensity, S.weather.wetness,
+    elevationStateSignature(), activeProSkillSignature(),
+  ].join('|');
+  if (sharedPlayerForecastCache?.key === key) return sharedPlayerForecastCache.forecast;
+  const forecast = playerShotForecast(
+    player.ball,
+    player.lie,
+    player.club,
+    player.shape,
+    intent.dirX,
+    intent.dirY,
+    intent.power,
+  );
+  sharedPlayerForecastCache = { key, forecast };
+  return forecast;
+}
+
+/** Cached forecast for the active player; render and HUD can share this object. */
+export function currentPlayerShotForecast(intent?: PlayerShotIntent | null): PlayerShotForecast | null {
+  const player = S.player;
+  if (!player) return null;
+  const resolved = intent ?? (player.aim?.on ? playerAimIntent(player.aim, player.lie) : null);
+  return resolved ? cachedPlayerShotForecast(player, resolved) : null;
+}
+
+export function playerShotPlanPosition(plan: PlayerShotPlan, t: number): Vec {
+  const progress = clamp(t, 0, 1);
+  const curve = shapeCurveOffset(plan.shape, plan.intend, progress);
+  return {
+    x: plan.from.x + plan.dirX * plan.intend * progress + plan.windDx * plan.windPush * progress + plan.perpX * curve,
+    y: plan.from.y + plan.dirY * plan.intend * progress + plan.windDy * plan.windPush * progress + plan.perpY * curve,
+  };
 }
 
 export function startRound(options?: { source: RoundSource; competitionId?: string; challengeId?: string; localEvent?: 'championship' | 'proChallenge' }) {
@@ -2164,14 +2482,24 @@ export function startChampionshipRound(courseId: string, difficulty: Difficulty,
 /** Player-only club pick for the next non-putt shot (putts always use the green-lie path). */
 export function setClub(id: ClubId) {
   if (!S.player) return;
+  const profile = clubLieProfile(S.player.lie, id);
+  if (!profile.available) {
+    setHint(profile.reason ?? 'That club is unavailable from this lie.');
+    sfx.err();
+    return false;
+  }
   S.player.club = id;
   updatePlayHud();
+  return true;
 }
 /** Player-only shot technique pick for the next non-putt swing (manual p.21-22). */
 export function setShape(id: ShotShape) {
   if (!S.player) return;
   S.player.shape = id;
   updatePlayHud();
+}
+export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'iron', weather: WeatherState = S.weather): number {
+  return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3) * clubLieProfile(landingLie, clubId).rolloutMultiplier * weatherRollMultiplier(weather);
 }
 function setupPlayerHole(i: number) {
   const p = S.player!;
@@ -2182,8 +2510,9 @@ function setupPlayerHole(i: number) {
   p.state = 'aim';
   p.aim = null;
   p.ball = { x: h.tee.x, y: h.tee.y };
-  const windAngle = rand(0, Math.PI * 2);
-  S.wind = { dx: Math.cos(windAngle), dy: Math.sin(windAngle), speed: rand(0, 0.6) };
+  const conditions = generateHoleConditions(S.theme);
+  S.wind = conditions.wind;
+  S.weather = conditions.weather;
   p.currentHole = {
     hole: i + 1,
     holeId: h.id,
@@ -2197,6 +2526,7 @@ function setupPlayerHole(i: number) {
     greenInRegulation: false,
     hazards: [],
     wind: { ...S.wind },
+    weather: { ...S.weather },
     shots: [],
   };
   p.pendingShot = null;
@@ -2207,20 +2537,22 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   const p = S.player;
   const h = p ? S.holes[p.holeIdx] : null;
   if (!p || !h) return;
+  const clubProfile = p.lie === 'green' ? null : clubLieProfile(p.lie, p.club);
+  if (clubProfile && !clubProfile.available) {
+    p.club = fallbackClubForLie(p.lie, p.club);
+    p.aim = null;
+    setHint(clubProfile.reason ?? 'Choose a recovery club for this lie.');
+    updatePlayHud();
+    sfx.err();
+    return;
+  }
   const start = { ...p.ball! };
   const fromLie = p.lie;
   p.strokes++;
-  const club = CLUBS[p.club];
-  const intend = playerIntendedDistance(p.lie, p.club, power);
-  // wind only pushes the ball in flight, not a putt rolling on the green, and scales with shot length
-  const windPush = p.lie === 'green' ? 0 : S.wind.speed * intend * 0.35;
-  const perpX = -dirY;
-  const perpY = dirX;
-  const curve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, 1);
-  const tgt = {
-    x: p.ball!.x + dirX * intend + S.wind.dx * windPush + perpX * curve,
-    y: p.ball!.y + dirY * intend + S.wind.dy * windPush + perpY * curve,
-  };
+  const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dirX, dirY, power);
+  const intend = plan.intend;
+  const tgt = plan.target;
+  const dispersion = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance);
   const shot: PlayerShotRecord = {
     stroke: p.strokes,
     club: p.lie === 'green' ? 'putter' : p.club,
@@ -2241,27 +2573,34 @@ export function playerFire(dirX: number, dirY: number, power: number) {
   p.pendingShot = shot;
   if (p.lie === 'green') {
     sfx.putt();
-    const land = aimShot(p.ball!, tgt, 'green', playerShotSkill('green', p.club, p.shape), 0.8);
+    const land = aimShot(p.ball!, tgt, 'green', dispersion.skill, dispersion.angularScale, undefined, plan.targetDistance);
     const holed = dist(land, h.cup) < 0.42;
     startBall({ kind: 'putt', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: holed ? h.cup.x : land.x, ty: holed ? h.cup.y : land.y, holed });
   } else {
     sfx.whoosh();
     sfx.hit();
-    // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover
-    const angScale = club.angScale * (p.shape === 'punch' ? 0.55 : 1);
-    const land = aimShot(p.ball!, tgt, p.lie, playerShotSkill(p.lie, p.club, p.shape), angScale);
+    // Low Punch flies flatter and more controlled — tighter aim wobble, under branch cover.
+    // Preserve the guide's complete wind/shape displacement. Forcing only the raw
+    // club carry would normalize the target and erase head/tail wind effects.
+    const land = aimShot(p.ball!, tgt, p.lie, dispersion.skill, dispersion.angularScale, undefined, plan.targetDistance);
     startBall(
-      { kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y, noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch' },
-      SHOT_SHAPES[p.shape].heightMul
+      {
+        kind: 'fly', owner: 'P', cup: h.cup, fx: p.ball!.x, fy: p.ball!.y, tx: land.x, ty: land.y,
+        noRoll: p.shape === 'backspin', lowFlight: p.shape === 'punch', shotShape: p.shape,
+        curvePerpX: plan.perpX, curvePerpY: plan.perpY, curveDistance: intend, rollMultiplier: clubProfile!.rolloutMultiplier,
+      },
+      SHOT_SHAPES[p.shape].heightMul * clubProfile!.launchMultiplier,
+      plan.targetDistance,
     );
   }
   p.state = 'wait';
   p.aim = null;
+  updatePlayHud();
 }
 function scoreName(diff: number): string {
   return diff <= -3 ? 'ALBATROSS?!' : diff === -2 ? 'EAGLE!' : diff === -1 ? 'BIRDIE!' : diff === 0 ? 'Par' : diff === 1 ? 'Bogey' : diff === 2 ? 'Double bogey' : '+' + diff;
 }
-function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
+function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLie?: LieKey) {
   const p = S.player;
   if (!p) return;
   const h = S.holes[p.holeIdx];
@@ -2276,7 +2615,7 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
     if (e === 'rock') floater(pos.x, pos.y - 0.8, 'Wild ricochet!', '#ffd2a6');
     if (e === 'chip') confetti(pos.x, pos.y);
   }
-  const resultLie = lieOf(pos.x, pos.y);
+  const resultLie = forcedResultLie ?? lieOf(pos.x, pos.y);
   const pending = p.pendingShot;
   const holeCard = p.currentHole;
   if (pending) {
@@ -2298,6 +2637,7 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
   }
   p.ball = { x: pos.x, y: pos.y };
   p.lie = resultLie;
+  p.club = fallbackClubForLie(resultLie, p.club);
   centerCam(pos.x, pos.y); // follow the ball
   if (holed && h) {
     const diff = p.strokes - h.par;
@@ -2367,15 +2707,36 @@ function endRound() {
       ],
     });
     record.payout = championshipResult.prize;
-    S.championshipHistory.unshift(championshipResult);
-    if (S.championshipHistory.length > 30) S.championshipHistory.length = 30;
-    if (championship.usesResidentPro) {
-      applyChampionshipCareer(S.proProfile, championshipResult);
-    }
   }
   if (proChallenge) {
     proChallengeResult = resolveProChallenge(record, proChallenge, S.holes);
     record.payout = Math.max(0, proChallengeResult.net);
+  }
+  const priorHistory = [...S.roundHistory];
+  const courseRecord = isCourseRecord(record, priorHistory);
+  const personalBest = isPersonalBest(record, priorHistory);
+  if (!onlineCompetition && !championship && !proChallenge) {
+    S.cash += cashOut;
+    recordFinance(cashOut, 'roundBonuses', `${S.proProfile.name} owner round`);
+    S.rep = clamp(S.rep + birdies * 0.03, 0.3, 5);
+  }
+  const restoredHome = !!isolatedReturnSave;
+  if (isolatedReturnSave) {
+    const homeCourse = isolatedReturnSave;
+    isolatedReturnSave = null;
+    applySaveData(homeCourse);
+  }
+  // Apply event rewards only after an isolated retired/online course has restored the
+  // live resort. Otherwise the advertised prize, career progress and ledger entry are
+  // immediately overwritten by the home snapshot.
+  if (championshipResult && championship) {
+    S.championshipHistory.unshift(championshipResult);
+    if (S.championshipHistory.length > 30) S.championshipHistory.length = 30;
+    if (championship.usesResidentPro) applyChampionshipCareer(S.proProfile, championshipResult);
+    S.cash += championshipResult.prize;
+    recordFinance(championshipResult.prize, 'tournament', `${championshipResult.title} prize`);
+  }
+  if (proChallengeResult) {
     S.proChallengeHistory.unshift(proChallengeResult);
     if (S.proChallengeHistory.length > 30) S.proChallengeHistory.length = 30;
     const before = S.cash;
@@ -2383,23 +2744,10 @@ function endRound() {
     recordFinance(S.cash - before, 'proChallenge', `${S.proProfile.name} vs ${proChallengeResult.opponent.name}`);
     S.proProfile.fame += proChallengeResult.outcome === 'won' ? 25 : proChallengeResult.outcome === 'tied' ? 6 : 0;
   }
-  const priorHistory = [...S.roundHistory];
-  const courseRecord = isCourseRecord(record, priorHistory);
-  const personalBest = isPersonalBest(record, priorHistory);
   S.roundHistory.push(record);
   if (S.roundHistory.length > ROUND_HISTORY_LIMIT) S.roundHistory.splice(0, S.roundHistory.length - ROUND_HISTORY_LIMIT);
   saveRoundHistory();
-  if (!onlineCompetition && !championship && !proChallenge) {
-    S.cash += cashOut;
-    recordFinance(cashOut, 'roundBonuses', `${S.proProfile.name} owner round`);
-    S.rep = clamp(S.rep + birdies * 0.03, 0.3, 5);
-  }
-  if (isolatedReturnSave) {
-    const homeCourse = isolatedReturnSave;
-    isolatedReturnSave = null;
-    applySaveData(homeCourse);
-    saveGame();
-  }
+  if (restoredHome) saveGame();
   S.mode = 'build';
   S.player = null;
   S.activeChampionship = null;
@@ -2454,7 +2802,7 @@ const HINTS: Record<string, string> = {
   rocks: 'Rocks cause a hard, random ricochet when struck.',
   tree: 'Trees add beauty and bounce shots into next week.',
   flower: 'Flower beds. Pure beauty, zero mercy required.',
-  path: 'Drag to lay pathway. Connect facilities to the clubhouse to open them.',
+  path: `Drag to lay pathway (${fmt$(TINFO[Tile.PATH].cost)} on land). Water and streams automatically become ${fmt$(TINFO[Tile.BRIDGE_WATER].cost)} and ${fmt$(TINFO[Tile.BRIDGE_STREAM].cost)} bridges.`,
   raise: 'Click repeatedly or hold to raise several levels. Drag to sculpt larger slopes.',
   lower: 'Click repeatedly or hold to lower several levels. Drag to carve valleys and bowls.',
   build: 'Pick a facility, then tap the course to place it.',
@@ -2527,16 +2875,45 @@ const SLOTS_KEY = 'fairway-mogul-slots-v1';
 const PROFILE_KEY = 'fairway-mogul-profile-v1';
 const slotDataKey = (id: string) => 'fairway-mogul-slot-' + id + '-v1';
 
+function snapshotHasSgaFlag(snapshot: unknown, flag: 'top100' | 'top18'): boolean {
+  if (!snapshot || typeof snapshot !== 'object') return false;
+  const holes = (snapshot as { holes?: unknown }).holes;
+  return Array.isArray(holes) && holes.some((hole) => !!hole && typeof hole === 'object' && (hole as Record<string, unknown>)[flag] === true);
+}
+
+/** Current sticky portfolio milestones, including achievements earned since the last autosave. */
+export function careerProgressSnapshot(): CareerProgress {
+  const existing = sanitizeCareerProgress(S.careerProgress, S.proProfile.accomplishments);
+  const historyBest = S.history.reduce((best, entry) => Math.max(best, Number.isFinite(entry.rep) ? entry.rep : 0), 0);
+  const currentTop100 = S.holes.some((hole) => hole.top100 || hole.top18);
+  const currentTop18 = S.holes.some((hole) => hole.top18);
+  const retiredTop100 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top100') || snapshotHasSgaFlag(course.snapshot, 'top18'));
+  const retiredTop18 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top18'));
+  return {
+    version: 1,
+    bestReputation: clamp(Math.max(existing.bestReputation, Number.isFinite(S.rep) ? S.rep : 0, historyBest), 0, 5),
+    tournamentHosted: existing.tournamentHosted || S.tournamentHostedEver || S.goalsAchieved.tournament === true,
+    sgaTop100Earned: existing.sgaTop100Earned || currentTop100 || retiredTop100,
+    sgaTop18Earned: existing.sgaTop18Earned || currentTop18 || retiredTop18,
+  };
+}
+
+function captureCareerProgress() {
+  S.careerProgress = careerProgressSnapshot();
+}
+
 function saveRoundHistory(): boolean {
+  if (!isolatedReturnSave) captureCareerProgress();
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify({
-      version: 2,
+      version: 3,
       rounds: S.roundHistory,
       proProfile: S.proProfile,
       retiredCourses: S.retiredCourses,
       championshipHistory: S.championshipHistory,
       proChallengeHistory: S.proChallengeHistory,
       propertiesPurchased: S.propertiesPurchased,
+      careerProgress: S.careerProgress,
     }));
     return true;
   } catch {
@@ -2589,6 +2966,7 @@ export function loadRoundHistory() {
     S.championshipHistory = sanitizeChampionshipHistory(parsed?.championshipHistory);
     S.proChallengeHistory = sanitizeProChallengeHistory(parsed?.proChallengeHistory);
     S.propertiesPurchased = sanitizePropertyHistory(parsed?.propertiesPurchased);
+    S.careerProgress = sanitizeCareerProgress(parsed?.careerProgress, S.proProfile.accomplishments);
   } catch {
     S.roundHistory = [];
     S.proProfile = createResidentPro();
@@ -2596,6 +2974,7 @@ export function loadRoundHistory() {
     S.championshipHistory = [];
     S.proChallengeHistory = [];
     S.propertiesPurchased = [];
+    S.careerProgress = sanitizeCareerProgress(null);
   }
 }
 
@@ -2705,7 +3084,8 @@ export function importRoundHistoryText(text: string): number {
 
 function buildSaveData() {
   return {
-    v: 2,
+    v: 2 as const,
+    savedAt: Date.now(),
     courseName: S.courseName,
     theme: S.theme,
     propertyId: S.propertyId,
@@ -2835,6 +3215,7 @@ function applySaveData(d: any): boolean {
     ivanaVisits: Math.max(0, Math.trunc(savedVisitors.ivanaVisits ?? 0)),
     landmarkDonated: !!savedVisitors.landmarkDonated,
     landmarkCredits: clamp(Math.trunc(savedVisitors.landmarkCredits ?? 0), 0, 1),
+    landPurchased: !!savedVisitors.landPurchased || !!d.goalsAchieved?.pickyLand,
     landOffer: savedVisitors.landOffer && Array.isArray(savedVisitors.landOffer.parcelIndices) ? {
       id: Number(savedVisitors.landOffer.id) || Date.now(),
       parcelIndices: savedVisitors.landOffer.parcelIndices.filter((parcel: unknown) => Number.isInteger(parcel) && Number(parcel) >= 0 && Number(parcel) < PW * PH && !S.owned[Number(parcel)]),
@@ -2892,18 +3273,37 @@ function applySaveData(d: any): boolean {
   if (!activeSpecials.has('picky') && !S.specialVisitors.landOffer && S.specialVisitors.pickyCooldown > 600) S.specialVisitors.pickyCooldown = 30;
   if (!activeSpecials.has('ivana') && !S.specialVisitors.landmarkDonated && S.specialVisitors.ivanaCooldown > 600) S.specialVisitors.ivanaCooldown = 45;
   recomputeAllBeauty();
+  captureCareerProgress();
   rebuildStatics();
   updateTopbar();
   return true;
 }
-export function saveGame() {
+function persistCourseSave(data: ReturnType<typeof buildSaveData>): boolean {
   try {
-    // Event play is a temporary guest course. Autosave must keep protecting the
-    // owner's captured home course even if the browser reloads mid-round.
-    localStorage.setItem(SAVE_KEY, JSON.stringify(isolatedReturnSave ?? buildSaveData()));
-    saveRoundHistory();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    return true;
   } catch {
-    /* storage full or unavailable — skip silently */
+    return false;
+  }
+}
+let portfolioReady = false;
+function setPortfolioStatus(status: 'idle' | 'saving' | 'saved' | 'error', bump = false) {
+  ui.set({
+    portfolioStatus: status,
+    ...(bump ? { portfolioVersion: ui.get().portfolioVersion + 1 } : {}),
+  });
+}
+export function saveGame() {
+  // Event play is a temporary guest course. Autosave must keep protecting the
+  // owner's captured home course even if the browser reloads mid-round.
+  const snapshot = isolatedReturnSave ?? buildSaveData();
+  if (persistCourseSave(snapshot)) associateActivePortfolioMirror(snapshot);
+  saveRoundHistory();
+  if (portfolioReady && portfolioSupported()) {
+    setPortfolioStatus('saving');
+    void saveActivePortfolioResort(snapshot)
+      .then((saved) => setPortfolioStatus(saved ? 'saved' : 'error', saved))
+      .catch(() => setPortfolioStatus('error'));
   }
 }
 export function loadGame(): boolean {
@@ -2915,9 +3315,45 @@ export function loadGame(): boolean {
       ticker('Course Ops', "Your saved course is incompatible with this version and couldn't be loaded — starting fresh.", 'bad');
       return false;
     }
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) {
+      S.propertiesPurchased.push(S.propertyId);
+      saveRoundHistory();
+    }
     return true;
   } catch {
     return false;
+  }
+}
+
+/** Browser boot path: migrate the legacy autosave once, then prefer the active portfolio resort. */
+export async function loadPortfolioGame(): Promise<boolean> {
+  const legacyResumed = loadGame();
+  if (!portfolioSupported()) return legacyResumed;
+  try {
+    const active = await bootstrapPortfolio(legacyResumed ? buildSaveData() : null);
+    portfolioReady = true;
+    if (!active) {
+      setPortfolioStatus('idle', true);
+      return legacyResumed;
+    }
+    if (!applySaveData(active.snapshot)) throw new Error('Active resort is incompatible');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    persistCourseSave(buildSaveData()); // compatibility mirror + emergency recovery
+    saveRoundHistory();
+    setPortfolioStatus('saved', true);
+    return true;
+  } catch {
+    setPortfolioStatus('error');
+    return legacyResumed;
+  }
+}
+
+export async function portfolioResorts(): Promise<ResortRecord[]> {
+  try {
+    return await listPortfolioResorts();
+  } catch {
+    setPortfolioStatus('error');
+    return [];
   }
 }
 export function setCourseName(name: string) {
@@ -2962,13 +3398,19 @@ export function saveToSlot(id: string, name: string) {
   }
 }
 export function loadFromSlot(id: string): boolean {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before loading another course.');
+    return false;
+  }
   try {
     const raw = localStorage.getItem(slotDataKey(id));
     if (!raw || !applySaveData(JSON.parse(raw))) {
       setHint('That save slot is empty or incompatible.');
       return false;
     }
-    setHint('Course loaded.');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    saveGame();
+    setHint('Course loaded and saved as the active resort.');
     return true;
   } catch {
     return false;
@@ -2988,12 +3430,18 @@ export function exportSaveText(): string {
 }
 /** Loads a save from arbitrary JSON text (e.g. an imported file). */
 export function importSaveText(text: string): boolean {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before importing another course.');
+    return false;
+  }
   try {
     if (!applySaveData(JSON.parse(text))) {
       setHint('That file is not a compatible Fairway Mogul save.');
       return false;
     }
-    setHint('Course imported.');
+    if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    saveGame();
+    setHint('Course imported and saved as the active resort.');
     return true;
   } catch {
     setHint('That file is not a compatible Fairway Mogul save.');
@@ -3011,13 +3459,28 @@ export function newCourse(
   availableFunds = PROPERTY_INHERITANCE,
 ): boolean {
   const property = propertyId ? propertyById(propertyId) : starterPropertyForTheme(theme);
-  const funds = Math.max(0, Math.trunc(availableFunds));
-  if (!sandbox && funds < property.price) {
-    setHint(`${property.name} costs ${fmt$(property.price)}; only ${fmt$(funds)} is available.`);
+  const funds = Math.max(0, Math.trunc(!sandbox && S.sandbox ? PROPERTY_INHERITANCE : availableFunds));
+  captureCareerProgress();
+  if (!sandbox && propertyId && S.propertiesPurchased.includes(property.id)) {
+    setHint(`${property.name} is already developed. Choose an undeveloped property or open it in Sandbox Mode.`);
     sfx.err();
     return false;
   }
-  localStorage.removeItem(SAVE_KEY);
+  const availability = propertyAvailability(property, {
+    funds,
+    progress: S.careerProgress,
+    proProfile: S.proProfile,
+    purchased: S.propertiesPurchased,
+    sandbox,
+  });
+  if (!sandbox && !availability.canPurchase) {
+    const prestigeMissing = availability.missing.filter((requirement) => requirement.id !== 'cash');
+    setHint(prestigeMissing.length
+      ? `${property.name} is still locked: ${prestigeMissing.map((requirement) => requirement.label).join(' · ')}.`
+      : `${property.name} costs ${fmt$(property.price)}; only ${fmt$(funds)} is available.`);
+    sfx.err();
+    return false;
+  }
   S.courseName = property.name;
   S.theme = property.theme;
   S.propertyId = property.id;
@@ -3071,10 +3534,10 @@ export function newCourse(
     caches.groundDirty = true;
   }
   centerCam(S.holes[0]?.tee.x ?? CH.x, S.holes[0]?.tee.y ?? CH.y);
-  if (!sandbox && !S.propertiesPurchased.includes(property.id)) {
-    S.propertiesPurchased.push(property.id);
-    saveRoundHistory();
-  }
+  const purchasedProperty = !sandbox && !S.propertiesPurchased.includes(property.id);
+  if (purchasedProperty) S.propertiesPurchased.push(property.id);
+  const courseSaved = persistCourseSave(buildSaveData());
+  if (purchasedProperty && courseSaved) saveRoundHistory();
   updateTopbar();
   ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, sandbox, difficulty, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId });
   setTool('hole');
@@ -3084,6 +3547,93 @@ export function newCourse(
     ? `${property.name} · ${pack.name} Sandbox: unlimited funds and every parcel owned.`
     : course ? `${property.name} purchased — ${pack.name}'s ${course.name} is open for development.` : `${property.name} purchased with ${fmt$(S.cash)} left to build. ${pack.name} is enabled.`);
   return true;
+}
+
+/**
+ * Portfolio-aware course creation. The legacy synchronous `newCourse` remains the
+ * deterministic course factory; this wrapper adds transactional source/target saves
+ * and rolls the live course/profile back if the portfolio commit fails.
+ */
+export async function createPortfolioCourse(
+  sandbox = false,
+  difficulty: Difficulty = 'moderate',
+  theme: CourseTheme = S.theme,
+  themePackId: ThemePackId = 'standard',
+  themeCourseId: string | null = null,
+  propertyId?: PropertyId,
+  availableFunds = PROPERTY_INHERITANCE,
+  preserveCurrent = true,
+): Promise<boolean> {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before travelling to another property.');
+    sfx.err();
+    return false;
+  }
+  const source = preserveCurrent ? buildSaveData() : null;
+  const originalProperties = [...S.propertiesPurchased];
+  const originalProgress = { ...S.careerProgress };
+  const legacyBefore = (() => { try { return localStorage.getItem(SAVE_KEY); } catch { return null; } })();
+  const profileBefore = (() => { try { return localStorage.getItem(PROFILE_KEY); } catch { return null; } })();
+  const property = propertyById(propertyId);
+
+  if (!newCourse(sandbox, difficulty, theme, themePackId, themeCourseId, propertyId, availableFunds)) return false;
+  const target = buildSaveData();
+  if (!portfolioSupported()) {
+    setHint(`${property.name} is open. This browser cannot keep a switchable resort portfolio.`);
+    return true;
+  }
+
+  try {
+    setPortfolioStatus('saving');
+    const persistedSource = source ? sourceForPortfolioExpansion(source, property.name, sandbox ? 'sandbox' : 'career') : source;
+    await createPortfolioResort(persistedSource, target, sandbox ? 'sandbox' : 'career');
+    portfolioReady = true;
+    saveRoundHistory();
+    setPortfolioStatus('saved', true);
+    ticker('World Office', `${property.name} joined your resort portfolio.`, 'money');
+    return true;
+  } catch {
+    S.propertiesPurchased = originalProperties;
+    S.careerProgress = originalProgress;
+    if (source) applySaveData(source);
+    try {
+      if (legacyBefore === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, legacyBefore);
+      if (profileBefore === null) localStorage.removeItem(PROFILE_KEY); else localStorage.setItem(PROFILE_KEY, profileBefore);
+    } catch { /* storage rollback is best effort */ }
+    setPortfolioStatus('error');
+    setHint('The new resort could not be saved safely. Your current course was restored.');
+    sfx.err();
+    return false;
+  }
+}
+
+export async function switchPortfolioResort(id: ResortId): Promise<boolean> {
+  if (S.player || isolatedReturnSave) {
+    setHint('Finish or quit the current round before travelling.');
+    sfx.err();
+    return false;
+  }
+  try {
+    setPortfolioStatus('saving');
+    const target = await switchPortfolioResortSnapshot(buildSaveData(), id);
+    if (!applySaveData(target.snapshot)) throw new Error('The target resort is incompatible');
+    persistCourseSave(buildSaveData());
+    saveRoundHistory();
+    S.mode = 'build';
+    S.player = null;
+    S.camTarget = null;
+    updateTopbar();
+    ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+    setPortfolioStatus('saved', true);
+    setHint(`Welcome back to ${target.summary.courseName}.`);
+    ticker('World Office', `Arrived at ${target.summary.courseName} · ${propertyById(target.propertyId).region}.`, 'money');
+    return true;
+  } catch {
+    setPortfolioStatus('error');
+    setHint('That resort could not be opened safely. The current course is unchanged.');
+    sfx.err();
+    return false;
+  }
 }
 
 /* ---------------- building lots develop into homes ---------------- */

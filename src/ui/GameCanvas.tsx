@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { initMap, update, updateTopbar, setTool, loadGame } from '../game/engine';
+import { initMap, update, updateTopbar, setTool, loadPortfolioGame, saveGame } from '../game/engine';
 import { fitCamera, P, PE, screenToWorld } from '../game/camera';
 import { S } from '../game/state';
 import { draw } from '../game/render';
 import { bindInput } from '../game/input';
 import { useUI } from './store';
 
-let booted = false;
+let bootPromise: Promise<boolean> | null = null;
 
 export default function GameCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -32,21 +32,11 @@ export default function GameCanvas() {
     }
     resize();
 
-    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__sim = { S, P, PE, screenToWorld };
-    if (!booted) {
-      booted = true;
-      const resumed = loadGame();
-      if (!resumed) initMap();
-      updateTopbar();
-      setTool('hole');
-      fitCamera(cssW, cssH);
-      if (!resumed) setUI({ modal: { kind: 'newCourse', initial: true } });
-      pushTicker('Pro shop', resumed ? 'Welcome back, boss. The course missed you.' : 'Hole 1 is open. Golfers are on their way!', 'money');
-    }
-
     const unbind = bindInput(cv);
     window.addEventListener('resize', resize);
+    window.addEventListener('pagehide', saveGame);
 
+    let cancelled = false;
     let raf = 0;
     let lastTs = 0;
     function tick(ts: number) {
@@ -56,11 +46,29 @@ export default function GameCanvas() {
       draw(ctx, cssW, cssH);
       raf = requestAnimationFrame(tick);
     }
-    raf = requestAnimationFrame(tick);
+
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__sim = { S, P, PE, screenToWorld };
+    if (!bootPromise) {
+      bootPromise = (async () => {
+        const resumed = await loadPortfolioGame();
+        if (!resumed) initMap();
+        updateTopbar();
+        setTool('hole');
+        fitCamera(cssW, cssH);
+        if (!resumed) setUI({ modal: { kind: 'newCourse', initial: true } });
+        pushTicker('Pro shop', resumed ? 'Welcome back, boss. The course missed you.' : 'Hole 1 is open. Golfers are on their way!', 'money');
+        return resumed;
+      })();
+    }
+    void bootPromise.then(() => {
+      if (!cancelled) raf = requestAnimationFrame(tick);
+    });
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('pagehide', saveGame);
       unbind();
     };
   }, [setUI, pushTicker]);
@@ -70,7 +78,8 @@ export default function GameCanvas() {
       ref={ref}
       className="game"
       tabIndex={0}
-      aria-label="Interactive isometric golf course. Choose a construction tool, then use pointer or touch controls on the course."
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
+      aria-label="Interactive isometric golf course. Use pointer or touch controls. While playing, focus the course, use left and right arrows to aim, up and down arrows for power, and Enter to swing."
     />
   );
 }

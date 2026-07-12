@@ -1,17 +1,21 @@
-import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, LIE, ROLL, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
+import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
-import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
+import type { Ball, Building, Golfer, Hole, Vec } from './types';
 import { S, caches } from './state';
-import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$ } from './rng';
-import { P, PE, screenToWorld, viewXY } from './camera';
-import { activePlayingPro, parFor, playerIntendedDistance, playerShotSkill, shapeCurveOffset } from './engine';
+import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
+import { P, PE, viewXY } from './camera';
+import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite } from './sprites';
-import type { GolferFrame, TreeKind, BSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
+import type { CourseStaffFrame, CourseStaffKind } from './sprites';
+import type { GolferFrame, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp } from './employees';
+import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
+import { ballFlightPosition } from './flightPath';
+import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -74,12 +78,14 @@ function groupOf(t: number): Grp {
     case Tile.POT_BUNKER:
       return Grp.POT;
     case Tile.STREAM:
+    case Tile.BRIDGE_STREAM:
       return Grp.STREAM;
     case Tile.BRUSH:
       return Grp.BRUSH;
     case Tile.ROCK:
       return Grp.ROCK;
     case Tile.WATER:
+    case Tile.BRIDGE_WATER:
       return Grp.WATER;
     case Tile.PATH:
       return Grp.PATH;
@@ -345,14 +351,14 @@ function drawOrtho() {
   c.lineJoin = 'round';
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      if (S.tiles[idx(x, y)] !== Tile.STREAM) continue;
+      if (!isStreamBackedTile(S.tiles[idx(x, y)])) continue;
       const cx = x * RES + RES / 2;
       const cy = y * RES + RES / 2;
       const joins: [number, number][] = [];
-      if (y > 0 && S.tiles[idx(x, y - 1)] === Tile.STREAM) joins.push([cx, y * RES]);
-      if (y + 1 < H && S.tiles[idx(x, y + 1)] === Tile.STREAM) joins.push([cx, (y + 1) * RES]);
-      if (x > 0 && S.tiles[idx(x - 1, y)] === Tile.STREAM) joins.push([x * RES, cy]);
-      if (x + 1 < W && S.tiles[idx(x + 1, y)] === Tile.STREAM) joins.push([(x + 1) * RES, cy]);
+      if (y > 0 && isStreamBackedTile(S.tiles[idx(x, y - 1)])) joins.push([cx, y * RES]);
+      if (y + 1 < H && isStreamBackedTile(S.tiles[idx(x, y + 1)])) joins.push([cx, (y + 1) * RES]);
+      if (x > 0 && isStreamBackedTile(S.tiles[idx(x - 1, y)])) joins.push([x * RES, cy]);
+      if (x + 1 < W && isStreamBackedTile(S.tiles[idx(x + 1, y)])) joins.push([(x + 1) * RES, cy]);
       const channel = new Path2D();
       if (!joins.length) {
         channel.moveTo(cx - RES * 0.12, cy + RES * 0.12);
@@ -894,7 +900,140 @@ function buildGround() {
   caches.groundDirty = false;
 }
 
+function drawBridge(ctx: CanvasRenderingContext2D, x: number, y: number, u: number) {
+  type WorldPoint = { x: number; y: number };
+  type Rail = [WorldPoint, WorldPoint];
+  const connections = bridgeConnectionsAt(S.tiles, x, y);
+  const h = BRIDGE_HALF_WIDTH;
+  const cx = x + 0.5;
+  const cy = y + 0.5;
+  const rect = (x0: number, y0: number, x1: number, y1: number): WorldPoint[] => [
+    { x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 },
+  ];
+  const decks = [rect(cx - h, cy - h, cx + h, cy + h)];
+  if (connections.west) decks.push(rect(x, cy - h, cx, cy + h));
+  if (connections.east) decks.push(rect(cx, cy - h, x + 1, cy + h));
+  if (connections.north) decks.push(rect(cx - h, y, cx + h, cy));
+  if (connections.south) decks.push(rect(cx - h, cy, cx + h, y + 1));
+  const lift = 2.2 * u;
+  const project = (point: WorldPoint) => {
+    const screen = PE(point.x, point.y);
+    return { x: screen.x, y: screen.y - lift };
+  };
+  const polygon = (points: { x: number; y: number }[]) => {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+  };
+
+  ctx.save();
+  ctx.lineCap = 'square';
+  ctx.lineJoin = 'round';
+  for (const deck of decks) {
+    polygon(deck.map(project).map((point) => ({ x: point.x, y: point.y + 3.2 * u })));
+    ctx.fillStyle = '#4b3120';
+    ctx.fill();
+  }
+  for (const deck of decks) {
+    polygon(deck.map(project));
+    ctx.fillStyle = '#a86d3e';
+    ctx.fill();
+  }
+
+  const plank = (a: WorldPoint, b: WorldPoint) => {
+    const pa = project(a);
+    const pb = project(b);
+    ctx.strokeStyle = 'rgba(69,38,21,.72)';
+    ctx.lineWidth = Math.max(0.8, 0.9 * u);
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
+  };
+  if (connections.west) for (const step of [0.08, 0.2, 0.34]) plank({ x: x + step, y: cy - h }, { x: x + step, y: cy + h });
+  if (connections.east) for (const step of [0.66, 0.8, 0.92]) plank({ x: x + step, y: cy - h }, { x: x + step, y: cy + h });
+  if (connections.north) for (const step of [0.08, 0.2, 0.34]) plank({ x: cx - h, y: y + step }, { x: cx + h, y: y + step });
+  if (connections.south) for (const step of [0.66, 0.8, 0.92]) plank({ x: cx - h, y: y + step }, { x: cx + h, y: y + step });
+  if (connections.west || connections.east) plank({ x: cx, y: cy - h }, { x: cx, y: cy + h });
+  if (connections.north || connections.south) plank({ x: cx - h, y: cy }, { x: cx + h, y: cy });
+
+  const railSides: Rail[] = [];
+  if (connections.west) railSides.push([{ x, y: cy - h }, { x: cx - h, y: cy - h }], [{ x, y: cy + h }, { x: cx - h, y: cy + h }]);
+  if (connections.east) railSides.push([{ x: cx + h, y: cy - h }, { x: x + 1, y: cy - h }], [{ x: cx + h, y: cy + h }, { x: x + 1, y: cy + h }]);
+  if (connections.north) railSides.push([{ x: cx - h, y }, { x: cx - h, y: cy - h }], [{ x: cx + h, y }, { x: cx + h, y: cy - h }]);
+  if (connections.south) railSides.push([{ x: cx - h, y: cy + h }, { x: cx - h, y: y + 1 }], [{ x: cx + h, y: cy + h }, { x: cx + h, y: y + 1 }]);
+  if (!connections.north) railSides.push([{ x: cx - h, y: cy - h }, { x: cx + h, y: cy - h }]);
+  if (!connections.south) railSides.push([{ x: cx - h, y: cy + h }, { x: cx + h, y: cy + h }]);
+  if (!connections.west) railSides.push([{ x: cx - h, y: cy - h }, { x: cx - h, y: cy + h }]);
+  if (!connections.east) railSides.push([{ x: cx + h, y: cy - h }, { x: cx + h, y: cy + h }]);
+  const railHeight = 6.8 * u;
+  for (const [start, end] of railSides) {
+    const a = project(start);
+    const b = project(end);
+    ctx.strokeStyle = '#51331f';
+    ctx.lineWidth = Math.max(1, 1.4 * u);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    for (const width of [Math.max(2, 2.5 * u), Math.max(0.9, 1.15 * u)]) {
+      ctx.strokeStyle = width > 1.5 * u ? '#3a271b' : '#d29a58';
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y - railHeight);
+      ctx.lineTo(b.x, b.y - railHeight);
+      ctx.stroke();
+    }
+    for (const t of [0, 0.5, 1]) {
+      const wx = start.x + (end.x - start.x) * t;
+      const wy = start.y + (end.y - start.y) * t;
+      const p = project({ x: wx, y: wy });
+      ctx.strokeStyle = '#3a271b';
+      ctx.lineWidth = Math.max(2, 2.5 * u);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y + 1.2 * u);
+      ctx.lineTo(p.x, p.y - railHeight - 0.8 * u);
+      ctx.stroke();
+      ctx.strokeStyle = '#c4894c';
+      ctx.lineWidth = Math.max(0.9, 1.1 * u);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 /* ================= main draw ================= */
+function drawWeather(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
+  if (S.mode !== 'play' || S.weather.condition === 'clear') return;
+  const { intensity, wetness } = S.weather;
+  ctx.save();
+  ctx.fillStyle = `rgba(17,34,45,${(0.045 + wetness * 0.075).toFixed(3)})`;
+  ctx.fillRect(0, 0, cssW, cssH);
+  if (intensity > 0.01) {
+    const count = Math.min(150, Math.max(18, Math.round((cssW * cssH) / 12500 * intensity)));
+    const spanX = cssW + 180;
+    const spanY = cssH + 120;
+    const drift = S.time * (55 + S.wind.speed * 150) * S.wind.dx;
+    const fall = S.time * (360 + intensity * 260);
+    const slant = 9 + S.wind.dx * (15 + S.wind.speed * 24);
+    ctx.strokeStyle = `rgba(210,235,244,${(0.16 + intensity * 0.26).toFixed(3)})`;
+    ctx.lineWidth = Math.max(0.75, 0.8 + intensity * 0.65);
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const rawX = hash2(i * 19 + 7, 31) * spanX + drift;
+      const rawY = hash2(i * 29 + 13, 47) * spanY + fall;
+      const x = ((rawX % spanX) + spanX) % spanX - 90;
+      const y = ((rawY % spanY) + spanY) % spanY - 60;
+      const length = 8 + hash2(i * 11 + 3, 71) * (12 + intensity * 14);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + slant, y + length);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) {
   const z = S.cam.z;
   const u = z;
@@ -953,6 +1092,10 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     D.push({ z: dep(pose.x, pose.y) + 0.05, f: () => drawCourseStaff(ctx, staffKind, pose, u) });
   }
   for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+      if (S.tiles[idx(x, y)] === Tile.BRIDGE_WATER || S.tiles[idx(x, y)] === Tile.BRIDGE_STREAM)
+        D.push({ z: dep(x + 0.5, y + 0.5) - 0.08, f: () => drawBridge(ctx, x, y, u) });
   S.holes.forEach((h, i) => {
     D.push({ z: dep(h.cup.x, h.cup.y), f: () => drawFlag(ctx, h, i + 1, u) });
     D.push({ z: dep(h.tee.x, h.tee.y) - 0.01, f: () => drawTeeSign(ctx, h, i + 1, u) });
@@ -989,6 +1132,9 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     if (facility) drawFacilityPlane(ctx, facilityActivityPose(activity, facility), u);
   }
 
+  // Weather sits over the course but below aiming and feedback, keeping the shot
+  // guide crisp while the scene still reads as wet and windswept.
+  drawWeather(ctx, cssW, cssH);
   drawAim(ctx, u);
   drawParticles(ctx, u);
   drawFloaters(ctx, u);
@@ -1168,13 +1314,34 @@ function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind']
   ctx.imageSmoothingEnabled = true;
 }
 
-function courseStaffPose(id: number, kind: 'ranger' | 'groundskeeper' | 'turftech', index: number) {
+function courseStaffPose(id: number, kind: CourseStaffKind, index: number) {
   const targets = kind === 'ranger' ? caches.wildlife : caches.naturePatches;
   const target = targets.length ? targets[Math.abs(Math.floor(id + index * 7)) % targets.length] : { x: CH.x + 4, y: CH.y + 3 };
-  const cycle = (S.time * (0.045 + index * 0.004) + (Math.abs(id) % 97) / 97) % 2;
-  const t0 = cycle <= 1 ? cycle : 2 - cycle;
-  const t = t0 * t0 * (3 - 2 * t0);
-  return { x: CH.x + (target.x - CH.x) * t, y: CH.y + (target.y - CH.y) * t, phase: S.time * 7 + index, face: cycle <= 1 ? 1 : -1 };
+  const cycle = (S.time * (0.023 + index * 0.002) + (Math.abs(id) % 97) / 97) % 1;
+  const smoothStep = (n: number) => n * n * (3 - 2 * n);
+  let t = 0;
+  let working = false;
+  let outbound = true;
+  if (cycle < 0.4) t = smoothStep(cycle / 0.4);
+  else if (cycle < 0.58) {
+    t = 1;
+    working = true;
+  } else if (cycle < 0.98) {
+    t = 1 - smoothStep((cycle - 0.58) / 0.4);
+    outbound = false;
+  }
+  const phase = S.time * (working ? 5.2 : 7.4) + index * 1.7;
+  const startScreen = P(CH.x, CH.y);
+  const targetScreen = P(target.x, target.y);
+  const outwardFace = targetScreen.x >= startScreen.x ? 1 : -1;
+  return {
+    x: CH.x + (target.x - CH.x) * t,
+    y: CH.y + (target.y - CH.y) * t,
+    phase,
+    face: outbound || working ? outwardFace : -outwardFace,
+    frame: courseStaffAnimationFrame(working, phase),
+    working,
+  };
 }
 
 /** Terrain-following tile outline. */
@@ -1326,24 +1493,17 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 }
 
 /* ================= scenery ================= */
-/** Species mix shifts with theme: tropical skews lush/blossom, links skews hardy pine, desert is mostly scrub-round. */
-function treeKindFor(theme: CourseTheme, s: number): TreeKind {
-  if (theme === 'tropical') return s > 0.5 ? 'blossom' : 'round';
-  if (theme === 'links') return s > 0.75 ? 'blossom' : s > 0.35 ? 'pine' : 'round';
-  if (theme === 'desert') return s > 0.8 ? 'blossom' : 'round';
-  return s > 0.85 ? 'blossom' : s > 0.62 ? 'pine' : 'round';
-}
 function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
-  const p = PE(tr.x, tr.y);
-  const sc = (0.78 + tr.s * 0.38) * u;
+  const profile = treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme);
+  const p = PE(profile.center.x, profile.center.y);
+  const k = profile.visualScale * u;
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 7 * sc, p.y + 3 * u, 14 * sc, 4.8 * sc, 0.16, 0, Math.PI * 2);
+  ctx.ellipse(p.x + 7.6 * k, p.y + 3 * u, 15.2 * k, 5.2 * k, 0.16, 0, Math.PI * 2);
   ctx.fill();
-  const kind: TreeKind = treeKindFor(S.theme, tr.s);
-  const spr = treeSprite(kind, ((tr.s * 97) | 0) % 3);
-  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.013;
-  const k = sc * 0.92;
+  const kind = sharedTreeKindFor(S.theme, profile.seed);
+  const spr = treeSprite(kind, ((profile.seed * 97) | 0) % 3);
+  const sway = Math.sin(S.time * 1.1 + profile.seed * 9) * 0.013;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y);
@@ -1636,14 +1796,16 @@ function drawGolferSprite(
   frame: GolferFrame,
   face: number,
   bob: number,
-  view: 'front' | 'rear' = 'front'
+  view: 'front' | 'rear' = 'front',
+  identity = ''
 ) {
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
   ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
   ctx.fill();
-  const spr = golferSprite(shirt, skin, cap, frame, view);
-  const k = u * 0.8;
+  const spr = golferSprite(shirt, skin, cap, frame, view, identity);
+  const spriteUnit = clamp(u, 0.62, 1.75);
+  const k = spriteUnit * 0.84;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y - bob);
@@ -1655,43 +1817,25 @@ function drawGolferSprite(
 
 function drawCourseStaff(
   ctx: CanvasRenderingContext2D,
-  kind: 'ranger' | 'groundskeeper' | 'turftech',
-  pose: { x: number; y: number; phase: number; face: number },
+  kind: CourseStaffKind,
+  pose: { x: number; y: number; phase: number; face: number; frame: CourseStaffFrame; working: boolean },
   u: number
 ) {
   const p = PE(pose.x, pose.y);
-  const frame: GolferFrame = Math.sin(pose.phase) > 0 ? 'walkA' : 'walkB';
-  const shirt = kind === 'ranger' ? '#456b3b' : kind === 'turftech' ? '#2f8172' : '#c98236';
-  const cap = kind === 'ranger' ? '#d0ad58' : kind === 'turftech' ? '#e8eee4' : '#f0d36b';
-  const bob = Math.abs(Math.sin(pose.phase)) * 1.1 * u;
-  drawGolferSprite(ctx, p.x, p.y, u * 0.92, shirt, '#c98a5e', cap, frame, pose.face, bob);
-
+  const k = clamp(u, 0.65, 1.75) * 0.82;
+  const bob = pose.working ? 0 : Math.abs(Math.sin(pose.phase)) * 1.05 * u;
+  const shadowWidth = kind === 'groundskeeper' ? 8.2 : 7.2;
+  ctx.fillStyle = 'rgba(5,22,17,.23)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + 2.5 * u, p.y + 1.5 * u, shadowWidth * u, 2.6 * u, 0.1, 0, Math.PI * 2);
+  ctx.fill();
   ctx.save();
-  ctx.translate(p.x, p.y - 8 * u);
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(p.x, p.y - bob);
   ctx.scale(pose.face, 1);
-  if (kind === 'ranger') {
-    ctx.strokeStyle = '#283d35';
-    ctx.lineWidth = Math.max(1, 1.2 * u);
-    ctx.beginPath();
-    ctx.moveTo(4 * u, -5 * u);
-    ctx.lineTo(9 * u, -8 * u);
-    ctx.stroke();
-    ctx.fillStyle = '#263c39';
-    ctx.fillRect(8 * u, -10 * u, 4 * u, 3 * u);
-  } else {
-    ctx.strokeStyle = '#79532c';
-    ctx.lineWidth = Math.max(1, 1.2 * u);
-    ctx.beginPath();
-    ctx.moveTo(4 * u, -4 * u);
-    ctx.lineTo(12 * u, 8 * u);
-    ctx.stroke();
-    ctx.strokeStyle = '#60676a';
-    ctx.beginPath();
-    ctx.moveTo(9 * u, 8 * u);
-    ctx.lineTo(15 * u, 8 * u);
-    ctx.stroke();
-  }
+  ctx.drawImage(courseStaffSprite(kind, pose.frame), -15 * k, -35 * k, 30 * k, 36 * k);
   ctx.restore();
+  ctx.imageSmoothingEnabled = true;
 }
 
 function golferFrame(g: Golfer): GolferFrame {
@@ -1707,8 +1851,11 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
   const view = walking && g.facingAway ? 'rear' : 'front';
-  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view);
-  if (g.specialGuest && S.cam.z > 0.58) drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * u - bob, u * 0.88, 'gold');
+  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view, g.name);
+  const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
+  if ((g.specialGuest && S.cam.z > 0.58) || hovered) {
+    drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * Math.max(u, 0.62) - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
+  }
 }
 
 function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
@@ -1719,7 +1866,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const py = bp.y - 1 * u;
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
   const pro = activePlayingPro();
-  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0);
+  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0, 'front', pro.name);
   drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - 31 * u, u, 'gold');
 }
 
@@ -1755,65 +1902,157 @@ function drawFlyingBall(ctx: CanvasRenderingContext2D, b: Ball, u: number) {
   ctx.stroke();
 }
 
+type AimForecast = NonNullable<ReturnType<typeof currentPlayerShotForecast>>;
+
+function aimFlightPoint(path: AimForecast['path'], t: number, u: number): Vec {
+  const position = ballFlightPosition(path, t);
+  const ground = PE(position.x, position.y);
+  return { x: ground.x, y: ground.y - Math.sin(Math.PI * clamp(t, 0, 1)) * path.h * u };
+}
+
+function traceAimFlight(ctx: CanvasRenderingContext2D, path: AimForecast['path'], fromT: number, toT: number, u: number) {
+  if (toT <= fromT + 0.0001) return false;
+  const steps = Math.max(1, Math.ceil((toT - fromT) * 20));
+  const first = aimFlightPoint(path, fromT, u);
+  ctx.beginPath();
+  ctx.moveTo(first.x, first.y);
+  for (let step = 1; step <= steps; step++) {
+    const t = fromT + (toT - fromT) * (step / steps);
+    const point = aimFlightPoint(path, t, u);
+    ctx.lineTo(point.x, point.y);
+  }
+  return true;
+}
+
+function drawCanopyWarning(ctx: CanvasRenderingContext2D, forecast: AimForecast, u: number) {
+  const impact = forecast.canopyImpact;
+  if (!impact) return;
+  const point = aimFlightPoint(forecast.path, impact.t, u);
+  const scale = clamp(u, 0.72, 1.35);
+  const label = impact.kind === 'trunk' ? 'TREE RISK' : 'CANOPY RISK';
+
+  // The ideal line's deterministic drop is useful tactical information, but it is
+  // kept faint because shot dispersion may still carry the real ball around the tree.
+  if (forecast.restingPoint) {
+    const rest = PE(forecast.restingPoint.x, forecast.restingPoint.y);
+    ctx.save();
+    ctx.setLineDash([2 * scale, 3 * scale]);
+    ctx.strokeStyle = 'rgba(230,174,77,.56)';
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(rest.x, rest.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(216,81,56,.7)';
+    ctx.strokeStyle = '#ffe08a';
+    ctx.beginPath();
+    ctx.arc(rest.x, rest.y, 3.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.translate(point.x, point.y);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillStyle = '#d85138';
+  ctx.strokeStyle = '#ffe08a';
+  ctx.lineWidth = Math.max(1, 1.2 * scale);
+  ctx.fillRect(-3.8 * scale, -3.8 * scale, 7.6 * scale, 7.6 * scale);
+  ctx.strokeRect(-3.8 * scale, -3.8 * scale, 7.6 * scale, 7.6 * scale);
+  ctx.restore();
+
+  ctx.save();
+  ctx.font = `900 ${Math.max(8, Math.round(8 * scale))}px sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelWidth = Math.ceil(ctx.measureText(label).width + 8 * scale);
+  const labelHeight = Math.max(12, Math.ceil(13 * scale));
+  const labelX = clamp(point.x + 7 * scale, 4, Math.max(4, S.view.w - labelWidth - 4));
+  const labelY = clamp(point.y - labelHeight - 5 * scale, 4, Math.max(4, S.view.h - labelHeight - 4));
+  ctx.fillStyle = 'rgba(42,31,22,.92)';
+  ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+  ctx.strokeStyle = '#e6ae4d';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.strokeRect(labelX + 0.5, labelY + 0.5, labelWidth - 1, labelHeight - 1);
+  ctx.fillStyle = '#fff0b5';
+  ctx.fillText(label, labelX + 4 * scale, labelY + labelHeight / 2 + 0.4 * scale);
+  ctx.restore();
+}
+
 function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   const p = S.player;
   if (!p || p.state !== 'aim' || !p.aim || !p.aim.on) return;
-  const a = p.aim;
-  const w0 = screenToWorld(a.sx, a.sy);
-  const w1 = screenToWorld(a.cx, a.cy);
-  let dx = w0.x - w1.x;
-  let dy = w0.y - w1.y;
-  const pl = Math.hypot(dx, dy);
-  if (pl < 0.15) return;
-  dx /= pl;
-  dy /= pl;
-  const L = LIE[p.lie] || LIE.rough;
-  const power = clamp(pl / 9, 0.08, 1);
-  const intend = playerIntendedDistance(p.lie, p.club, power);
-  // mirrors playerFire()'s wind push + shape curve/height exactly, so the preview matches the real shot
-  const windPush = p.lie === 'green' ? 0 : S.wind.speed * intend * 0.35;
-  const perpX = -dy;
-  const perpY = dx;
-  const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul;
+  const aim = playerAimIntent(p.aim, p.lie);
+  if (!aim) return;
+  const { power } = aim;
+  const forecast = currentPlayerShotForecast(aim);
+  if (!forecast) return;
+  const { plan, path, canopyImpact } = forecast;
   const bp = PE(p.ball!.x, p.ball!.y);
-  ctx.setLineDash([5 * u, 5 * u]);
-  ctx.strokeStyle = 'rgba(255,255,255,.95)';
-  ctx.lineWidth = 2 * u;
-  ctx.beginPath();
-  ctx.moveTo(bp.x, bp.y - 1 * u);
-  for (let t = 0.1; t <= 1.001; t += 0.1) {
-    const curve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, t);
-    const wx = p.ball!.x + dx * intend * t + S.wind.dx * windPush * t + perpX * curve;
-    const wy = p.ball!.y + dy * intend * t + S.wind.dy * windPush * t + perpY * curve;
-    const q = PE(wx, wy);
-    ctx.lineTo(q.x, q.y - (p.lie === 'green' ? 0 : Math.sin(Math.PI * t) * intend * 3.4 * u * heightMul));
+
+  ctx.save();
+  if (canopyImpact) {
+    const warningStart = Math.max(0, canopyImpact.t - Math.min(0.16, Math.max(0.06, canopyImpact.t * 0.4)));
+    ctx.setLineDash([5 * u, 5 * u]);
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, 0, warningStart, u)) ctx.stroke();
+
+    // The ideal line's threatened segment glows amber around a red dashed core and
+    // stops at its first contact. The dim landing ellipse below preserves dispersion
+    // context: the real shot can still miss around either side of this centerline risk.
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(244,183,70,.72)';
+    ctx.lineWidth = 4.2 * u;
+    if (traceAimFlight(ctx, path, warningStart, canopyImpact.t, u)) ctx.stroke();
+    ctx.setLineDash([2.5 * u, 3 * u]);
+    ctx.strokeStyle = '#df6847';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, warningStart, canopyImpact.t, u)) ctx.stroke();
+  } else {
+    ctx.setLineDash([5 * u, 5 * u]);
+    ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, 0, 1, u)) ctx.stroke();
   }
-  ctx.stroke();
   ctx.setLineDash([]);
-  const landCurve = p.lie === 'green' ? 0 : shapeCurveOffset(p.shape, intend, 1);
-  const landX = p.ball!.x + dx * intend + S.wind.dx * windPush + perpX * landCurve;
-  const landY = p.ball!.y + dy * intend + S.wind.dy * windPush + perpY * landCurve;
+  ctx.restore();
+
+  drawCanopyWarning(ctx, forecast, u);
+
+  const landX = plan.target.x;
+  const landY = plan.target.y;
   const land = PE(landX, landY);
-  const skill = playerShotSkill(p.lie, p.club, p.shape);
-  const spread = intend * (L.dst * (1 - skill * 0.55) + 0.025) + intend * Math.sin((L.ang * (1 - skill * 0.65) * Math.PI) / 180) * 0.6 + 0.22;
-  ctx.strokeStyle = 'rgba(255,255,255,.85)';
-  ctx.lineWidth = 1.6 * u;
+  const spread = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius;
+  ctx.save();
+  ctx.setLineDash(canopyImpact ? [2.5 * u, 4 * u] : []);
+  ctx.strokeStyle = canopyImpact ? 'rgba(255,220,145,.3)' : 'rgba(255,255,255,.85)';
+  ctx.lineWidth = (canopyImpact ? 1.2 : 1.6) * u;
   ctx.beginPath();
   ctx.ellipse(land.x, land.y, spread * 22 * u, spread * 11 * u, 0, 0, 7);
   ctx.stroke();
-  // roll-out preview: a dimmer dashed line continuing the shot direction along the ground
-  // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
-  const rollLen = p.lie !== 'green' && p.shape === 'backspin' ? 0 : intend * 0.5 * (ROLL[p.lie] ?? 0.3);
-  if (rollLen > 0.15) {
-    const rollEnd = PE(landX + dx * rollLen, landY + dy * rollLen);
-    ctx.setLineDash([3 * u, 4 * u]);
-    ctx.strokeStyle = 'rgba(255,255,255,.4)';
-    ctx.lineWidth = 1.3 * u;
-    ctx.beginPath();
-    ctx.moveTo(land.x, land.y);
-    ctx.lineTo(rollEnd.x, rollEnd.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
+  ctx.restore();
+
+  if (!canopyImpact) {
+    // The ideal obstructed line has no ground release. Clear forecasts retain the
+    // usual rollout estimate after their full-strength landing ellipse.
+    const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club);
+    if (rollLen > 0.15) {
+      const landingDistance = Math.hypot(landX - p.ball!.x, landY - p.ball!.y) || 1;
+      const rollDx = (landX - p.ball!.x) / landingDistance;
+      const rollDy = (landY - p.ball!.y) / landingDistance;
+      const rollEnd = PE(landX + rollDx * rollLen, landY + rollDy * rollLen);
+      ctx.setLineDash([3 * u, 4 * u]);
+      ctx.strokeStyle = 'rgba(255,255,255,.4)';
+      ctx.lineWidth = 1.3 * u;
+      ctx.beginPath();
+      ctx.moveTo(land.x, land.y);
+      ctx.lineTo(rollEnd.x, rollEnd.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
   ctx.fillStyle = 'rgba(20,40,28,.75)';
   ctx.fillRect(bp.x - 18 * u, bp.y + 8 * u, 36 * u, 6 * u);

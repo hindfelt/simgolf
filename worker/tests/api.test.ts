@@ -129,7 +129,8 @@ function scorecard(event: { id: string; source: 'exhibition' | 'daily' | 'weekly
       greenInRegulation: score === 0,
       hazards: [],
       wind: { dx: 1, dy: 0, speed: 0.2 },
-      shots: [{ stroke: 1, club: 'iron', shape: 'straight', fromLie: 'tee', resultLie: 'green', power: 0.8, intendedDistance: 7, distance: 7, start: { x: 5, y: 5 }, end: { x: 12, y: 5 }, events: [], penalty: 0, holed: false }],
+      weather: { condition: 'drizzle', intensity: 0.35, wetness: 0.5 },
+      shots: [{ stroke: 1, club: 'iron', shape: 'hook', fromLie: 'tee', resultLie: 'green', power: 0.8, intendedDistance: 7, distance: 7, start: { x: 5, y: 5 }, end: { x: 12, y: 5 }, events: [], penalty: 0, holed: false }],
     }],
   };
 }

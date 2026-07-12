@@ -1,5 +1,5 @@
 import { Tile } from './types';
-import type { TileInfo, LieInfo, LieKey, CourseTheme } from './types';
+import type { TileInfo, LieInfo, LieKey, CourseTheme, ClubId } from './types';
 
 export const W = 64;
 export const H = 48;
@@ -156,28 +156,30 @@ export const ROLL: Record<string, number> = {
 
 /**
  * Player-only club choice for non-putt shots (putts always use the green-lie path
- * regardless of club). `mul` scales the lie's max distance; `angScale` feeds straight
- * into `aimShot`'s existing per-call aim-wobble parameter. `iron` reproduces the game's
- * original fixed-angScale-0.55, mul-1 behavior exactly, so it's the safe default.
+ * regardless of club). `mul` scales the lie's max distance; `angScale`, launch and roll
+ * are composed with the lie-specific profile in clubProfiles.ts. Iron retains the
+ * original fixed-angScale-0.55, mul-1 behavior as the balanced baseline.
  */
-export const CLUBS: Record<'driver' | 'iron' | 'wedge', { label: string; mul: number; angScale: number }> = {
-  driver: { label: 'Driver', mul: 1.25, angScale: 0.85 },
-  iron: { label: 'Iron', mul: 1.0, angScale: 0.55 },
-  wedge: { label: 'Wedge', mul: 0.55, angScale: 0.3 },
+export const CLUBS: Record<ClubId, { label: string; mul: number; angScale: number; launchMul: number; rollMul: number; role: string }> = {
+  driver: { label: 'Driver', mul: 1.25, angScale: 0.85, launchMul: 0.72, rollMul: 1.45, role: 'Low · runs' },
+  iron: { label: 'Iron', mul: 1.0, angScale: 0.55, launchMul: 1, rollMul: 1, role: 'Mid · balanced' },
+  wedge: { label: 'Wedge', mul: 0.55, angScale: 0.3, launchMul: 1.35, rollMul: 0.35, role: 'High · checks' },
 };
 
 /**
  * Player-only shot technique (manual p.21-22), picked before each full swing (hidden on
  * the green — putts don't have a shape). `heightMul` scales the drawn/flown arc height;
- * curvature (fade/draw) and the no-roll/no-tree-deflect effects (backspin/punch) are
- * applied directly in `playerFire`/`resolveFly`, not here.
+ * curvature (fade/draw/hook), no-roll Backspin and low-window Punch behavior are
+ * applied through the shared player flight path and `resolveFly`: Punch can travel
+ * below open round-tree branches, while trunks and low pine foliage still block it.
  */
-export const SHOT_SHAPES: Record<'straight' | 'fade' | 'draw' | 'backspin' | 'punch', { label: string; heightMul: number }> = {
-  straight: { label: 'Straight', heightMul: 1 },
-  fade: { label: 'Fade', heightMul: 1 },
-  draw: { label: 'Draw', heightMul: 1 },
-  backspin: { label: 'Backspin', heightMul: 1.3 },
-  punch: { label: 'Punch', heightMul: 0.45 },
+export const SHOT_SHAPES: Record<'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch', { label: string; heightMul: number; carryMul: number }> = {
+  straight: { label: 'Straight', heightMul: 1, carryMul: 1 },
+  fade: { label: 'Fade', heightMul: 1, carryMul: 1 },
+  draw: { label: 'Draw', heightMul: 1, carryMul: 1 },
+  hook: { label: 'Hook', heightMul: 0.9, carryMul: 1 },
+  backspin: { label: 'Backspin', heightMul: 1.3, carryMul: 1 },
+  punch: { label: 'Punch', heightMul: 0.45, carryMul: 0.82 },
 };
 
 export const NAMES = [

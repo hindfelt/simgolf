@@ -17,6 +17,8 @@ import { useUI } from './ui/store';
 
 function Hint() {
   const hint = useUI((s) => s.hint);
+  const playHud = useUI((s) => s.playHud);
+  if (playHud) return null;
   return <div className="hint" role="status" aria-live="polite">{hint}</div>;
 }
 

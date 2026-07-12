@@ -39,4 +39,22 @@ describe('Routing Map overlays', () => {
     expect(heat).toHaveLength(W * H);
     expect(heat[5 * W + 5]).toBe(0);
   });
+
+  it('keeps bridges buildable while preserving their underlying scenery value', () => {
+    const baseline = homeValueAt(S, 40, 35);
+    S.tiles[5 * W + 5] = Tile.BRIDGE_WATER;
+    S.tiles[5 * W + 6] = Tile.BRIDGE_STREAM;
+
+    expect(homeValueAt(S, 5, 5)).toBeGreaterThan(baseline);
+    expect(homeValueAt(S, 6, 5)).toBeGreaterThan(baseline);
+    expect(auraAt(S, 5, 5)).toBeGreaterThan(0);
+  });
+
+  it('uses the configured 12-tile parcel height for ownership', () => {
+    S.owned.fill(0);
+    S.owned[PW] = 1;
+
+    expect(homeValueAt(S, 1, 1)).toBe(0);
+    expect(homeValueAt(S, 1, 13)).toBeGreaterThan(0);
+  });
 });

@@ -72,32 +72,30 @@ Then read, in this order:
 - Multi-step terrain elevations and course wildlife/grounds ambience.
 - Improved original facility sprites plus aircraft, marina traffic and course flyovers.
 - Google OIDC, secure sessions, cloud slots, published courses, profiles/follows, asynchronous challenges, daily/weekly competitions, Club Championship, leaderboards and season points.
-- A new sixteen-property World Screen data model and mostly wired new-course flow.
-- Bridge terrain values and most simulation-side path conversion behavior.
+- A sixteen-property World Screen with distinct terrain/deed profiles, six starter deeds, ten enforced career-gated locations, purchase-history persistence and guarded new-course replacement.
+- Connected water/stream bridge tiles with automatic Pathway conversion, wooden-deck rendering, routing value and bulldoze restoration.
+- A responsive fifteen-item Resort catalog with category filters, explicit availability and aligned staff actions.
 
 The snapshot is intentionally a continuation point, not a finished release. The items below are the active work.
 
 ## Active work: finish this first
 
-### 1. Complete water-crossing bridges
+### 1. Verify water-crossing bridges
 
-Already present:
+Implemented in the current continuation work:
 
-- `Tile.BRIDGE_WATER = 16` and `Tile.BRIDGE_STREAM = 17` are appended in `src/game/types.ts`.
-- Tile metadata, costs, lie/roll behavior and minimap colors exist.
-- Painting a path on water/stream converts the tile to the appropriate bridge type.
-- Bulldozing restores the underlying water/stream.
-- Path connectivity and pathfinding accept bridge tiles.
-- Water beauty/wildlife caches treat a water bridge as water.
+- `BRIDGE_WATER` remains part of the water blob and `BRIDGE_STREAM` remains part of the connected stream channel, so the original procedural terrain stays visible beneath each deck.
+- `src/game/bridges.ts` determines the deck axis from orthogonal path/bridge neighbors, with channel-aware fallback for isolated stream crossings.
+- `src/game/render.ts` draws raised original wooden decks with continuous long edges, plank rhythm, rails, posts and isometric depth. Adjacent bridge tiles share their deck and rail edges instead of reading as separate platforms.
+- Routing Map Aura and Home Value preserve the underlying water/stream benefit while bridge sites remain buildable. Parcel ownership now uses `PARCEL_W`, `PARCEL_H` and `PW` rather than stale hard-coded dimensions.
+- Pathway tool pricing explains land, water-bridge and stream-bridge costs.
+- Regression coverage now includes persisted tile ids, conversion prices, connectivity, bulldoze restoration, pinned water elevation, deck direction and routing behavior.
 
-Still missing:
+Still required before calling this milestone complete:
 
-- `src/game/render.ts` does not draw bridge tiles yet. Keep water visible under `BRIDGE_WATER`; treat `BRIDGE_STREAM` as a stream-backed tile; add an original low-resolution wooden deck overlay with rails, plank rhythm and proper isometric depth.
-- Determine bridge direction from orthogonal path/bridge neighbors. Consecutive bridge tiles must read as one continuous span rather than separate platforms.
-- Extend stream-neighbor rendering so stream joins remain continuous beneath `BRIDGE_STREAM`.
-- Update `src/game/routing.ts`: bridges should add the underlying water scenery/home-value benefit without being blocked or trouble terrain. Replace the hard-coded parcel height there with `PH` (`12`).
-- Update the Pathway tool copy in `src/ui/Toolbar.tsx` to explain the land price versus bridge price.
-- Add regression tests for water conversion, stream conversion, costs, connectivity and bulldoze restoration.
+- Inspect bridge spans in a real browser at multiple zoom levels and all four rotations, including wide ponds, one-tile streams and sloped approaches.
+- Run the remaining typecheck/build matrix.
+- Run the required Snyk Code and dependency scans after explicitly approving source upload/folder trust, then commit and push.
 
 Audit all terrain switches after the change:
 
@@ -105,31 +103,34 @@ Audit all terrain switches after the change:
 rg -n "Tile\.(PATH|WATER|STREAM)|switch \(.*tile|switch \(t\)" src/game src/ui
 ```
 
-### 2. Finish and style the sixteen-property World Screen
+### 2. Verify the sixteen-property World Screen
 
-`src/game/properties.ts` defines sixteen original properties across Parklands, Links, Desert and Tropical regions. Prices, starting parcel deeds, relief, water, woodland and seeds vary. State/save/profile integration and procedural map generation are substantially wired through `src/game/engine.ts`, `src/game/state.ts`, `src/game/types.ts`, `src/ui/store.ts`, `src/ui/TopBar.tsx` and `src/ui/Modals.tsx`.
+Implemented in the current continuation work:
 
-Still missing:
+- A responsive atlas-and-deed layout now styles all sixteen Parklands, Links, Desert and Tropical opportunities with original travel-poster scenery, brass pins, property cards, themed inspectors, deed cells and terrain meters.
+- Affordable, short-of-funds, purchased, current and selected states use distinct color, border, pattern and copy treatments. Every card remains selectable for comparison and announces its status; deed and terrain visuals expose accessible values.
+- The setup modal now traps keyboard focus, restores prior focus on close, labels selection buttons and uses a truthful Sandbox replacement confirmation.
+- `newCourse()` now rejects an already-developed property even if a caller bypasses the panel, while Sandbox Mode deliberately remains available on purchased properties.
+- Property replacement now writes the new autosave before profile ownership is relied upon, backfills legacy/current deeds into purchase history, prevents Sandbox treasury leakage and awards the Picky land accomplishment only after a real county purchase.
+- Property regressions cover the sixteen-entry catalog, affordability, starter fallback, history sanitization, deed ownership, price deduction, profile persistence, repurchase protection, Sandbox behavior, old-save migration and terrain-generation differences.
 
-- Add the CSS for `worldScreenHead`, `worldMap`, `worldRegion`, `worldProperty`, `propertyPin`, `propertyInspector`, `propertyFacts`, `parcelDeed` and `propertyMeter` in `src/styles.css`.
-- Verify affordable, unaffordable, selected and already-purchased states are visually distinct and accessible.
-- Add property-focused tests: affordability, starter property fallback, persistence/migration, deed ownership and generation differences.
-- Verify new-course replacement semantics and profile purchase history in a browser.
-- Update `README.md`, `featurelist.md`, `TODO.md` and the older `handover.md` once this is complete; some still call the World Screen a gap.
+Still required before calling this milestone complete:
 
-### 3. Redesign the Resort & facilities catalog
+- Verify the initial and replacement flows in a real browser at desktop, tablet and phone widths, including keyboard-only navigation and every property state.
+- Run the remaining typecheck/build matrix.
 
-The last supplied screenshot showed an oversized four-column modal with loose spacing, uneven hierarchy and a dead empty area in the final row. The current implementation is `src/ui/BuildPanel.tsx`; relevant CSS begins near `.buildPanel`, `.bpGrid` and `.bpItem` in `src/styles.css`.
+### 3. Verify the Resort & facilities catalog
 
-Target:
+Implemented in the current continuation work:
 
-- A denser, balanced catalog with consistent card height, aligned icon/name/cost/footprint and no dead final-row void.
-- Consider five equal columns at wide desktop widths so all fifteen facilities form three complete rows; use three, two and one column at narrower breakpoints.
-- Keep descriptions to two readable lines and separate the price from the footprint chip.
-- Add compact category filters or grouping only if they improve scanning: Resort, Travel, Property and Scenery.
-- Do not fade locked facilities into illegibility; show the lock reason clearly.
-- Preserve the immediate Resort click behavior already wired in `src/ui/Toolbar.tsx`.
-- Check staff-card button baselines as well; a previous screenshot showed Hire/Fire misalignment.
+- The fifteen build choices use a balanced five-column desktop grid and three/two/one-column responsive breakpoints, with Resort, Travel, Property and Scenery filters.
+- Cards align icon, name, category, two-line description, price, footprint and availability. Locked and unaffordable entries remain legible and explain the blocker instead of being disabled into obscurity.
+- The Resort button still opens the Build catalog directly; Build/Manage tabs retain existing facility-upgrade behavior.
+- Staff cards now expose employment or unlock status, accessible Hire/Fire labels and consistently aligned actions.
+
+Still required before calling this milestone complete:
+
+- Inspect all breakpoints in a real browser, including long themed names, insufficient cash, the locked Landmark, keyboard focus, and Hire/Fire baselines.
 
 ### 4. Visual QA of moving traffic and facility art
 
@@ -145,12 +146,18 @@ The in-app Browser/Chrome surface was unavailable during the final session, so d
 
 ## Verification state at handoff
 
+Current continuation checks:
+
+- `npm test` — 146/146 browser-game tests pass across 22 files, including bridge/property regressions, career unlock boundaries, transactional portfolio switching, dedicated staff art, and direct shot-shape behavior.
+- `npm run test:api` — 7/7 Worker/D1 integration tests pass.
+- Browser screenshots, the remaining typecheck/build matrix and Snyk scans are still pending; no visual QA is claimed for this round.
+
 These were run immediately before the handoff commit:
 
 - `npm run typecheck` — passes after restoring the missing theme metadata used by the Help modal.
 - `npm run typecheck:api` — passes.
-- `npm run test:api` — 7/7 passes.
-- `npm test` — 86/86 passes after updating an obsolete expected course name from `Fairway Mogul` to the selected property name `Donegal Point`.
+- `npm run test:api` — 7/7 passed at the earlier handoff and again in the current continuation.
+- `npm test` — the earlier handoff passed 86/86; the expanded current suite now passes 146/146.
 - `npm run build` — passes.
 - `npm run build:api` — Wrangler production dry-run passes.
 - `npm audit` and `snyk test` — no vulnerable dependency paths.

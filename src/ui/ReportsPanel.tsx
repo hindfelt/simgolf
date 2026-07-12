@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useUI } from './store';
 import { S } from '../game/state';
 import { empWagesPerSec } from '../game/employees';
@@ -9,6 +9,7 @@ import Icon from './Icon';
 import { SGA_CLASS_INFO, sgaFeeMultiplier } from '../game/sga';
 import { FINANCE_CATEGORY_INFO, financialYearAt, summarizeFinance } from '../game/finance';
 import { membershipActive } from '../game/memberships';
+import { useFloatingPanelFocus } from './panelA11y';
 
 const TOURNAMENT_PURSE = 1500;
 
@@ -140,6 +141,9 @@ export default function ReportsPanel() {
   useUI((s) => s.holesVersion); // subscribe so reordering re-renders the hole card
   useUI((s) => s.simTick); // subscribe so the tournament countdown + goal checks stay live
   const [tab, setTab] = useState<'course' | 'financial' | 'members'>('course');
+  const panelRef = useRef<HTMLElement>(null);
+  const close = useCallback(() => setStore({ reportsPanel: false }), [setStore]);
+  useFloatingPanelFocus(open, panelRef, close);
   if (!open) return null;
 
   const income = passiveIncomePerSec();
@@ -153,27 +157,27 @@ export default function ReportsPanel() {
   const arrivalRate = S.served + S.lost ? Math.round((S.served / (S.served + S.lost)) * 100) : 100;
 
   return (
-    <section className="managementPanel reportsPanel" role="dialog" aria-modal="false" aria-labelledby="reports-title">
+    <section className="managementPanel reportsPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="reports-title" tabIndex={-1}>
       <header className="panelHead">
         <div className="panelTitleMark"><Icon name="report" size={22} /></div>
         <div>
           <h2 id="reports-title">Resort reports</h2>
           <p>{tab === 'course' ? 'Course operations' : tab === 'financial' ? 'Financial report' : 'Membership roster'}</p>
         </div>
-        <button className="iconButton panelClose" aria-label="Close course report" onClick={() => setStore({ reportsPanel: false })}>
+        <button className="iconButton panelClose" aria-label="Close course report" onClick={close}>
           <Icon name="close" size={16} />
         </button>
       </header>
 
-      <nav className="reportTabs" aria-label="Report type">
-        <button className={tab === 'course' ? 'active' : ''} onClick={() => setTab('course')}>Course</button>
-        <button className={tab === 'financial' ? 'active' : ''} onClick={() => setTab('financial')}>Financial</button>
-        <button className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>Membership</button>
+      <nav className="reportTabs" role="tablist" aria-label="Report type">
+        <button id="report-tab-course" role="tab" aria-selected={tab === 'course'} aria-controls="report-panel-course" className={tab === 'course' ? 'active' : ''} onClick={() => setTab('course')}>Course</button>
+        <button id="report-tab-financial" role="tab" aria-selected={tab === 'financial'} aria-controls="report-panel-financial" className={tab === 'financial' ? 'active' : ''} onClick={() => setTab('financial')}>Financial</button>
+        <button id="report-tab-members" role="tab" aria-selected={tab === 'members'} aria-controls="report-panel-members" className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>Membership</button>
       </nav>
 
-      {tab === 'financial' && <FinancialReport cash={cash} />}
-      {tab === 'members' && <MembershipReport />}
-      {tab === 'course' && <>
+      {tab === 'financial' && <div id="report-panel-financial" role="tabpanel" aria-labelledby="report-tab-financial"><FinancialReport cash={cash} /></div>}
+      {tab === 'members' && <div id="report-panel-members" role="tabpanel" aria-labelledby="report-tab-members"><MembershipReport /></div>}
+      {tab === 'course' && <div id="report-panel-course" role="tabpanel" aria-labelledby="report-tab-course">
 
       <div className="reportHero">
         <div><span>Bank balance</span><strong>{fmt$(cash)}</strong></div>
@@ -265,14 +269,14 @@ export default function ReportsPanel() {
             </div>
             <div className="holeStat">
               <span>Scenery</span>
-              <div className="beautyMeter" aria-label={`Hole ${i + 1} scenery ${Math.round(h.beauty * 100)} percent`}>
+              <div className="beautyMeter" role="meter" aria-label={`Hole ${i + 1} scenery ${Math.round(h.beauty * 100)} percent`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(h.beauty * 100)}>
                 <i style={{ width: `${Math.round(h.beauty * 100)}%` }} />
               </div>
               <em>{Math.round(h.beauty * 100)}%</em>
             </div>
             <div className="holeStat">
               <span>Excitement</span>
-              <div className="interestMeter" aria-label={`Hole ${i + 1} excitement ${Math.round(h.interest * 100)} percent`}>
+              <div className="interestMeter" role="meter" aria-label={`Hole ${i + 1} excitement ${Math.round(h.interest * 100)} percent`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(h.interest * 100)}>
                 <i style={{ width: `${Math.round(h.interest * 100)}%` }} />
               </div>
               <em>{Math.round(h.interest * 100)}%</em>
@@ -320,7 +324,7 @@ export default function ReportsPanel() {
           </div>
         ))}
       </div>
-      </>}
+      </div>}
     </section>
   );
 }

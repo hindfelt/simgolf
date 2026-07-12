@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useUI } from './store';
 import { fmt$ } from '../game/rng';
-import { newCourse, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
+import { careerProgressSnapshot, createPortfolioCourse, portfolioResorts, switchPortfolioResort, listSlots, saveToSlot, loadFromSlot, deleteSlot, exportSaveText, importSaveText, setCourseTheme, acceptLandOffer, declineLandOffer, selectBuilding, type SlotInfo } from '../game/engine';
 import type { Difficulty, PropertyId, ThemePackId } from '../game/types';
 import { DIFFICULTIES } from '../game/difficulty';
 import { S } from '../game/state';
@@ -10,7 +10,9 @@ import Scorecard from './Scorecard';
 import { submitChallengeRound, submitCompetitionRound } from '../online/api';
 import { relativeScoreLabel } from '../game/scorecards';
 import { THEME_PACKS, themePackById } from '../game/themePacks';
-import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAffordable, propertyById } from '../game/properties';
+import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAvailability, propertyById } from '../game/properties';
+import CharacterPortrait from './CharacterPortrait';
+import { portfolioSupported, resortsForProperty, type ResortRecord } from '../game/portfolio';
 
 const SLOT_IDS = ['A', 'B', 'C'];
 const WORLD_THEME_ORDER = [
@@ -29,26 +31,60 @@ const THEMES = [
 function NewCoursePanel({ initial, close }: { initial: boolean; close: () => void }) {
   const currentDifficulty = useUI((s) => s.difficulty);
   const currentThemePack = useUI((s) => s.themePackId);
+  const portfolioVersion = useUI((s) => s.portfolioVersion);
   const [difficulty, setDifficulty] = useState<Difficulty>(currentDifficulty);
   const [themePackId, setThemePackId] = useState<ThemePackId>(currentThemePack);
   const [themeCourseId, setThemeCourseId] = useState<string | null>(S.themePackId === currentThemePack ? S.themeCourseId : null);
-  const availableFunds = initial ? PROPERTY_INHERITANCE : S.cash;
-  const firstAvailable = WORLD_PROPERTIES.find((candidate) => !S.propertiesPurchased.includes(candidate.id) && propertyAffordable(candidate, availableFunds)) ?? propertyById(S.propertyId);
+  const [resorts, setResorts] = useState<ResortRecord[]>([]);
+  const [travelling, setTravelling] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void portfolioResorts().then((records) => { if (alive) setResorts(records); });
+    return () => { alive = false; };
+  }, [portfolioVersion]);
+  const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : S.cash;
+  const careerProgress = careerProgressSnapshot();
+  const availabilityFor = (candidate: (typeof WORLD_PROPERTIES)[number]) => propertyAvailability(candidate, {
+    funds: availableFunds,
+    progress: careerProgress,
+    proProfile: S.proProfile,
+    purchased: S.propertiesPurchased,
+    // A sandbox is a separate copy, not ownership of the underlying career
+    // deed. Keep that deed purchasable while its sandbox is currently open.
+    currentPropertyId: initial || S.sandbox ? null : S.propertyId,
+  });
+  const firstAvailable = WORLD_PROPERTIES.find((candidate) => availabilityFor(candidate).canPurchase) ?? propertyById(S.propertyId);
   const [propertyId, setPropertyId] = useState<PropertyId>(firstAvailable.id);
   const themePack = themePackById(themePackId);
   const property = propertyById(propertyId);
-  const purchased = S.propertiesPurchased.includes(property.id);
-  const affordable = propertyAffordable(property, availableFunds);
-  const start = (sandbox: boolean) => {
-    if (!sandbox && (purchased || !affordable)) return;
-    if (!initial && !window.confirm(`Purchase ${property.name} and permanently leave ${S.courseName}? The current autosave will be replaced.`)) return;
-    newCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds);
+  const availability = availabilityFor(property);
+  const purchased = availability.status === 'purchased' || availability.status === 'current';
+  const propertyResorts = resortsForProperty(resorts, property.id);
+  const careerResort = propertyResorts.find((resort) => resort.kind === 'career');
+  const start = async (sandbox: boolean) => {
+    if (!sandbox && !availability.canPurchase) return;
+    const action = sandbox ? `Start a sandbox on ${property.name}` : `Purchase ${property.name}`;
+    const detail = !portfolioSupported()
+      ? `${action}? This browser cannot keep a switchable resort portfolio. Continuing will replace ${S.courseName}; save it to a named slot or export it first.`
+      : sandbox
+        ? `${action} as a separate portfolio resort? ${S.courseName} will remain exactly as it is.`
+        : `${action} and transfer the available ${fmt$(availableFunds)} development fund? ${S.courseName} will remain in your portfolio, with its operating cash moved to the new project.`;
+    if (!initial && !window.confirm(detail)) return;
+    setTravelling(true);
+    await createPortfolioCourse(sandbox, difficulty, property.theme, themePackId, themeCourseId, property.id, availableFunds, !initial);
+    setTravelling(false);
+  };
+  const visit = async (resort: ResortRecord) => {
+    if (resort.active) return;
+    setTravelling(true);
+    await switchPortfolioResort(resort.id);
+    setTravelling(false);
   };
   return (
     <>
       <h1 id="modal-title">Choose your property</h1>
-      <div className="tag">New resort setup</div>
-      <p className="setupIntro">Choose a Theme Pack and difficulty, then purchase one of sixteen properties around the world. Location controls terrain, deed size, construction budget and the land you own on day one.</p>
+      <div className="tag">{initial ? 'New resort setup' : 'Resort portfolio & travel office'}</div>
+      <p className="setupIntro">Choose a Theme Pack and difficulty, then open one of sixteen properties around the world. New deeds release as your portfolio earns stronger ratings, SGA recognition, tournament prestige and pro fame.</p>
       <h2 className="setupLabel">Theme pack</h2>
       <div className="themePackGrid">
         {THEME_PACKS.map((pack) => {
@@ -58,6 +94,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
               key={pack.id}
               className={'themePackBtn' + (themePackId === pack.id ? ' active' : '')}
               style={{ '--pack-accent': pack.accent } as CSSProperties}
+              aria-pressed={themePackId === pack.id}
               onClick={() => { setThemePackId(pack.id); setThemeCourseId(null); }}
             >
               <i aria-hidden="true" />
@@ -71,7 +108,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
       <h2 className="setupLabel">Gameplay mode</h2>
       <div className="difficultyGrid">
         {DIFFICULTIES.map((item) => (
-          <button key={item.id} className={'difficultyBtn difficulty-' + item.id + (difficulty === item.id ? ' active' : '')} onClick={() => setDifficulty(item.id)}>
+          <button key={item.id} className={'difficultyBtn difficulty-' + item.id + (difficulty === item.id ? ' active' : '')} aria-pressed={difficulty === item.id} onClick={() => setDifficulty(item.id)}>
             <span className="difficultyPips" aria-hidden="true">{'◆'.repeat(DIFFICULTIES.indexOf(item) + 1)}</span>
             <b>{item.label}</b><small>{item.description}</small>
           </button>
@@ -80,35 +117,94 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
 
       <div className="worldScreenHead">
         <span><b>World Screen</b><small>16 development opportunities</small></span>
-        <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
+        <div className="worldCareerStrip" aria-label="Portfolio career progress">
+          <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
+          <span><small>Best rating</small><b>{careerProgress.bestReputation.toFixed(1)}★</b></span>
+          <span><small>Pro fame</small><b>{S.proProfile.fame}</b></span>
+          <span><small>Deeds</small><b>{S.propertiesPurchased.length} / 16</b></span>
+        </div>
       </div>
-      <div className="worldMap" aria-label="Worldwide property market">
-        {WORLD_THEME_ORDER.map((group) => (
-          <section className={`worldRegion world-${group.id}`} key={group.id}>
-            <header><i>{group.mark}</i><b>{group.label}</b></header>
-            {WORLD_PROPERTIES.filter((candidate) => candidate.theme === group.id).map((candidate) => {
-              const isPurchased = S.propertiesPurchased.includes(candidate.id);
-              const canAfford = propertyAffordable(candidate, availableFunds);
-              const state = isPurchased ? 'purchased' : canAfford ? 'affordable' : 'locked';
-              return (
-                <button key={candidate.id} className={`worldProperty ${state}${propertyId === candidate.id ? ' selected' : ''}`} aria-pressed={propertyId === candidate.id} onClick={() => setPropertyId(candidate.id)}>
-                  <i className="propertyPin" aria-hidden="true" />
-                  <span><b>{candidate.name}</b><small>{candidate.region}</small></span>
-                  <em>{isPurchased ? 'PURCHASED' : candidate.price ? fmt$(candidate.price) : 'INHERITED'}</em>
-                </button>
-              );
-            })}
-          </section>
-        ))}
-      </div>
+      <div className="worldScreenBody">
+        <div className="worldMap" role="group" aria-label="Worldwide property market">
+          {WORLD_THEME_ORDER.map((group) => (
+            <section className={`worldRegion world-${group.id}`} key={group.id} aria-labelledby={`world-region-${group.id}`}>
+              <header><i aria-hidden="true">{group.mark}</i><b id={`world-region-${group.id}`}>{group.label}</b></header>
+              {WORLD_PROPERTIES.filter((candidate) => candidate.theme === group.id).map((candidate) => {
+                const isCurrent = !initial && S.propertyId === candidate.id;
+                const candidateAvailability = availabilityFor(candidate);
+                const isPurchased = candidateAvailability.status === 'purchased' || candidateAvailability.status === 'current';
+                const prestigeMissing = candidateAvailability.missing.filter((requirement) => requirement.id !== 'cash');
+                const state = isPurchased ? 'purchased' : candidateAvailability.canPurchase ? 'affordable' : 'locked';
+                const lockClass = prestigeMissing.length ? ' prestigeLocked' : candidateAvailability.cashShortfall ? ' cashLocked' : '';
+                const cardStatus = isCurrent
+                  ? S.sandbox ? 'Current sandbox property' : 'Current course, already purchased'
+                  : isPurchased ? 'Purchased'
+                  : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, available` : 'Inherited property, available'
+                  : `Locked. ${candidateAvailability.missing.map((requirement) => requirement.label).join(', ')}`;
+                const candidateResorts = resortsForProperty(resorts, candidate.id);
+                const portfolioResort = candidateResorts.find((resort) => resort.kind === 'career');
+                const sandboxCount = candidateResorts.filter((resort) => resort.kind === 'sandbox').length;
+                const sandboxStatus = sandboxCount ? `${sandboxCount} saved sandbox ${sandboxCount === 1 ? 'copy' : 'copies'}.` : '';
+                const cardBadge = isCurrent
+                  ? S.sandbox ? 'CURRENT SANDBOX' : 'CURRENT COURSE'
+                  : isPurchased ? portfolioResort ? 'PORTFOLIO RESORT' : 'PURCHASED'
+                  : sandboxCount ? `${sandboxCount} SANDBOX${sandboxCount === 1 ? '' : 'ES'}`
+                  : candidateAvailability.canPurchase ? candidate.price ? fmt$(candidate.price) : 'INHERITED'
+                  : prestigeMissing.length ? `LOCKED · ${prestigeMissing[0].label}` : `${fmt$(candidateAvailability.cashShortfall)} SHORT`;
+                return (
+                  <button
+                    key={candidate.id}
+                    className={`worldProperty ${state}${lockClass}${isCurrent ? ' current' : ''}${propertyId === candidate.id ? ' selected' : ''}`}
+                    aria-label={`${candidate.name}, ${candidate.region}. ${cardStatus}. ${sandboxStatus}`.trim()}
+                    aria-pressed={propertyId === candidate.id}
+                    onClick={() => setPropertyId(candidate.id)}
+                  >
+                    <i className="propertyPin" aria-hidden="true" />
+                    <span><b>{candidate.name}</b><small>{candidate.region}</small></span>
+                    <em>{cardBadge}</em>
+                  </button>
+                );
+              })}
+            </section>
+          ))}
+        </div>
 
-      <div className={`propertyInspector inspector-${property.theme}`}>
-        <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : affordable ? property.price ? fmt$(property.price) : 'Inheritance' : `Need ${fmt$(property.price - availableFunds)} more`}</strong></div>
-        <p>{property.description}</p>
-        <div className="propertyFacts">
-          <div className="parcelDeed" style={{ gridTemplateColumns: `repeat(${PW}, 1fr)` }}>{Array.from({ length: PW * PH }, (_, parcel) => <i key={parcel} className={property.ownedParcels.includes(parcel) ? 'owned' : ''} />)}</div>
-          <span><b>{property.ownedParcels.length} / {PW * PH}</b><small>starting parcels</small></span>
-          {(['relief', 'water', 'woodland'] as const).map((metric) => <span key={metric}><b className="propertyMeter"><i style={{ width: `${Math.round(property.terrain[metric] * 100)}%` }} /></b><small>{metric}</small></span>)}
+        <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
+          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : availability.canPurchase ? property.price ? 'Ready to purchase' : 'Inheritance ready' : 'Career locked'}</strong></div>
+          <p>{property.description}</p>
+          {propertyResorts.map((resort) => (
+            <button
+              type="button"
+              key={resort.id}
+              className={'portfolioDeed' + (resort.active ? ' active' : '')}
+              disabled={travelling || resort.active}
+              aria-current={resort.active ? 'page' : undefined}
+              aria-label={`${resort.active ? 'Current' : 'Visit'} ${resort.kind} resort ${resort.summary.courseName}, ${fmt$(resort.summary.cash)}, ${resort.summary.rep.toFixed(1)} stars, ${resort.summary.holes} holes`}
+              onClick={() => void visit(resort)}
+            >
+              <span><small>{resort.active ? `Current ${resort.kind}` : `${resort.kind} resort · select to visit`}</small><b>{resort.summary.courseName}</b></span>
+              <span><b>{fmt$(resort.summary.cash)}</b><small>{resort.kind === 'sandbox' ? 'unlimited treasury' : 'operating cash'}</small></span>
+              <span><b>{resort.summary.rep.toFixed(1)}★</b><small>{resort.summary.holes} holes</small></span>
+            </button>
+          ))}
+          <div className="propertyUnlocks" aria-label={`${property.name} deed requirements`}>
+            <header><b>Deed requirements</b><span>{availability.requirements.filter((requirement) => requirement.met).length} / {availability.requirements.length} complete</span></header>
+            <ul>
+              {availability.requirements.map((requirement) => (
+                <li className={requirement.met ? 'met' : 'missing'} key={requirement.id}>
+                  <i aria-hidden="true">{requirement.met ? '✓' : '○'}</i><span>{requirement.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="propertyFacts">
+            <div className="parcelDeed" role="img" aria-label={`${property.ownedParcels.length} of ${PW * PH} parcels included in the starting deed`} style={{ gridTemplateColumns: `repeat(${PW}, 1fr)` }}>{Array.from({ length: PW * PH }, (_, parcel) => <i key={parcel} className={property.ownedParcels.includes(parcel) ? 'owned' : ''} />)}</div>
+            <span><b>{property.ownedParcels.length} / {PW * PH}</b><small>starting parcels</small></span>
+            {(['relief', 'water', 'woodland'] as const).map((metric) => {
+              const value = Math.round(property.terrain[metric] * 100);
+              return <span key={metric}><b className="propertyMeter" role="meter" aria-label={`${metric} ${value}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}><i style={{ width: `${value}%` }} /></b><small>{metric}</small></span>;
+            })}
+          </div>
         </div>
       </div>
 
@@ -116,13 +212,19 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <>
           <h2 className="setupLabel">Bundled course</h2>
           <div className="themeCourseGrid">
-            <button className={themeCourseId === null ? 'active' : ''} onClick={() => setThemeCourseId(null)}><b>Fresh property</b><span>One starter hole · build from scratch</span></button>
-            {themePack.courses.map((course) => <button key={course.id} className={themeCourseId === course.id ? 'active' : ''} onClick={() => setThemeCourseId(course.id)}><b>{course.name}</b><span>{course.description}</span></button>)}
+            <button className={themeCourseId === null ? 'active' : ''} aria-pressed={themeCourseId === null} onClick={() => setThemeCourseId(null)}><b>Fresh property</b><span>One starter hole · build from scratch</span></button>
+            {themePack.courses.map((course) => <button key={course.id} className={themeCourseId === course.id ? 'active' : ''} aria-pressed={themeCourseId === course.id} onClick={() => setThemeCourseId(course.id)}><b>{course.name}</b><span>{course.description}</span></button>)}
           </div>
         </>
       )}
-      <button className="bigbtn" disabled={purchased || !affordable} onClick={() => start(false)}>{purchased ? 'Choose an undeveloped property' : !affordable ? 'This property is outside your budget' : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
-      <button className="bigbtn secondarySetup" onClick={() => start(true)}>Sandbox on {property.name} — unlimited funds &amp; land</button>
+      {purchased ? (
+        <button className="bigbtn portfolioVisit" disabled={travelling || !careerResort || careerResort.active} onClick={() => careerResort && void visit(careerResort)}>
+          {travelling ? 'Preparing resort…' : careerResort?.active ? `${careerResort.summary.courseName} is open` : careerResort ? `Visit ${careerResort.summary.courseName}` : 'Legacy deed owned · local resort save unavailable'}
+        </button>
+      ) : (
+        <button className="bigbtn" disabled={travelling || !availability.canPurchase} onClick={() => void start(false)}>{travelling ? 'Preparing resort…' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
+      )}
+      <button className="bigbtn secondarySetup" disabled={travelling} onClick={() => void start(true)}>{travelling ? 'Saving portfolio…' : `Sandbox on ${property.name} — unlimited funds & land`}</button>
       {!initial && <button className="textBtn" onClick={close}>Keep current course</button>}
     </>
   );
@@ -133,7 +235,7 @@ function LandOfferPanel({ close }: { close: () => void }) {
   const offer = S.specialVisitors.landOffer;
   return (
     <>
-      <div className="guestHeading pickyHeading"><span className="guestPortrait">IM</span><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
+      <div className="guestHeading pickyHeading"><CharacterPortrait name="I.M. Picky" shirt="#71845d" skin="#d9aa7c" cap="#d0ad58" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
       {offer ? (
         <>
           <p>Your course passed inspection. Choose any adjoining highlighted plot before the offer expires.</p>
@@ -257,12 +359,33 @@ export default function Modals() {
   const modalRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!modal) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     modalRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !(modal.kind === 'newCourse' && modal.initial)) setStore({ modal: null });
+      if (event.key !== 'Tab' || !modalRef.current) return;
+      const focusable = [...modalRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) {
+        event.preventDefault();
+        modalRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === modalRef.current || document.activeElement === first || !modalRef.current.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === modalRef.current || document.activeElement === last)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previousFocus?.focus();
+    };
   }, [modal, setStore]);
   useEffect(() => setSubmission('idle'), [modal]);
   if (!modal) return null;
@@ -330,7 +453,7 @@ export default function Modals() {
               style={{ background: '#8a4a3a', marginTop: 8 }}
               onClick={() => setStore({ modal: { kind: 'newCourse' } })}
             >
-              🚜 New course &amp; Sandbox setup
+              🌍 World Screen &amp; resort portfolio
             </button>
             <div className="fine">An original homage to Sid Meier’s SimGolf (2002). All code and art generated fresh.</div>
           </>
@@ -425,7 +548,7 @@ export default function Modals() {
         {modal.kind === 'landOffer' && <LandOfferPanel close={close} />}
         {modal.kind === 'landmarkGift' && (
           <>
-            <div className="guestHeading ivanaHeading"><span className="guestPortrait">IR</span><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
+            <div className="guestHeading ivanaHeading"><CharacterPortrait name="Ivana Richman" shirt="#bd6f9f" skin="#e0a878" cap="#f2d688" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
             <p>“I adored my round. Please accept this Landmark as a gift to the resort.”</p>
             <div className="landmarkGiftArt" aria-hidden="true"><span>★</span><i /><b>LANDMARK</b></div>
             <p className="fine">The first Landmark is free. After it is placed, additional Landmarks can be purchased from Resort &amp; Facilities.</p>

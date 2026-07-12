@@ -4,14 +4,18 @@ Everything shipped so far is in `featurelist.md`. This file is remaining work on
 
 ## Confirmed manual gaps
 
-- [ ] **World Screen property market** (manual p.7) — the original offers sixteen worldwide properties with different location, size and cost, shows affordable/unaffordable/already-purchased pins, and permanently leaves the current course after a purchase. The clone has four terrain themes and buyable expansion parcels, but only one new-course property footprint/generation profile.
 - [ ] **Complete keyboard/report hotkey parity** (manual p.3–4) — core pan/pause/rotate shortcuts exist, but the F1–F10 report map, terrain shortcuts and open-hole/name toggles are not complete.
 
 Theme Packs are implemented as modular player/story/celebrity/pro/course bundles with per-section Standard fallback. Further fidelity gaps should be added here only after verifying them against the manual or original behavior.
 
+## Current visual verification
+
+- [ ] **Browser-QA the new presentation work.** Automated coverage is green, but the sixteen-property World Screen still needs desktop/tablet/phone and keyboard-only checks; water/stream bridges need multi-tile, zoom and all-four-rotation inspection; the tactical tree-flight ideal-line risk guide/status needs pointer/keyboard checks across round trees, trunks and pines, including cases where dispersion misses the marked cover; and the horizontal Field Desk facility strip plus staff actions need responsive layout checks. Do not treat typecheck, bundling or Vitest as visual approval.
+
 ## Online play and long-term progression
 
 The owner has explicitly authorized building these systems. Production deployment still requires credential, domain and Cloudflare account decisions before touching live infrastructure.
+
 
 - [ ] **Account polish.** Google OIDC, hashed sessions, session listing/revocation, privacy-preserving account deletion and local↔cloud scorecard migration are implemented. Device labels, downloadable account-data export and re-authentication before destructive actions remain.
 - [ ] **Finish cloud publishing.** Conflict-safe versioned cloud slots, validated course publication and public/unlisted visibility are implemented; private sharing, thumbnails, course-version history and restore UI remain.

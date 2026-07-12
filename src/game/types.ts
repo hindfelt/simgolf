@@ -192,6 +192,17 @@ export interface FinanceEntry {
 
 export type BallKind = 'fly' | 'roll' | 'putt';
 
+export interface TreeCanopyImpact {
+  t: number;
+  x: number;
+  y: number;
+  treeX: number;
+  treeY: number;
+  kind: 'canopy' | 'trunk' | 'pine';
+  /** Absolute vertical screen-space coordinate above the map's zero plane. */
+  altitude: number;
+}
+
 export interface Ball {
   kind: BallKind;
   owner: Golfer | 'P';
@@ -209,8 +220,17 @@ export interface Ball {
   holed?: boolean;
   /** High Backspin shot: skip roll-out, stop dead where it lands. */
   noRoll?: boolean;
-  /** Low Punch shot: flies under branch cover, never deflects off a tree. */
+  /** Low Punch shot marker; clearance comes from its lower trajectory, not collision exemptions. */
   lowFlight?: boolean;
+  /** Player-shaped flight follows the same curve as the aim guide, not a straight chord. */
+  shotShape?: ShotShape;
+  curvePerpX?: number;
+  curvePerpY?: number;
+  curveDistance?: number;
+  /** Club-specific ground release; Backspin still bypasses rollout entirely. */
+  rollMultiplier?: number;
+  /** Player-only precomputed first tree impact. AI balls intentionally omit this. */
+  canopyImpact?: TreeCanopyImpact;
 }
 
 export interface Floater {
@@ -236,7 +256,16 @@ export interface Particle {
 
 export type ClubId = 'driver' | 'iron' | 'wedge';
 /** Manual (p.21-22): shot techniques the player picks before each swing. */
-export type ShotShape = 'straight' | 'fade' | 'draw' | 'backspin' | 'punch';
+export type ShotShape = 'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch';
+export type WeatherCondition = 'clear' | 'overcast' | 'drizzle' | 'rain';
+
+/** Stable conditions for one player hole. Wetness changes carry and ground release;
+ * intensity controls the rain treatment without introducing per-frame simulation state. */
+export interface WeatherState {
+  condition: WeatherCondition;
+  intensity: number;
+  wetness: number;
+}
 
 /** Immutable evidence for one completed player stroke. This is deliberately richer
  * than the HUD needs because online competitions will submit this same record shape. */
@@ -270,6 +299,8 @@ export interface PlayerHoleScore {
   greenInRegulation: boolean;
   hazards: string[];
   wind: { dx: number; dy: number; speed: number };
+  /** Present on new rounds; optional so version-1 scorecards saved before weather remain readable. */
+  weather?: WeatherState;
   shots: PlayerShotRecord[];
 }
 
@@ -336,6 +367,12 @@ export interface Aim {
   sy: number;
   cx: number;
   cy: number;
+  /** Pointer drags and keyboard-generated drags share the same shot-preview pipeline. */
+  kind?: 'pointer' | 'keyboard';
+  /** Camera-independent intent keeps keyboard previews stable during view changes. */
+  worldDirX?: number;
+  worldDirY?: number;
+  worldPower?: number;
 }
 
 export interface Camera {
@@ -486,6 +523,15 @@ export interface ProProfile {
   fame: number;
 }
 
+/** Non-spendable portfolio milestones that survive moving between courses. */
+export interface CareerProgress {
+  version: 1;
+  bestReputation: number;
+  tournamentHosted: boolean;
+  sgaTop100Earned: boolean;
+  sgaTop18Earned: boolean;
+}
+
 export interface RetiredCourse {
   id: string;
   name: string;
@@ -586,6 +632,8 @@ export interface SpecialVisitorState {
   ivanaVisits: number;
   landmarkDonated: boolean;
   landmarkCredits: number;
+  /** True only after buying a county parcel offered by I.M. Picky. */
+  landPurchased?: boolean;
   landOffer: LandOffer | null;
 }
 
@@ -629,6 +677,8 @@ export interface GameState {
   proProfile: ProProfile;
   /** Profile-level World Screen history used for magenta purchased pins. */
   propertiesPurchased: PropertyId[];
+  /** Sticky World Screen unlock milestones; money remains course-local and spendable. */
+  careerProgress: CareerProgress;
   retiredCourses: RetiredCourse[];
   championshipHistory: ChampionshipResult[];
   /** Ephemeral isolated pro-circuit round; never written into a course save. */
@@ -667,6 +717,8 @@ export interface GameState {
   camShake: number;
   /** Per-hole wind for the player's own round — a unit direction plus a 0..1 speed, redrawn each hole. */
   wind: { dx: number; dy: number; speed: number };
+  /** Per-hole sky and turf conditions for the player's round. */
+  weather: WeatherState;
   /** Persistent history of golfer/staff/system chatter, newest last — mirrors the original's Player Comments report. */
   comments: CommentEntry[];
   /** Periodic snapshots for the Histograph trend chart — reputation/cash/golfers over time, newest last. */

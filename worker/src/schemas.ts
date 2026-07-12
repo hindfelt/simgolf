@@ -24,7 +24,7 @@ export const publishCourseSchema = z.object({
 const shotSchema = z.object({
   stroke: z.number().int().min(1).max(50),
   club: z.enum(['driver', 'iron', 'wedge', 'putter']),
-  shape: z.enum(['straight', 'fade', 'draw', 'backspin', 'punch', 'putt']),
+  shape: z.enum(['straight', 'fade', 'draw', 'hook', 'backspin', 'punch', 'putt']),
   fromLie: z.string().max(30),
   resultLie: z.string().max(30),
   power: z.number().finite().min(0).max(2),
@@ -50,6 +50,11 @@ const holeSchema = z.object({
   greenInRegulation: z.boolean(),
   hazards: z.array(z.string().max(40)).max(30),
   wind: z.object({ dx: z.number().finite().min(-1).max(1), dy: z.number().finite().min(-1).max(1), speed: z.number().finite().min(0).max(1) }),
+  weather: z.object({
+    condition: z.enum(['clear', 'overcast', 'drizzle', 'rain']),
+    intensity: z.number().finite().min(0).max(1),
+    wetness: z.number().finite().min(0).max(1),
+  }).optional(),
   shots: z.array(shotSchema).min(1).max(50),
 }).strict();
 
