@@ -8,6 +8,8 @@ import { difficultyDefinition } from '../game/difficulty';
 import Icon, { type IconName } from './Icon';
 import { themePackById } from '../game/themePacks';
 import { propertyById } from '../game/properties';
+import { S } from '../game/state';
+import { FINANCIAL_YEAR_SECONDS, financialYearAt } from '../game/finance';
 
 function ControlButton({ label, icon, active = false, disabled = false, onClick }: { label: string; icon: IconName; active?: boolean; disabled?: boolean; onClick: () => void }) {
   return (
@@ -39,6 +41,7 @@ export default function TopBar() {
   const themePackId = useUI((s) => s.themePackId);
   const propertyId = useUI((s) => s.propertyId);
   const portfolioStatus = useUI((s) => s.portfolioStatus);
+  const simTick = useUI((s) => s.simTick);
   const setStore = useUI((s) => s.set);
   const fromMenu = (action: () => void) => {
     action();
@@ -47,11 +50,16 @@ export default function TopBar() {
 
   const full = Math.round(clamp(rep, 0, 5));
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  void simTick;
+  const month = months[Math.min(11, Math.floor(((S.time % FINANCIAL_YEAR_SECONDS) / FINANCIAL_YEAR_SECONDS) * 12))];
+  const simDate = `${month} · Year ${financialYearAt(S.time)}`;
 
   return (
     <>
-      <header className="plaque" aria-label="Course status">
-        <div className="pEyebrow">Course operations</div>
+      <header className="plaque" data-ui="course-plaque" aria-label="Course status">
+        <span className="courseCrest" aria-hidden="true"><Icon name="course" size={34} /></span>
+        <div className="pEyebrow">{propertyById(propertyId).region}</div>
         <button
           type="button"
           className="pTitle pTitleBtn"
@@ -61,19 +69,21 @@ export default function TopBar() {
             if (next != null) setCourseName(next);
           }}
         >
-          {courseName.toUpperCase()}
+          {courseName}
         </button>
         <div className="pSub">
-          {holes} hole{holes === 1 ? '' : 's'} open · {golfers} on course
-          <span className="propertyBadge">{propertyById(propertyId).region}</span>
+          <span className="simDate">{simDate}</span>
+          <span className="courseCounters"><b>⛳ {holes}</b><b>● {golfers}</b><b>♥ {Math.round(rep * 20)}</b></span>
+          <span className="statusBadges">
           <span className={'portfolioSyncBadge status-' + portfolioStatus}>{portfolioStatus === 'error' ? 'PORTFOLIO SAVE ERROR' : portfolioStatus === 'saving' ? 'SAVING PORTFOLIO' : portfolioStatus === 'saved' ? 'PORTFOLIO SAVED' : 'LOCAL AUTOSAVE'}</span>
           {sandbox && <span className="sandboxBadge">SANDBOX</span>}
           {!sandbox && <span className={'difficultyBadge difficulty-' + difficulty}>{difficultyDefinition(difficulty).label}</span>}
           {themePackId !== 'standard' && <span className="themePackBadge">{themePackById(themePackId).name}</span>}
+          </span>
         </div>
       </header>
 
-      <div className="gauges" aria-label="Course finances and reputation">
+      <div className="gauges" data-ui="status-shelves" aria-label="Course finances and reputation">
         <div className="gauge" title="Bank balance">
           <div className="gCap"><span className="gLabel">Bank</span><output className="gVal">{fmt$(cash)}</output></div>
           <span className="gOrb"><Icon name="cash" size={18} /></span>
@@ -92,14 +102,12 @@ export default function TopBar() {
         </div>
       </div>
 
-      <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} aria-label="Simulation controls">
-        <ControlButton label="Pause simulation" icon="pause" active={speed === 0} disabled={mode === 'play'} onClick={() => setSpeed(0)} />
-        <ControlButton label="Normal simulation speed" icon="play" active={speed === 1} onClick={() => setSpeed(1)} />
-        <ControlButton label="Fast simulation speed" icon="fast" active={speed === 3} onClick={() => setSpeed(3)} />
+      <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} data-ui="simulation-controls" aria-label="Simulation controls">
         <details className="fieldMenu" ref={menuRef}>
-          <summary className="orb" aria-label="Open field desk menu" title="Field desk menu"><Icon name="course" size={19} /></summary>
+          <summary className="orb" aria-label="Open field desk menu" title="Field desk menu"><Icon name="course" size={27} /></summary>
+          <span className="controlLegend" aria-hidden="true">Clubhouse</span>
           <div className="fieldMenuCard" aria-label="Course management controls">
-            <div className="fieldMenuHead"><span>Groundskeeper’s desk</span><small>Course operations</small></div>
+            <div className="fieldMenuHead"><span>Clubhouse</span><small>Course operations</small></div>
             <div className="fieldMenuGrid">
               <ControlButton label={muted ? 'Turn sound on' : 'Mute sound'} icon={muted ? 'mute' : 'volume'} active={muted} onClick={() => fromMenu(() => { setMuted(!muted); ensureAudio(); })} />
               <ControlButton label="Rotate view left" icon="rotateLeft" onClick={() => fromMenu(() => rotateView(-1))} />
@@ -116,6 +124,9 @@ export default function TopBar() {
             </div>
           </div>
         </details>
+        <ControlButton label="Pause simulation" icon="pause" active={speed === 0} disabled={mode === 'play'} onClick={() => setSpeed(0)} />
+        <ControlButton label="Normal simulation speed" icon="play" active={speed === 1} onClick={() => setSpeed(1)} />
+        <ControlButton label="Fast simulation speed" icon="fast" active={speed === 3} onClick={() => setSpeed(3)} />
       </div>
     </>
   );

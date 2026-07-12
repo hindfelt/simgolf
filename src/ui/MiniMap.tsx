@@ -122,7 +122,7 @@ export default function MiniMap() {
 
   const legend = mode === 'course' ? 'Hole order · facilities · offered land' : mode === 'aura' ? 'Trouble  ←  mood aura  →  delight' : 'Black = impossible · bright green = valuable';
   return (
-    <aside className={'routingMap mode-' + mode} aria-label="Routing map">
+    <aside className={'routingMap mode-' + mode} data-ui="routing-monitor" aria-label="Routing map">
       <header><b>Routing map</b><span>{mode === 'course' ? `${holeCount} holes` : mode === 'aura' ? 'Player mood' : 'Building lots'}</span></header>
       <div className="routingTabs" role="tablist" aria-label="Routing map layers">
         {([['course', 'Route'], ['aura', 'Aura'], ['homeValue', 'Home value']] as const).map(([id, label]) => (
