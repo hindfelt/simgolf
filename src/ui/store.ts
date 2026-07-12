@@ -32,6 +32,9 @@ export interface PlayHudInfo {
   carry: number | null;
   rollout: number | null;
   finishDistance: number | null;
+  canopyStatus: 'clear' | 'canopy' | 'trunk' | 'pine' | null;
+  canopyLabel: string | null;
+  canopyAdvice: string | null;
   selectedRole: string;
   club: ClubId;
   shape: ShotShape;

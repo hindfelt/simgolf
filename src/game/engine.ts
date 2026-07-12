@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
@@ -34,6 +34,9 @@ import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './cour
 import { findPath } from './pathfind';
 import { isWaterBackedTile } from './bridges';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
+import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
+import type { FlightPath } from './flightPath';
+export { ballFlightPosition, flightApexHeight, shapeCurveOffset } from './flightPath';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -117,10 +120,34 @@ export function updatePlayHud() {
     const profile = clubLieProfile(p.lie, clubId);
     return [clubId, { carry: clubRanges[clubId], available: profile.available, reason: profile.reason, role: profile.role }];
   })) as Record<ClubId, { carry: number; available: boolean; reason: string | null; role: string }>;
-  const plan = aim && p.ball ? playerShotPlan(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power) : null;
+  // The shared cache wraps the former direct call:
+  // playerShotForecast(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power)
+  const forecast = aim ? cachedPlayerShotForecast(p, aim) : null;
+  const plan = forecast?.plan ?? null;
   const landingLie = plan ? lieOf(plan.target.x, plan.target.y) : null;
-  const rollout = plan && p.lie !== 'green' && landingLie ? playerEstimatedRoll(landingLie, p.shape, p.club) : null;
+  const rollout = plan && p.lie !== 'green' && landingLie && !forecast?.canopyImpact ? playerEstimatedRoll(landingLie, p.shape, p.club) : null;
   const landingDistance = plan && p.ball ? dist(p.ball, plan.target) : null;
+  const restingDistance = forecast?.restingPoint && p.ball ? dist(p.ball, forecast.restingPoint) : null;
+  const canopyStatus = forecast && p.lie !== 'green' ? forecast.canopyStatus : null;
+  const canopyLabel = canopyStatus === 'clear'
+    ? 'Canopy clear'
+    : canopyStatus === 'canopy'
+      ? 'Canopy risk'
+      : canopyStatus === 'trunk'
+        ? 'Trunk risk'
+        : canopyStatus === 'pine'
+          ? 'Pine risk'
+          : null;
+  const canopyAdvice = canopyStatus === 'canopy'
+    ? p.shape === 'punch'
+      ? 'Ideal line for Punch clips high branches; dispersion may miss. Shape around them or switch to Wedge for height.'
+      : 'Ideal line clips the canopy; dispersion may miss. Try Punch under open branches, shape around the crown, or switch to Wedge for height.'
+    : canopyStatus === 'trunk'
+      ? 'Ideal line meets the trunk; dispersion may miss. Shape around it or switch to Wedge—Punch cannot go through wood.'
+      : canopyStatus === 'pine'
+        ? 'Ideal line clips low pine cover; dispersion may miss. Shape around it or choose a higher flight—Punch stays blocked.'
+        : null;
+  const keyboardRisk = canopyStatus && canopyStatus !== 'clear' && canopyLabel ? ` · ${canopyLabel}` : '';
   ui.set({
     playHud: {
       holeLabel: 'Hole ' + (p.holeIdx + 1) + ' of ' + S.holes.length + ' · Par ' + h.par,
@@ -130,7 +157,7 @@ export function updatePlayHud() {
       coach: p.state === 'wait'
         ? 'Track the ball, then plan the next lie.'
         : p.aim?.kind === 'keyboard' && aim
-          ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing.`
+          ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing${keyboardRisk}.`
         : p.lie === 'green'
           ? 'Drag against the putting line, then release.'
           : 'Choose club and flight, drag back, then release.',
@@ -140,9 +167,12 @@ export function updatePlayHud() {
       clubRanges,
       clubOptions,
       power,
-      carry: plan?.intend ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
+      carry: forecast?.plan.intend ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
       rollout,
-      finishDistance: landingDistance === null ? null : landingDistance + (rollout ?? 0),
+      finishDistance: restingDistance ?? (landingDistance === null ? null : landingDistance + (rollout ?? 0)),
+      canopyStatus,
+      canopyLabel,
+      canopyAdvice,
       selectedRole: clubLieProfile(p.lie, p.club).role,
       club: p.club,
       shape: p.shape,
@@ -1215,11 +1245,6 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   return { x: clamp(from.x + Math.cos(ang) * d, 0.6, W - 0.6), y: clamp(from.y + Math.sin(ang) * d, 0.6, H - 0.6), power: d };
 }
 type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'rollMultiplier'>;
-/** Shared screen-space flight apex used by launched balls and the aim guide. */
-export function flightApexHeight(targetDistance: number, heightMultiplier = 1): number {
-  return Math.min(64, 10 + Math.max(0, targetDistance) * 4.5) * heightMultiplier;
-}
-
 function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number) {
   const d = dist({ x: spec.fx, y: spec.fy }, { x: spec.tx, y: spec.ty });
   const ball: Ball = {
@@ -1230,6 +1255,9 @@ function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number
     x: spec.fx,
     y: spec.fy,
   };
+  if (ball.kind === 'fly') {
+    ball.canopyImpact = playerOnlyTreeCanopyImpact(ball, { theme: S.theme, tileAt, elevationAt: elevAt }) ?? undefined;
+  }
   S.balls.push(ball);
 }
 /**
@@ -1238,25 +1266,6 @@ function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number
  * aim instead of following it exactly. `t` is 0 at the tee, 1 at landing — used both
  * here (t=1, for the actual landing point) and in `drawAim`'s preview (stepped 0..1).
  */
-export function shapeCurveOffset(shape: ShotShape, intend: number, t: number): number {
-  if (shape === 'fade') return intend * 0.22 * Math.pow(t, 1.5);
-  if (shape === 'draw') return -intend * 0.22 * Math.pow(t, 1.5);
-  if (shape === 'hook') return -intend * 0.38 * Math.pow(t, 1.35);
-  return 0;
-}
-
-export function ballFlightPosition(ball: Pick<Ball, 'fx' | 'fy' | 'tx' | 'ty' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance'>, t: number): Vec {
-  const progress = clamp(t, 0, 1);
-  let x = lerp(ball.fx, ball.tx, progress);
-  let y = lerp(ball.fy, ball.ty, progress);
-  if (ball.shotShape && ball.curveDistance && ball.curvePerpX !== undefined && ball.curvePerpY !== undefined) {
-    const desired = shapeCurveOffset(ball.shotShape, ball.curveDistance, progress);
-    const chord = shapeCurveOffset(ball.shotShape, ball.curveDistance, 1) * progress;
-    x += ball.curvePerpX * (desired - chord);
-    y += ball.curvePerpY * (desired - chord);
-  }
-  return { x, y };
-}
 function elevGrad(x: number, y: number): Vec {
   return {
     x: (elevAt(x + 1, y) - elevAt(x - 1, y)) / 2,
@@ -1304,7 +1313,15 @@ function resolveFly(b: Ball) {
   const from = { x: b.fx, y: b.fy };
   let pos = { x: b.tx, y: b.ty };
   const events: string[] = [];
-  if (lieOf(pos.x, pos.y) === 'tree' && !b.lowFlight && Math.random() < 0.5) {
+  if (b.canopyImpact) {
+    pos = treeDropPosition(b, b.canopyImpact);
+    events.push('tree');
+    sfx.thunk();
+    // A canopy strike drops immediately: no ground release, no extra stroke penalty.
+    settleShot(b, pos, events, false, 'tree');
+    return;
+  }
+  if (usesLegacyEndpointTreeDeflection(b) && lieOf(pos.x, pos.y) === 'tree' && Math.random() < 0.5) {
     const back = rand(0.55, 0.75);
     pos = { x: lerp(from.x, b.tx, back), y: lerp(from.y, b.ty, back) };
     events.push('tree');
@@ -1357,15 +1374,20 @@ function resolveFly(b: Ball) {
   }
   settleShot(b, pos, events, false);
 }
-function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean) {
+export function usesLegacyEndpointTreeDeflection(ball: Pick<Ball, 'owner' | 'lowFlight'>): boolean {
+  return ball.owner !== 'P' && !ball.lowFlight;
+}
+
+function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, forcedLie?: LieKey) {
   let holed = holedFlag;
-  if (!holed && b.cup && lieOf(pos.x, pos.y) === 'green' && dist(pos, b.cup) < 0.45) {
+  const resultLie = forcedLie ?? lieOf(pos.x, pos.y);
+  if (!holed && b.cup && resultLie === 'green' && dist(pos, b.cup) < 0.45) {
     holed = true;
     events.push('chip');
   }
   if (holed && b.cup) pos = { x: b.cup.x, y: b.cup.y };
   if (b.owner === 'P') {
-    onPlayerLand(pos, events, holed);
+    onPlayerLand(pos, events, holed, forcedLie);
     return;
   }
   onGolferLand(b.owner, pos, events, holed);
@@ -1836,7 +1858,12 @@ function updateBalls(dt: number) {
     const b = S.balls[i];
     const spd = b.owner === 'P' ? Math.max(1, S.speed) : S.speed;
     b.t += (dt * spd) / b.dur;
-    if (b.t >= 1) {
+    const endT = b.kind === 'fly' ? b.canopyImpact?.t ?? 1 : 1;
+    if (b.t >= endT) {
+      b.t = endT;
+      const finalPosition = b.kind === 'fly' ? ballFlightPosition(b, endT) : { x: b.tx, y: b.ty };
+      b.x = finalPosition.x;
+      b.y = finalPosition.y;
       S.balls.splice(i, 1);
       if (b.kind === 'fly') resolveFly(b);
       else settleShot(b, { x: b.tx, y: b.ty }, b.events || [], !!b.holed);
@@ -2212,11 +2239,11 @@ export function playerShotPlan(
   const magnitude = Math.hypot(dirX, dirY) || 1;
   const nx = dirX / magnitude;
   const ny = dirY / magnitude;
-  const intend = playerIntendedDistance(lie, clubId, power);
+  const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
+  const intend = playerIntendedDistance(lie, clubId, power) * SHOT_SHAPES[activeShape].carryMul;
   const windPush = lie === 'green' ? 0 : wind.speed * intend * 0.35;
   const perpX = -ny;
   const perpY = nx;
-  const activeShape: ShotShape = lie === 'green' ? 'straight' : shape;
   const curve = shapeCurveOffset(activeShape, intend, 1);
   const target = {
     x: from.x + nx * intend + wind.dx * windPush + perpX * curve,
@@ -2236,6 +2263,114 @@ export function playerShotPlan(
     target,
     targetDistance: dist(from, target),
   };
+}
+
+export interface PlayerShotForecast {
+  plan: PlayerShotPlan;
+  path: FlightPath;
+  canopyImpact: TreeCanopyImpact | null;
+  /** Deterministic physical finish used by both preview and impact resolution. */
+  restingPoint: Vec | null;
+  canopyStatus: 'clear' | 'canopy' | 'trunk' | 'pine';
+}
+
+/** Pure ideal-flight forecast shared by pointer and keyboard UI paths. */
+export function playerShotForecast(
+  from: Vec,
+  lie: LieKey,
+  clubId: ClubId,
+  shape: ShotShape,
+  dirX: number,
+  dirY: number,
+  power: number,
+  wind: { dx: number; dy: number; speed: number } = S.wind,
+): PlayerShotForecast {
+  const plan = playerShotPlan(from, lie, clubId, shape, dirX, dirY, power, wind);
+  const heightMultiplier = lie === 'green' ? 0 : SHOT_SHAPES[plan.shape].heightMul * clubLieProfile(lie, clubId).launchMultiplier;
+  const path: FlightPath = {
+    fx: from.x,
+    fy: from.y,
+    tx: plan.target.x,
+    ty: plan.target.y,
+    h: lie === 'green' ? 0 : flightApexHeight(plan.targetDistance, heightMultiplier),
+    shotShape: plan.shape,
+    curvePerpX: plan.perpX,
+    curvePerpY: plan.perpY,
+    curveDistance: plan.intend,
+    lowFlight: plan.shape === 'punch',
+  };
+  const canopyImpact = lie === 'green' ? null : firstTreeCanopyImpact(path, { theme: S.theme, tileAt, elevationAt: elevAt });
+  return {
+    plan,
+    path,
+    canopyImpact,
+    restingPoint: canopyImpact ? treeDropPosition(path, canopyImpact) : null,
+    canopyStatus: canopyImpact?.kind ?? 'clear',
+  };
+}
+
+export interface PlayerShotIntent {
+  dirX: number;
+  dirY: number;
+  power: number;
+}
+
+let nextTreeCacheIdentity = 1;
+const treeCacheIdentities = new WeakMap<object, number>();
+let sharedPlayerForecastCache: { key: string; forecast: PlayerShotForecast } | null = null;
+
+function treeCacheIdentity(): number {
+  let identity = treeCacheIdentities.get(caches.trees);
+  if (!identity) {
+    identity = nextTreeCacheIdentity++;
+    treeCacheIdentities.set(caches.trees, identity);
+  }
+  return identity;
+}
+
+function elevationStateSignature(): number {
+  // Elevation arrays are mutable, so object identity alone can make a cached arc
+  // stale after landscaping. This compact hash keeps the cache terrain-safe.
+  let signature = 2166136261;
+  for (const height of S.elevC) signature = Math.imul(signature ^ height, 16777619);
+  return signature >>> 0;
+}
+
+function activeProSkillSignature(): string {
+  const skills = activePlayingPro().skills;
+  return Object.keys(skills).sort().map((skill) => skills[skill as ProSkillId]).join(',');
+}
+
+/** Cached shared forecast for a supplied current player state and normalized intent. */
+export function cachedPlayerShotForecast(player: PlayerRound, intent: PlayerShotIntent): PlayerShotForecast | null {
+  if (!player.ball) return null;
+  const key = [
+    treeCacheIdentity(), caches.trees.length,
+    player.ball.x, player.ball.y, player.lie, player.club, player.shape,
+    intent.dirX, intent.dirY, intent.power,
+    S.wind.dx, S.wind.dy, S.wind.speed, S.theme,
+    elevationStateSignature(), activeProSkillSignature(),
+  ].join('|');
+  if (sharedPlayerForecastCache?.key === key) return sharedPlayerForecastCache.forecast;
+  const forecast = playerShotForecast(
+    player.ball,
+    player.lie,
+    player.club,
+    player.shape,
+    intent.dirX,
+    intent.dirY,
+    intent.power,
+  );
+  sharedPlayerForecastCache = { key, forecast };
+  return forecast;
+}
+
+/** Cached forecast for the active player; render and HUD can share this object. */
+export function currentPlayerShotForecast(intent?: PlayerShotIntent | null): PlayerShotForecast | null {
+  const player = S.player;
+  if (!player) return null;
+  const resolved = intent ?? (player.aim?.on ? playerAimIntent(player.aim, player.lie) : null);
+  return resolved ? cachedPlayerShotForecast(player, resolved) : null;
 }
 
 export function playerShotPlanPosition(plan: PlayerShotPlan, t: number): Vec {
@@ -2455,7 +2590,7 @@ export function playerFire(dirX: number, dirY: number, power: number) {
 function scoreName(diff: number): string {
   return diff <= -3 ? 'ALBATROSS?!' : diff === -2 ? 'EAGLE!' : diff === -1 ? 'BIRDIE!' : diff === 0 ? 'Par' : diff === 1 ? 'Bogey' : diff === 2 ? 'Double bogey' : '+' + diff;
 }
-function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
+function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLie?: LieKey) {
   const p = S.player;
   if (!p) return;
   const h = S.holes[p.holeIdx];
@@ -2470,7 +2605,7 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean) {
     if (e === 'rock') floater(pos.x, pos.y - 0.8, 'Wild ricochet!', '#ffd2a6');
     if (e === 'chip') confetti(pos.x, pos.y);
   }
-  const resultLie = lieOf(pos.x, pos.y);
+  const resultLie = forcedResultLie ?? lieOf(pos.x, pos.y);
   const pending = p.pendingShot;
   const holeCard = p.currentHole;
   if (pending) {

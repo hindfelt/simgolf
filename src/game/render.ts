@@ -1,20 +1,21 @@
-import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, SHOT_SHAPES, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
+import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
-import type { Ball, Building, Golfer, Hole, Vec, CourseTheme } from './types';
+import type { Ball, Building, Golfer, Hole, Vec } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
 import { P, PE, viewXY } from './camera';
-import { activePlayingPro, flightApexHeight, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion, playerShotPlan, playerShotPlanPosition } from './engine';
+import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
 import type { CourseStaffFrame, CourseStaffKind } from './sprites';
-import type { GolferFrame, TreeKind, BSprite } from './sprites';
+import type { GolferFrame, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp } from './employees';
 import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
-import { clubLieProfile } from './clubProfiles';
+import { ballFlightPosition } from './flightPath';
+import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1459,24 +1460,17 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 }
 
 /* ================= scenery ================= */
-/** Species mix shifts with theme: tropical skews lush/blossom, links skews hardy pine, desert is mostly scrub-round. */
-function treeKindFor(theme: CourseTheme, s: number): TreeKind {
-  if (theme === 'tropical') return s > 0.5 ? 'blossom' : 'round';
-  if (theme === 'links') return s > 0.75 ? 'blossom' : s > 0.35 ? 'pine' : 'round';
-  if (theme === 'desert') return s > 0.8 ? 'blossom' : 'round';
-  return s > 0.85 ? 'blossom' : s > 0.62 ? 'pine' : 'round';
-}
 function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
-  const p = PE(tr.x, tr.y);
-  const sc = (0.78 + tr.s * 0.38) * u;
+  const profile = treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme);
+  const p = PE(profile.center.x, profile.center.y);
+  const k = profile.visualScale * u;
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 7 * sc, p.y + 3 * u, 14 * sc, 4.8 * sc, 0.16, 0, Math.PI * 2);
+  ctx.ellipse(p.x + 7.6 * k, p.y + 3 * u, 15.2 * k, 5.2 * k, 0.16, 0, Math.PI * 2);
   ctx.fill();
-  const kind: TreeKind = treeKindFor(S.theme, tr.s);
-  const spr = treeSprite(kind, ((tr.s * 97) | 0) % 3);
-  const sway = Math.sin(S.time * 1.1 + tr.s * 9) * 0.013;
-  const k = sc * 0.92;
+  const kind = sharedTreeKindFor(S.theme, profile.seed);
+  const spr = treeSprite(kind, ((profile.seed * 97) | 0) % 3);
+  const sway = Math.sin(S.time * 1.1 + profile.seed * 9) * 0.013;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y);
@@ -1875,53 +1869,157 @@ function drawFlyingBall(ctx: CanvasRenderingContext2D, b: Ball, u: number) {
   ctx.stroke();
 }
 
+type AimForecast = NonNullable<ReturnType<typeof currentPlayerShotForecast>>;
+
+function aimFlightPoint(path: AimForecast['path'], t: number, u: number): Vec {
+  const position = ballFlightPosition(path, t);
+  const ground = PE(position.x, position.y);
+  return { x: ground.x, y: ground.y - Math.sin(Math.PI * clamp(t, 0, 1)) * path.h * u };
+}
+
+function traceAimFlight(ctx: CanvasRenderingContext2D, path: AimForecast['path'], fromT: number, toT: number, u: number) {
+  if (toT <= fromT + 0.0001) return false;
+  const steps = Math.max(1, Math.ceil((toT - fromT) * 20));
+  const first = aimFlightPoint(path, fromT, u);
+  ctx.beginPath();
+  ctx.moveTo(first.x, first.y);
+  for (let step = 1; step <= steps; step++) {
+    const t = fromT + (toT - fromT) * (step / steps);
+    const point = aimFlightPoint(path, t, u);
+    ctx.lineTo(point.x, point.y);
+  }
+  return true;
+}
+
+function drawCanopyWarning(ctx: CanvasRenderingContext2D, forecast: AimForecast, u: number) {
+  const impact = forecast.canopyImpact;
+  if (!impact) return;
+  const point = aimFlightPoint(forecast.path, impact.t, u);
+  const scale = clamp(u, 0.72, 1.35);
+  const label = impact.kind === 'trunk' ? 'TREE RISK' : 'CANOPY RISK';
+
+  // The ideal line's deterministic drop is useful tactical information, but it is
+  // kept faint because shot dispersion may still carry the real ball around the tree.
+  if (forecast.restingPoint) {
+    const rest = PE(forecast.restingPoint.x, forecast.restingPoint.y);
+    ctx.save();
+    ctx.setLineDash([2 * scale, 3 * scale]);
+    ctx.strokeStyle = 'rgba(230,174,77,.56)';
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(rest.x, rest.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(216,81,56,.7)';
+    ctx.strokeStyle = '#ffe08a';
+    ctx.beginPath();
+    ctx.arc(rest.x, rest.y, 3.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.translate(point.x, point.y);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillStyle = '#d85138';
+  ctx.strokeStyle = '#ffe08a';
+  ctx.lineWidth = Math.max(1, 1.2 * scale);
+  ctx.fillRect(-3.8 * scale, -3.8 * scale, 7.6 * scale, 7.6 * scale);
+  ctx.strokeRect(-3.8 * scale, -3.8 * scale, 7.6 * scale, 7.6 * scale);
+  ctx.restore();
+
+  ctx.save();
+  ctx.font = `900 ${Math.max(8, Math.round(8 * scale))}px sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelWidth = Math.ceil(ctx.measureText(label).width + 8 * scale);
+  const labelHeight = Math.max(12, Math.ceil(13 * scale));
+  const labelX = clamp(point.x + 7 * scale, 4, Math.max(4, S.view.w - labelWidth - 4));
+  const labelY = clamp(point.y - labelHeight - 5 * scale, 4, Math.max(4, S.view.h - labelHeight - 4));
+  ctx.fillStyle = 'rgba(42,31,22,.92)';
+  ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+  ctx.strokeStyle = '#e6ae4d';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.strokeRect(labelX + 0.5, labelY + 0.5, labelWidth - 1, labelHeight - 1);
+  ctx.fillStyle = '#fff0b5';
+  ctx.fillText(label, labelX + 4 * scale, labelY + labelHeight / 2 + 0.4 * scale);
+  ctx.restore();
+}
+
 function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   const p = S.player;
   if (!p || p.state !== 'aim' || !p.aim || !p.aim.on) return;
   const aim = playerAimIntent(p.aim, p.lie);
   if (!aim) return;
-  const { dirX: dx, dirY: dy, power } = aim;
-  const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dx, dy, power);
-  const heightMul = p.lie === 'green' ? 1 : SHOT_SHAPES[p.shape].heightMul * clubLieProfile(p.lie, p.club).launchMultiplier;
-  const flightApex = p.lie === 'green' ? 0 : flightApexHeight(plan.targetDistance, heightMul);
+  const { power } = aim;
+  const forecast = currentPlayerShotForecast(aim);
+  if (!forecast) return;
+  const { plan, path, canopyImpact } = forecast;
   const bp = PE(p.ball!.x, p.ball!.y);
-  ctx.setLineDash([5 * u, 5 * u]);
-  ctx.strokeStyle = 'rgba(255,255,255,.95)';
-  ctx.lineWidth = 2 * u;
-  ctx.beginPath();
-  ctx.moveTo(bp.x, bp.y - 1 * u);
-  for (let t = 0.1; t <= 1.001; t += 0.1) {
-    const position = playerShotPlanPosition(plan, t);
-    const q = PE(position.x, position.y);
-    ctx.lineTo(q.x, q.y - Math.sin(Math.PI * t) * flightApex * u);
+
+  ctx.save();
+  if (canopyImpact) {
+    const warningStart = Math.max(0, canopyImpact.t - Math.min(0.16, Math.max(0.06, canopyImpact.t * 0.4)));
+    ctx.setLineDash([5 * u, 5 * u]);
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, 0, warningStart, u)) ctx.stroke();
+
+    // The ideal line's threatened segment glows amber around a red dashed core and
+    // stops at its first contact. The dim landing ellipse below preserves dispersion
+    // context: the real shot can still miss around either side of this centerline risk.
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(244,183,70,.72)';
+    ctx.lineWidth = 4.2 * u;
+    if (traceAimFlight(ctx, path, warningStart, canopyImpact.t, u)) ctx.stroke();
+    ctx.setLineDash([2.5 * u, 3 * u]);
+    ctx.strokeStyle = '#df6847';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, warningStart, canopyImpact.t, u)) ctx.stroke();
+  } else {
+    ctx.setLineDash([5 * u, 5 * u]);
+    ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.lineWidth = 2 * u;
+    if (traceAimFlight(ctx, path, 0, 1, u)) ctx.stroke();
   }
-  ctx.stroke();
   ctx.setLineDash([]);
+  ctx.restore();
+
+  drawCanopyWarning(ctx, forecast, u);
+
   const landX = plan.target.x;
   const landY = plan.target.y;
   const land = PE(landX, landY);
   const spread = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius;
-  ctx.strokeStyle = 'rgba(255,255,255,.85)';
-  ctx.lineWidth = 1.6 * u;
+  ctx.save();
+  ctx.setLineDash(canopyImpact ? [2.5 * u, 4 * u] : []);
+  ctx.strokeStyle = canopyImpact ? 'rgba(255,220,145,.3)' : 'rgba(255,255,255,.85)';
+  ctx.lineWidth = (canopyImpact ? 1.2 : 1.6) * u;
   ctx.beginPath();
   ctx.ellipse(land.x, land.y, spread * 22 * u, spread * 11 * u, 0, 0, 7);
   ctx.stroke();
-  // roll-out preview: a dimmer dashed line continuing the shot direction along the ground
-  // (skipped for High Backspin, which stops dead instead of rolling — see resolveFly's noRoll)
-  const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club);
-  if (rollLen > 0.15) {
-    const landingDistance = Math.hypot(landX - p.ball!.x, landY - p.ball!.y) || 1;
-    const rollDx = (landX - p.ball!.x) / landingDistance;
-    const rollDy = (landY - p.ball!.y) / landingDistance;
-    const rollEnd = PE(landX + rollDx * rollLen, landY + rollDy * rollLen);
-    ctx.setLineDash([3 * u, 4 * u]);
-    ctx.strokeStyle = 'rgba(255,255,255,.4)';
-    ctx.lineWidth = 1.3 * u;
-    ctx.beginPath();
-    ctx.moveTo(land.x, land.y);
-    ctx.lineTo(rollEnd.x, rollEnd.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
+  ctx.restore();
+
+  if (!canopyImpact) {
+    // The ideal obstructed line has no ground release. Clear forecasts retain the
+    // usual rollout estimate after their full-strength landing ellipse.
+    const rollLen = p.lie === 'green' ? 0 : playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club);
+    if (rollLen > 0.15) {
+      const landingDistance = Math.hypot(landX - p.ball!.x, landY - p.ball!.y) || 1;
+      const rollDx = (landX - p.ball!.x) / landingDistance;
+      const rollDy = (landY - p.ball!.y) / landingDistance;
+      const rollEnd = PE(landX + rollDx * rollLen, landY + rollDy * rollLen);
+      ctx.setLineDash([3 * u, 4 * u]);
+      ctx.strokeStyle = 'rgba(255,255,255,.4)';
+      ctx.lineWidth = 1.3 * u;
+      ctx.beginPath();
+      ctx.moveTo(land.x, land.y);
+      ctx.lineTo(rollEnd.x, rollEnd.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
   ctx.fillStyle = 'rgba(20,40,28,.75)';
   ctx.fillRect(bp.x - 18 * u, bp.y + 8 * u, 36 * u, 6 * u);

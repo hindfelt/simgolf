@@ -192,6 +192,17 @@ export interface FinanceEntry {
 
 export type BallKind = 'fly' | 'roll' | 'putt';
 
+export interface TreeCanopyImpact {
+  t: number;
+  x: number;
+  y: number;
+  treeX: number;
+  treeY: number;
+  kind: 'canopy' | 'trunk' | 'pine';
+  /** Absolute vertical screen-space coordinate above the map's zero plane. */
+  altitude: number;
+}
+
 export interface Ball {
   kind: BallKind;
   owner: Golfer | 'P';
@@ -209,7 +220,7 @@ export interface Ball {
   holed?: boolean;
   /** High Backspin shot: skip roll-out, stop dead where it lands. */
   noRoll?: boolean;
-  /** Low Punch shot: flies under branch cover, never deflects off a tree. */
+  /** Low Punch shot marker; clearance comes from its lower trajectory, not collision exemptions. */
   lowFlight?: boolean;
   /** Player-shaped flight follows the same curve as the aim guide, not a straight chord. */
   shotShape?: ShotShape;
@@ -218,6 +229,8 @@ export interface Ball {
   curveDistance?: number;
   /** Club-specific ground release; Backspin still bypasses rollout entirely. */
   rollMultiplier?: number;
+  /** Player-only precomputed first tree impact. AI balls intentionally omit this. */
+  canopyImpact?: TreeCanopyImpact;
 }
 
 export interface Floater {

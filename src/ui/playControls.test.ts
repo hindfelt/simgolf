@@ -8,6 +8,9 @@ describe('play controls accessibility and shot-shape presentation', () => {
   const hud = readFileSync(new URL('./PlayHud.tsx', import.meta.url), 'utf8');
   const input = readFileSync(new URL('../game/input.ts', import.meta.url), 'utf8');
   const render = readFileSync(new URL('../game/render.ts', import.meta.url), 'utf8');
+  const engineSource = readFileSync(new URL('../game/engine.ts', import.meta.url), 'utf8');
+  const store = readFileSync(new URL('./store.ts', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
   it('exposes an explicit Hook alongside Draw and Fade', () => {
     expect(hud).toContain("['straight', 'fade', 'draw', 'hook', 'backspin', 'punch']");
@@ -33,11 +36,49 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain('yards(playHud.finishDistance)');
   });
 
-  it('uses the shared club profile in aim height, landing dispersion, and rollout previews', () => {
-    expect(render).toContain('clubLieProfile(p.lie, p.club).launchMultiplier');
-    expect(render).toContain('flightApexHeight(plan.targetDistance, heightMul)');
+  it('publishes the shared canopy forecast as a compact static status with contextual caddie advice', () => {
+    expect(engineSource).toContain('playerShotForecast(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power)');
+    expect(engineSource).toContain("? 'Canopy clear'");
+    expect(engineSource).toContain("? 'Canopy risk'");
+    expect(engineSource).toContain("? 'Trunk risk'");
+    expect(engineSource).toContain("? 'Pine risk'");
+    expect(engineSource).toContain('forecast?.restingPoint');
+    expect(engineSource).toContain('finishDistance: restingDistance ??');
+    expect(engineSource).toContain('dispersion may miss');
+    expect(engineSource).toContain('Enter to swing${keyboardRisk}.');
+    expect(store).toContain("canopyStatus: 'clear' | 'canopy' | 'trunk' | 'pine' | null;");
+    expect(hud).toContain('id="canopy-status"');
+    expect(hud).toContain('role="note" aria-label={`Tree flight status: ${playHud.canopyLabel}`}');
+    expect(hud.match(/aria-describedby=\{canopyDescription\}/g)).toHaveLength(2);
+    expect(hud).toContain('<strong>Caddie:</strong> {playHud.canopyAdvice}');
+    expect(hud).not.toMatch(/canopyAdvice[^\n]*aria-live/);
+    expect(css).toContain('.canopyStatus.canopy-trunk');
+    expect(css).toContain('.canopyAdvice.canopy-pine');
+    expect(css).toMatch(/\.canopyStatus \{[\s\S]*?font-size: 8px;/);
+    expect(css).toMatch(/\.canopyAdvice \{[\s\S]*?font-size: 8\.5px;/);
+  });
+
+  it('uses the shared cached shot forecast in aim height, landing dispersion, and rollout previews', () => {
+    expect(render).toContain('currentPlayerShotForecast(aim)');
+    expect(render).not.toContain('function cachedAimForecast(');
+    expect(render).toContain('ballFlightPosition(path, t)');
     expect(render).toContain('playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius');
     expect(render).toContain('playerEstimatedRoll(lieOf(landX, landY), p.shape, p.club)');
+  });
+
+  it('presents the ideal obstruction as risk while retaining dispersion and physical finish context', () => {
+    expect(render).toContain('traceAimFlight(ctx, path, warningStart, canopyImpact.t, u)');
+    expect(render).toContain("impact.kind === 'trunk' ? 'TREE RISK' : 'CANOPY RISK'");
+    expect(render).toContain('forecast.restingPoint.x');
+    expect(render).toContain("canopyImpact ? 'rgba(255,220,145,.3)' : 'rgba(255,255,255,.85)'");
+    expect(render).toContain('if (!canopyImpact)');
+  });
+
+  it('renders tree species and scale from the same geometry profile used by collision', () => {
+    expect(render).toContain('treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme)');
+    expect(render).toContain('sharedTreeKindFor(S.theme, profile.seed)');
+    expect(render).toContain('const k = profile.visualScale * u');
+    expect(render).not.toContain('function treeKindFor(');
   });
 
   it('supports keyboard aim, power adjustment, and firing on the canvas', () => {

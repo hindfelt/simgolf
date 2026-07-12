@@ -64,7 +64,11 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
 - **Strategic manual play** — Driver, Iron, and Wedge have distinct lie
   availability, recovery carry, launch, control, and rollout. Straight, Fade,
   Draw, Hook, Backspin, and Punch share one guide/physics forecast, with
-  pointer and keyboard aiming. Named golfers use deterministic pixel archetypes
+  pointer and keyboard aiming. The live guide and HUD flag where the ideal line
+  risks round-tree canopy, solid trunks, and low pine tiers; actual dispersion
+  can still miss that cover. Shaped shots can route around it, Wedge can clear
+  it, and Punch trades carry for a route beneath open branches without phasing
+  through wood. Named golfers use deterministic pixel archetypes
   with varied builds, headwear, hair, outfits, faces, and pants.
 - **Buildings & facilities** (`buildings.ts`) — pro shop, snack bar, driving
   range, putting green, cart garage, hotel, tennis, marina, airstrip, building
@@ -122,7 +126,7 @@ UI-facing values (cash, rep, hint, tickers, modals) through the `ui` bridge in
   players, stories, celebrities, touring professionals and bundled starter
   courses while omitted sections inherit Standard. Includes Standard, a
   story-only fallback demonstration, and two complete original content packs.
-- **Regression coverage** — 195 browser-game tests covering course construction,
+- **Regression coverage** — 219 browser-game tests covering course construction,
   simulation, persistence, the World Screen/property lifecycle, bridge pricing,
   restoration and connectivity, plus 7 Worker/D1 integration tests.
 - **Clubhouse Online** — Google OIDC accounts, cloud saves, published courses,

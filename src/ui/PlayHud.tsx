@@ -30,6 +30,10 @@ export default function PlayHud() {
   const windMph = Math.round(playHud.windSpeed * 25);
   const windPoints = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
   const windPoint = windPoints[Math.round(((windDeg + 360) % 360) / 45) % 8];
+  const canopyDescription = [
+    playHud.canopyLabel ? 'canopy-status' : null,
+    playHud.canopyAdvice ? 'canopy-advice' : null,
+  ].filter(Boolean).join(' ') || undefined;
   return (
     <div className="playHud" role="region" aria-label="Player round controls">
       {S.activeChampionship && <div className="championshipHud"><b>PRO CIRCUIT</b><span>{S.activeChampionship.title}</span><em>{S.activeChampionship.pro.name} · {S.activeChampionship.difficulty}</em></div>}
@@ -52,7 +56,7 @@ export default function PlayHud() {
       {!playHud.onGreen && <div className="shotWorkbench" role="group" aria-label="Shot setup">
         <div className="shotControlGroup">
           <span className="shotControlLabel">Club · {playHud.selectedRole}</span>
-          <div className="clubPicker" role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`}>
+          <div className="clubPicker" role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`} aria-describedby={canopyDescription}>
             {CLUB_IDS.map((id) => {
               const option = playHud.clubOptions[id];
               const detail = option.available ? `${yards(option.carry)} yards, ${option.role}` : option.reason ?? 'Unavailable from this lie';
@@ -75,8 +79,15 @@ export default function PlayHud() {
           </div>
         </div>
         <div className="shotControlGroup">
-          <span className="shotControlLabel">Ball flight</span>
-          <div className="shapePicker" role="group" aria-label="Shot technique selection">
+          <span className="shotControlLabel flightControlLabel">
+            <span>Ball flight</span>
+            {playHud.canopyLabel && (
+              <span id="canopy-status" className={`canopyStatus canopy-${playHud.canopyStatus}`} role="note" aria-label={`Tree flight status: ${playHud.canopyLabel}`}>
+                {playHud.canopyLabel}
+              </span>
+            )}
+          </span>
+          <div className="shapePicker" role="group" aria-label="Shot technique selection" aria-describedby={canopyDescription}>
             {SHAPE_IDS.map((id) => (
               <button
                 key={id}
@@ -91,6 +102,7 @@ export default function PlayHud() {
               </button>
             ))}
           </div>
+          {playHud.canopyAdvice && <p id="canopy-advice" className={`canopyAdvice canopy-${playHud.canopyStatus}`}><strong>Caddie:</strong> {playHud.canopyAdvice}</p>}
         </div>
       </div>}
       {windMph > 1 && (

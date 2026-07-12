@@ -4402,6 +4402,39 @@ canvas.game:focus-visible {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
+.flightControlLabel { display: flex; align-items: center; gap: 5px; }
+.canopyStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 2px 5px;
+  border: 1px solid rgba(211,192,126,.52);
+  border-radius: 4px;
+  background: rgba(8,28,21,.42);
+  color: #c9d4c6;
+  font-size: 8px;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.canopyStatus.canopy-clear { border-color: rgba(118,190,125,.55); color: #bfe7be; }
+.canopyStatus.canopy-canopy { border-color: #c79a3f; background: rgba(115,76,16,.48); color: #ffe397; }
+.canopyStatus.canopy-trunk { border-color: #bb6659; background: rgba(104,40,32,.55); color: #ffd0bd; }
+.canopyStatus.canopy-pine { border-color: #9580b8; background: rgba(57,45,84,.58); color: #e0d5ff; }
+.canopyAdvice {
+  max-width: min(520px, calc(100vw - 24px));
+  margin: 3px 0 0;
+  padding: 3px 6px;
+  border-left: 2px solid #c79a3f;
+  border-radius: 3px;
+  background: rgba(8,27,21,.48);
+  color: #f2dfad;
+  font-family: Verdana, sans-serif;
+  font-size: 8.5px;
+  line-height: 1.3;
+}
+.canopyAdvice strong { color: #ffe28a; }
+.canopyAdvice.canopy-trunk { border-left-color: #bb6659; }
+.canopyAdvice.canopy-pine { border-left-color: #9580b8; }
 .playHud .clubPicker,.playHud .shapePicker { gap: 3px; max-width: none; flex-wrap: nowrap; }
 .playHud .clubBtn,.playHud .shapeBtn {
   min-height: 34px;
