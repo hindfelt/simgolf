@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles.css';
+import './simgolf-shell.css';
 
 // roundRect polyfill for older engines (Safari < 16 etc.)
 if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.roundRect) {

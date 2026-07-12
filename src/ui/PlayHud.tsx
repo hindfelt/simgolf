@@ -40,7 +40,7 @@ export default function PlayHud() {
     playHud.canopyAdvice ? 'canopy-advice' : null,
   ].filter(Boolean).join(' ') || undefined;
   return (
-    <div className="playHud" role="region" aria-label="Player round controls">
+    <div className="playHud" data-ui="play-shell" role="region" aria-label="Player round controls">
       {S.activeChampionship && <div className="championshipHud"><b>PRO CIRCUIT</b><span>{S.activeChampionship.title}</span><em>{S.activeChampionship.pro.name} · {S.activeChampionship.difficulty}</em></div>}
       {S.activeProChallenge && <div className="championshipHud proChallengeHud"><b>PRO CHALLENGE</b><span>{S.proProfile.name} vs {S.activeProChallenge.opponent.name}</span><em>{S.activeProChallenge.wagerPerHole.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} per hole</em></div>}
       <div className="playRoundStatus">

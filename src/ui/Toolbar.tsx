@@ -78,7 +78,7 @@ export default function Toolbar() {
   if (mode === 'play') return null;
 
   return (
-    <nav className="toolDock" aria-label="Course construction tools">
+    <nav className="toolDock" data-ui="construction-dock" aria-label="Course construction tools">
       <div className="toolGroups" role="tablist" aria-label="Tool categories">
         {GROUPS.map((item) => (
           <button
