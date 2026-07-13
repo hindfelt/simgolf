@@ -1,7 +1,15 @@
 import { useEffect, useRef } from 'react';
-import { useUI } from './store';
+import { useUI, type TickerItem } from './store';
+import CharacterPortrait from './CharacterPortrait';
 
 const LIFETIME = 8200;
+
+export function selectSimFotoTicker(tickers: readonly TickerItem[]): TickerItem | null {
+  for (let index = tickers.length - 1; index >= 0; index--) {
+    if (tickers[index].character) return tickers[index];
+  }
+  return null;
+}
 
 export default function Ticker() {
   const tickers = useUI((s) => s.tickers);
@@ -19,9 +27,26 @@ export default function Ticker() {
     }
   }, [tickers, dropTicker]);
 
+  const simFoto = selectSimFotoTicker(tickers);
+
   return (
     <div className="ticker" aria-live="polite" aria-label="Course activity">
+      {simFoto?.character ? (
+        <article className={'simFotoTicker' + (simFoto.cls ? ' ' + simFoto.cls : '')}>
+          <CharacterPortrait
+            name={simFoto.name}
+            identity={simFoto.character.identity}
+            shirt={simFoto.character.shirt}
+            skin={simFoto.character.skin}
+            cap={simFoto.character.cap}
+            expression={simFoto.character.expression}
+            variant="simfoto"
+          />
+          <div className="simFotoCopy"><b>{simFoto.name}</b><span>{simFoto.txt}</span></div>
+        </article>
+      ) : null}
       {tickers.map((t) => (
+        t.id === simFoto?.id ? null :
         <div key={t.id} className={'tk' + (t.cls ? ' ' + t.cls : '')}>
           {t.name ? <b>{t.name}: </b> : null}
           {t.txt}

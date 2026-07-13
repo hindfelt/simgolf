@@ -298,6 +298,38 @@ body,
 .tk b { color: #fff68b; }
 .tk.money { color: #62f17e; }
 
+.simFotoTicker {
+  width: min(360px, calc(100vw - 420px));
+  min-width: 250px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px 8px 6px;
+  border: 3px solid var(--sg-rim);
+  border-radius: 38px 13px 13px 38px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.5) 0 3px, transparent 3px),
+    linear-gradient(180deg, #c9c6f5 0 13%, #aaa7e9 13% 76%, #7a79c3 76% 100%);
+  color: #fff;
+  box-shadow: inset 2px 2px rgba(255,255,255,.45), 0 4px 0 var(--sg-rim-dark), 0 9px 20px rgba(0,0,0,.3);
+  animation: tkin .24s ease-out;
+}
+.simFotoTicker.bad { border-color: #642f68; }
+.simFotoTicker.money { border-color: #6b5611; }
+.simFotoTicker .characterPortrait {
+  width: 66px;
+  height: 66px;
+  flex-basis: 66px;
+  margin: -4px 0 -5px -3px;
+}
+.simFotoTicker .characterPortrait canvas { width: 50px; height: 66px; }
+.simFotoCopy { min-width: 0; display: grid; gap: 2px; font-family: var(--sg-font); text-shadow: 1px 2px #273279; }
+.simFotoCopy b { overflow: hidden; color: #fff36e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.simFotoCopy span { color: #fff; font-size: 10px; font-weight: 900; line-height: 1.2; }
+.simFotoTicker.money .simFotoCopy span { color: #79f293; }
+.simFotoTicker.bad .simFotoCopy span { color: #ffd0d7; }
+
 /* --- lower-left molded control island ------------------------------------ */
 .fieldControls {
   left: 0;
@@ -1228,6 +1260,7 @@ body,
   .tool .nm { font-size: 8px; }
   .routingMap { display: none; }
   .ticker { left: 8px; bottom: calc(var(--sg-bottom) + 92px); max-width: calc(100vw - 16px); }
+  .simFotoTicker { width: min(340px, calc(100vw - 16px)); min-width: 0; }
   .fieldDeskPanel,
   .fieldDeskPanel.catalogMode,
   .fieldDeskPanel.manageMode,

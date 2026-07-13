@@ -16,6 +16,7 @@ import { countEmp } from './employees';
 import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
 import { ballFlightPosition } from './flightPath';
 import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
+import { resolveGolferFrame, resolveManualGolferFrame } from './golferPose';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1844,12 +1845,19 @@ function drawCourseStaff(
   ctx.imageSmoothingEnabled = true;
 }
 
-function golferFrame(g: Golfer): GolferFrame {
-  if (g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave') return Math.sin(g.phase) > 0 ? 'walkA' : 'walkB';
-  if (g.state === 'prePutt') return 'putt';
-  if (g.state === 'preshot') return g.t < 0.28 ? 'back' : 'address';
-  if (g.state === 'watch') return g.t > 0 ? 'follow' : 'idle';
-  return 'idle';
+function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, u: number, gold = false) {
+  const size = clamp(7.2 * u, 6.5, 10.5);
+  ctx.save();
+  ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(2, size * 0.3);
+  ctx.strokeStyle = 'rgba(22,27,72,.92)';
+  ctx.strokeText(label, x, y);
+  ctx.fillStyle = gold ? '#fff06a' : '#fff';
+  ctx.fillText(label, x, y);
+  ctx.restore();
 }
 
 function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
@@ -1857,11 +1865,11 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
   const view = g.facingAway ? 'rear' : 'front';
-  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view, g.name);
+  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
-  if ((g.specialGuest && S.cam.z > 0.58) || hovered) {
+  if ((g.specialGuest && S.cam.z > 0.58) || hovered || S.cam.z > 0.9) {
     const spriteHeight = GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96;
-    drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - spriteHeight - 3 * u - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
+    drawActorName(ctx, g.name, p.x, p.y - spriteHeight - 2 * u - bob, Math.max(u * 0.88, 0.58), !!g.specialGuest);
   }
 }
 
@@ -1869,12 +1877,35 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const pl = S.player!;
   const b = pl.ball!;
   const bp = PE(b.x, b.y);
-  const px = bp.x - 7 * u;
-  const py = bp.y - 1 * u;
-  const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
+  const intent = pl.aim?.on ? playerAimIntent(pl.aim, pl.lie) : null;
+  const travelling = S.balls.find((ball) => ball.owner === 'P');
+  const hole = S.holes[pl.holeIdx];
+  let dirX = intent?.dirX ?? (travelling ? travelling.tx - travelling.fx : hole ? hole.cup.x - b.x : 1);
+  let dirY = intent?.dirY ?? (travelling ? travelling.ty - travelling.fy : hole ? hole.cup.y - b.y : 0);
+  const worldLength = Math.hypot(dirX, dirY) || 1;
+  dirX /= worldLength;
+  dirY /= worldLength;
+  const ahead = PE(b.x + dirX, b.y + dirY);
+  const screenX = ahead.x - bp.x;
+  const screenY = ahead.y - bp.y;
+  const screenLength = Math.hypot(screenX, screenY) || 1;
+  let normalX = -screenY / screenLength;
+  let normalY = screenX / screenLength;
+  // Keep enough horizontal separation for the mirrored club head to meet the
+  // ball, even when the shot points almost straight across the screen.
+  if (Math.abs(normalX) < 0.28) normalX = normalX < 0 ? -0.28 : 0.28;
+  const normalLength = Math.hypot(normalX, normalY) || 1;
+  normalX /= normalLength;
+  normalY /= normalLength;
+  const px = bp.x + normalX * 8 * u;
+  const py = bp.y + normalY * 4.5 * u - 1 * u;
+  const face = bp.x >= px ? 1 : -1;
+  const view = screenY < 0 ? 'rear' : 'front';
+  const chargedAim = !!intent && intent.rawPower > (pl.lie === 'green' ? 0.04 : 0.12);
+  const frame = resolveManualGolferFrame(pl, chargedAim);
   const pro = activePlayingPro();
-  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0, 'front', pro.name);
-  drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96, u, 'gold');
+  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, face, 0, view, pro.visualSeed);
+  drawActorName(ctx, pro.name, px, py - GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96, u, true);
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {

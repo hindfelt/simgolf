@@ -1,11 +1,21 @@
 import { create } from 'zustand';
 import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition } from '../game/types';
+import type { PortraitExpression } from '../game/portraits';
+
+export interface TickerCharacter {
+  shirt: string;
+  skin: string;
+  cap: string;
+  identity?: string;
+  expression: PortraitExpression;
+}
 
 export interface TickerItem {
   id: number;
   name: string;
   txt: string;
   cls?: string;
+  character?: TickerCharacter;
 }
 
 export type ModalDescriptor =
@@ -83,7 +93,7 @@ interface UIStore {
   portfolioStatus: 'idle' | 'saving' | 'saved' | 'error';
 
   set: (patch: Partial<UIStore>) => void;
-  pushTicker: (name: string, txt: string, cls?: string) => void;
+  pushTicker: (name: string, txt: string, cls?: string, character?: TickerCharacter) => void;
   dropTicker: (id: number) => void;
 }
 
@@ -125,9 +135,9 @@ export const useUI = create<UIStore>((set) => ({
   portfolioStatus: 'idle',
 
   set: (patch) => set(patch),
-  pushTicker: (name, txt, cls) =>
+  pushTicker: (name, txt, cls, character) =>
     set((st) => {
-      const item: TickerItem = { id: ++tickerSeq, name, txt, cls };
+      const item: TickerItem = { id: ++tickerSeq, name, txt, cls, character };
       const next = [...st.tickers, item];
       while (next.length > 4) next.shift();
       return { tickers: next };
@@ -138,6 +148,6 @@ export const useUI = create<UIStore>((set) => ({
 /** Non-hook accessors so the imperative engine can drive the UI store. */
 export const ui = {
   set: (patch: Partial<UIStore>) => useUI.getState().set(patch),
-  ticker: (name: string, txt: string, cls?: string) => useUI.getState().pushTicker(name, txt, cls),
+  ticker: (name: string, txt: string, cls?: string, character?: TickerCharacter) => useUI.getState().pushTicker(name, txt, cls, character),
   get: () => useUI.getState(),
 };

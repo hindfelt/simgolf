@@ -38,6 +38,7 @@ export function createResidentPro(): ProProfile {
   return {
     version: 1,
     name: 'Gary Golf',
+    visualSeed: 'resident-pro',
     shirt: '#e9b53c',
     skin: '#f1c6a0',
     cap: '#fffdf2',
@@ -56,6 +57,7 @@ export function createResidentPro(): ProProfile {
 export function createDefaultTourPro(identity?: TouringPro): ProProfile {
   const profile = createResidentPro();
   profile.name = identity?.name ?? 'Gary Golf';
+  profile.visualSeed = identity?.name ?? 'default-tour-pro';
   profile.shirt = identity?.shirt ?? '#3f7fd0';
   profile.skin = identity?.skin ?? profile.skin;
   profile.cap = identity?.cap ?? '#efefef';
@@ -78,6 +80,7 @@ export function sanitizeProProfile(value: unknown): ProProfile {
   return {
     version: 1,
     name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim().slice(0, 28) : fallback.name,
+    visualSeed: typeof raw.visualSeed === 'string' && raw.visualSeed.trim() ? raw.visualSeed.trim().slice(0, 64) : fallback.visualSeed,
     shirt: validColor(raw.shirt, fallback.shirt),
     skin: validColor(raw.skin, fallback.skin),
     cap: validColor(raw.cap, fallback.cap),

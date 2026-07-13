@@ -47,7 +47,7 @@ function shade(hex: string, f: number): string {
 
 /* ================= golfers ================= */
 
-export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt';
+export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt' | 'puttFollow';
 
 const GOLFER_SOURCE_SIZE = { width: 24, height: 32 } as const;
 export const GOLFER_SPRITE_SIZE = { width: 30, height: 40 } as const;
@@ -152,7 +152,8 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const walking = frame === 'walkA' || frame === 'walkB';
   const swingBack = frame === 'back';
   const follow = frame === 'follow';
-  const putt = frame === 'putt';
+  const puttFollow = frame === 'puttFollow';
+  const putt = frame === 'putt' || puttFollow;
   const address = frame === 'address' || putt;
   const rear = view === 'rear';
 
@@ -311,6 +312,17 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     ctx.lineTo(21.5, ty - 9);
     ctx.stroke();
     p(21, ty - 11, 2, 2, steel);
+  } else if (puttFollow) {
+    // Putter remains below the waist through a short finish instead of jumping
+    // to the full raised-club follow-through used by drives and iron shots.
+    p(frontArmX, ty + 1, 2, 5, shirt);
+    p(frontArmX + 1, ty + 6, 2, 2, skin);
+    ctx.strokeStyle = grey;
+    ctx.beginPath();
+    ctx.moveTo(frontArmX + 2, ty + 8);
+    ctx.lineTo(18, 27);
+    ctx.stroke();
+    p(17, 27, 4, 1.5, steel);
   } else if (address) {
     // both arms down to the grip, club to the ball
     p(frontArmX, ty + 1, 2, 5, shirt);

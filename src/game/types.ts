@@ -510,6 +510,8 @@ export type ProSkillId =
 export interface ProProfile {
   version: 1;
   name: string;
+  /** Stable portrait/course-actor identity; renaming the pro must not change their face. */
+  visualSeed: string;
   shirt: string;
   skin: string;
   cap: string;
