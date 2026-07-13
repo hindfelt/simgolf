@@ -26,6 +26,7 @@
   --sg-font: 'Chalkboard SE', 'Comic Sans MS', 'Marker Felt', 'Trebuchet MS', cursive;
   --sg-small: Verdana, Geneva, sans-serif;
   --sg-bottom: 106px;
+  --sg-fan-height: 160px;
   --sg-control-width: 190px;
 }
 
@@ -276,7 +277,7 @@ body,
 
 .ticker {
   left: calc(var(--sg-control-width) + 12px);
-  bottom: calc(var(--sg-bottom) + 8px);
+  bottom: calc(var(--sg-fan-height) + 8px);
   max-width: min(520px, calc(100vw - 400px));
   gap: 2px;
 }
@@ -303,40 +304,56 @@ body,
   bottom: 0;
   z-index: 26;
   width: var(--sg-control-width);
-  height: var(--sg-bottom);
+  height: var(--sg-fan-height);
   display: grid;
-  grid-template-columns: 68px 36px 36px;
-  grid-template-rows: 38px 38px;
-  align-content: center;
-  gap: 7px 6px;
-  padding: 10px 10px 8px 10px;
+  grid-template-columns: 68px 44px 44px;
+  grid-template-rows: 46px 46px;
+  align-content: end;
+  gap: 8px 6px;
+  padding: 10px 5px 12px 7px;
   border: 0;
   border-top: 4px solid var(--sg-shell-hi);
   border-right: 4px solid var(--sg-rim);
-  border-radius: 0 32px 0 0;
+  border-radius: 0 76px 28px 0;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.42) 0 3px, transparent 3px),
-    linear-gradient(180deg, #b9b7f1 0 12%, var(--sg-shell) 12% 74%, #817fc7 74% 91%, #6564ad 91% 100%);
+    radial-gradient(ellipse at 100% 0, rgba(255,255,255,.48) 0 5%, transparent 5.5%),
+    linear-gradient(180deg, rgba(255,255,255,.52) 0 4px, transparent 4px),
+    linear-gradient(180deg, #c5c2f4 0 11%, #aaa7e7 11% 68%, #817fc5 68% 90%, #6564ad 90% 100%);
   box-shadow:
-    inset -4px -7px 0 rgba(48,52,137,.2),
+    inset -7px -10px 0 rgba(48,52,137,.2),
     inset 3px 3px 0 rgba(255,255,255,.3),
     0 -4px 0 var(--sg-rim),
-    5px -6px 15px rgba(0,0,0,.28);
+    5px -7px 0 var(--sg-rim-dark),
+    9px -12px 22px rgba(0,0,0,.3);
 }
 
 .fieldControls::after {
-  display: none;
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: 6px;
+  right: 24px;
+  top: 9px;
+  height: 4px;
+  border-radius: 100% 42% 0 0;
+  background: rgba(239,237,255,.68);
+  box-shadow: 0 3px rgba(82,85,166,.22);
+  pointer-events: none;
 }
 
 .fieldControls .fieldMenu {
+  position: relative;
+  z-index: 2;
   grid-row: 1 / span 2;
   align-self: center;
   justify-self: center;
 }
 
 .fieldControls .orb {
-  width: 36px;
-  height: 36px;
+  position: relative;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
   border: 3px solid var(--sg-rim);
   background:
     radial-gradient(circle at 33% 24%, #faf9ff 0 10%, #c8c5f1 34%, #918fce 67%, #686ab1);
@@ -361,8 +378,8 @@ body,
 }
 
 .fieldControls .fieldMenu > summary.orb {
-  width: 60px;
-  height: 60px;
+  width: 68px;
+  height: 68px;
   border-width: 4px;
   background:
     radial-gradient(circle at 34% 26%, #f7f7ff, #c8c7f1 38%, #8386cd 70%, #5b60ae);
@@ -430,13 +447,33 @@ body,
     inset 3px 3px rgba(255,255,255,.28),
     0 -4px 0 var(--sg-rim),
     0 -10px 22px rgba(0,0,0,.23);
+  isolation: isolate;
+}
+
+.toolDock::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: calc(-1 * var(--sg-control-width));
+  bottom: 0;
+  width: calc(var(--sg-control-width) + 116px);
+  height: var(--sg-fan-height);
+  clip-path: polygon(0 23%, 34% 0, 48% 2%, 60% 18%, 68% 42%, 79% 55%, 82% 69%, 100% 78%, 100% 100%, 0 100%);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.54) 0 4px, transparent 4px),
+    linear-gradient(160deg, #ccc9f8 0 15%, #aba8e8 15% 67%, #827fc6 67% 89%, #6665ae 89% 100%);
+  filter:
+    drop-shadow(0 -4px 0 var(--sg-rim))
+    drop-shadow(5px -1px 0 var(--sg-rim))
+    drop-shadow(6px -5px 10px rgba(0,0,0,.25));
+  pointer-events: none;
 }
 
 .toolDock::before {
   content: '';
   position: absolute;
-  left: 108px;
-  top: 8px;
+  left: 118px;
+  top: 9px;
   bottom: 8px;
   width: 3px;
   border-radius: 2px;
@@ -447,23 +484,23 @@ body,
 .toolGroups {
   position: absolute;
   z-index: 2;
-  left: 12px;
-  top: 7px;
-  width: 88px;
-  min-height: 90px;
+  left: -18px;
+  top: -43px;
+  width: 124px;
+  min-height: 119px;
   display: grid;
-  grid-template-columns: repeat(2, 41px);
-  grid-auto-rows: 40px;
+  grid-template-columns: repeat(2, 56px);
+  grid-auto-rows: 56px;
   align-content: center;
-  gap: 5px 5px;
+  gap: 7px 7px;
   padding: 0;
   border: 0;
 }
 
 .toolGroup {
-  width: 39px;
-  height: 39px;
-  min-height: 39px;
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
   display: grid;
   place-items: center;
   gap: 0;
@@ -473,7 +510,7 @@ body,
   background: radial-gradient(circle at 34% 24%, #f7f6ff, #c6c3ef 39%, #898bcc 72%, #6367b2);
   color: #27347f;
   font-family: var(--sg-small);
-  font-size: 6px;
+  font-size: 7px;
   font-weight: 900;
   line-height: .9;
   letter-spacing: 0;
@@ -481,7 +518,7 @@ body,
   box-shadow: inset 2px 2px rgba(255,255,255,.7), 0 3px 0 #1f276f;
 }
 
-.toolGroup .gameIcon { width: 17px; height: 17px; }
+.toolGroup .gameIcon { width: 23px; height: 23px; }
 .toolGroup span { margin-top: -2px; }
 .toolGroup:hover { background: radial-gradient(circle at 35% 24%, #fff, #d8d5ff 44%, #9597da); }
 .toolGroup.active {
@@ -503,7 +540,7 @@ body,
   display: flex;
   align-items: center;
   gap: 1px;
-  margin-left: 114px;
+  margin-left: 126px;
   padding: 5px 10px calc(5px + env(safe-area-inset-bottom)) 7px;
   overflow-x: auto;
   border: 0;
@@ -719,7 +756,7 @@ body,
 /* --- shared trays and reports -------------------------------------------- */
 .fieldDeskPanel,
 .managementPanel {
-  bottom: calc(var(--sg-bottom) + 12px);
+  bottom: calc(var(--sg-fan-height) + 12px);
   border: 4px solid var(--sg-rim);
   border-radius: 24px 24px 10px 10px;
   background: linear-gradient(180deg, var(--sg-shell-hi), var(--sg-shell) 70%, var(--sg-shell-mid));
@@ -727,7 +764,7 @@ body,
   box-shadow: inset 2px 2px rgba(255,255,255,.58), 0 6px 0 var(--sg-rim-dark), 0 18px 38px rgba(0,0,0,.4);
 }
 .fieldDeskPanel { left: 166px; right: 10px; }
-.fieldDeskPanel.manageMode { bottom: calc(var(--sg-bottom) + 12px); }
+.fieldDeskPanel.manageMode { bottom: calc(var(--sg-fan-height) + 12px); }
 .fieldDeskPanel .bpHead b,
 .panelHead h2,
 .reportSectionHead h3 { color: #26368c; font-family: var(--sg-font); }
@@ -1111,10 +1148,33 @@ body,
 
 /* --- responsive shell ----------------------------------------------------- */
 @media (max-width: 1100px) {
-  :root { --sg-control-width: 166px; }
+  :root {
+    --sg-control-width: 166px;
+    --sg-fan-height: 150px;
+  }
   .plaque { width: 230px; min-width: 230px; }
   .toolDock { left: var(--sg-control-width); }
-  .fieldControls { width: var(--sg-control-width); }
+  .fieldControls {
+    width: var(--sg-control-width);
+    grid-template-columns: 62px 39px 39px;
+    grid-template-rows: 43px 43px;
+    gap: 7px 5px;
+    padding-right: 4px;
+  }
+  .fieldControls .fieldMenu > summary.orb { width: 62px; height: 62px; }
+  .fieldControls .orb { width: 39px; height: 39px; }
+  .toolDock::before { left: 106px; }
+  .toolGroups {
+    left: -14px;
+    top: -37px;
+    width: 112px;
+    min-height: 111px;
+    grid-template-columns: repeat(2, 52px);
+    grid-auto-rows: 52px;
+    gap: 6px;
+  }
+  .toolGroup { width: 52px; height: 52px; min-height: 52px; }
+  .toolbar { margin-left: 114px; }
   .tool { width: 67px; }
   .routingMap { width: 166px; }
   .minimap { width: 150px; height: 112px; }
@@ -1122,7 +1182,10 @@ body,
 }
 
 @media (max-width: 760px) {
-  :root { --sg-bottom: 108px; }
+  :root {
+    --sg-bottom: 108px;
+    --sg-fan-height: 108px;
+  }
   .plaque { width: min(248px, 64vw); min-width: 0; min-height: 62px; padding-left: 52px; }
   .courseCrest { width: 57px; height: 69px; }
   .plaque .pTitle { font-size: 14px; }
@@ -1155,6 +1218,7 @@ body,
   .controlLegend { display: none; }
   .fieldMenuCard { bottom: 63px; }
   .toolDock { left: 0; min-height: var(--sg-bottom); border-left: 0; border-radius: 26px 26px 0 0; }
+  .toolDock::after { display: none; }
   .toolDock::before { left: 83px; }
   .toolGroups { left: 5px; top: 8px; width: 78px; grid-template-columns: repeat(2, 35px); grid-auto-rows: 39px; gap: 5px; }
   .toolGroup { width: 35px; height: 35px; min-height: 35px; font-size: 0; }
