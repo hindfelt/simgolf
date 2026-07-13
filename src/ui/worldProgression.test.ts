@@ -42,6 +42,7 @@ describe('World Screen career progression presentation', () => {
   it('announces newly earned deeds from every milestone path and links directly to the World Screen', () => {
     expect(engine).toContain('checkDestinationReleases(roundPropertyAccessAtStart, true)');
     expect(engine).toContain('checkDestinationReleases();');
+    expect(engine).toContain("S.mode === 'play'");
     expect(engine).toContain('releasedProperties');
     expect(engine).toContain("ticker('World Screen'");
     expect(source).toContain('className="destinationUnlock"');
