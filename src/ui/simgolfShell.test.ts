@@ -33,8 +33,9 @@ describe('original SimGolf shell contract', () => {
     expect(topBar).toContain('className="courseCrest"');
     expect(topBar).toContain('className="simDate"');
     expect(shell).toMatch(/\.gauges \{[\s\S]*?flex-direction: column;/);
-    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?bottom: 0;[\s\S]*?--sg-bottom/);
-    expect(shell).toMatch(/\.toolDock \{[\s\S]*?left: 148px;[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/--sg-control-width:\s*190px;/);
+    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?bottom: 0;[\s\S]*?width: var\(--sg-control-width\)/);
+    expect(shell).toMatch(/\.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
   });
 
@@ -43,5 +44,13 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.toolGroup\.active \{[\s\S]*?var\(--sg-yellow\)/);
     expect(shell).toMatch(/\.playHud \.clubBtn,[\s\S]*?var\(--sg-teal\)/);
     expect(shell).toMatch(/\.playHud \.clubBtn\.on,[\s\S]*?var\(--sg-lime\)/);
+  });
+
+  it('uses dedicated isometric tool art instead of legacy fixed-position CSS diamonds', () => {
+    expect(toolbar).toContain('className={\'toolGraphic art-\'');
+    expect(toolbar).toContain('className="toolGraphicTop"');
+    expect(toolbar).toContain('data-group={group}');
+    expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
+    expect(shell).toContain(".toolDock[data-group='terrain'] .toolbar");
   });
 });
