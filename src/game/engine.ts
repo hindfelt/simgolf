@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RegularSkill, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
@@ -36,6 +36,7 @@ import { findPath } from './pathfind';
 import { isWaterBackedTile } from './bridges';
 import { generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
+import { applyRegularTraining, createRegularTraining, regularTrainingRates, sanitizeRegularTraining } from './regularTraining';
 import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
 import type { FlightPath } from './flightPath';
 export { ballFlightPosition, flightApexHeight, shapeCurveOffset } from './flightPath';
@@ -774,6 +775,7 @@ function seedRegulars() {
       lastVisit: -1e9,
       holesPlayed: 0,
       lifetimeSpend: 0,
+      training: createRegularTraining(),
       celebrity: player.celebrity || undefined,
     });
   }
@@ -1800,6 +1802,18 @@ function finishHole(g: Golfer, pickedUp: boolean) {
     if (regular) {
       regular.holesPlayed = (regular.holesPlayed ?? 0) + 1;
       regular.lifetimeSpend = (regular.lifetimeSpend ?? 0) + pay;
+      const training = applyRegularTraining(regular, regularTrainingRates(S.buildings), pickedUp ? 0.5 : 1);
+      g.length = regular.length;
+      g.accuracy = regular.accuracy;
+      g.imagination = regular.imagination;
+      g.skill = (regular.length + regular.accuracy + regular.imagination) / 3;
+      const improved = training.gains.filter((gain) => gain.levels > 0);
+      if (improved.length) {
+        const skillLabel = (skill: RegularSkill) => skill[0].toUpperCase() + skill.slice(1);
+        const summary = improved.map((gain) => `${skillLabel(gain.skill)} +${gain.levels}%`).join(' · ');
+        floater(h.cup.x, h.cup.y - 1.2, summary, '#ffe36e', 'bub');
+        ticker('Golf Academy', `${regular.name} improved ${summary} after ${training.holes} practice ${training.holes === 1 ? 'hole' : 'holes'}.`, 'money', golferTickerCharacter(regular, 'money'));
+      }
     }
   }
   S.served++;
@@ -3312,8 +3326,12 @@ function applySaveData(d: any): boolean {
       visits: Math.max(0, Math.trunc(Number(regular.visits) || 0)),
       streak: Math.max(0, Math.trunc(Number(regular.streak) || 0)),
       lastVisit: Number.isFinite(regular.lastVisit) ? regular.lastVisit : -1e9,
+      length: clamp(Number(regular.length) || 0.2, 0.2, 1),
+      accuracy: clamp(Number(regular.accuracy) || 0.2, 0.2, 1),
+      imagination: clamp(Number(regular.imagination) || 0.2, 0.2, 1),
       holesPlayed: Math.max(0, Math.trunc(Number(regular.holesPlayed) || 0)),
       lifetimeSpend: Math.max(0, Math.trunc(Number(regular.lifetimeSpend) || 0)),
+      training: sanitizeRegularTraining(regular.training),
       membership: sanitizeMembership(regular.membership),
     }));
   seedRegulars(); // backfills the roster on saves from before this feature
