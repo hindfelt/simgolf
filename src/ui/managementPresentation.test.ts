@@ -10,6 +10,7 @@ describe('management presentation and accessibility', () => {
   const scorecards = read('./ScorecardsPanel.tsx');
   const account = read('./AccountPanel.tsx');
   const css = read('../styles.css');
+  const shell = read('../simgolf-shell.css');
 
   it('uses named pixel portraits for both championship golfer choices', () => {
     expect(pro.match(/className="proChoicePortrait"/g)).toHaveLength(2);
@@ -67,14 +68,15 @@ describe('management presentation and accessibility', () => {
     expect(css).toMatch(/@media \(max-width:980px\)\s*\{[^}]*\.proSkillGrid\s*\{\s*grid-template-columns:1fr;/s);
   });
 
-  it('wraps the play workbench before its controls overflow common laptop widths', () => {
-    expect(css).toMatch(/@media \(max-width: 1300px\)\s*\{[\s\S]*?\.playHud\s*\{[^}]*max-width: none;[^}]*flex-wrap: wrap;/);
-    expect(css).toMatch(/@media \(max-width: 1300px\)[\s\S]*?\.shotWorkbench\s*\{[^}]*flex:\s*1 0 100%;[^}]*overflow-x: auto;/);
+  it('keeps the play console on one original-height molded strip at laptop widths', () => {
+    expect(shell).toMatch(/\.playHud\s*\{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?height: var\(--sg-bottom\);/);
+    expect(shell).toMatch(/@media \(max-width: 1100px\)[\s\S]*?\.fieldControls\s*\{ width: var\(--sg-control-width\); \}[\s\S]*?\.playHud\s*\{ left: var\(--sg-control-width\); \}/);
+    expect(shell).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.fieldControls\.playControls\s*\{ display: none; \}/);
   });
 
-  it('keeps expanded forecasts and unavailable clubs legible on compact screens', () => {
-    expect(css).toMatch(/@media \(max-width: 470px\)[\s\S]*?\.shotTelemetry\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
-    expect(css).toMatch(/\.playHud \.clubBtn:disabled\s*\{[^}]*cursor: not-allowed;[^}]*opacity: \.72;/s);
+  it('keeps trajectory tools and unavailable clubs legible on compact screens', () => {
+    expect(shell).toMatch(/@media \(max-width: 520px\)[\s\S]*?\.playShotPalette \.shapeBtn\s*\{[^}]*width: 49px;/);
+    expect(shell).toMatch(/\.playClubLine button:disabled\s*\{[^}]*text-decoration: line-through;[^}]*cursor: not-allowed;/s);
   });
 
   it('keeps mobile World and Field Desk content reachable in short viewports', () => {

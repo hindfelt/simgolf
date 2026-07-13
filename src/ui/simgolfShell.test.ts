@@ -39,11 +39,12 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
   });
 
-  it('renders circular yellow mode medallions and teal-to-lime shot controls', () => {
+  it('renders circular yellow mode medallions and original trajectory ovals', () => {
     expect(shell).toMatch(/\.toolGroup \{[\s\S]*?border-radius: 50%;/);
     expect(shell).toMatch(/\.toolGroup\.active \{[\s\S]*?var\(--sg-yellow\)/);
-    expect(shell).toMatch(/\.playHud \.clubBtn,[\s\S]*?var\(--sg-teal\)/);
-    expect(shell).toMatch(/\.playHud \.clubBtn\.on,[\s\S]*?var\(--sg-lime\)/);
+    expect(playHud).toContain('className="flightGlyph"');
+    expect(shell).toMatch(/\.playShotPalette \.shapeBtn \{[\s\S]*?border-radius: 54% 48% 50% 46%;/);
+    expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on \{[\s\S]*?#20d365/);
   });
 
   it('uses dedicated isometric tool art instead of legacy fixed-position CSS diamonds', () => {

@@ -800,6 +800,7 @@ body,
 
 /* --- player shot shell ---------------------------------------------------- */
 .playHud {
+  position: fixed;
   top: auto;
   left: var(--sg-control-width);
   right: 0;
@@ -807,171 +808,317 @@ body,
   z-index: 25;
   width: auto;
   max-width: none;
-  min-height: 137px;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 12px 10px calc(9px + env(safe-area-inset-bottom)) 19px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  height: var(--sg-bottom);
+  min-height: var(--sg-bottom);
+  display: block;
+  padding: 0;
+  overflow: visible;
   border: 0;
   border-top: 4px solid var(--sg-shell-hi);
   border-left: 4px solid var(--sg-rim);
-  border-radius: 42px 0 0 0;
+  border-radius: 36px 0 0 0;
   background:
-    linear-gradient(166deg, rgba(255,255,255,.31), transparent 22%),
-    linear-gradient(180deg, var(--sg-shell-hi), var(--sg-shell) 31%, var(--sg-shell-mid) 74%, var(--sg-shell-low));
+    linear-gradient(166deg, rgba(255,255,255,.38), transparent 20%),
+    linear-gradient(180deg, #cac8fa 0 8%, #a7a6df 8% 69%, #8989c4 69% 88%, #6869a8 88% 100%);
   color: var(--sg-panel-blue);
-  box-shadow: inset 0 -8px rgba(44,49,139,.2), 0 -4px 0 var(--sg-rim), 0 -10px 22px rgba(0,0,0,.23);
+  box-shadow:
+    inset 0 -7px rgba(44,49,139,.22),
+    inset 3px 3px rgba(255,255,255,.23),
+    0 -4px 0 var(--sg-rim),
+    0 -10px 22px rgba(0,0,0,.23);
   transform: none;
-  scrollbar-width: thin;
-  scrollbar-color: #5f65af transparent;
+  box-sizing: border-box;
 }
 
-.playRoundStatus,
-.shotTelemetry,
-.conditionsReadout {
-  flex: 0 0 auto;
-  align-self: stretch;
-  border: 3px solid #6670b8;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ecebff, #c6c6ef);
-  box-shadow: inset 2px 2px rgba(255,255,255,.72), inset -2px -3px rgba(67,76,164,.14);
+.playHud::after {
+  content: '';
+  position: absolute;
+  left: 123px;
+  top: 13px;
+  bottom: 0;
+  width: 5px;
+  border-left: 2px solid rgba(53,59,139,.48);
+  border-right: 2px solid rgba(234,232,255,.42);
+  transform: skewX(-4deg);
 }
 
-.playRoundStatus {
-  min-width: 142px;
-  max-width: 170px;
-  padding: 9px 10px;
-  text-align: center;
-}
-.playRoundStatus > small {
-  color: #6670b1;
-  font-family: var(--sg-small);
-  font-size: 6px;
-  letter-spacing: .09em;
-}
-.playRoundStatus > span { color: #30449c; font-family: var(--sg-font); font-size: 15px; text-shadow: 1px 1px #fff; }
-.playHud .sub { color: #5864aa; font-family: var(--sg-small); font-size: 7px; }
-.playCoach { max-width: 155px; color: #31449b; font-family: var(--sg-font); font-size: 9px; line-height: 1.1; }
-
-.shotTelemetry {
-  min-width: 216px;
+.playConsolePanes {
+  position: absolute;
+  left: 128px;
+  top: 27px;
+  bottom: calc(5px + env(safe-area-inset-bottom));
+  width: min(520px, calc(100% - 136px));
   display: grid;
-  grid-template-columns: repeat(2, minmax(93px, 1fr));
-  gap: 0;
-  padding: 5px;
-}
-.shotTelemetry > span { padding: 5px 7px; border-right: 1px solid rgba(55,67,154,.25); border-bottom: 1px solid rgba(55,67,154,.2); }
-.shotTelemetry > span:nth-child(even) { border-right: 0; }
-.shotTelemetry > span:nth-last-child(-n+2) { border-bottom: 0; }
-.shotTelemetry small { color: #6670ae; font-family: var(--sg-small); font-size: 6px; letter-spacing: .07em; }
-.shotTelemetry b { color: #2f439d; font-family: var(--sg-font); font-size: 11px; }
-.powerTelemetry i { height: 5px; background: #7e83bd; }
-.powerTelemetry i em { background: linear-gradient(90deg, #2edc78, #f4e21b, #ee6a4c); }
-
-.shotWorkbench { flex: 0 0 auto; align-self: stretch; align-items: stretch; gap: 7px; }
-.shotControlGroup { display: flex; flex-direction: column; justify-content: flex-end; }
-.shotControlLabel {
-  margin: 0 0 3px 6px;
-  color: #fff;
-  font-family: var(--sg-font);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-transform: none;
-  text-shadow: 1px 1px #29337e;
-}
-.flightControlLabel { min-height: 18px; }
-.playHud .clubPicker,
-.playHud .shapePicker { gap: 4px; max-width: none; flex-wrap: nowrap; }
-.playHud .clubBtn,
-.playHud .shapeBtn {
-  min-height: 47px;
-  padding: 5px 9px;
-  border: 3px solid #303b8e;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #78e1cf 0%, var(--sg-teal) 44%, #269788 100%);
-  color: #173b67;
-  font-family: var(--sg-font);
-  font-size: 10px;
-  box-shadow: inset 2px 3px rgba(224,255,249,.56), inset -2px -4px rgba(14,95,90,.18), 0 3px 0 #252d78;
-}
-.playHud .clubBtn:hover,
-.playHud .shapeBtn:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.playHud .clubBtn.on,
-.playHud .shapeBtn.on {
-  border-color: #2c397e;
-  background: linear-gradient(180deg, #79ffae, var(--sg-lime) 54%, #10aa52);
-  color: #193c63;
-  box-shadow: 0 0 0 3px #f5ed21, inset 2px 3px rgba(229,255,222,.62), 0 4px 0 #283078;
-}
-.playHud .clubBtn span,
-.playHud .shapeBtn span { color: inherit; font-size: 10px; }
-.playHud .clubBtn small,
-.playHud .shapeBtn small { color: #245d73; font-family: var(--sg-small); font-size: 6px; }
-.playHud .clubBtn.on small,
-.playHud .shapeBtn.on small { color: #205c54; }
-.playHud .shapeBtn { min-width: 58px; grid-template-columns: 14px auto; padding-inline: 6px; text-align: left; }
-.playHud .shapeBtn i { color: #25418b; font-size: 17px; }
-.playHud .clubBtn:disabled {
-  border-color: #5f6492;
-  background: linear-gradient(180deg, #c5c5d9, #898ba8);
-  color: #5b5f79;
-  opacity: .7;
+  grid-template-columns: 160px 140px minmax(145px, 1fr);
+  gap: 5px;
+  min-width: 0;
 }
 
-.canopyStatus { border-color: #626bae; background: #d9d8f5; color: #354392; font-size: 7px; }
-.canopyAdvice { max-width: 420px; border-left-color: #f1df1e; background: rgba(29,37,111,.76); color: #fff; font-size: 7px; }
+.playConsolePanes > section {
+  min-width: 0;
+  overflow: hidden;
+  border: 2px solid #5f65a3;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #b9b9f5 0%, #a9aaf0 58%, #9698da 100%);
+  box-shadow:
+    inset 2px 2px 0 rgba(236,235,255,.57),
+    inset -2px -3px 0 rgba(63,68,146,.16),
+    0 1px 0 rgba(47,52,128,.54);
+}
 
-.playHud .conditionsReadout {
-  min-width: 118px;
+.playStatusPane { position: relative; padding: 4px 6px 3px; color: #263584; font-family: var(--sg-font); }
+.playPaneTitle {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 7px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  height: 14px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(56,63,147,.22);
+  white-space: nowrap;
 }
-.playHud .weatherReadout {
-  border: 0;
+.playPaneTitle b { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
+.playPaneTitle span { flex: 0 0 auto; color: #4a57a2; font-size: 7px; }
+
+.playClubLine,
+.playClubReadout {
+  height: 17px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #34418e;
+  font-family: var(--sg-font);
+  font-size: 8px;
+  white-space: nowrap;
+}
+.playClubLine > span { margin-right: 1px; }
+.playClubLine button {
+  min-width: 0;
+  min-height: 0;
+  height: 15px;
+  padding: 0 3px;
+  border: 1px solid transparent;
   border-radius: 3px;
   background: transparent;
-  color: #35469c;
+  color: #2f3d89;
   font-family: var(--sg-font);
-  font-size: 9px;
+  font-size: 7px;
+  line-height: 12px;
+  box-shadow: none;
 }
-.playHud .weather-drizzle,
-.playHud .weather-rain { background: #aebee9; color: #253d88; }
-.playHud .windReadout { padding: 2px 4px; color: #34479f; font-family: var(--sg-small); font-size: 7px; }
-.windArrow { color: #3548a0; }
+.playClubLine button:hover:not(:disabled) { background: rgba(236,235,255,.5); }
+.playClubLine button.on {
+  border-color: #314085;
+  background: linear-gradient(180deg, #45ec7d, #1bc85d);
+  color: #173667;
+  box-shadow: inset 1px 1px rgba(231,255,237,.65), 0 1px #283476;
+}
+.playClubLine button:disabled { color: #70739b; text-decoration: line-through; opacity: .62; cursor: not-allowed; }
+.playClubLine button:focus-visible,
+.playShotPalette .shapeBtn:focus-visible,
+.playHud .quitBtn:focus-visible { outline: 3px solid #fff24c; outline-offset: 2px; }
+
+.playShotFacts {
+  display: grid;
+  gap: 0;
+  color: #34418e;
+  font-family: var(--sg-font);
+  font-size: 7.5px;
+  line-height: 10px;
+  white-space: nowrap;
+}
+.playShotFacts span { overflow: hidden; text-overflow: ellipsis; }
+.playShotFacts b { color: #22327c; font-weight: 900; }
+.playTargetPower { position: absolute; left: 6px; right: 6px; bottom: 3px; height: 2px; overflow: hidden; background: rgba(57,64,145,.28); }
+.playTargetPower i { display: block; height: 100%; background: rgba(255,255,255,.9); box-shadow: 1px 0 #273681; transition: width .05s linear; }
+
+.playSkillPane {
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: 4px 6px;
+  color: #f4f3ff;
+  font-family: var(--sg-font);
+  font-size: 7.5px;
+  line-height: 10px;
+  text-shadow: 1px 1px #50569a;
+}
+.playSkillPane > span { min-width: 0; display: flex; justify-content: space-between; gap: 4px; white-space: nowrap; }
+.playSkillPane b { min-width: 0; overflow: hidden; font-weight: 900; text-overflow: ellipsis; }
+.playSkillPane em { flex: 0 0 auto; color: #fff; font-style: normal; }
+
+.playShotSetup { position: static; }
+.playShotPalette {
+  position: absolute;
+  left: 190px;
+  top: -29px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.playShotPalette .shapeBtn {
+  position: relative;
+  width: 60px;
+  min-width: 60px;
+  height: 42px;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 3px 6px;
+  border: 3px solid #2d3578;
+  border-radius: 54% 48% 50% 46%;
+  background:
+    linear-gradient(165deg, rgba(215,237,237,.48) 0 12%, transparent 13%),
+    linear-gradient(180deg, #7f9c99 0%, #4d6c6b 48%, #314949 100%);
+  color: #f8f2ff;
+  box-shadow:
+    inset 2px 2px rgba(232,245,248,.45),
+    inset -3px -4px rgba(24,45,52,.38),
+    0 3px 0 #1b225e,
+    0 5px 7px rgba(0,0,0,.22);
+  transform: rotate(-1deg);
+}
+.playShotPalette .shapeBtn:nth-child(even) { transform: rotate(1deg); }
+.playShotPalette .shapeBtn:hover { filter: brightness(1.09); transform: translateY(-1px); }
+.playShotPalette .shapeBtn.on {
+  border-color: #2d3577;
+  background:
+    linear-gradient(165deg, rgba(225,255,231,.55) 0 12%, transparent 13%),
+    linear-gradient(180deg, #55f18a 0%, #20d365 52%, #0aa64c 100%);
+  color: #fffaff;
+  box-shadow:
+    inset 2px 2px rgba(238,255,241,.64),
+    inset -3px -4px rgba(0,91,45,.25),
+    0 3px 0 #1c2461,
+    0 5px 8px rgba(0,0,0,.25);
+}
+.flightGlyph { width: 46px; height: 24px; overflow: visible; fill: #fff8ff; stroke: #fff8ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px #465489); }
+.flightGlyph path { fill: none; }
+.playVisuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.playMessage {
+  position: absolute;
+  left: 138px;
+  top: -66px;
+  z-index: 2;
+  width: min(390px, calc(100vw - 440px));
+  min-height: 27px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 2px solid rgba(116,122,180,.76);
+  border-radius: 5px;
+  background: rgba(13,23,37,.82);
+  color: #f4f2ff;
+  font-family: var(--sg-font);
+  font-size: 8.5px;
+  line-height: 1.15;
+  box-shadow: 0 3px 8px rgba(0,0,0,.28);
+}
+.playMessage > span:not(.canopyStatus) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.playMessage .canopyStatus { flex: 0 0 auto; min-height: 16px; padding: 1px 4px; border-color: #777eae; background: #d7d6ee; color: #303c82; font-size: 7px; }
+.playCaddie { color: #fff0a5; }
+.playCaddie strong { color: #fff46c; }
+
+.playConditions {
+  position: absolute;
+  right: 9px;
+  top: -65px;
+  z-index: 2;
+  min-width: 104px;
+  display: grid;
+  gap: 2px;
+  padding: 4px 6px;
+  border: 2px solid rgba(116,122,180,.76);
+  border-radius: 5px;
+  background: rgba(13,23,37,.82);
+  color: #f4f2ff;
+  box-shadow: 0 3px 8px rgba(0,0,0,.28);
+}
+.playConditions .weatherReadout {
+  min-height: 0;
+  display: flex;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--sg-font);
+  font-size: 8px;
+}
+.playConditions .weatherReadout small { color: #bdc9e5; font-family: var(--sg-small); font-size: 6px; }
+.playConditions .weather-drizzle,
+.playConditions .weather-rain { color: #bdeaff; }
+.playConditions .windReadout { display: flex; gap: 4px; padding: 0; color: #d9ddf8; font-family: var(--sg-small); font-size: 7px; }
+.playConditions .windArrow { display: inline-block; color: #f6f2ff; }
+
 .playHud .quitBtn {
+  position: absolute;
+  left: 67px;
+  top: 33px;
+  z-index: 3;
+  width: 45px;
   min-width: 45px;
+  height: 45px;
   min-height: 45px;
-  align-self: center;
-  padding: 5px;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  padding: 1px;
   border: 3px solid #58265e;
   border-radius: 50%;
   background: radial-gradient(circle at 34% 25%, #ffb39d, #e65f56 58%, #9c303f);
   color: #fff;
   font-family: var(--sg-small);
-  font-size: 6px;
   box-shadow: inset 2px 2px rgba(255,255,255,.55), 0 4px 0 #3b245d;
 }
-.championshipHud { align-self: stretch; border: 3px solid #5f55a2; border-radius: 10px; background: linear-gradient(180deg, var(--sg-yellow-hi), #dfb710); color: #30336d; }
+.playHud .quitBtn span { height: 23px; font-family: var(--sg-font); font-size: 23px; line-height: 23px; text-shadow: 1px 1px #6f2740; }
+.playHud .quitBtn small { margin-top: -7px; color: #fff; font-size: 5px; font-weight: 900; text-transform: uppercase; }
+.playHud .quitBtn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.playCompetitionHud {
+  position: absolute;
+  left: 8px;
+  bottom: calc(100% + 72px);
+  z-index: 3;
+  min-width: 165px;
+  display: grid;
+  padding: 5px 8px;
+  border: 3px solid #5f55a2;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--sg-yellow-hi), #dfb710);
+  color: #30336d;
+  font-family: var(--sg-font);
+  box-shadow: 0 3px 0 #282c76, 0 7px 14px rgba(0,0,0,.28);
+}
+.playCompetitionHud b { font-size: 7px; }
+.playCompetitionHud span { font-size: 10px; }
+.playCompetitionHud em { font-family: var(--sg-small); font-size: 6px; font-style: normal; }
 
 /* --- responsive shell ----------------------------------------------------- */
 @media (max-width: 1100px) {
-  :root { --sg-bottom: 118px; }
+  :root { --sg-control-width: 166px; }
   .plaque { width: 230px; min-width: 230px; }
-  .toolDock { left: 138px; }
-  .fieldControls { width: 154px; }
+  .toolDock { left: var(--sg-control-width); }
+  .fieldControls { width: var(--sg-control-width); }
   .tool { width: 67px; }
-  .tool .diaWrap { transform: scale(.9); transform-origin: center bottom; }
   .routingMap { width: 166px; }
   .minimap { width: 150px; height: 112px; }
-  .playHud { left: 138px; min-height: 127px; }
-  .playRoundStatus { min-width: 126px; }
-  .shotTelemetry { min-width: 190px; }
+  .playHud { left: var(--sg-control-width); }
 }
 
 @media (max-width: 760px) {
@@ -1021,32 +1168,67 @@ body,
   .fieldDeskPanel.catalogMode,
   .fieldDeskPanel.manageMode,
   .managementPanel { left: 6px; right: 6px; bottom: calc(var(--sg-bottom) + 92px); max-height: calc(100dvh - var(--sg-bottom) - 104px); }
-  .playControls { top: auto; bottom: 0; height: 82px; z-index: 27; }
+  .fieldControls.playControls { display: none; }
   .playHud {
     left: 0;
     bottom: 0;
-    min-height: 0;
-    max-height: 45vh;
-    padding-left: 10px;
+    height: var(--sg-bottom);
+    min-height: var(--sg-bottom);
+    max-height: none;
+    padding: 0;
     border-left: 0;
     border-radius: 26px 26px 0 0;
-    flex-wrap: nowrap;
-    overflow: auto hidden;
+    overflow: visible;
   }
-  .playRoundStatus { min-width: 130px; }
-  .shotWorkbench { width: auto; overflow: visible; }
+  .playHud::after { display: none; }
+  .playConsolePanes {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    grid-template-columns: 1.08fr 1fr 1.08fr;
+  }
+  .playShotPalette { left: 50%; transform: translateX(-50%); }
+  .playShotPalette .shapeBtn:nth-child(even),
+  .playShotPalette .shapeBtn { transform: none; }
+  .playMessage { left: 8px; width: min(390px, calc(100vw - 136px)); }
+  .playConditions { right: 8px; }
+  .playHud .quitBtn { left: 9px; top: -31px; }
+}
+
+@media (max-width: 520px) {
+  .playShotPalette { gap: 4px; }
+  .playShotPalette .shapeBtn {
+    width: 49px;
+    min-width: 49px;
+    height: 39px;
+    min-height: 39px;
+    padding-inline: 3px;
+  }
+  .flightGlyph { width: 40px; }
+  .playConsolePanes { grid-template-columns: 1.15fr .95fr 1fr; }
+  .playConsolePanes > section { border-width: 1px; }
+  .playStatusPane { padding-inline: 4px; }
+  .playPaneTitle b { font-size: 7.5px; }
+  .playPaneTitle span { display: none; }
+  .playClubLine { gap: 0; }
+  .playClubLine button { padding-inline: 2px; font-size: 6px; }
+  .playShotFacts,
+  .playSkillPane { font-size: 6.5px; }
+  .playSkillPane { padding-inline: 3px; }
+  .playMessage { top: -65px; font-size: 7.5px; }
+  .playMessage .playCaddie { display: none; }
+  .playConditions { min-width: 96px; }
 }
 
 @media (pointer: coarse) {
   .toolGroup { min-width: 41px; min-height: 41px; }
-  .playHud .clubBtn,
-  .playHud .shapeBtn { min-width: 58px; min-height: 48px; }
+  .playShotPalette .shapeBtn { min-height: 42px; }
+  .playClubLine button { min-height: 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tool:hover .diaWrap,
-  .playHud .clubBtn:hover,
-  .playHud .shapeBtn:hover,
+  .tool:hover .toolGraphic,
+  .playShotPalette .shapeBtn:hover,
   .fieldControls .orb:hover { transform: none; }
 }
 
@@ -1061,6 +1243,6 @@ body,
   .playHud { background: Canvas; color: CanvasText; border-color: ButtonText; }
   .toolGroup.active,
   .fieldControls .orb.on,
-  .playHud .clubBtn.on,
-  .playHud .shapeBtn.on { background: Highlight; color: HighlightText; }
+  .playClubLine button.on,
+  .playShotPalette .shapeBtn.on { background: Highlight; color: HighlightText; }
 }

@@ -2144,7 +2144,7 @@ export function activePlayingPro(): ProProfile {
 const RECOVERY_LIES = new Set<LieKey>(['deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rock', 'tree']);
 
 /** Resolves either a real pointer drag or a keyboard-generated drag into one shot intent. */
-export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: number; power: number } | null {
+export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: number; power: number; rawPower: number } | null {
   if (aim.kind === 'keyboard' && Number.isFinite(aim.worldDirX) && Number.isFinite(aim.worldDirY) && Number.isFinite(aim.worldPower)) {
     const magnitude = Math.hypot(aim.worldDirX!, aim.worldDirY!);
     if (magnitude < 0.001) return null;
@@ -2152,6 +2152,7 @@ export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: nu
       dirX: aim.worldDirX! / magnitude,
       dirY: aim.worldDirY! / magnitude,
       power: clamp(aim.worldPower!, lie === 'green' ? 0.02 : 0.08, 1),
+      rawPower: aim.worldPower!,
     };
   }
   const start = screenToWorld(aim.sx, aim.sy);
@@ -2162,7 +2163,7 @@ export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: nu
   if (drag < 0.001) return null;
   dirX /= drag;
   dirY /= drag;
-  return { dirX, dirY, power: clamp(drag / 9, lie === 'green' ? 0.02 : 0.08, 1) };
+  return { dirX, dirY, power: clamp(drag / 9, lie === 'green' ? 0.02 : 0.08, 1), rawPower: drag / 9 };
 }
 
 /** Shared by fire + renderer preview so pro skill changes never make the guide lie. */
