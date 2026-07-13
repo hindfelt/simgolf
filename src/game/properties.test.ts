@@ -4,6 +4,7 @@ import { GOAL_DEFS, acceptLandOffer, newCourse } from './engine';
 import {
   PROPERTY_INHERITANCE,
   WORLD_PROPERTIES,
+  newlyAvailableProperties,
   propertyAvailability,
   propertyAffordable,
   propertyById,
@@ -138,6 +139,21 @@ describe('World Screen property catalog', () => {
     expect(propertyAvailability(property, { ...unlockedContext(property.id), purchased: [property.id] })).toMatchObject({ status: 'purchased', canPurchase: false });
     expect(propertyAvailability(property, { ...unlockedContext(property.id), currentPropertyId: property.id })).toMatchObject({ status: 'current', canPurchase: false });
     expect(propertyAvailability(property, { funds: 0, progress: emptyProgress(), proProfile: createResidentPro(), purchased: [], sandbox: true })).toMatchObject({ status: 'available', canPurchase: true });
+  });
+
+  it('reports only deeds that cross from locked to purchasable at an earned threshold', () => {
+    const beforeCash = unlockedContext('kyoto-gardens');
+    beforeCash.funds = propertyById('kyoto-gardens').price - 1;
+    const afterCash = { ...beforeCash, funds: propertyById('kyoto-gardens').price };
+    expect(newlyAvailableProperties(beforeCash, afterCash).map((property) => property.id)).toContain('kyoto-gardens');
+
+    const beforeFame = unlockedContext('fiji-lagoon');
+    beforeFame.proProfile.fame = 24;
+    const afterFame = { ...beforeFame, proProfile: { ...beforeFame.proProfile, fame: 25 } };
+    expect(newlyAvailableProperties(beforeFame, afterFame).map((property) => property.id)).toContain('fiji-lagoon');
+
+    const purchasedAfter = { ...afterFame, purchased: ['fiji-lagoon'] as PropertyId[] };
+    expect(newlyAvailableProperties(beforeFame, purchasedAfter).map((property) => property.id)).not.toContain('fiji-lagoon');
   });
 
   it('migrates legacy career accomplishments conservatively and clamps malformed progress', () => {

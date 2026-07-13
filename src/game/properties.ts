@@ -123,6 +123,22 @@ export function propertyAvailability(property: PropertyDefinition, context: Prop
   };
 }
 
+/**
+ * Destinations that crossed from locked to purchasable between two career
+ * snapshots. Purchased/current deeds are intentionally excluded: this helper
+ * reports newly earned opportunities, not every place the portfolio can visit.
+ */
+export function newlyAvailableProperties(
+  before: PropertyAvailabilityContext,
+  after: PropertyAvailabilityContext,
+): PropertyDefinition[] {
+  return WORLD_PROPERTIES.filter((property) => {
+    const previous = propertyAvailability(property, before);
+    const current = propertyAvailability(property, after);
+    return previous.status === 'locked' && current.status === 'available' && current.canPurchase;
+  });
+}
+
 export function sanitizeCareerProgress(value: unknown, accomplishments: readonly string[] = []): CareerProgress {
   const raw = value && typeof value === 'object' ? value as Partial<CareerProgress> : {};
   const inferredRep = accomplishments.includes('rep5') ? 5 : accomplishments.includes('rep4') ? 4 : accomplishments.includes('rep3') ? 3 : 2.5;

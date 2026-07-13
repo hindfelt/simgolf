@@ -28,6 +28,18 @@ const THEMES = [
   { id: 'tropical', label: 'Tropical', blurb: 'Bright water, dense palms and lush fairways.' },
 ] as const;
 
+function DestinationUnlockBanner({ propertyIds, openWorld }: { propertyIds?: readonly PropertyId[]; openWorld: () => void }) {
+  if (!propertyIds?.length) return null;
+  const properties = propertyIds.map(propertyById);
+  return (
+    <aside className="destinationUnlock" aria-label={`${properties.length} new world ${properties.length === 1 ? 'destination' : 'destinations'} unlocked`}>
+      <span className="destinationSeal" aria-hidden="true">✦</span>
+      <div><small>NEW DESTINATION {properties.length === 1 ? 'RELEASED' : 'RELEASES'}</small><b>{properties.map((property) => property.name).join(' · ')}</b><p>Your latest result cleared every deed requirement. The properties are ready for development.</p></div>
+      <button type="button" onClick={openWorld}>Open World Screen</button>
+    </aside>
+  );
+}
+
 function NewCoursePanel({ initial, close }: { initial: boolean; close: () => void }) {
   const currentDifficulty = useUI((s) => s.difficulty);
   const currentThemePack = useUI((s) => s.themePackId);
@@ -469,6 +481,7 @@ export default function Modals() {
                 {modal.personalBest && <span>★ Personal best</span>}
               </div>
             )}
+            <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
             <Scorecard record={modal.record} />
             {modal.record.competitionId || modal.record.challengeId ? (
               <p className="roundPayout">Online event: <b>{submission === 'sent' ? 'Score submitted' : 'Provisional scorecard ready'}</b></p>
@@ -505,6 +518,7 @@ export default function Modals() {
               <div className={'championshipMedal rank-' + Math.min(4, modal.result.rank)}><span>{modal.result.rank === 1 ? '★' : modal.result.rank}</span><small>PLACE</small></div>
               <div><h1 id="modal-title">{modal.result.title}</h1><div className="tag">{modal.result.difficulty} field · {modal.result.courseName}</div><p>{modal.result.proName} finished <b>#{modal.result.rank}</b>, earning <strong>{fmt$(modal.result.prize)}</strong> and <strong>{modal.result.fame} fame</strong>.</p></div>
             </div>
+            <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
             <div className="championshipResultGrid">
               <section className="championshipLeaderboard">
                 <header><b>Final leaderboard</b><span>12-player stroke play</span></header>
@@ -529,6 +543,7 @@ export default function Modals() {
               <div className="challengeResultSeal"><span>{modal.result.outcome === 'won' ? 'W' : modal.result.outcome === 'lost' ? 'L' : 'T'}</span><small>{modal.result.outcome}</small></div>
               <div><div className="tag">SGA Pro Challenge · {fmt$(modal.result.wagerPerHole)} per hole</div><h1 id="modal-title">{modal.result.proName} vs {modal.result.opponent.name}</h1><p>{modal.result.holesWon} won · {modal.result.holesLost} lost · {modal.result.holesTied} tied. <strong>{modal.result.net > 0 ? `The resort earns ${fmt$(modal.result.net)}.` : modal.result.net < 0 ? `The resort pays ${fmt$(Math.abs(modal.result.net))}.` : 'The match finishes all square.'}</strong></p></div>
             </div>
+            <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
             <div className="challengeComparison">
               <table>
                 <thead><tr><th>Hole</th>{modal.result.holes.map((hole) => <th key={hole.hole}>{hole.hole}</th>)}<th>W-L-T</th></tr></thead>

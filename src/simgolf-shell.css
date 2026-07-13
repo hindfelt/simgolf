@@ -753,6 +753,51 @@ body,
   color: #30336b;
 }
 
+.destinationUnlock {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  margin: 10px 0 13px;
+  padding: 8px 10px 8px 8px;
+  border: 3px solid var(--sg-rim);
+  border-radius: 12px 28px 28px 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.48) 0 3px, transparent 3px),
+    linear-gradient(180deg, #c8c5f4 0 72%, #8c89cd 72% 100%);
+  color: #26368c;
+  box-shadow: inset 2px 2px rgba(255,255,255,.45), 0 4px 0 var(--sg-rim-dark);
+}
+.destinationSeal {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #39357b;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 27%, var(--sg-yellow-hi), var(--sg-yellow) 58%, #b98d00);
+  color: #303776;
+  font-size: 23px;
+  box-shadow: inset 2px 2px rgba(255,255,255,.65), 0 3px 0 #272461;
+}
+.destinationUnlock div { min-width: 0; }
+.destinationUnlock small { display: block; color: #5a63a5; font-family: var(--sg-small); font-size: 6px; font-weight: 900; letter-spacing: .13em; }
+.destinationUnlock b { display: block; overflow: hidden; color: #26368c; font-family: var(--sg-font); font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.destinationUnlock p { margin: 1px 0 0; color: #4e589a; font-family: var(--sg-small); font-size: 7px; }
+.destinationUnlock button {
+  min-height: 38px;
+  padding: 5px 14px;
+  border: 3px solid #2d397f;
+  border-radius: 21px;
+  background: linear-gradient(180deg, #70e3ca, var(--sg-teal) 58%, #23998b);
+  color: #173c6d;
+  font-family: var(--sg-font);
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: inset 2px 2px rgba(235,255,250,.58), 0 3px 0 #202966;
+}
+.destinationUnlock button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
 /* --- player shot shell ---------------------------------------------------- */
 .playHud {
   top: auto;

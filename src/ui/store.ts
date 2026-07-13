@@ -13,9 +13,9 @@ export type ModalDescriptor =
   | { kind: 'newCourse'; initial?: boolean }
   | { kind: 'landOffer' }
   | { kind: 'landmarkGift' }
-  | { kind: 'round'; record: RoundRecord; courseRecord: boolean; personalBest: boolean }
-  | { kind: 'championshipResult'; record: RoundRecord; result: ChampionshipResult; courseRecord: boolean; personalBest: boolean }
-  | { kind: 'proChallengeResult'; record: RoundRecord; result: ProChallengeResult; courseRecord: boolean; personalBest: boolean }
+  | { kind: 'round'; record: RoundRecord; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
+  | { kind: 'championshipResult'; record: RoundRecord; result: ChampionshipResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
+  | { kind: 'proChallengeResult'; record: RoundRecord; result: ProChallengeResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
   | { kind: 'saves' }
   | null;
 
