@@ -1557,6 +1557,22 @@ table.sc td.bad {
 .scorecardStats small { margin-top: 1px; overflow: hidden; color: #746f7f; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
 .roundPayout { margin: 9px 0 2px !important; text-align: center; }
 .roundPayout b { color: #9c7a12; }
+.practiceProgress { margin:8px 0; overflow:hidden; border:2px solid #4f557c; border-radius:11px; background:#e7e3cd; box-shadow:0 2px 0 #343851,inset 0 1px #fff; }
+.practiceProgressHead { display:grid; grid-template-columns:34px minmax(150px,1fr) auto; align-items:center; gap:8px; padding:7px 9px; background:#35395d; color:#fff6c8; }
+.practiceProgressHead > span { width:30px; height:30px; display:grid; place-items:center; border:2px solid #e2bd4c; border-radius:50%; background:#fff0a5; color:#3d4264; font-size:17px; }
+.practiceProgressHead small,.practiceProgressHead b { display:block; }.practiceProgressHead small { color:#d4d0ae; font-size:6px; font-weight:900; letter-spacing:.12em; }.practiceProgressHead b { margin-top:1px; font-size:10px; }
+.practiceProgressHead > em { max-width:260px; color:#bfc5df; font-size:7px; font-style:normal; text-align:right; }
+.practiceGainList { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; padding:6px; }
+.practiceGainList > div { min-width:0; padding:5px; border:1px solid rgba(53,57,93,.2); border-radius:7px; background:rgba(255,255,255,.48); }
+.practiceGainList > div.leveled { border-color:#9a7319; background:#fff0a9; box-shadow:inset 0 0 0 1px #e4c254; }
+.practiceGainList span b,.practiceGainList span small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.practiceGainList span b { color:#3a4055; font-size:7px; }.practiceGainList span small { margin-top:1px; color:#7a7180; font-size:6px; }
+.practiceGainList > div > i { height:5px; display:block; margin:5px 0 3px; overflow:hidden; border:1px solid #777b8c; border-radius:99px; background:#b9b8aa; }.practiceGainList > div > i em { display:block; height:100%; background:repeating-linear-gradient(90deg,#4b8b58 0 6px,#76b963 6px 12px); }
+.practiceGainList > div > strong { display:block; color:#4f5571; font-size:7px; text-align:right; }.practiceGainList > div.leveled > strong { color:#8a610d; }
+@media (max-width:760px) {
+  .practiceProgressHead { grid-template-columns:34px 1fr; }
+  .practiceProgressHead > em { grid-column:1/-1; max-width:none; text-align:left; }
+  .practiceGainList { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 .roundActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .roundActions .bigbtn.secondary { border-color: #4a4d76; background: linear-gradient(180deg, #d8daed, #9b9dc1); color: #2f315a; box-shadow: 0 3px 0 #5e6086; }
 
@@ -3213,6 +3229,10 @@ canvas.game:focus-visible {
 .proSkillGrid article small { margin-top:2px; color:#6d6a77; font-size:8px; line-height:1.25; }
 .skillMeter { height:7px; overflow:hidden; border:1px solid #6a705c; border-radius:999px; background:#b9b8a5; }
 .skillMeter i { display:block; height:100%; background:repeating-linear-gradient(90deg,#4f8e54 0 8px,#76b95b 8px 16px); }
+.skillGrowth { display:grid; gap:4px; }
+.practiceMeter { position:relative; height:11px; overflow:hidden; border:1px solid #76798e; border-radius:4px; background:#c6c4b5; }
+.practiceMeter i { display:block; height:100%; background:repeating-linear-gradient(90deg,#d2a735 0 5px,#efd66b 5px 10px); }
+.practiceMeter small { position:absolute; inset:0; display:grid !important; place-items:center; margin:0 !important; color:#353951 !important; font-size:5px !important; font-weight:900; letter-spacing:.04em; line-height:1 !important; text-shadow:0 1px rgba(255,255,255,.7); }
 .skillStepper { display:grid; grid-template-columns:28px 1fr 28px; align-items:center; gap:3px; }
 .skillStepper button { width:28px; height:28px; padding:0; border:1px solid #555976; border-radius:6px; background:#e6e3d4; color:#363955; font-weight:900; cursor:pointer; }
 .skillStepper button:disabled { opacity:.3; cursor:default; }

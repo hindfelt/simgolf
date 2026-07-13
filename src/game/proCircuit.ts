@@ -33,6 +33,36 @@ export const PRO_SKILLS: readonly ProSkillDefinition[] = [
 ] as const;
 
 const emptySkills = (): Record<ProSkillId, number> => Object.fromEntries(PRO_SKILLS.map((skill) => [skill.id, 0])) as Record<ProSkillId, number>;
+const emptyPractice = (): Record<ProSkillId, number> => Object.fromEntries(PRO_SKILLS.map((skill) => [skill.id, 0])) as Record<ProSkillId, number>;
+
+export const PRO_PRACTICE_THRESHOLD = 100;
+
+export interface ProPracticeFacilities {
+  drivingRange: boolean;
+  puttingGreen: boolean;
+  proShop: boolean;
+}
+
+export interface ProPracticeSession {
+  holes: number;
+  earned: Record<ProSkillId, number>;
+  facilities: string[];
+}
+
+export interface ProPracticeGain {
+  id: ProSkillId;
+  earned: number;
+  progress: number;
+  levels: number;
+  level: number;
+}
+
+export interface ProPracticeResult {
+  holes: number;
+  practiceRound: number;
+  facilities: string[];
+  gains: ProPracticeGain[];
+}
 
 export function createResidentPro(): ProProfile {
   return {
@@ -43,6 +73,8 @@ export function createResidentPro(): ProProfile {
     skin: '#f1c6a0',
     cap: '#fffdf2',
     skills: emptySkills(),
+    practice: emptyPractice(),
+    practiceRounds: 0,
     unspentSkillPoints: 10,
     accomplishments: [],
     starts: 0,
@@ -73,9 +105,14 @@ export function sanitizeProProfile(value: unknown): ProProfile {
   if (!value || typeof value !== 'object') return fallback;
   const raw = value as Partial<ProProfile>;
   const skills = emptySkills();
+  const practice = emptyPractice();
   for (const definition of PRO_SKILLS) {
     const level = Number(raw.skills?.[definition.id]);
     skills[definition.id] = Number.isFinite(level) ? Math.max(0, Math.min(10, Math.trunc(level))) : 0;
+    const progress = Number(raw.practice?.[definition.id]);
+    practice[definition.id] = skills[definition.id] >= 10 || !Number.isFinite(progress)
+      ? 0
+      : Math.max(0, Math.min(PRO_PRACTICE_THRESHOLD - 1, Math.trunc(progress)));
   }
   return {
     version: 1,
@@ -85,6 +122,8 @@ export function sanitizeProProfile(value: unknown): ProProfile {
     skin: validColor(raw.skin, fallback.skin),
     cap: validColor(raw.cap, fallback.cap),
     skills,
+    practice,
+    practiceRounds: Math.max(0, Math.trunc(Number(raw.practiceRounds) || 0)),
     unspentSkillPoints: Math.max(0, Math.min(99, Math.trunc(Number(raw.unspentSkillPoints) || 0))),
     accomplishments: Array.isArray(raw.accomplishments) ? raw.accomplishments.filter((id): id is string => typeof id === 'string').slice(0, 100) : [],
     starts: Math.max(0, Math.trunc(Number(raw.starts) || 0)),
@@ -95,11 +134,80 @@ export function sanitizeProProfile(value: unknown): ProProfile {
   };
 }
 
+const PRACTICE_RECOVERY_LIES = new Set(['deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rock', 'tree']);
+const DRIVING_SKILLS = new Set<ProSkillId>(['powerHitter', 'longDriver', 'accurateDriver', 'drawShot', 'fadeShot']);
+const SHORT_GAME_SKILLS = new Set<ProSkillId>(['accurateIrons', 'accuratePutter', 'highBackspin', 'recovery']);
+
+/** Translate actual shot choices into a deterministic practice session. */
+export function createProPracticeSession(record: RoundRecord, facilities: ProPracticeFacilities): ProPracticeSession {
+  const earned = emptyPractice();
+  for (const hole of record.card) {
+    for (const shot of hole.shots) {
+      if (shot.club === 'driver') {
+        earned.accurateDriver += 4;
+        if (shot.power >= 0.72) earned.longDriver += 3;
+        if (shot.power >= 0.86) earned.powerHitter += 2;
+      } else if (shot.club === 'putter') {
+        earned.accuratePutter += 4;
+      } else {
+        earned.accurateIrons += 4;
+        if (shot.power >= 0.86) earned.powerHitter += 1;
+      }
+      if (shot.shape === 'draw') earned.drawShot += 5;
+      else if (shot.shape === 'hook') earned.drawShot += 6;
+      else if (shot.shape === 'fade') earned.fadeShot += 5;
+      else if (shot.shape === 'backspin') earned.highBackspin += 5;
+      else if (shot.shape === 'punch') earned.recovery += 3;
+      if (PRACTICE_RECOVERY_LIES.has(shot.fromLie)) earned.recovery += 6;
+      if (shot.holed) earned.luck += 1;
+    }
+    if (hole.fairwayHit) earned.accurateDriver += 1;
+    if (hole.greenInRegulation) earned.accurateIrons += 1;
+    if (hole.relative <= 0) earned.luck += 2;
+  }
+
+  for (const skill of PRO_SKILLS) {
+    let multiplier = facilities.proShop ? 1.2 : 1;
+    if (facilities.drivingRange && DRIVING_SKILLS.has(skill.id)) multiplier += 0.5;
+    if (facilities.puttingGreen && SHORT_GAME_SKILLS.has(skill.id)) multiplier += 0.5;
+    earned[skill.id] = Math.round(earned[skill.id] * multiplier);
+  }
+
+  const facilityNames = [
+    facilities.drivingRange && 'Driving Range',
+    facilities.puttingGreen && 'Putting Green',
+    facilities.proShop && 'Pro Shop',
+  ].filter((name): name is string => !!name);
+  return { holes: record.holesPlayed, earned, facilities: facilityNames };
+}
+
+/** Apply a completed session after any isolated competition course restores home. */
+export function applyProPracticeSession(profile: ProProfile, session: ProPracticeSession): ProPracticeResult {
+  profile.practiceRounds++;
+  const gains: ProPracticeGain[] = [];
+  for (const skill of PRO_SKILLS) {
+    const earned = Math.max(0, Math.trunc(session.earned[skill.id]));
+    if (profile.skills[skill.id] >= 10) {
+      profile.practice[skill.id] = 0;
+      continue;
+    }
+    if (!earned) continue;
+    const total = profile.practice[skill.id] + earned;
+    const levels = Math.min(10 - profile.skills[skill.id], Math.floor(total / PRO_PRACTICE_THRESHOLD));
+    profile.skills[skill.id] += levels;
+    profile.practice[skill.id] = profile.skills[skill.id] >= 10 ? 0 : total - levels * PRO_PRACTICE_THRESHOLD;
+    gains.push({ id: skill.id, earned, progress: profile.practice[skill.id], levels, level: profile.skills[skill.id] });
+  }
+  gains.sort((a, b) => b.levels - a.levels || b.earned - a.earned || a.id.localeCompare(b.id));
+  return { holes: session.holes, practiceRound: profile.practiceRounds, facilities: session.facilities, gains };
+}
+
 export function adjustProSkill(profile: ProProfile, id: ProSkillId, delta: -1 | 1): boolean {
   const current = profile.skills[id];
   if (delta > 0) {
     if (profile.unspentSkillPoints <= 0 || current >= 10) return false;
     profile.skills[id]++;
+    if (profile.skills[id] >= 10) profile.practice[id] = 0;
     profile.unspentSkillPoints--;
     return true;
   }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition } from '../game/types';
 import type { PortraitExpression } from '../game/portraits';
+import type { ProPracticeResult } from '../game/proCircuit';
 
 export interface TickerCharacter {
   shirt: string;
@@ -23,9 +24,9 @@ export type ModalDescriptor =
   | { kind: 'newCourse'; initial?: boolean }
   | { kind: 'landOffer' }
   | { kind: 'landmarkGift' }
-  | { kind: 'round'; record: RoundRecord; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
-  | { kind: 'championshipResult'; record: RoundRecord; result: ChampionshipResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
-  | { kind: 'proChallengeResult'; record: RoundRecord; result: ProChallengeResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[] }
+  | { kind: 'round'; record: RoundRecord; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[]; practice?: ProPracticeResult }
+  | { kind: 'championshipResult'; record: RoundRecord; result: ChampionshipResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[]; practice?: ProPracticeResult }
+  | { kind: 'proChallengeResult'; record: RoundRecord; result: ProChallengeResult; courseRecord: boolean; personalBest: boolean; unlockedProperties?: PropertyId[]; practice?: ProPracticeResult }
   | { kind: 'saves' }
   | null;
 

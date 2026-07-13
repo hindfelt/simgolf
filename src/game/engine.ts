@@ -53,10 +53,13 @@ import { adjacentUnownedParcels, SPECIAL_GUESTS, specialGuestEnjoyed } from './s
 import {
   adjustProSkill,
   applyChampionshipCareer,
+  applyProPracticeSession,
   championshipTitle,
   createDefaultTourPro,
+  createProPracticeSession,
   createProChallengeOffer,
   createResidentPro,
+  PRO_SKILLS,
   sanitizeProProfile,
   sanitizeProChallengeOffer,
   resolveProChallenge,
@@ -2716,6 +2719,12 @@ function endRound() {
     completedAt: Date.now(),
     payout: cashOut,
   });
+  const residentParticipated = !championship || championship.usesResidentPro;
+  const practiceSession = residentParticipated ? createProPracticeSession(record, {
+    drivingRange: S.buildings.some((building) => building.kind === 'drivingrange' && building.open),
+    puttingGreen: S.buildings.some((building) => building.kind === 'puttinggreen' && building.open),
+    proShop: S.buildings.some((building) => building.kind === 'proshop' && building.open),
+  }) : null;
   let championshipResult: ChampionshipResult | null = null;
   let proChallengeResult: ProChallengeResult | null = null;
   if (championship) {
@@ -2750,6 +2759,7 @@ function endRound() {
     isolatedReturnSave = null;
     applySaveData(homeCourse);
   }
+  const practice = practiceSession ? applyProPracticeSession(S.proProfile, practiceSession) : undefined;
   // Apply event rewards only after an isolated retired/online course has restored the
   // live resort. Otherwise the advertised prize, career progress and ledger entry are
   // immediately overwritten by the home snapshot.
@@ -2774,6 +2784,17 @@ function endRound() {
   const unlockedProperties = roundPropertyAccessAtStart ? checkDestinationReleases(roundPropertyAccessAtStart, true) : [];
   roundPropertyAccessAtStart = null;
   if (restoredHome) saveGame();
+  if (practice?.gains.length) {
+    const improved = practice.gains.filter((gain) => gain.levels > 0);
+    if (improved.length) {
+      const labels = improved.map((gain) => `${PRO_SKILLS.find((skill) => skill.id === gain.id)!.label} ${gain.level * 10}%`);
+      ticker(S.proProfile.name, `Practice paid off: ${labels.join(' · ')}.`, 'money');
+    } else {
+      const lead = practice.gains[0];
+      const label = PRO_SKILLS.find((skill) => skill.id === lead.id)!.label;
+      ticker(S.proProfile.name, `Practice complete: +${lead.earned} ${label} progress (${lead.progress}%).`, 'money');
+    }
+  }
   S.mode = 'build';
   S.player = null;
   S.activeChampionship = null;
@@ -2784,11 +2805,12 @@ function endRound() {
     mode: 'build',
     playHud: null,
     roundsVersion: ui.get().roundsVersion + 1,
+    ...(practice ? { proVersion: ui.get().proVersion + 1 } : {}),
     modal: championshipResult
-      ? { kind: 'championshipResult', record, result: championshipResult, courseRecord, personalBest, unlockedProperties }
+      ? { kind: 'championshipResult', record, result: championshipResult, courseRecord, personalBest, unlockedProperties, practice }
       : proChallengeResult
-        ? { kind: 'proChallengeResult', record, result: proChallengeResult, courseRecord, personalBest, unlockedProperties }
-      : { kind: 'round', record, courseRecord, personalBest, unlockedProperties },
+        ? { kind: 'proChallengeResult', record, result: proChallengeResult, courseRecord, personalBest, unlockedProperties, practice }
+      : { kind: 'round', record, courseRecord, personalBest, unlockedProperties, practice },
   });
   sfx.tada();
 }

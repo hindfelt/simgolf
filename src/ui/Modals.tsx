@@ -13,6 +13,7 @@ import { THEME_PACKS, themePackById } from '../game/themePacks';
 import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, propertyAvailability, propertyById } from '../game/properties';
 import CharacterPortrait from './CharacterPortrait';
 import { portfolioSupported, resortsForProperty, type ResortRecord } from '../game/portfolio';
+import { PRO_PRACTICE_THRESHOLD, PRO_SKILLS, type ProPracticeResult } from '../game/proCircuit';
 
 const SLOT_IDS = ['A', 'B', 'C'];
 const WORLD_THEME_ORDER = [
@@ -36,6 +37,33 @@ function DestinationUnlockBanner({ propertyIds, openWorld }: { propertyIds?: rea
       <span className="destinationSeal" aria-hidden="true">✦</span>
       <div><small>NEW DESTINATION {properties.length === 1 ? 'RELEASED' : 'RELEASES'}</small><b>{properties.map((property) => property.name).join(' · ')}</b><p>Your latest result cleared every deed requirement. The properties are ready for development.</p></div>
       <button type="button" onClick={openWorld}>Open World Screen</button>
+    </aside>
+  );
+}
+
+function PracticeProgress({ result }: { result?: ProPracticeResult }) {
+  if (!result?.gains.length) return null;
+  const gains = result.gains.slice(0, 5);
+  const levelUps = result.gains.reduce((sum, gain) => sum + gain.levels, 0);
+  return (
+    <aside className="practiceProgress" aria-label={`Resident pro practice, ${levelUps} skill ${levelUps === 1 ? 'level' : 'levels'} earned`}>
+      <div className="practiceProgressHead">
+        <span aria-hidden="true">🏌</span>
+        <div><small>PRACTICE ROUND {result.practiceRound}</small><b>{levelUps ? `${levelUps} skill ${levelUps === 1 ? 'level' : 'levels'} earned` : `${result.holes} ${result.holes === 1 ? 'hole' : 'holes'} of focused training`}</b></div>
+        <em>{result.facilities.length ? `${result.facilities.join(' · ')} boost` : 'Build practice facilities for faster growth'}</em>
+      </div>
+      <div className="practiceGainList">
+        {gains.map((gain) => {
+          const skill = PRO_SKILLS.find((definition) => definition.id === gain.id)!;
+          return (
+            <div key={gain.id} className={gain.levels ? 'leveled' : ''}>
+              <span><b>{skill.label}</b><small>+{gain.earned} practice</small></span>
+              <i role="progressbar" aria-label={`${skill.label}, ${gain.progress} percent toward next level`} aria-valuemin={0} aria-valuemax={PRO_PRACTICE_THRESHOLD} aria-valuenow={gain.progress}><em style={{ width: `${gain.progress}%` }} /></i>
+              <strong>{gain.levels ? `LEVEL ${gain.level}` : `${gain.progress}%`}</strong>
+            </div>
+          );
+        })}
+      </div>
     </aside>
   );
 }
@@ -482,6 +510,7 @@ export default function Modals() {
               </div>
             )}
             <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
+            <PracticeProgress result={modal.practice} />
             <Scorecard record={modal.record} />
             {modal.record.competitionId || modal.record.challengeId ? (
               <p className="roundPayout">Online event: <b>{submission === 'sent' ? 'Score submitted' : 'Provisional scorecard ready'}</b></p>
@@ -519,6 +548,7 @@ export default function Modals() {
               <div><h1 id="modal-title">{modal.result.title}</h1><div className="tag">{modal.result.difficulty} field · {modal.result.courseName}</div><p>{modal.result.proName} finished <b>#{modal.result.rank}</b>, earning <strong>{fmt$(modal.result.prize)}</strong> and <strong>{modal.result.fame} fame</strong>.</p></div>
             </div>
             <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
+            <PracticeProgress result={modal.practice} />
             <div className="championshipResultGrid">
               <section className="championshipLeaderboard">
                 <header><b>Final leaderboard</b><span>12-player stroke play</span></header>
@@ -544,6 +574,7 @@ export default function Modals() {
               <div><div className="tag">SGA Pro Challenge · {fmt$(modal.result.wagerPerHole)} per hole</div><h1 id="modal-title">{modal.result.proName} vs {modal.result.opponent.name}</h1><p>{modal.result.holesWon} won · {modal.result.holesLost} lost · {modal.result.holesTied} tied. <strong>{modal.result.net > 0 ? `The resort earns ${fmt$(modal.result.net)}.` : modal.result.net < 0 ? `The resort pays ${fmt$(Math.abs(modal.result.net))}.` : 'The match finishes all square.'}</strong></p></div>
             </div>
             <DestinationUnlockBanner propertyIds={modal.unlockedProperties} openWorld={() => setStore({ modal: { kind: 'newCourse' } })} />
+            <PracticeProgress result={modal.practice} />
             <div className="challengeComparison">
               <table>
                 <thead><tr><th>Hole</th>{modal.result.holes.map((hole) => <th key={hole.hole}>{hole.hole}</th>)}<th>W-L-T</th></tr></thead>

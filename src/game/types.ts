@@ -516,6 +516,9 @@ export interface ProProfile {
   skin: string;
   cap: string;
   skills: Record<ProSkillId, number>;
+  /** 0-99 practice toward the next level in each skill. */
+  practice: Record<ProSkillId, number>;
+  practiceRounds: number;
   unspentSkillPoints: number;
   accomplishments: string[];
   starts: number;
