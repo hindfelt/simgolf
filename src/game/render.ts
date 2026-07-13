@@ -1,6 +1,6 @@
 import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
-import type { Ball, Building, Golfer, Hole, Vec } from './types';
+import type { Ball, Building, Employee, Golfer, Hole, Vec } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
 import { P, PE, viewXY } from './camera';
@@ -12,7 +12,7 @@ import type { CourseStaffFrame, CourseStaffKind } from './sprites';
 import type { GolferFrame, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
-import { countEmp } from './employees';
+import { countEmp, employeeDisplayName, employeeWorkZone } from './employees';
 import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
 import { ballFlightPosition } from './flightPath';
 import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
@@ -1088,9 +1088,11 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   let staffIndex = 0;
   for (const employee of S.employees) {
     const staffKind = employee.kind;
-    if (staffKind !== 'ranger' && staffKind !== 'groundskeeper' && staffKind !== 'turftech') continue;
     const pose = courseStaffPose(employee.id, staffKind, staffIndex++);
-    D.push({ z: dep(pose.x, pose.y) + 0.05, f: () => drawCourseStaff(ctx, staffKind, pose, u) });
+    D.push({
+      z: dep(pose.x, pose.y) + 0.05,
+      f: () => drawCourseStaff(ctx, staffKind, pose, u, employeeDisplayName(employee)),
+    });
   }
   for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
   for (let y = 0; y < H; y++)
@@ -1315,9 +1317,29 @@ function drawWildlife(ctx: CanvasRenderingContext2D, kind: WildlifeCache['kind']
   ctx.imageSmoothingEnabled = true;
 }
 
-function courseStaffPose(id: number, kind: CourseStaffKind, index: number) {
-  const targets = kind === 'ranger' ? caches.wildlife : caches.naturePatches;
-  const target = targets.length ? targets[Math.abs(Math.floor(id + index * 7)) % targets.length] : { x: CH.x + 4, y: CH.y + 3 };
+function courseStaffTargets(kind: CourseStaffKind, index: number): Vec[] {
+  const zone = employeeWorkZone(kind);
+  if (zone === 'wildlife') return caches.wildlife;
+  if (zone === 'turf') return caches.naturePatches;
+  if (zone === 'first-tee' && S.holes.length) return S.holes.map((hole) => ({ x: hole.tee.x + 0.35, y: hole.tee.y + 0.2 }));
+  if (zone === 'golfers' && S.golfers.length) {
+    return S.golfers.map((golfer, golferIndex) => ({
+      x: golfer.x + (golferIndex % 2 ? -0.55 : 0.55),
+      y: golfer.y + 0.42,
+    }));
+  }
+  if (zone === 'clubhouse') {
+    return [
+      { x: CH.x + 2.7, y: CH.y + 1.15 },
+      { x: CH.x + 1.4, y: CH.y + 2.35 },
+    ];
+  }
+  return [{ x: CH.x + 2.4 + (index % 3) * 0.65, y: CH.y + 1.8 + (index % 2) * 0.55 }];
+}
+
+function courseStaffPose(id: Employee['id'], kind: CourseStaffKind, index: number) {
+  const targets = courseStaffTargets(kind, index);
+  const target = targets[Math.abs(Math.floor(id * 1000 + index * 7)) % targets.length];
   const cycle = (S.time * (0.023 + index * 0.002) + (Math.abs(id) % 97) / 97) % 1;
   const smoothStep = (n: number) => n * n * (3 - 2 * n);
   let t = 0;
@@ -1826,7 +1848,8 @@ function drawCourseStaff(
   ctx: CanvasRenderingContext2D,
   kind: CourseStaffKind,
   pose: { x: number; y: number; phase: number; face: number; frame: CourseStaffFrame; working: boolean },
-  u: number
+  u: number,
+  name: string
 ) {
   const p = PE(pose.x, pose.y);
   const k = clamp(u, 0.65, 1.75) * 0.82;
@@ -1843,6 +1866,10 @@ function drawCourseStaff(
   ctx.drawImage(courseStaffSprite(kind, pose.frame), -15 * k, -35 * k, 30 * k, 36 * k);
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
+  const hovered = !!S.hover && Math.floor(pose.x) === S.hover.x && Math.floor(pose.y) === S.hover.y;
+  if (S.cam.z > 0.82 || hovered) {
+    drawActorName(ctx, name, p.x, p.y - 36 * k - 2 * u - bob, Math.max(u * 0.86, 0.58));
+  }
 }
 
 function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, u: number, gold = false) {
