@@ -592,92 +592,15 @@ body,
 .toolGraphic {
   position: relative;
   width: 68px;
-  height: 52px;
-  flex: 0 0 52px;
+  height: 54px;
+  flex: 0 0 54px;
+  display: block;
+  background: transparent;
+  image-rendering: pixelated;
   filter: drop-shadow(0 4px 2px rgba(19,24,80,.42));
   transition: transform .1s ease;
 }
 .tool:hover .toolGraphic { transform: translateY(-2px); }
-.toolGraphicRing,
-.toolGraphicTop,
-.toolGraphicLeft,
-.toolGraphicRight {
-  position: absolute;
-  display: block;
-}
-.toolGraphicRing {
-  z-index: 0;
-  inset: -2px 0 8px;
-  background: #fff45a;
-  clip-path: polygon(50% 0, 100% 49%, 50% 100%, 0 49%);
-  filter: drop-shadow(0 0 1px #3b3478);
-}
-.toolGraphicRing::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  background: var(--sg-yellow);
-  clip-path: inherit;
-}
-.toolGraphicLeft {
-  z-index: 1;
-  left: 5px;
-  top: 25px;
-  width: 30px;
-  height: 20px;
-  background: linear-gradient(90deg, #2b306d, var(--tool-side));
-  clip-path: polygon(0 0, 100% 48%, 100% 100%, 0 52%);
-}
-.toolGraphicRight {
-  z-index: 1;
-  right: 5px;
-  top: 25px;
-  width: 30px;
-  height: 20px;
-  background: var(--tool-side);
-  clip-path: polygon(0 48%, 100% 0, 100% 52%, 0 100%);
-}
-.toolGraphicTop {
-  z-index: 2;
-  left: 5px;
-  top: 2px;
-  width: 58px;
-  height: 43px;
-  background: var(--tool-surface);
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  box-shadow: inset 0 2px rgba(255,255,255,.65);
-}
-.toolGraphicTop::after {
-  content: '';
-  position: absolute;
-  inset: 3px 4px 9px;
-  background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 54%);
-  clip-path: inherit;
-}
-.toolGraphicIcon {
-  position: absolute;
-  z-index: 3;
-  left: 22px;
-  top: 11px;
-  width: 25px;
-  height: 25px;
-  fill: none;
-  color: #25317c;
-  stroke: currentColor;
-  stroke-width: 2.8;
-  filter: drop-shadow(1px 2px 0 rgba(255,255,255,.42));
-}
-.toolGraphic.art-slab .toolGraphicTop {
-  left: 8px;
-  top: 9px;
-  width: 53px;
-  height: 31px;
-  clip-path: polygon(8% 0, 88% 6%, 100% 88%, 20% 100%);
-}
-.toolGraphic.art-slab .toolGraphicLeft { left: 13px; top: 35px; width: 28px; height: 10px; }
-.toolGraphic.art-slab .toolGraphicRight { right: 5px; top: 33px; width: 30px; height: 12px; }
-.tool[data-tool='hole'] .toolGraphicIcon { color: #184f37; }
-.goldTool .toolGraphicIcon { color: #28357b; }
 .tool .nm {
   color: #fff;
   font-family: var(--sg-font);
@@ -702,7 +625,7 @@ body,
   width: 58px;
   height: 48px;
   display: grid;
-  grid-template-columns: 42px 15px;
+  grid-template-columns: 46px 12px;
   grid-template-rows: 31px 11px;
   align-items: center;
   padding: 0;
@@ -712,10 +635,8 @@ body,
   height: 36px;
   flex-basis: 36px;
   grid-row: 1 / span 2;
-  transform: scale(.76);
-  transform-origin: center;
 }
-.toolDock[data-group='terrain'] .tool:hover .toolGraphic { transform: scale(.76) translateY(-2px); }
+.toolDock[data-group='terrain'] .tool:hover .toolGraphic { transform: translateY(-2px); }
 .toolDock[data-group='terrain'] .tool .nm,
 .toolDock[data-group='terrain'] .tool .ct {
   max-width: 28px;

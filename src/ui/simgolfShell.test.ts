@@ -7,6 +7,7 @@ describe('original SimGolf shell contract', () => {
   const main = read('../main.tsx');
   const topBar = read('./TopBar.tsx');
   const toolbar = read('./Toolbar.tsx');
+  const toolPreview = read('./ToolPreview.tsx');
   const minimap = read('./MiniMap.tsx');
   const playHud = read('./PlayHud.tsx');
   const shell = read('../simgolf-shell.css');
@@ -56,16 +57,25 @@ describe('original SimGolf shell contract', () => {
   it('renders circular yellow mode medallions and original trajectory ovals', () => {
     expect(shell).toMatch(/\.toolGroup \{[\s\S]*?border-radius: 50%;/);
     expect(shell).toMatch(/\.toolGroup\.active,[\s\S]*?\.toolGroup\.familyActive \{[\s\S]*?var\(--sg-yellow\)/);
+    expect(toolbar).toContain("id: 'course', label: 'Course', icon: 'course'");
+    expect(toolbar).toContain("id: 'terrain', label: 'Terrain', icon: 'terrain'");
     expect(playHud).toContain('className="flightGlyph"');
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn \{[\s\S]*?border-radius: 54% 48% 50% 46%;/);
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on \{[\s\S]*?#20d365/);
   });
 
-  it('uses dedicated isometric tool art instead of legacy fixed-position CSS diamonds', () => {
-    expect(toolbar).toContain('className={\'toolGraphic art-\'');
-    expect(toolbar).toContain('className="toolGraphicTop"');
+  it('uses dedicated pixel-canvas scenes instead of generic icon-stamped CSS diamonds', () => {
+    expect(toolbar).toContain("import ToolPreview from './ToolPreview'");
+    expect(toolbar).toContain('<ToolPreview tool={item.id} active={active} />');
+    expect(toolbar).not.toContain('toolGraphicTop');
+    expect(toolbar).not.toContain('toolGraphicIcon');
+    expect(toolPreview).toContain('data-tool-preview={tool}');
+    expect(toolPreview).toContain('window.devicePixelRatio || 1');
+    expect(toolPreview).toContain('ctx.imageSmoothingEnabled = false');
+    expect(shell).toMatch(/\.toolGraphic \{[\s\S]*?image-rendering: pixelated;/);
     expect(toolbar).toContain('data-group={group}');
     expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
     expect(shell).toContain(".toolDock[data-group='terrain'] .toolbar");
+    expect(shell).not.toContain('.toolGraphicIcon');
   });
 });
