@@ -66,7 +66,8 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, isPropertyId, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, isPropertyId, newlyAvailableProperties, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import type { PropertyAvailabilityContext } from './properties';
 import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
 /* ---------------- UI bridge ---------------- */
@@ -2134,6 +2135,7 @@ function updateCamGlide(dt: number) {
 
 /* ---------------- play your own course / pro circuit ---------------- */
 let isolatedReturnSave: ReturnType<typeof buildSaveData> | null = null;
+let roundPropertyAccessAtStart: PropertyAvailabilityContext | null = null;
 
 export function activePlayingPro(): ProProfile {
   return S.activeChampionship?.pro ?? S.proProfile;
@@ -2401,6 +2403,7 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
     return;
   }
   if (S.speed === 0) setSpeed(1);
+  if (!roundPropertyAccessAtStart) roundPropertyAccessAtStart = currentPropertyAccessContext();
   const startedAt = Date.now();
   S.mode = 'play';
   S.player = {
@@ -2433,8 +2436,10 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
 function startIsolatedOnlineRound(snapshot: unknown, options: { source: 'daily' | 'weekly' | 'tournament'; competitionId: string } | { source: 'challenge'; challengeId: string }): boolean {
   if (S.player || isolatedReturnSave) return false;
   const homeCourse = buildSaveData();
+  roundPropertyAccessAtStart = currentPropertyAccessContext();
   saveGame();
   if (!applySaveData(snapshot)) {
+    roundPropertyAccessAtStart = null;
     setHint('That competition course is incompatible with this version.');
     return false;
   }
@@ -2460,8 +2465,10 @@ export function startChampionshipRound(courseId: string, difficulty: Difficulty,
     return false;
   }
   const homeCourse = buildSaveData();
+  roundPropertyAccessAtStart = currentPropertyAccessContext();
   saveGame();
   if (!applySaveData(retired.snapshot)) {
+    roundPropertyAccessAtStart = null;
     setHint('That retired course is incompatible with this version. Retire it again from a current save.');
     sfx.err();
     return false;
@@ -2751,6 +2758,10 @@ function endRound() {
   S.roundHistory.push(record);
   if (S.roundHistory.length > ROUND_HISTORY_LIMIT) S.roundHistory.splice(0, S.roundHistory.length - ROUND_HISTORY_LIMIT);
   saveRoundHistory();
+  const unlockedProperties = roundPropertyAccessAtStart
+    ? newlyAvailableProperties(roundPropertyAccessAtStart, currentPropertyAccessContext()).map((property) => property.id)
+    : [];
+  roundPropertyAccessAtStart = null;
   if (restoredHome) saveGame();
   S.mode = 'build';
   S.player = null;
@@ -2758,15 +2769,19 @@ function endRound() {
   S.activeProChallenge = null;
   S.camTarget = null;
   updateTopbar();
+  if (unlockedProperties.length) {
+    const names = unlockedProperties.map((propertyId) => propertyById(propertyId).name);
+    ticker('World Screen', `${names.join(' · ')} ${names.length === 1 ? 'is' : 'are'} now available for development.`, 'money');
+  }
   ui.set({
     mode: 'build',
     playHud: null,
     roundsVersion: ui.get().roundsVersion + 1,
     modal: championshipResult
-      ? { kind: 'championshipResult', record, result: championshipResult, courseRecord, personalBest }
+      ? { kind: 'championshipResult', record, result: championshipResult, courseRecord, personalBest, unlockedProperties }
       : proChallengeResult
-        ? { kind: 'proChallengeResult', record, result: proChallengeResult, courseRecord, personalBest }
-      : { kind: 'round', record, courseRecord, personalBest },
+        ? { kind: 'proChallengeResult', record, result: proChallengeResult, courseRecord, personalBest, unlockedProperties }
+      : { kind: 'round', record, courseRecord, personalBest, unlockedProperties },
   });
   sfx.tada();
 }
@@ -2782,6 +2797,7 @@ export function quitRound(msg?: string) {
   }
   S.activeChampionship = null;
   S.activeProChallenge = null;
+  roundPropertyAccessAtStart = null;
   S.camTarget = null;
   S.balls = S.balls.filter((b) => b.owner !== 'P');
   ui.set({ mode: 'build', playHud: null });
@@ -2899,6 +2915,22 @@ export function careerProgressSnapshot(): CareerProgress {
     tournamentHosted: existing.tournamentHosted || S.tournamentHostedEver || S.goalsAchieved.tournament === true,
     sgaTop100Earned: existing.sgaTop100Earned || currentTop100 || retiredTop100,
     sgaTop18Earned: existing.sgaTop18Earned || currentTop18 || retiredTop18,
+  };
+}
+
+function currentPropertyAccessContext(): PropertyAvailabilityContext {
+  return {
+    funds: S.cash,
+    progress: { ...careerProgressSnapshot() },
+    proProfile: {
+      fame: S.proProfile.fame,
+      starts: S.proProfile.starts,
+      podiums: S.proProfile.podiums,
+      wins: S.proProfile.wins,
+    },
+    purchased: [...S.propertiesPurchased],
+    currentPropertyId: S.propertyId,
+    sandbox: S.sandbox,
   };
 }
 

@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 describe('World Screen career progression presentation', () => {
   const source = readFileSync(new URL('./Modals.tsx', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  const shell = readFileSync(new URL('../simgolf-shell.css', import.meta.url), 'utf8');
+  const engine = readFileSync(new URL('../game/engine.ts', import.meta.url), 'utf8');
 
   it('uses the shared engine availability model for selection, cards, inspection, and purchase', () => {
     expect(source).toContain('propertyAvailability(candidate');
@@ -34,6 +36,15 @@ describe('World Screen career progression presentation', () => {
     expect(source).toContain('className="bigbtn portfolioVisit"');
     expect(source).not.toContain('permanently leave');
     expect(css).toMatch(/\.portfolioDeed/);
+  });
+
+  it('announces newly earned deeds after rounds and links directly to the World Screen', () => {
+    expect(engine).toContain('newlyAvailableProperties(roundPropertyAccessAtStart');
+    expect(engine).toContain("ticker('World Screen'");
+    expect(source).toContain('className="destinationUnlock"');
+    expect(source).toContain("setStore({ modal: { kind: 'newCourse' } })");
+    expect(shell).toMatch(/\.destinationUnlock\s*\{/);
+    expect(shell).toMatch(/\.destinationUnlock button\s*\{/);
   });
 
   it('collapses career stats and requirement lists cleanly on phone layouts', () => {
