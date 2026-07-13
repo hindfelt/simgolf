@@ -2918,6 +2918,11 @@ canvas.game:focus-visible {
   max-height: 60vh;
   overflow: auto;
 }
+.regularTrainingCampus { display:grid; grid-template-columns:minmax(145px,1.25fr) repeat(3,minmax(92px,1fr)); align-items:stretch; gap:4px; margin-bottom:7px; padding:5px; border:2px solid #34395e; border-radius:10px; background:#292e50; box-shadow:0 3px 0 #1e223d,inset 0 1px rgba(255,255,255,.13); }
+.regularTrainingCampus > div { align-self:center; padding:2px 6px; color:#fff6c7; }.regularTrainingCampus > div small,.regularTrainingCampus > div b,.regularTrainingCampus > div span { display:block; }.regularTrainingCampus > div small { color:#d5bd5f; font-size:6px; font-weight:900; letter-spacing:.14em; }.regularTrainingCampus > div b { margin-top:1px; font-size:11px; }.regularTrainingCampus > div span { margin-top:2px; color:#bfc3dc; font-size:7px; }
+.regularTrainingCampus > span { min-width:0; display:grid; grid-template-columns:26px 1fr; grid-template-rows:1fr 1fr; align-items:center; column-gap:5px; padding:4px; border:1px solid #5a5e7c; border-radius:7px; background:#393e60; color:#999db6; }
+.regularTrainingCampus > span.active { border-color:#c8a83e; background:linear-gradient(180deg,#fff0a6,#d7b747); color:#40380f; box-shadow:inset 0 1px #fff7c8; }
+.regularTrainingCampus > span > i { grid-row:1/3; width:24px; height:24px; display:grid; place-items:center; border:2px solid currentColor; border-radius:50%; font-size:9px; font-style:normal; font-weight:900; }.regularTrainingCampus > span > b { overflow:hidden; font-size:7px; text-overflow:ellipsis; white-space:nowrap; }.regularTrainingCampus > span > small { font-size:6px; font-weight:900; letter-spacing:.04em; }
 .regularCard {
   border: 1px solid rgba(44,58,110,.22);
   border-radius: 11px;
@@ -2949,6 +2954,7 @@ canvas.game:focus-visible {
 .regularTag.regularMember { background: #cce6b8; color: #28633e; box-shadow: inset 0 0 0 1px #79a96a; }
 .regularTag.regular-rival { background: #fbd7d0; color: #973a26; }
 .regularTag.regular-couple { background: #ffd0e6; color: #973a63; }
+.regularTag.regularTrainingTag { border:1px solid #b6902d; background:#fff0a3; color:#71520b; text-transform:uppercase; }
 .regularVisits {
   margin-left: auto;
   font-size: 9px;
@@ -2962,12 +2968,13 @@ canvas.game:focus-visible {
 }
 .regularStat {
   display: grid;
-  grid-template-columns: 70px 1fr;
+  grid-template-columns: 90px 1fr;
   align-items: center;
   gap: 6px;
   font-size: 9px;
 }
-.regularStat span { color: #53506f; font-weight: 800; }
+.regularStat span { color: #53506f; font-weight: 800; }.regularStat span em { display:block; margin-top:1px; color:#9a7013; font-size:6px; font-style:normal; }
+.regularSkillTracks { display:grid; gap:2px; }
 .regularStatBar {
   height: 6px;
   border-radius: 999px;
@@ -2978,6 +2985,13 @@ canvas.game:focus-visible {
   display: block;
   height: 100%;
   background: linear-gradient(90deg, #3f7fd0, #4ed8b6);
+}
+.regularPracticeBar { height:4px; overflow:hidden; border:1px solid #9a8b55; border-radius:99px; background:#d3cfb9; }.regularPracticeBar i { display:block; height:100%; background:repeating-linear-gradient(90deg,#c89422 0 5px,#f0d669 5px 10px); }
+@media (max-width:760px) {
+  .regularTrainingCampus { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .regularTrainingCampus > div { grid-column:1/-1; }
+  .regularTrainingCampus > span { grid-template-columns:22px 1fr; }
+  .regularTrainingCampus > span > i { width:20px; height:20px; }
 }
 
 /* ---------- persistent player scorecards ---------- */

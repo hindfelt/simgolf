@@ -132,6 +132,16 @@ export interface Golfer {
 }
 
 /** A named regular's persistent identity — looked up by `name`, survives save/load and course rebuilds. */
+export type RegularSkill = 'length' | 'accuracy' | 'imagination';
+
+export interface RegularTraining {
+  /** 0-99 practice toward the next one-percentage-point skill increase. */
+  progress: Record<RegularSkill, number>;
+  /** Lifetime percentage points earned from the course's practice campus. */
+  gained: Record<RegularSkill, number>;
+  holes: number;
+}
+
 export interface Regular {
   name: string;
   shirt: string;
@@ -146,6 +156,7 @@ export interface Regular {
   /** Persistent club relationship and spending history for the Membership Roster. */
   holesPlayed?: number;
   lifetimeSpend?: number;
+  training?: RegularTraining;
   membership?: Membership;
   celebrity?: boolean;
   relation?: { type: 'rival' | 'couple'; withName: string; cd: number };

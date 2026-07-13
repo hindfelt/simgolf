@@ -10,6 +10,7 @@ import { Tile } from './types';
 import type { Golfer, Hole, ProChallengeOffer } from './types';
 import { ui } from '../ui/store';
 import { CLEAR_WEATHER } from './weather';
+import { createRegularTraining } from './regularTraining';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -25,6 +26,7 @@ describe('new-hole placement', () => {
     S.nextFacilityActivity = 4;
     S.employees = [];
     S.golfers = [];
+    S.regulars = [];
     S.balls = [];
     S.speed = 1;
     S.nextGolfer = 999;
@@ -159,6 +161,7 @@ describe('save / load round-trip', () => {
     S.regulars = [{
       name: 'Ada Member', shirt: '#fff', skin: '#dba276', cap: '#333', length: .6, accuracy: .7, imagination: .8,
       visits: 12, streak: 3, lastVisit: 400, holesPlayed: 88, lifetimeSpend: 4200,
+      training: { progress: { length: 25, accuracy: 50, imagination: 75 }, gained: { length: 2, accuracy: 3, imagination: 4 }, holes: 16 },
       membership: { tier: 'lifetime', sinceYear: 1, lastRenewedYear: 2, paid: 2400 },
     }];
     S.financeLedger = [
@@ -241,6 +244,7 @@ describe('save / load round-trip', () => {
     expect(S.financeLedger[1]).toMatchObject({ year: 2, amount: 2345, category: 'greenFees' });
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
+    expect(S.regulars[0].training).toEqual({ progress: { length: 25, accuracy: 50, imagination: 75 }, gained: { length: 2, accuracy: 3, imagination: 4 }, holes: 16 });
   });
 
   it('round-trips bridge backing types, connectivity, and bulldozer restoration', () => {
@@ -1117,6 +1121,7 @@ describe('golfer state machine', () => {
     S.balls = [];
     S.speed = 1;
     S.nextGolfer = 999; // don't let the spawner add extra golfers mid-test
+    S.regulars = [];
     S.nextStoryCheck = 999;
     S.tournament = null;
     S.tournamentCooldown = 999;
@@ -1153,5 +1158,33 @@ describe('golfer state machine', () => {
     expect(g.state).toBe('toBall'); // far from arriving yet
     expect(g.x).toBeGreaterThan(5.5);
     expect(g.x).toBeLessThan(25.5);
+  });
+
+  it('persists facility training and applies the improved trait to later holes immediately', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const training = createRegularTraining();
+    training.progress.accuracy = 95;
+    S.regulars = [{
+      name: 'Test Golfer', shirt: '#d0453a', skin: '#f1c6a0', cap: '#3f7fd0',
+      length: 0.6, accuracy: 0.6, imagination: 0.6, visits: 1, streak: 1, lastVisit: 0,
+      holesPlayed: 0, lifetimeSpend: 0, training,
+    }];
+    S.buildings = [{ id: 1, kind: 'proshop', x: 20, y: 20, w: 3, h: 2, open: true }];
+    const cup = S.holes[0].cup;
+    const g = makeGolfer({
+      state: 'prePutt', t: 0.001, ball: { x: cup.x - 0.2, y: cup.y }, lie: 'green',
+      x: cup.x - 0.2, y: cup.y, tx: cup.x - 0.2, ty: cup.y,
+      strokes: 2, length: 0.6, accuracy: 0.6, imagination: 0.6,
+    });
+    S.golfers.push(g);
+
+    update(0.1);
+    update(5);
+
+    expect(S.regulars[0].accuracy).toBe(0.61);
+    expect(S.regulars[0].training).toMatchObject({ holes: 1, progress: { accuracy: 13 }, gained: { accuracy: 1 } });
+    expect(g.accuracy).toBe(0.61);
+    expect(g.skill).toBeCloseTo((0.6 + 0.61 + 0.6) / 3);
+    random.mockRestore();
   });
 });

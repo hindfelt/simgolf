@@ -18,9 +18,9 @@ export interface BuildingDef {
 
 /** Catalog. Footprints are in tiles. Effects are applied in engine + here. */
 export const CATALOG: Record<BuildingKind, BuildingDef> = {
-  proshop: { name: 'Pro Shop', cost: 1800, w: 3, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Accuracy amenity. Lifts play + green fees.' },
-  drivingrange: { name: 'Driving Range', cost: 2800, w: 6, h: 3, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Length amenity. Happier big hitters.' },
-  puttinggreen: { name: 'Putting Green', cost: 1600, w: 3, h: 3, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Imagination amenity. Sharper short game.' },
+  proshop: { name: 'Pro Shop', cost: 1800, w: 3, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Trains regulars’ Accuracy after every hole.' },
+  drivingrange: { name: 'Driving Range', cost: 2800, w: 6, h: 3, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Trains regulars’ Length after every hole.' },
+  puttinggreen: { name: 'Putting Green', cost: 1600, w: 3, h: 3, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Trains regulars’ Imagination after every hole.' },
   snackbar: { name: 'Snack Bar', cost: 1000, w: 2, h: 2, wall: '#efc9a0', roof: '#c25a3a', short: '🌭', blurb: 'Feeds hungry golfers. Keeps moods up.' },
   cartgarage: { name: 'Cart Garage', cost: 1800, w: 3, h: 2, wall: '#c9c2b4', roof: '#5d6d7e', short: '🛺', blurb: 'Golfers move faster around the course.' },
   hotel: { name: 'Resort Hotel', cost: 4800, w: 4, h: 3, wall: '#e7dcc0', roof: '#9a3f5c', short: '🏨', blurb: 'Well-rested golfers stay happy longer.' },

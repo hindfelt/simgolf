@@ -40,6 +40,11 @@ describe('management presentation and accessibility', () => {
   it('announces regular skills as numeric meters', () => {
     expect(regulars).toContain('className="regularStatBar" role="meter"');
     expect(regulars).toContain('aria-valuenow={Math.round(r[key] * 100)}');
+    expect(regulars).toContain('className="regularPracticeBar" role="progressbar"');
+    expect(regulars).toContain('role="region" aria-label="Golfer practice campus"');
+    expect(regulars).toContain('const campus = regularTrainingRates(S.buildings)');
+    expect(css).toContain('.regularTrainingCampus');
+    expect(css).toContain('.regularPracticeBar');
   });
 
   it('announces course quality and touring-pro stats as numeric meters', () => {
