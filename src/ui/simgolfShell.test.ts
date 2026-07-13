@@ -34,9 +34,15 @@ describe('original SimGolf shell contract', () => {
     expect(topBar).toContain('className="simDate"');
     expect(shell).toMatch(/\.gauges \{[\s\S]*?flex-direction: column;/);
     expect(shell).toMatch(/--sg-control-width:\s*190px;/);
+    expect(shell).toMatch(/--sg-fan-height:\s*160px;/);
     expect(shell).toMatch(/\.fieldControls \{[\s\S]*?bottom: 0;[\s\S]*?width: var\(--sg-control-width\)/);
+    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?height: var\(--sg-fan-height\);[\s\S]*?border-radius: 0 76px 28px 0;/);
     expect(shell).toMatch(/\.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?height: var\(--sg-fan-height\);[\s\S]*?clip-path: polygon\(/);
+    expect(shell).toMatch(/\.toolGroups \{[\s\S]*?top: -43px;[\s\S]*?grid-template-columns: repeat\(2, 56px\);/);
+    expect(shell).toMatch(/\.toolGroup \{[\s\S]*?width: 56px;[\s\S]*?height: 56px;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.toolDock::after \{ display: none; \}/);
   });
 
   it('renders circular yellow mode medallions and original trajectory ovals', () => {
