@@ -29,25 +29,33 @@ describe('original SimGolf shell contract', () => {
     expect(playHud).toContain('data-ui="play-shell"');
   });
 
-  it('uses the original corner-pod and molded-bottom-shell composition', () => {
+  it('uses the original corner-pod and scalloped-bottom-shell composition', () => {
     expect(topBar).toContain('className="courseCrest"');
     expect(topBar).toContain('className="simDate"');
+    expect(topBar).toContain('className="fieldControlSkin"');
+    expect(topBar).toContain('className="fieldControlSkinBody"');
+    expect(topBar).toContain('C124 24 132 55 166 64');
     expect(shell).toMatch(/\.gauges \{[\s\S]*?flex-direction: column;/);
-    expect(shell).toMatch(/--sg-control-width:\s*190px;/);
+    expect(shell).toMatch(/--sg-control-width:\s*218px;/);
     expect(shell).toMatch(/--sg-fan-height:\s*160px;/);
     expect(shell).toMatch(/\.fieldControls \{[\s\S]*?bottom: 0;[\s\S]*?width: var\(--sg-control-width\)/);
-    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?height: var\(--sg-fan-height\);[\s\S]*?border-radius: 0 76px 28px 0;/);
+    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?height: 104px;[\s\S]*?background: transparent;/);
+    expect(shell).toMatch(/\.fieldControlSkinBody \{[\s\S]*?fill: url\(#simGolfFanFill\);/);
     expect(shell).toMatch(/\.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
-    expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?height: var\(--sg-fan-height\);[\s\S]*?clip-path: polygon\(/);
-    expect(shell).toMatch(/\.toolGroups \{[\s\S]*?top: -43px;[\s\S]*?grid-template-columns: repeat\(2, 56px\);/);
-    expect(shell).toMatch(/\.toolGroup \{[\s\S]*?width: 56px;[\s\S]*?height: 56px;/);
+    expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?display: none;/);
+    expect(shell).toMatch(/\.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-control-width\)\);[\s\S]*?top: -62px;/);
+    expect(toolbar).toContain("data-group-id={item.id}");
+    expect(toolbar).toContain('className="toolGroupLabel"');
+    expect(shell).toMatch(/\.toolGroup\[data-group-id='course'\] \{[\s\S]*?width: 70px;[\s\S]*?height: 70px;/);
+    expect(shell).toMatch(/\.toolGroup\[data-group-id='terrain'\] \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;/);
+    expect(shell).toMatch(/\.toolbar \{[\s\S]*?margin-left: 62px;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.toolDock::after \{ display: none; \}/);
   });
 
   it('renders circular yellow mode medallions and original trajectory ovals', () => {
     expect(shell).toMatch(/\.toolGroup \{[\s\S]*?border-radius: 50%;/);
-    expect(shell).toMatch(/\.toolGroup\.active \{[\s\S]*?var\(--sg-yellow\)/);
+    expect(shell).toMatch(/\.toolGroup\.active,[\s\S]*?\.toolGroup\.familyActive \{[\s\S]*?var\(--sg-yellow\)/);
     expect(playHud).toContain('className="flightGlyph"');
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn \{[\s\S]*?border-radius: 54% 48% 50% 46%;/);
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on \{[\s\S]*?#20d365/);
