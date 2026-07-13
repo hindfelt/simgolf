@@ -94,20 +94,24 @@ export default function ProCircuitPanel() {
             <div className="proPalette"><b>Skin</b>{SKINS.map((color) => <button key={color} aria-label={`Skin ${color}`} aria-pressed={pro.skin === color} className={pro.skin === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ skin: color })} />)}</div>
             <div className="proCareer">
               <div><span>Starts</span><b>{pro.starts}</b></div><div><span>Wins</span><b>{pro.wins}</b></div><div><span>Podiums</span><b>{pro.podiums}</b></div>
-              <div><span>Earnings</span><b>{fmt$(pro.careerEarnings)}</b></div><div><span>Fame</span><b>{pro.fame}</b></div><div><span>Accomplishments</span><b>{pro.accomplishments.length}</b></div>
+              <div><span>Earnings</span><b>{fmt$(pro.careerEarnings)}</b></div><div><span>Fame</span><b>{pro.fame}</b></div><div><span>Goals / practice</span><b>{pro.accomplishments.length} / {pro.practiceRounds}</b></div>
             </div>
             <div className="proFileActions"><button onClick={exportPro}><Icon name="save" size={13} /> Save pro</button><button onClick={() => proFileRef.current?.click()}><Icon name="publish" size={13} /> Load pro</button></div>
             <input ref={proFileRef} type="file" accept="application/json,.json" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) file.text().then(importResidentProText); event.target.value = ''; }} />
           </aside>
           <div className="proSkillsBoard">
-            <header><div><span>Skill points</span><strong>{pro.unspentSkillPoints}</strong></div><p>Each point adds 10%. Course-owner accomplishments award more points.</p></header>
+            <header><div><span>Skill points</span><strong>{pro.unspentSkillPoints}</strong></div><p>Accomplishments award free points. Finished rounds train the shots you use; practice facilities accelerate progress.</p></header>
             <div className="proSkillGrid">
               {PRO_SKILLS.map((skill) => {
                 const level = pro.skills[skill.id];
+                const practice = pro.practice[skill.id];
                 return (
                   <article key={skill.id}>
                     <div><b>{skill.label}</b><small>{skill.description}</small></div>
-                    <div className="skillMeter" role="meter" aria-label={`${skill.label} ${level * 10}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={level * 10}><i style={{ width: `${level * 10}%` }} /></div>
+                    <div className="skillGrowth">
+                      <div className="skillMeter" role="meter" aria-label={`${skill.label} ${level * 10}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={level * 10}><i style={{ width: `${level * 10}%` }} /></div>
+                      <div className="practiceMeter" role="progressbar" aria-label={`${skill.label} practice ${practice}% toward next level`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={practice}><i style={{ width: `${practice}%` }} /><small>{level >= 10 ? 'MASTERED' : `PRACTICE ${practice}%`}</small></div>
+                    </div>
                     <div className="skillStepper"><button disabled={level <= 0} onClick={() => changeResidentProSkill(skill.id, -1)}>−</button><strong>{level * 10}%</strong><button disabled={level >= 10 || pro.unspentSkillPoints <= 0} onClick={() => changeResidentProSkill(skill.id, 1)}>+</button></div>
                   </article>
                 );

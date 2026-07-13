@@ -389,6 +389,29 @@ describe('save / load round-trip', () => {
     random.mockRestore();
   });
 
+  it('turns a completed owner round into persistent, visible resident-pro practice', () => {
+    const roundsBefore = S.proProfile.practiceRounds;
+    startRound();
+    const cup = S.holes[0].cup;
+    S.player!.ball = { x: cup.x - 0.2, y: cup.y };
+    S.player!.lie = 'green';
+
+    playerFire(1, 0, 0.02);
+    update(5);
+
+    expect(S.player).toBeNull();
+    expect(S.proProfile.practiceRounds).toBe(roundsBefore + 1);
+    expect(S.proProfile.practice.accuratePutter).toBeGreaterThan(0);
+    expect(ui.get().modal).toMatchObject({
+      kind: 'round',
+      practice: {
+        practiceRound: roundsBefore + 1,
+        facilities: ['Pro Shop'],
+        gains: expect.arrayContaining([expect.objectContaining({ id: 'accuratePutter', earned: 5 })]),
+      },
+    });
+  });
+
   it('makes allocated power and driving skills change the shared shot-distance math', () => {
     S.proProfile.skills.powerHitter = 0;
     S.proProfile.skills.longDriver = 0;

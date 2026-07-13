@@ -9,6 +9,7 @@ describe('management presentation and accessibility', () => {
   const regulars = read('./RegularsPanel.tsx');
   const scorecards = read('./ScorecardsPanel.tsx');
   const account = read('./AccountPanel.tsx');
+  const modals = read('./Modals.tsx');
   const portrait = read('./CharacterPortrait.tsx');
   const css = read('../styles.css');
   const shell = read('../simgolf-shell.css');
@@ -50,6 +51,16 @@ describe('management presentation and accessibility', () => {
     expect(pro).toContain('data-label="Accuracy" role="meter"');
     expect(pro).toContain('data-label="Imagination" role="meter"');
     expect(pro).toContain('aria-valuenow={Math.round(S.proChallengeOffer.opponent.length * 100)}');
+  });
+
+  it('shows persistent practice growth on the pro board and completed-round results', () => {
+    expect(pro).toContain('const practice = pro.practice[skill.id]');
+    expect(pro).toContain('className="practiceMeter" role="progressbar"');
+    expect(pro).toContain('Finished rounds train the shots you use; practice facilities accelerate progress.');
+    expect(modals).toContain('function PracticeProgress');
+    expect(modals.match(/<PracticeProgress result=\{modal\.practice\} \/>/g)).toHaveLength(3);
+    expect(css).toContain('.practiceProgressHead');
+    expect(css).toContain('.practiceGainList');
   });
 
   it('exposes selected scorecard rounds and holes to assistive technology', () => {
