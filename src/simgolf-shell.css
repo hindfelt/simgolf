@@ -1163,6 +1163,179 @@ body,
 .playCompetitionHud span { font-size: 10px; }
 .playCompetitionHud em { font-family: var(--sg-small); font-size: 6px; font-style: normal; }
 
+/* --- original in-world dialog layer -------------------------------------- */
+/* SimGolf kept the course live and bright behind compact molded dialogs.    */
+/* Modal kinds are explicit so placement is part of the game shell, not a    */
+/* generic centered web-card convention.                                     */
+.overlay[data-modal-kind] {
+  align-items: flex-start;
+  justify-content: center;
+  padding: 76px 18px calc(var(--sg-bottom) + 14px);
+  background: rgba(30, 32, 82, .08);
+  backdrop-filter: none;
+}
+
+.modal[data-modal-kind] {
+  position: relative;
+  width: min(100%, 430px);
+  max-height: calc(100dvh - var(--sg-bottom) - 90px);
+  padding: 12px 14px 11px;
+  border: 4px solid var(--sg-rim);
+  border-radius: 10px 12px 9px 11px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.18), transparent 14%, transparent 86%, rgba(59,55,143,.16)),
+    linear-gradient(180deg, #e0defd 0 6px, #c6c3f3 6px 72%, #aaa7e4 100%);
+  box-shadow:
+    0 4px 0 var(--sg-rim-dark),
+    0 10px 20px rgba(5, 8, 35, .32),
+    inset 0 2px 0 #f8f7ff,
+    inset 2px 0 0 rgba(255,255,255,.48),
+    inset -2px 0 0 rgba(74,71,157,.24),
+    inset 0 -3px 0 rgba(69,67,151,.26);
+  color: #20255d;
+  scrollbar-color: #6569b8 #c5c4ef;
+  scrollbar-width: thin;
+}
+
+.modal[data-modal-kind]::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 5px 7px 4px 6px;
+}
+
+.modal[data-modal-kind] h1 {
+  color: #253080;
+  font-family: var(--sg-font);
+  font-size: 17px;
+  line-height: 1.05;
+  text-shadow: 1px 1px 0 #fff8bd;
+}
+
+.modal[data-modal-kind] .tag {
+  margin-bottom: 7px;
+  color: #555a92;
+  font-family: var(--sg-small);
+  font-size: 8px;
+  letter-spacing: .12em;
+}
+
+.modal[data-modal-kind] p,
+.modal[data-modal-kind] .step { line-height: 1.35; }
+
+.modal[data-modal-kind] .step,
+.modal[data-modal-kind] .saveSlotRow,
+.modal[data-modal-kind] .themeBtn,
+.modal[data-modal-kind] .themePackBtn,
+.modal[data-modal-kind] .themeCourseGrid button,
+.modal[data-modal-kind] .difficultyBtn,
+.modal[data-modal-kind] .offerMeta {
+  border: 2px solid #6d71b6;
+  border-radius: 6px 8px 6px 7px;
+  background: linear-gradient(180deg, rgba(250,250,255,.62), rgba(173,174,225,.48));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 1px 0 rgba(38,42,113,.26);
+}
+
+.modal[data-modal-kind] .step { margin: 6px 0; padding: 6px 8px; }
+.modal[data-modal-kind] .saveSlots { gap: 5px; margin: 7px 0 9px; }
+.modal[data-modal-kind] .saveSlotRow { gap: 7px; padding: 5px 7px; }
+.modal[data-modal-kind] .saveSlotInfo b { border-radius: 6px; background: #343b91; }
+.modal[data-modal-kind] .saveSlotActions button {
+  border: 2px solid #3b438f;
+  border-radius: 5px 7px 5px 6px;
+  background: linear-gradient(180deg, #eef0ff, #9b9ed5 72%, #777bb9);
+  box-shadow: inset 0 1px #fff, 0 2px 0 #292f76;
+  color: #202765;
+}
+
+.modal[data-modal-kind] .bigbtn {
+  min-height: 31px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 3px solid #3e4595;
+  border-radius: 7px 9px 6px 8px;
+  background: linear-gradient(180deg, #fff78a 0 14%, #f2dc1a 14% 72%, #c9a911 100%);
+  box-shadow: inset 0 1px #ffffcf, 0 3px 0 #22296f;
+  color: #293071;
+  font-family: var(--sg-font);
+  font-size: 11px;
+  line-height: 1.05;
+  text-shadow: 1px 1px #fff7a0;
+}
+
+.modal[data-modal-kind] .bigbtn.secondary,
+.modal[data-modal-kind] .secondarySetup {
+  border-color: #53599c;
+  background: linear-gradient(180deg, #ececff, #a7a8dc 72%, #8184c2);
+  color: #2d3374;
+  box-shadow: inset 0 1px #fff, 0 3px 0 #353b82;
+  text-shadow: 1px 1px rgba(255,255,255,.55);
+}
+
+.modal[data-modal-kind] .roundScorecard {
+  border: 3px solid #39418f;
+  border-radius: 7px 9px 7px 8px;
+  background: #f4f2dc;
+  box-shadow: 0 3px 0 #252b70;
+}
+
+.overlay[data-modal-kind='round'],
+.overlay[data-modal-kind='championshipResult'],
+.overlay[data-modal-kind='proChallengeResult'] { padding-top: 68px; }
+
+.modal[data-modal-kind='round'],
+.modal[data-modal-kind='championshipResult'],
+.modal[data-modal-kind='proChallengeResult'] {
+  width: min(700px, calc(100vw - 120px));
+  max-width: 700px;
+  max-height: calc(100dvh - var(--sg-bottom) - 82px);
+}
+
+.overlay[data-modal-kind='landOffer'],
+.overlay[data-modal-kind='landmarkGift'] { padding-top: 74px; }
+
+.modal[data-modal-kind='landOffer'],
+.modal[data-modal-kind='landmarkGift'] {
+  width: min(510px, calc(100vw - 130px));
+  max-width: 510px;
+}
+
+.modal[data-modal-kind] .guestPortrait {
+  border: 4px solid #343b8c;
+  border-radius: 50%;
+  box-shadow: inset 0 2px rgba(255,255,255,.45), 0 3px 0 #20265e;
+}
+
+.overlay[data-modal-kind='saves'] {
+  justify-content: flex-start;
+  padding: clamp(300px, 55vh, 338px) 0 8px clamp(70px, 10vw, 96px);
+}
+
+.modal[data-modal-kind='saves'] {
+  width: 360px;
+  max-width: calc(100vw - 112px);
+  max-height: calc(100dvh - clamp(310px, 55vh, 346px));
+}
+
+.overlay[data-modal-kind='newCourse'] {
+  align-items: center;
+  padding: 12px;
+  background: rgba(22, 25, 69, .18);
+}
+
+.modal[data-modal-kind='newCourse'] {
+  width: min(940px, calc(100vw - 24px));
+  max-width: 940px;
+  max-height: calc(100dvh - 24px);
+  padding: 13px 15px 12px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.15), transparent 11%, transparent 89%, rgba(45,42,123,.18)),
+    linear-gradient(180deg, #d9d7fa, #b5b3eb 76%, #8f8dce);
+}
+
 /* --- responsive shell ----------------------------------------------------- */
 @media (max-width: 1100px) {
   .plaque { width: 230px; min-width: 230px; }
@@ -1176,6 +1349,21 @@ body,
     --sg-bottom: 108px;
     --sg-fan-height: 108px;
   }
+  .overlay[data-modal-kind] { padding: 74px 7px calc(var(--sg-bottom) + 8px); }
+  .modal[data-modal-kind],
+  .modal[data-modal-kind='round'],
+  .modal[data-modal-kind='championshipResult'],
+  .modal[data-modal-kind='proChallengeResult'],
+  .modal[data-modal-kind='landOffer'],
+  .modal[data-modal-kind='landmarkGift'] {
+    width: 100%;
+    max-width: 540px;
+    max-height: calc(100dvh - var(--sg-bottom) - 86px);
+  }
+  .overlay[data-modal-kind='saves'] { justify-content: center; padding: 80px 7px calc(var(--sg-bottom) + 8px); }
+  .modal[data-modal-kind='saves'] { width: min(420px, 100%); max-width: 420px; max-height: calc(100dvh - var(--sg-bottom) - 92px); }
+  .overlay[data-modal-kind='newCourse'] { padding: 7px; }
+  .modal[data-modal-kind='newCourse'] { width: 100%; max-width: 940px; max-height: calc(100dvh - 14px); }
   .plaque { width: min(248px, 64vw); min-width: 0; min-height: 62px; padding-left: 52px; }
   .courseCrest { width: 57px; height: 69px; }
   .plaque .pTitle { font-size: 14px; }

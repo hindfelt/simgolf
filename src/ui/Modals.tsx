@@ -435,11 +435,12 @@ export default function Modals() {
   return (
     <div
       className="overlay"
+      data-modal-kind={modal.kind}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).classList.contains('overlay') && !(modal.kind === 'newCourse' && modal.initial)) close();
       }}
     >
-      <div className={'modal' + (modal.kind === 'round' || modal.kind === 'championshipResult' || modal.kind === 'proChallengeResult' ? ' roundModal' : '') + (modal.kind === 'championshipResult' || modal.kind === 'proChallengeResult' ? ' championshipResultModal' : '') + (modal.kind === 'newCourse' ? ' setupModal' : '') + (modal.kind === 'landOffer' || modal.kind === 'landmarkGift' ? ' guestModal' : '')} ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
+      <div className={'modal' + (modal.kind === 'round' || modal.kind === 'championshipResult' || modal.kind === 'proChallengeResult' ? ' roundModal' : '') + (modal.kind === 'championshipResult' || modal.kind === 'proChallengeResult' ? ' championshipResultModal' : '') + (modal.kind === 'newCourse' ? ' setupModal' : '') + (modal.kind === 'landOffer' || modal.kind === 'landmarkGift' ? ' guestModal' : '')} data-modal-kind={modal.kind} ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabIndex={-1}>
         {modal.kind === 'newCourse' && <NewCoursePanel initial={!!modal.initial} close={close} />}
         {modal.kind === 'help' && (
           <>

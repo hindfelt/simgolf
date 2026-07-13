@@ -10,6 +10,7 @@ describe('original SimGolf shell contract', () => {
   const toolPreview = read('./ToolPreview.tsx');
   const minimap = read('./MiniMap.tsx');
   const playHud = read('./PlayHud.tsx');
+  const modals = read('./Modals.tsx');
   const shell = read('../simgolf-shell.css');
 
   it('loads one authoritative shell layer after the component stylesheet', () => {
@@ -77,5 +78,16 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
     expect(shell).toContain(".toolDock[data-group='terrain'] .toolbar");
     expect(shell).not.toContain('.toolGraphicIcon');
+  });
+
+  it('keeps in-world dialogs inside the molded shell instead of a dimmed web-card layer', () => {
+    expect(modals.match(/data-modal-kind=\{modal\.kind\}/g)).toHaveLength(2);
+    expect(shell).toMatch(/\.overlay\[data-modal-kind\] \{[\s\S]*?background: rgba\(30, 32, 82, \.08\);/);
+    expect(shell).toMatch(/\.modal\[data-modal-kind\] \{[\s\S]*?border: 4px solid var\(--sg-rim\);[\s\S]*?#e0defd/);
+    expect(shell).toMatch(/\.modal\[data-modal-kind\] \.bigbtn \{[\s\S]*?border-radius: 7px 9px 6px 8px;/);
+    expect(shell).toContain(".overlay[data-modal-kind='saves']");
+    expect(shell).toMatch(/\.overlay\[data-modal-kind='saves'\] \{[\s\S]*?padding: clamp\(300px, 55vh, 338px\)/);
+    expect(shell).toContain(".overlay[data-modal-kind='round']");
+    expect(shell).toContain(".modal[data-modal-kind='newCourse']");
   });
 });
