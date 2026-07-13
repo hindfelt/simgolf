@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   COURSE_STAFF_ARCHETYPES,
   COURSE_STAFF_SPRITE_SIZE,
+  GOLFER_SPRITE_SIZE,
   courseStaffAnimationFrame,
   type CourseStaffKind,
 } from './sprites';
@@ -17,9 +18,10 @@ describe('dedicated course-staff sprites', () => {
     expect(archetypes.map((archetype) => archetype.tool)).toEqual(['binoculars', 'rake', 'watering-can']);
   });
 
-  it('keeps staff broader and taller than the legacy 24x32 golfer canvas', () => {
-    expect(COURSE_STAFF_SPRITE_SIZE.width).toBeGreaterThan(24);
-    expect(COURSE_STAFF_SPRITE_SIZE.height).toBeGreaterThan(32);
+  it('keeps staff and golfers on distinct, readable actor canvases', () => {
+    expect(COURSE_STAFF_SPRITE_SIZE).toEqual({ width: 30, height: 36 });
+    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 30, height: 40 });
+    expect(GOLFER_SPRITE_SIZE).not.toEqual(COURSE_STAFF_SPRITE_SIZE);
   });
 
   it('alternates independent walking and profession-work frames', () => {

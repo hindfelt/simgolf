@@ -4,6 +4,7 @@ import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golf
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, screenToWorld } from './camera';
+import { golferFacingBetween } from './golferFacing';
 import { sfx } from './audio';
 import { ui } from '../ui/store';
 import {
@@ -1628,6 +1629,11 @@ function sayText(g: Golfer, txt: string, cls?: string) {
 function say(g: Golfer, key: string, cls?: string) {
   sayText(g, pick(SAY[key]), cls);
 }
+function faceGolferToward(g: Golfer, from: Vec, to: Vec) {
+  const facing = golferFacingBetween(from, to);
+  g.face = facing.face;
+  g.facingAway = facing.facingAway;
+}
 /** Why a low-interest hole is dull, for anchored complaints ("Hole 3 is flat and hazard-free"). */
 function boringReason(h: Hole): string {
   const b = h.funBreakdown;
@@ -1652,8 +1658,8 @@ function aiShot(g: Golfer) {
   sfx.whoosh();
   sfx.hit();
   if (land.power > 9 && Math.random() < 0.35) say(g, 'drive');
+  faceGolferToward(g, g.ball!, h.cup);
   startBall({ kind: 'fly', owner: g, cup: h.cup, fx: g.ball!.x, fy: g.ball!.y, tx: land.x, ty: land.y });
-  g.face = Math.sign(isoOf(h.cup.x, h.cup.y).ix - isoOf(g.ball!.x, g.ball!.y).ix) || 1;
   g.state = 'watch';
   g.t = 0.55; // hold the follow-through pose briefly
 }
@@ -1678,8 +1684,8 @@ function aiPutt(g: Golfer) {
     const nd = clamp(d * rand(0.12, 0.38) + 0.35, 0.4, d);
     end = { x: clamp(h.cup.x - Math.cos(a) * nd, 0.6, W - 0.6), y: clamp(h.cup.y - Math.sin(a) * nd, 0.6, H - 0.6) };
   }
+  faceGolferToward(g, g.ball!, h.cup);
   startBall({ kind: 'putt', owner: g, cup: h.cup, fx: g.ball!.x, fy: g.ball!.y, tx: end.x, ty: end.y, holed: made });
-  g.face = Math.sign(isoOf(h.cup.x, h.cup.y).ix - isoOf(g.ball!.x, g.ball!.y).ix) || 1;
   g.state = 'watch';
   g.t = 0.4;
 }
@@ -1833,19 +1839,17 @@ function updateGolfers(dt: number) {
           g.strokes = 0;
           g.state = 'preshot';
           g.t = rand(0.6, 1.5);
+          faceGolferToward(g, g.ball, h.cup);
         } else {
           g.state = g.lie === 'green' ? 'prePutt' : 'preshot';
           g.t = rand(0.5, 1.2);
+          const h = S.holes[g.holeIdx];
+          if (h && g.ball) faceGolferToward(g, g.ball, h.cup);
         }
       } else {
         g.x += ((wx - g.x) / d) * sp;
         g.y += ((wy - g.y) / d) * sp;
-        const from = isoOf(g.x, g.y);
-        const to = isoOf(wx, wy);
-        const sdx = to.ix - from.ix; // screen-space horizontal direction
-        const sdy = to.iy - from.iy; // screen-space vertical direction
-        if (Math.abs(sdx) > 1) g.face = sdx > 0 ? 1 : -1;
-        if (Math.abs(sdy) > Math.abs(sdx) * 1.2) g.facingAway = sdy < 0; // walking mostly up-screen → show their back
+        faceGolferToward(g, { x: g.x, y: g.y }, { x: wx, y: wy });
       }
     } else if (g.state === 'preshot') {
       g.t -= dt;
