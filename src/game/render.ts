@@ -7,7 +7,7 @@ import { P, PE, viewXY } from './camera';
 import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
+import { GOLFER_SPRITE_SIZE, golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
 import type { CourseStaffFrame, CourseStaffKind } from './sprites';
 import type { GolferFrame, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
@@ -1799,18 +1799,24 @@ function drawGolferSprite(
   view: 'front' | 'rear' = 'front',
   identity = ''
 ) {
+  const k = clamp(u, 0.65, 1.7) * 0.96;
+  const planted = frame === 'address' || frame === 'back' || frame === 'follow' || frame === 'putt';
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(x + 2.5 * u, y + 1.5 * u, 6.2 * u, 2.5 * u, 0.1, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 1.2 * k, (planted ? 7.4 : 6.5) * k, (planted ? 2.5 : 2.2) * k, 0.08, 0, Math.PI * 2);
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame, view, identity);
-  const spriteUnit = clamp(u, 0.62, 1.75);
-  const k = spriteUnit * 0.84;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y - bob);
   ctx.scale(face, 1);
-  ctx.drawImage(spr, -12 * k, -31 * k, 24 * k, 32 * k);
+  ctx.drawImage(
+    spr,
+    -(GOLFER_SPRITE_SIZE.width / 2) * k,
+    -(GOLFER_SPRITE_SIZE.height - 1) * k,
+    GOLFER_SPRITE_SIZE.width * k,
+    GOLFER_SPRITE_SIZE.height * k,
+  );
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
 }
@@ -1850,11 +1856,12 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const p = PE(g.x, g.y);
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
-  const view = walking && g.facingAway ? 'rear' : 'front';
+  const view = g.facingAway ? 'rear' : 'front';
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, golferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
   if ((g.specialGuest && S.cam.z > 0.58) || hovered) {
-    drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - 34 * Math.max(u, 0.62) - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
+    const spriteHeight = GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96;
+    drawWorldLabel(ctx, g.name.toUpperCase(), p.x, p.y - spriteHeight - 3 * u - bob, Math.max(u * 0.88, 0.58), g.specialGuest ? 'gold' : 'dark');
   }
 }
 
@@ -1867,7 +1874,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const frame: GolferFrame = pl.state === 'wait' ? 'follow' : pl.lie === 'green' ? 'putt' : 'address';
   const pro = activePlayingPro();
   drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, 1, 0, 'front', pro.name);
-  drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - 31 * u, u, 'gold');
+  drawWorldLabel(ctx, pro.name.toUpperCase(), px, py - GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96, u, 'gold');
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {

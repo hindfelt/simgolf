@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NAMES } from './constants';
-import { golferAppearance } from './sprites';
+import { GOLFER_SPRITE_SIZE, golferAppearance } from './sprites';
 
 const silhouette = (name: string) => {
   const appearance = golferAppearance(name);
@@ -16,6 +16,8 @@ const fullIdentity = (name: string) => {
     appearance.outfit,
     appearance.face,
     appearance.pants,
+    appearance.bag,
+    appearance.socks,
   ].join('|');
 };
 
@@ -25,7 +27,7 @@ describe('named golfer sprite identities', () => {
 
     expect(golferAppearance('Big Earl')).toEqual(appearance);
     expect(golferAppearance('  BIG EARL  ')).toEqual(appearance);
-    expect(Object.keys(appearance).sort()).toEqual(['build', 'face', 'hair', 'headwear', 'outfit', 'pants']);
+    expect(Object.keys(appearance).sort()).toEqual(['bag', 'build', 'face', 'hair', 'headwear', 'outfit', 'pants', 'socks']);
   });
 
   it('uses every build and headwear silhouette across the canonical cast', () => {
@@ -46,5 +48,11 @@ describe('named golfer sprite identities', () => {
     expect(new Set(NAMES.map(silhouette)).size).toBeGreaterThanOrEqual(16);
     expect(new Set(NAMES.map(fullIdentity)).size).toBeGreaterThanOrEqual(22);
     expect(new Set(NAMES.map((name) => golferAppearance(name).pants)).size).toBe(6);
+    expect(new Set(NAMES.map((name) => golferAppearance(name).bag)).size).toBe(5);
+    expect(new Set(NAMES.map((name) => golferAppearance(name).socks)).size).toBe(4);
+  });
+
+  it('renders named golfers large enough for their identity details to survive course scale', () => {
+    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 30, height: 40 });
   });
 });

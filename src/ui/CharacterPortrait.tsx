@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { golferSprite, type GolferFrame } from '../game/sprites';
+import { GOLFER_SPRITE_SIZE, golferSprite, type GolferFrame } from '../game/sprites';
 
 interface CharacterPortraitProps {
   name: string;
@@ -27,7 +27,17 @@ export default function CharacterPortrait({ name, shirt, skin, cap, frame = 'idl
     ctx.imageSmoothingEnabled = false;
     // Head-and-shoulders crop, not a stretched full-body thumbnail. The same
     // identity seed adds matching face/outfit details on the course and in UI.
-    ctx.drawImage(golferSprite(shirt, skin, cap, frame, 'front', name), 4, 0, 16, 24, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      golferSprite(shirt, skin, cap, frame, 'front', name),
+      4,
+      0,
+      GOLFER_SPRITE_SIZE.width - 8,
+      GOLFER_SPRITE_SIZE.height - 9,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
   }, [cap, frame, name, shirt, skin]);
 
   return (

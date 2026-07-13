@@ -49,6 +49,9 @@ function shade(hex: string, f: number): string {
 
 export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt';
 
+const GOLFER_SOURCE_SIZE = { width: 24, height: 32 } as const;
+export const GOLFER_SPRITE_SIZE = { width: 30, height: 40 } as const;
+
 export type GolferBuild = 'compact' | 'classic' | 'broad';
 export type GolferHeadwear = 'cap' | 'visor' | 'flat-cap' | 'bucket-hat';
 export type GolferHair = 'close' | 'side-locks' | 'curls' | 'tail';
@@ -65,10 +68,14 @@ export interface GolferAppearance {
   outfit: number;
   face: number;
   pants: number;
+  bag: number;
+  socks: number;
 }
 
 const PANTS = ['#3b4252', '#6b4f35', '#75787f', '#4a5d3a', '#7d4444', '#e8e4d8'];
 const HAIR = ['#34251f', '#6e3f28', '#b96f3e', '#d7c8aa', '#272a31'];
+const BAGS = ['#8a5a30', '#315f83', '#8b3640', '#4f7042', '#d19a2e'];
+const SOCKS = ['#e8e4d8', '#f4c94b', '#94c7d0', '#be6a72'];
 const BUILDS = ['compact', 'classic', 'broad'] as const;
 const HEADWEAR = ['cap', 'visor', 'flat-cap', 'bucket-hat'] as const;
 const HAIRSTYLES = ['close', 'side-locks', 'curls', 'tail'] as const;
@@ -99,9 +106,11 @@ export function golferAppearance(name: string): GolferAppearance {
     build: BUILDS[appearanceIndex(seed, 'build', BUILDS.length)],
     headwear: HEADWEAR[appearanceIndex(seed, 'headwear', HEADWEAR.length)],
     hair: HAIRSTYLES[appearanceIndex(seed, 'hair', HAIRSTYLES.length)],
-    outfit: appearanceIndex(seed, 'outfit', 4),
+    outfit: appearanceIndex(seed, 'outfit', 5),
     face: appearanceIndex(seed, 'face', 5),
     pants: appearanceIndex(seed, 'pants', PANTS.length),
+    bag: appearanceIndex(seed, 'bag', BAGS.length),
+    socks: appearanceIndex(seed, 'socks', SOCKS.length),
   };
 }
 
@@ -119,21 +128,24 @@ const BUILD_GEOMETRY: Record<GolferBuild, {
 };
 
 /**
- * 24x32 golfer, drawn facing right. `view: 'rear'` is used while walking away from the
- * camera (up-screen) — no face or forward-only hat bill is visible, so it reads as a back view.
+ * A 24x32 hand-plotted golfer enlarged onto a 30x40 baked canvas, drawn facing right.
+ * `view: 'rear'` is used while walking or swinging away from the camera (up-screen) —
+ * no face or forward-only hat bill is visible, so it reads as a back view.
  */
 export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front', identity = ''): HTMLCanvasElement {
-  const key = 'g|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
+  const key = 'g2|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const [art, ctx, p] = makeCanvas(24, 32);
+  const [art, ctx, p] = makeCanvas(GOLFER_SOURCE_SIZE.width, GOLFER_SOURCE_SIZE.height);
   const identitySeed = identity || shirt + skin + cap;
   const normalizedIdentity = identitySeed.trim().toLowerCase() || 'anonymous golfer';
   const appearance = golferAppearance(normalizedIdentity);
   const geometry = BUILD_GEOMETRY[appearance.build];
   const pants = PANTS[appearance.pants];
   const hair = HAIR[appearanceIndex(normalizedIdentity, 'hair-tone', HAIR.length)];
+  const bag = BAGS[appearance.bag];
+  const socks = SOCKS[appearance.socks];
   const shirtDk = shade(shirt, 0.78);
   const capDk = shade(cap, 0.75);
   const skinDk = shade(skin, 0.8);
@@ -142,46 +154,46 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const follow = frame === 'follow';
   const putt = frame === 'putt';
   const address = frame === 'address' || putt;
-  const rear = view === 'rear' && !address && !swingBack && !follow; // swing poses always show the front
+  const rear = view === 'rear';
 
   // golf bag on the back while walking
   if (walking) {
-    p(4, 12, 3, 9, '#8a5a30');
-    p(4, 12, 1, 9, shade('#8a5a30', 0.75));
-    p(4, 11, 3, 1, '#6e4523');
+    p(3, 12, 4, 10, bag);
+    p(3, 12, 1, 10, shade(bag, 0.68));
+    p(4, 11, 3, 1, shade(bag, 0.72));
     // club heads poking out
     p(4, 8, 1, 3, '#9aa0a8');
     p(6, 9, 1, 2, '#9aa0a8');
     p(5, 7, 2, 2, '#c9ced4');
     // strap
-    p(7, 12, 1, 1, '#6e4523');
-    p(8, 11, 1, 1, '#6e4523');
+    p(6, 14, 1, 5, shade(bag, 1.22));
+    p(7, 12, 1, 1, shade(bag, 0.72));
+    p(8, 11, 1, 1, shade(bag, 0.72));
   }
 
   // legs + shoes — a contrast sock band sits between pants and shoe (matches the
   // knee-sock convention visible in the original's Bodies/*.pcx reference art)
   const shoe = '#2e2a26';
-  const sock = '#e8e4d8';
   if (frame === 'walkA') {
     p(9, 24, 2, 4, pants); // back leg
-    p(9, 28, 2, 1, sock);
+    p(9, 28, 2, 1, socks);
     p(8, 29, 3, 2, shoe);
     p(13, 24, 2, 3, pants); // front leg forward
-    p(13, 27, 2, 1, sock);
+    p(13, 27, 2, 1, socks);
     p(14, 28, 3, 2, shoe);
   } else if (frame === 'walkB') {
     p(9, 24, 2, 3, pants);
-    p(9, 27, 2, 1, sock);
+    p(9, 27, 2, 1, socks);
     p(9, 28, 3, 2, shoe);
     p(13, 24, 2, 4, pants);
-    p(13, 28, 2, 1, sock);
+    p(13, 28, 2, 1, socks);
     p(12, 29, 3, 2, shoe);
   } else {
     p(9, 24, 2, 4, pants);
-    p(9, 28, 2, 1, sock);
+    p(9, 28, 2, 1, socks);
     p(8, 29, 3, 2, shoe);
     p(13, 24, 2, 4, pants);
-    p(13, 28, 2, 1, sock);
+    p(13, 28, 2, 1, socks);
     p(13, 29, 3, 2, shoe);
   }
   // hips / shorts
@@ -206,12 +218,19 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   } else if (appearance.outfit === 2) {
     p(torsoX + 1, ty + 1, 2, 6, shirtDk);
     p(torsoRight - 2, ty + 1, 1, 6, shirtDk);
-  } else p(torsoRight - 3, ty + 2, 2, 2, shade(shirt, 1.25));
+  } else if (appearance.outfit === 3) p(torsoRight - 3, ty + 2, 2, 2, shade(shirt, 1.25));
+  else {
+    // Chunky argyle diamonds survive the world render better than another
+    // one-pixel facial mark and make this outfit recognizable at a glance.
+    p(chestCenter - 2, ty + 2, 2, 2, shade(shirt, 1.28));
+    p(chestCenter, ty + 4, 2, 2, shirtDk);
+    p(chestCenter - 2, ty + 6, 2, 1, shade(shirt, 1.2));
+  }
   // collar (not visible from behind)
   if (!rear) p(chestCenter - 1, ty - 1, 3, 1, '#f2f0e8');
 
   // Head, hair and headwear are deliberately stronger silhouette cues than the
-  // one-pixel facial details: they remain legible when the 24x32 art is zoomed out.
+  // one-pixel facial details: they remain legible after the art is baked to 30x40.
   const hy = address ? 4 : 3;
   const headRight = headX + headW;
   if (appearance.hair === 'close') p(headX - 1, hy + 2, 1, 4, hair);
@@ -308,7 +327,20 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(frontArmX, ty + 6, 2, 2, skin);
   }
 
-  const done = outlined(art, '#20242b');
+  const raw = outlined(art, '#20242b');
+  const [done, doneCtx] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
+  doneCtx.imageSmoothingEnabled = false;
+  doneCtx.drawImage(
+    raw,
+    0,
+    0,
+    GOLFER_SOURCE_SIZE.width,
+    GOLFER_SOURCE_SIZE.height,
+    0,
+    0,
+    GOLFER_SPRITE_SIZE.width,
+    GOLFER_SPRITE_SIZE.height,
+  );
   cache.set(key, done);
   return done;
 }
