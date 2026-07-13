@@ -867,6 +867,78 @@ body,
 }
 .destinationUnlock button:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
+.destinationReleaseToast {
+  position: fixed;
+  top: 105px;
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 29;
+  width: min(370px, calc(100vw - 24px));
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 8px 32px 9px 8px;
+  border: 4px solid var(--sg-rim);
+  border-radius: 31px 13px 13px 31px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.52) 0 3px, transparent 3px),
+    linear-gradient(180deg, #cfccf8 0 12%, #aaa7e9 12% 76%, #7f7bc4 76% 100%);
+  color: #26368c;
+  box-shadow: inset 2px 2px rgba(255,255,255,.5), 0 5px 0 var(--sg-rim-dark), 0 12px 28px rgba(0,0,0,.34);
+  animation: tkin .26s ease-out;
+}
+.destinationReleaseSeal {
+  grid-row: 1 / span 2;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #39357b;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 27%, var(--sg-yellow-hi), var(--sg-yellow) 58%, #b98d00);
+  color: #303776;
+  font-size: 23px;
+  box-shadow: inset 2px 2px rgba(255,255,255,.66), 0 3px 0 #272461;
+}
+.destinationReleaseToast div { min-width: 0; }
+.destinationReleaseToast small { display:block; color:#5963a5; font-family:var(--sg-small); font-size:6px; font-weight:900; letter-spacing:.13em; }
+.destinationReleaseToast b { display:block; overflow:hidden; color:#27358b; font-family:var(--sg-font); font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
+.destinationReleaseToast p { margin:1px 0 0; color:#4e589a; font-family:var(--sg-small); font-size:7px; line-height:1.25; }
+.destinationReleaseOpen {
+  grid-column: 2 / span 2;
+  justify-self: start;
+  min-height: 28px;
+  padding: 3px 11px;
+  border: 2px solid #2d397f;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #70e3ca, var(--sg-teal) 58%, #23998b);
+  color: #173c6d;
+  font-family: var(--sg-font);
+  font-size: 8px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: inset 1px 1px rgba(235,255,250,.58), 0 2px 0 #202966;
+}
+.destinationReleaseDismiss {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 2px solid #3e478e;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #fff, #c3c1ed 58%, #8588ca);
+  color: #303b83;
+  font-family: var(--sg-small);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 18px;
+  cursor: pointer;
+}
+.destinationReleaseOpen:hover,
+.destinationReleaseDismiss:hover { filter:brightness(1.08); transform:translateY(-1px); }
+
 /* --- player shot shell ---------------------------------------------------- */
 .playHud {
   position: fixed;
@@ -1261,6 +1333,7 @@ body,
   .routingMap { display: none; }
   .ticker { left: 8px; bottom: calc(var(--sg-bottom) + 92px); max-width: calc(100vw - 16px); }
   .simFotoTicker { width: min(340px, calc(100vw - 16px)); min-width: 0; }
+  .destinationReleaseToast { top: 83px; left: 8px; right: 8px; width: auto; }
   .fieldDeskPanel,
   .fieldDeskPanel.catalogMode,
   .fieldDeskPanel.manageMode,
@@ -1293,6 +1366,7 @@ body,
 }
 
 @media (max-width: 520px) {
+  .destinationReleaseToast p { display: none; }
   .playShotPalette { gap: 4px; }
   .playShotPalette .shapeBtn {
     width: 49px;
@@ -1333,6 +1407,7 @@ body,
   .plaque,
   .gauges .gCap,
   .fieldControls,
+  .destinationReleaseToast,
   .toolDock,
   .routingMap,
   .fieldDeskPanel,

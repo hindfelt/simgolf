@@ -75,6 +75,7 @@ interface UIStore {
   tool: ToolId;
   hint: string;
   tickers: TickerItem[];
+  destinationRelease: PropertyId[];
   modal: ModalDescriptor;
   playHud: PlayHudInfo | null;
   buildPanel: boolean;
@@ -117,6 +118,7 @@ export const useUI = create<UIStore>((set) => ({
   tool: 'hole',
   hint: 'Welcome, boss.',
   tickers: [],
+  destinationRelease: [],
   modal: null,
   playHud: null,
   buildPanel: false,

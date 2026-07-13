@@ -160,6 +160,7 @@ describe('World Screen property catalog', () => {
     expect(sanitizeCareerProgress(null, ['rep4', 'tournament'])).toEqual({ version: 1, bestReputation: 4, tournamentHosted: true, sgaTop100Earned: false, sgaTop18Earned: false });
     expect(sanitizeCareerProgress({ bestReputation: 99, tournamentHosted: 'yes', sgaTop100Earned: true, sgaTop18Earned: 1 })).toEqual({ version: 1, bestReputation: 5, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false });
     expect(sanitizeCareerProgress({ sgaTop100Earned: false, sgaTop18Earned: true })).toMatchObject({ sgaTop100Earned: true, sgaTop18Earned: true });
+    expect(sanitizeCareerProgress({ releasedProperties: ['fiji-lagoon', 'fiji-lagoon', 'not-a-place'] as PropertyId[] }).releasedProperties).toEqual(['fiji-lagoon']);
   });
 });
 
