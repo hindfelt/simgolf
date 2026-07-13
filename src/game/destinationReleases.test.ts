@@ -42,6 +42,7 @@ describe('central worldwide destination releases', () => {
   beforeEach(() => {
     (globalThis as { localStorage?: Storage }).localStorage = memoryStorage();
     S.sandbox = false;
+    S.mode = 'build';
     S.propertyId = 'maple-crossing';
     S.propertiesPurchased = ['maple-crossing'];
     S.cash = 0;
@@ -72,6 +73,36 @@ describe('central worldwide destination releases', () => {
     expect(S.careerProgress.releasedProperties).toContain('fiji-lagoon');
     expect(ui.get().destinationRelease).toContain('fiji-lagoon');
     expect(ui.get().tickers.at(-1)).toMatchObject({ name: 'World Screen', cls: 'money' });
+  });
+
+  it('keeps the background watcher active while managing the course', () => {
+    S.cash = 5_500;
+    S.proProfile.fame = 24;
+    resetDestinationReleaseTracking();
+
+    S.proProfile.fame = 25;
+
+    expect(checkDestinationReleases()).toEqual(['fiji-lagoon']);
+    expect(S.careerProgress.releasedProperties).toContain('fiji-lagoon');
+    expect(ui.get().destinationRelease).toContain('fiji-lagoon');
+  });
+
+  it('defers the background watcher during play so round completion owns the release', () => {
+    S.cash = 5_500;
+    S.proProfile.fame = 24;
+    resetDestinationReleaseTracking();
+    const roundStart = context(5_500, progress(), 24);
+
+    S.mode = 'play';
+    S.proProfile.fame = 25;
+
+    expect(checkDestinationReleases()).toEqual([]);
+    expect(S.careerProgress.releasedProperties ?? []).not.toContain('fiji-lagoon');
+    expect(ui.get().destinationRelease).not.toContain('fiji-lagoon');
+
+    expect(checkDestinationReleases(roundStart, true)).toEqual(['fiji-lagoon']);
+    expect(S.careerProgress.releasedProperties).toContain('fiji-lagoon');
+    expect(ui.get().destinationRelease).toContain('fiji-lagoon');
   });
 
   it('persists acknowledgement so a later cash dip cannot replay the same release', () => {

@@ -3002,7 +3002,10 @@ export function resetDestinationReleaseTracking() {
  * profile-level acknowledgement prevents a cash dip from replaying a release.
  */
 export function checkDestinationReleases(before?: PropertyAvailabilityContext, suppressSound = false): PropertyId[] {
-  if (isolatedReturnSave && !before) return [];
+  // A played round owns its release presentation. Keep the background watcher
+  // from acknowledging a milestone behind the play HUD; endRound supplies the
+  // round-start snapshot explicitly so the result modal can announce it.
+  if (!before && (isolatedReturnSave || S.mode === 'play')) return [];
   const after = currentPropertyAccessContext();
   const previous = before ?? propertyReleaseBaseline;
   propertyReleaseBaseline = after;
