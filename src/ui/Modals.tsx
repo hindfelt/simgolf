@@ -247,7 +247,7 @@ function LandOfferPanel({ close }: { close: () => void }) {
   const offer = S.specialVisitors.landOffer;
   return (
     <>
-      <div className="guestHeading pickyHeading"><CharacterPortrait name="I.M. Picky" shirt="#71845d" skin="#d9aa7c" cap="#d0ad58" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
+      <div className="guestHeading pickyHeading"><CharacterPortrait name="I.M. Picky" shirt="#71845d" skin="#d9aa7c" cap="#d0ad58" expression="cross" variant="simfoto" className="guestPortrait" /><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
       {offer ? (
         <>
           <p>Your course passed inspection. Choose any adjoining highlighted plot before the offer expires.</p>
@@ -563,7 +563,7 @@ export default function Modals() {
         {modal.kind === 'landOffer' && <LandOfferPanel close={close} />}
         {modal.kind === 'landmarkGift' && (
           <>
-            <div className="guestHeading ivanaHeading"><CharacterPortrait name="Ivana Richman" shirt="#bd6f9f" skin="#e0a878" cap="#f2d688" frame="idle" className="guestPortrait" /><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
+            <div className="guestHeading ivanaHeading"><CharacterPortrait name="Ivana Richman" shirt="#bd6f9f" skin="#e0a878" cap="#f2d688" expression="triumphant" variant="simfoto" className="guestPortrait" /><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
             <p>“I adored my round. Please accept this Landmark as a gift to the resort.”</p>
             <div className="landmarkGiftArt" aria-hidden="true"><span>★</span><i /><b>LANDMARK</b></div>
             <p className="fine">The first Landmark is free. After it is placed, additional Landmarks can be purchased from Resort &amp; Facilities.</p>

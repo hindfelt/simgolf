@@ -53,6 +53,13 @@ describe('resident pro and Championship Mode', () => {
     expect(pro.starts).toBe(0);
   });
 
+  it('keeps the resident pro face stable when the display name changes', () => {
+    const original = createResidentPro();
+    const renamed = sanitizeProProfile({ ...original, name: 'Molly Mulligan' });
+    expect(renamed.name).toBe('Molly Mulligan');
+    expect(renamed.visualSeed).toBe(original.visualSeed);
+  });
+
   it('creates deterministic 12-player fields and stronger opposition at higher difficulty', () => {
     const options = { id: 'event-fixed', title: 'Test Open', courseId: 'course', proName: 'Gary Golf' };
     const easy = simulateChampionshipResult(round(0), { ...options, difficulty: 'easy' });

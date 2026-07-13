@@ -87,7 +87,7 @@ export default function ProCircuitPanel() {
       {tab === 'pro' ? (
         <div className="proWorkspace">
           <aside className="proIdentityCard">
-            <CharacterPortrait name={pro.name} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} frame="idle" className="proPortrait" />
+            <CharacterPortrait name={pro.name} identity={pro.visualSeed} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} expression="pleased" variant="profile" className="proPortrait" />
             <label>Resident pro<input value={name} maxLength={28} onChange={(event) => setName(event.target.value)} onBlur={() => updateResidentPro({ name })} /></label>
             <div className="proPalette"><b>Shirt</b>{SHIRTS.map((color) => <button key={color} aria-label={`Shirt ${color}`} aria-pressed={pro.shirt === color} className={pro.shirt === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ shirt: color })} />)}</div>
             <div className="proPalette"><b>Cap</b>{CAPS.map((color) => <button key={color} aria-label={`Cap ${color}`} aria-pressed={pro.cap === color} className={pro.cap === color ? 'active' : ''} style={{ background: color }} onClick={() => updateResidentPro({ cap: color })} />)}</div>
@@ -124,7 +124,8 @@ export default function ProCircuitPanel() {
                 shirt={S.proChallengeOffer.opponent.shirt}
                 skin={S.proChallengeOffer.opponent.skin}
                 cap={S.proChallengeOffer.opponent.cap}
-                frame="idle"
+                expression="cross"
+                variant="simfoto"
                 className="touringProPortrait"
               />
               <div className="proChallengeCopy"><span>Incoming SGA pro challenge</span><h3>{S.proChallengeOffer.opponent.name}</h3><b>{S.proChallengeOffer.opponent.title}</b><p>One round on your current course. Every hole won or lost transfers the wager.</p>
@@ -162,8 +163,8 @@ export default function ProCircuitPanel() {
             <p>{difficultyDefinition(difficulty).description} Stronger fields award larger purses.</p>
             <h3>Pro golfer</h3>
             <div className="proChoice" role="group" aria-label="Championship golfer">
-              <button aria-label={`${pro.name}, your saved golfer with ${pro.unspentSkillPoints} unspent skill points`} aria-pressed={useResident} className={useResident ? 'active' : ''} onClick={() => setUseResident(true)}><CharacterPortrait name={pro.name} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} className="proChoicePortrait" /><span><b>{pro.name}</b><small>Your saved skills · {pro.unspentSkillPoints} points free</small></span></button>
-              <button aria-label="Gary Golf, default balanced golfer" aria-pressed={!useResident} className={!useResident ? 'active' : ''} onClick={() => setUseResident(false)}><CharacterPortrait name="Gary Golf" shirt="#3f7fd0" skin="#f1c6a0" cap="#efefef" className="proChoicePortrait" /><span><b>Gary Golf</b><small>Default balanced pro</small></span></button>
+              <button aria-label={`${pro.name}, your saved golfer with ${pro.unspentSkillPoints} unspent skill points`} aria-pressed={useResident} className={useResident ? 'active' : ''} onClick={() => setUseResident(true)}><CharacterPortrait name={pro.name} identity={pro.visualSeed} shirt={pro.shirt} skin={pro.skin} cap={pro.cap} expression="pleased" className="proChoicePortrait" /><span><b>{pro.name}</b><small>Your saved skills · {pro.unspentSkillPoints} points free</small></span></button>
+              <button aria-label="Gary Golf, default balanced golfer" aria-pressed={!useResident} className={!useResident ? 'active' : ''} onClick={() => setUseResident(false)}><CharacterPortrait name="Gary Golf" identity="default-tour-pro" shirt="#3f7fd0" skin="#f1c6a0" cap="#efefef" expression="triumphant" className="proChoicePortrait" /><span><b>Gary Golf</b><small>Default balanced pro</small></span></button>
             </div>
             <button className="startChampionship" disabled={!selectedCourse} onClick={() => selectedCourse && startChampionshipRound(selectedCourse.id, difficulty, useResident) && setStore({ proPanel: false })}><Icon name="trophy" size={17} /> Play championship</button>
           </section>

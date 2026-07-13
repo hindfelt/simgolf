@@ -6,7 +6,7 @@ import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, has
 import { isoOf, screenToWorld } from './camera';
 import { golferFacingBetween } from './golferFacing';
 import { sfx } from './audio';
-import { ui } from '../ui/store';
+import { ui, type TickerCharacter } from '../ui/store';
 import {
   CH_TILES,
   buildingTiles,
@@ -75,8 +75,8 @@ export function setHint(t: string) {
   ui.set({ hint: t });
 }
 let commentSeq = 0;
-function ticker(name: string, txt: string, cls?: string) {
-  ui.ticker(name, txt, cls);
+function ticker(name: string, txt: string, cls?: string, character?: TickerCharacter) {
+  ui.ticker(name, txt, cls, character);
   S.comments.push({ id: ++commentSeq, time: S.time, name, txt, cls });
   if (S.comments.length > 60) S.comments.shift();
 }
@@ -1454,7 +1454,7 @@ function spawnGolfer() {
   if (!S.tournament && S.fee > fair * 1.45 && Math.random() < 0.6) {
     S.lost++;
     floater(CH.x, CH.y - 1, pick(SAY.pricey), '#ffb0a6', 'bub');
-    ticker(g.name, pick(SAY.pricey), 'bad');
+    ticker(g.name, pick(SAY.pricey), 'bad', golferTickerCharacter(g, 'bad'));
     return;
   }
   if (S.fee > fair) changeMood(g, -(S.fee - fair) / 12);
@@ -1472,7 +1472,7 @@ function spawnGolfer() {
   if (r.visits === 3 || r.visits === 10 || (r.visits > 10 && r.visits % 25 === 0)) {
     const themed = themePackStories(S.themePackId, 'visitMilestone');
     const line = themed.length ? fillThemeStory(pick(themed), { name: r.name, visits: r.visits }) : `${r.name} is back for visit #${r.visits} — a real regular now.`;
-    ticker(r.name, line, 'money');
+    ticker(r.name, line, 'money', golferTickerCharacter(r, 'money'));
     S.rep = clamp(S.rep + 0.03, 0.3, 5);
   }
   if (r.celebrity) {
@@ -1480,7 +1480,7 @@ function spawnGolfer() {
     confetti(CH.x, CH.y);
     const themed = themePackStories(S.themePackId, 'celebrityArrival');
     const line = themed.length ? fillThemeStory(pick(themed), { name: r.name }) : `Local celebrity ${r.name} has arrived — everyone's watching!`;
-    ticker(r.name, line, 'money');
+    ticker(r.name, line, 'money', golferTickerCharacter(r, 'money'));
     S.rep = clamp(S.rep + 0.05, 0.3, 5);
   }
   updateTopbar();
@@ -1625,7 +1625,17 @@ function sayText(g: Golfer, txt: string, cls?: string) {
   if (g.chatCd > 0) return;
   g.chatCd = 4;
   floater(g.x, g.y - 1.2, txt, '#fff', 'bub');
-  ticker(g.name, txt, cls);
+  ticker(g.name, txt, cls, golferTickerCharacter(g, cls));
+}
+
+function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 'cap'> | Pick<Regular, 'name' | 'shirt' | 'skin' | 'cap'>, cls?: string): TickerCharacter {
+  return {
+    identity: golfer.name,
+    shirt: golfer.shirt,
+    skin: golfer.skin,
+    cap: golfer.cap,
+    expression: cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : 'pleased',
+  };
 }
 function say(g: Golfer, key: string, cls?: string) {
   sayText(g, pick(SAY[key]), cls);

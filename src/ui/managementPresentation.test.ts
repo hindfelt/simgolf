@@ -9,13 +9,17 @@ describe('management presentation and accessibility', () => {
   const regulars = read('./RegularsPanel.tsx');
   const scorecards = read('./ScorecardsPanel.tsx');
   const account = read('./AccountPanel.tsx');
+  const portrait = read('./CharacterPortrait.tsx');
   const css = read('../styles.css');
   const shell = read('../simgolf-shell.css');
 
-  it('uses named pixel portraits for both championship golfer choices', () => {
+  it('uses dedicated SimFoto portraits for both championship golfer choices', () => {
     expect(pro.match(/className="proChoicePortrait"/g)).toHaveLength(2);
-    expect(pro).toContain('name={pro.name} shirt={pro.shirt} skin={pro.skin} cap={pro.cap}');
-    expect(pro).toContain('name="Gary Golf" shirt="#3f7fd0" skin="#f1c6a0" cap="#efefef"');
+    expect(pro).toContain('name={pro.name} identity={pro.visualSeed} shirt={pro.shirt}');
+    expect(pro).toContain('name="Gary Golf" identity="default-tour-pro" shirt="#3f7fd0"');
+    expect(portrait).toContain('golferPortraitSprite');
+    expect(portrait).not.toContain('golferSprite(');
+    expect(css).toMatch(/\.characterPortrait\s*\{[^}]*border-radius: 50%;/s);
   });
 
   it('exposes selected state for report and championship choices', () => {

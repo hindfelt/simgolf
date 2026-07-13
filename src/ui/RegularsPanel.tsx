@@ -45,7 +45,14 @@ export default function RegularsPanel() {
       <div className="regularsList">
         {roster.map((r) => (
           <div className="regularCard" key={r.name}>
-            <CharacterPortrait name={r.name} shirt={r.shirt} skin={r.skin} cap={r.cap} className={onCourse.has(r.name) ? 'onCourse' : ''} />
+            <CharacterPortrait
+              name={r.name}
+              shirt={r.shirt}
+              skin={r.skin}
+              cap={r.cap}
+              expression={onCourse.has(r.name) ? 'pleased' : 'neutral'}
+              className={onCourse.has(r.name) ? 'onCourse' : ''}
+            />
             <div className="regularCardBody">
               <div className="regularHead">
                 <b className={onCourse.has(r.name) ? 'regularOnCourse' : ''}>{r.name}</b>

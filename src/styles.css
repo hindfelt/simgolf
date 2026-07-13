@@ -3174,10 +3174,10 @@ canvas.game:focus-visible {
 .proWorkspace { display: grid; grid-template-columns: 245px 1fr; gap: 10px; }
 .proIdentityCard,.proSkillsBoard,.retiredCourseSection,.championshipSetup,.circuitHistory { border: 1px solid rgba(59,61,92,.32); border-radius: 13px; background: linear-gradient(180deg,#f8f3df,#ddd9c5); box-shadow: inset 0 1px rgba(255,255,255,.7); }
 .proIdentityCard { padding: 10px; }
-.proPortrait { position: relative; height: 126px; overflow: hidden; margin-bottom: 9px; border: 2px solid #283f31; border-radius: 11px; background: radial-gradient(circle at 58% 28%,#c6d89e,#668d55 65%,#3c5938); box-shadow: inset 0 -18px rgba(30,55,37,.22); }
-.characterPortrait.proPortrait { width: 100%; height: 126px; border-radius: 11px; }
-.characterPortrait.proPortrait canvas { width: 92px; height: 122px; }
-.proPortrait::before { content:""; position:absolute; left:0; right:0; bottom:17px; height:4px; background:repeating-linear-gradient(90deg,rgba(255,255,255,.32) 0 18px,transparent 18px 37px); transform:skewY(-7deg); }
+.proPortrait { position: relative; overflow: hidden; margin: 0 auto 12px; }
+.characterPortrait.proPortrait { width: 146px; height: 146px; flex-basis:146px; border-width:4px; border-radius:50%; }
+.characterPortrait.proPortrait canvas { width: 108px; height: 144px; }
+.proPortrait::before { display:none; }
 .proHead { position:absolute; left:50%; top:31px; width:29px; height:34px; margin-left:-13px; border:3px solid #26382e; border-radius:45% 45% 40% 42%; background:var(--skin); z-index:2; }
 .proHead::after { content:""; position:absolute; right:3px; top:14px; width:3px; height:3px; border-radius:50%; background:#28342c; box-shadow:8px 3px 0 -1px #6d412a; }
 .proCap { position:absolute; left:50%; top:23px; width:38px; height:18px; margin-left:-19px; border:3px solid #26382e; border-radius:55% 55% 18% 18%; background:var(--cap); z-index:3; }
@@ -3220,9 +3220,9 @@ canvas.game:focus-visible {
 .championshipWorkspace { display:grid; grid-template-columns:1.05fr .95fr; gap:9px; }
 .proChallengeOffer { grid-column:1/-1; min-height:54px; display:flex; align-items:center; justify-content:center; gap:9px; padding:8px 10px; border:1px dashed #85828f; border-radius:12px; background:rgba(255,255,255,.28); color:#6d697a; }
 .proChallengeOffer > div > b,.proChallengeOffer > div > span { display:block; }.proChallengeOffer > div > b { color:#424755; font-size:10px; }.proChallengeOffer > div > span { margin-top:2px; font-size:7px; }
-.proChallengeOffer.live { display:grid; grid-template-columns:64px 1fr 180px; justify-content:stretch; min-height:112px; border:2px solid #7b451e; background:linear-gradient(135deg,#f3e5c5,#d8b57e); box-shadow:inset 0 1px #fff7df,0 3px 0 #70421f; }
-.characterPortrait.touringProPortrait { width:58px; height:92px; overflow:hidden; border:2px solid #45372e; border-radius:23px 23px 9px 9px; background:linear-gradient(180deg,#a3b985,#637a50); }
-.characterPortrait.touringProPortrait canvas { width:54px; height:88px; }
+.proChallengeOffer.live { display:grid; grid-template-columns:82px 1fr 180px; justify-content:stretch; min-height:112px; border:2px solid #7b451e; background:linear-gradient(135deg,#f3e5c5,#d8b57e); box-shadow:inset 0 1px #fff7df,0 3px 0 #70421f; }
+.characterPortrait.touringProPortrait { width:76px; height:76px; flex-basis:76px; overflow:hidden; border:3px solid #45372e; border-radius:50%; background:radial-gradient(circle at 46% 27%,#f8efc9 0 28%,#a3b985 29% 62%,#637a50 63%); }
+.characterPortrait.touringProPortrait canvas { width:57px; height:76px; }
 .proChallengeCopy > span { color:#8a5220!important; font-size:7px!important; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }.proChallengeCopy h3 { margin:2px 0 0; color:#3e342c; font-size:15px; }.proChallengeCopy > b { color:#855b27!important; font-size:8px!important; text-transform:uppercase; }.proChallengeCopy p { margin:5px 0; color:#675b4f; font-size:7px; }
 .touringSkills { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }.touringSkills i { position:relative; height:16px; overflow:hidden; padding:2px 4px; box-sizing:border-box; border:1px solid #967b58; border-radius:5px; background:#c7b591; color:#493f36; font-size:6px; font-style:normal; font-weight:900; text-align:center; text-transform:uppercase; }.touringSkills i span { position:absolute; inset:0 auto 0 0; background:rgba(89,134,75,.52); }.touringSkills i::after { content:attr(data-label); position:relative; z-index:1; }
 .challengeTerms { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:8px; border:1px solid #8a6839; border-radius:10px; background:rgba(255,249,224,.6); text-align:center; }.challengeTerms > span,.challengeTerms > strong,.challengeTerms > small { grid-column:1/-1; display:block; }.challengeTerms > span { color:#7a6545; font-size:6px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }.challengeTerms > strong { color:#68460b; font-size:18px; }.challengeTerms > small { color:#796b57; font-size:6px; }.challengeTerms button { padding:6px 4px; border:1px solid #58684a; border-radius:6px; background:#6e955b; color:#fffbe4; font-size:7px; font-weight:900; cursor:pointer; }.challengeTerms button.decline { border-color:#8a5a4f; background:#d6b6a3; color:#69392e; }.challengeTerms button:disabled { opacity:.45; cursor:default; }
@@ -3255,9 +3255,9 @@ canvas.game:focus-visible {
 .circuitDifficulty button.active { border-color:#694d0b; background:#f3ce5b; color:#4b3504; box-shadow:inset 0 1px #fff2b1; }
 .circuitDifficulty b,.circuitDifficulty span { display:block; }.circuitDifficulty b { font-size:8px; text-transform:uppercase; }.circuitDifficulty span { min-height:8px; margin-top:3px; color:#8d6812; font-size:7px; letter-spacing:-1px; }
 .proChoice { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
-.proChoice button { min-width:0; min-height:60px; display:grid; grid-template-columns:44px minmax(0,1fr); align-items:center; gap:7px; padding:6px; border:1px solid #89858d; border-radius:8px; background:#e6e2d2; color:#53525f; text-align:left; cursor:pointer; }
+.proChoice button { min-width:0; min-height:60px; display:grid; grid-template-columns:48px minmax(0,1fr); align-items:center; gap:7px; padding:6px; border:1px solid #89858d; border-radius:8px; background:#e6e2d2; color:#53525f; text-align:left; cursor:pointer; }
 .proChoice button.active { border-color:#546a4d; background:#e6f0d8; box-shadow:inset 0 0 0 1px #98b780; }
-.characterPortrait.proChoicePortrait { width:42px; height:48px; flex-basis:42px; border-radius:15px 15px 7px 7px; }
+.characterPortrait.proChoicePortrait { width:46px; height:46px; flex-basis:46px; border-radius:50%; }
 .characterPortrait.proChoicePortrait canvas { width:35px; height:46px; }
 .proChoice > button > span:not(.characterPortrait) { min-width:0; }
 .proChoice b,.proChoice small { display:block; overflow:hidden; text-overflow:ellipsis; }
@@ -4605,9 +4605,9 @@ canvas.game:focus-visible {
   .playRoundStatus { min-width: 0; flex: 1; }
   .shotTelemetry { flex: 0 0 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shotTelemetry > span:nth-child(2) { border-right: 0; }
-  .regularCard { grid-template-columns:44px minmax(0,1fr); gap:7px; padding-inline:7px; }
-  .regularCard .characterPortrait { width:44px; height:54px; flex-basis:44px; }
-  .regularCard .characterPortrait canvas { width:38px; height:51px; }
+  .regularCard { grid-template-columns:48px minmax(0,1fr); gap:8px; padding-inline:7px; }
+  .regularCard .characterPortrait { width:48px; height:48px; flex-basis:48px; }
+  .regularCard .characterPortrait canvas { width:36px; height:48px; }
   .regularVisits { flex-basis:100%; margin-left:0; white-space:normal; }
   .proChoice { grid-template-columns:1fr; }
   .proSkillGrid article { grid-template-columns:minmax(0,1fr) 82px; }
@@ -4681,49 +4681,69 @@ canvas.game:focus-visible {
   .ticker { bottom: 182px; }
 }
 
-/* Character identity cards reuse the exact sprite palette seen on the course. */
+/* Dedicated SimFoto medallions: authored busts, not enlarged course sprites. */
 .characterPortrait {
   position: relative;
-  flex: 0 0 52px;
-  width: 52px;
+  flex: 0 0 60px;
+  width: 60px;
   height: 60px;
   display: grid;
   place-items: end center;
   overflow: hidden;
-  border: 1px solid #a98744;
-  border-radius: 18px 18px 9px 9px;
+  border: 3px solid #30366f;
+  border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,.72), transparent 32%),
-    linear-gradient(155deg, #e9dfb7 0 54%, #8ca36d 55% 100%);
-  box-shadow: 0 2px 0 #65501f, inset 0 1px rgba(255,255,255,.7);
+    radial-gradient(circle at 45% 26%, #fff9d9 0 24%, #e9dfb7 25% 58%, #91a874 59% 82%, #526b52 83% 100%);
+  box-shadow:
+    0 0 0 2px #f2d862,
+    0 4px 0 #20275f,
+    0 7px 12px rgba(0,0,0,.24),
+    inset 2px 2px rgba(255,255,255,.72),
+    inset -4px -5px rgba(39,54,70,.2);
+}
+.characterPortrait::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 3px;
+  border: 1px solid rgba(255,255,255,.58);
+  border-radius: 50%;
+  pointer-events: none;
 }
 .characterPortrait::after {
   content: '';
   position: absolute;
   left: 7px;
   right: 7px;
-  bottom: 3px;
-  height: 5px;
+  bottom: 2px;
+  height: 7px;
   border-radius: 50%;
   background: rgba(17,39,28,.24);
 }
-.characterPortrait canvas { position: relative; z-index: 1; width: 42px; height: 56px; image-rendering: pixelated; }
-.characterPortrait.onCourse { border-color: #4c9b66; box-shadow: 0 2px 0 #2c6742, 0 0 0 2px rgba(91,185,118,.22); }
+.characterPortrait canvas { position: relative; z-index: 1; width: 45px; height: 60px; image-rendering: pixelated; }
+.characterPortrait.portrait-profile {
+  background: radial-gradient(circle at 45% 25%,#fff8d3 0 23%,#d9d7ad 24% 54%,#7ca16e 55% 78%,#42614c 79%);
+  box-shadow:0 0 0 3px #f2d862,0 5px 0 #20275f,0 10px 22px rgba(0,0,0,.3),inset 3px 3px rgba(255,255,255,.68),inset -7px -9px rgba(29,48,42,.24);
+}
+.characterPortrait.portrait-simfoto { box-shadow:0 0 0 2px #fff04e,0 4px 0 #20275f,0 8px 16px rgba(0,0,0,.32),inset 2px 2px rgba(255,255,255,.7); }
+.characterPortrait.expression-triumphant { border-color:#78591c; }
+.characterPortrait.expression-cross { border-color:#733e56; box-shadow:0 0 0 2px #f4b65b,0 4px 0 #43225f,0 7px 12px rgba(0,0,0,.26),inset 2px 2px rgba(255,255,255,.65); }
+.characterPortrait.onCourse { border-color: #4c9b66; box-shadow: 0 0 0 2px #f4e95d, 0 4px 0 #2c6742, 0 0 0 5px rgba(91,185,118,.18); }
 .characterPortrait.onCourse i { position: absolute; z-index: 2; top: 4px; right: 4px; width: 7px; height: 7px; border: 1px solid #efffe8; border-radius: 50%; background: #52bb70; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
-.regularCard { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 10px; }
+.regularCard { display: grid; grid-template-columns: 60px minmax(0, 1fr); align-items: center; gap: 12px; }
 .regularCardBody { min-width: 0; }
 .characterPortrait.guestPortrait {
-  flex-basis: 54px;
-  width: 54px;
-  height: 62px;
-  border: 2px solid #30345d;
-  border-radius: 20px 20px 10px 10px;
-  box-shadow: 0 3px 0 #30345d;
+  flex-basis: 70px;
+  width: 70px;
+  height: 70px;
+  border: 3px solid #30345d;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #ffe64a, 0 4px 0 #30345d, 0 9px 18px rgba(0,0,0,.28);
   color: transparent;
   font-size: 0;
 }
-.characterPortrait.guestPortrait canvas { width: 44px; height: 58px; }
-.ivanaHeading .characterPortrait.guestPortrait { background: radial-gradient(circle at 50% 24%, #fff8dd, transparent 32%), linear-gradient(155deg,#f2d688 0 54%,#bd6f9f 55%); }
+.characterPortrait.guestPortrait canvas { width: 53px; height: 70px; }
+.ivanaHeading .characterPortrait.guestPortrait { background: radial-gradient(circle at 46% 25%,#fff8dd 0 26%,#f2d688 27% 58%,#bd6f9f 59% 83%,#754467 84%); }
 
 @media (forced-colors: active) {
   .fieldControls,
