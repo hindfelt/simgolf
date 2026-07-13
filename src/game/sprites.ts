@@ -3,6 +3,8 @@
 // image smoothing off — that chunky scaling is what makes it read as
 // game pixel art instead of smooth vector shapes.
 
+import type { EmployeeKind } from './types';
+
 const cache = new Map<string, HTMLCanvasElement>();
 
 type Px = (x: number, y: number, w?: number, h?: number, c?: string) => void;
@@ -362,7 +364,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
    keeps golf bags and clubs off the maintenance crew, and lets each profession
    carry a readable tool even at normal zoom. */
 
-export type CourseStaffKind = 'ranger' | 'groundskeeper' | 'turftech';
+export type CourseStaffKind = EmployeeKind;
 export type CourseStaffFrame = 'walkA' | 'walkB' | 'workA' | 'workB';
 
 export interface CourseStaffArchetype {
@@ -370,17 +372,28 @@ export interface CourseStaffArchetype {
   primary: string;
   secondary: string;
   trousers: string;
-  headwear: 'ranger-hat' | 'work-cap' | 'sun-hat';
-  tool: 'binoculars' | 'rake' | 'watering-can';
+  skin: string;
+  headwear: 'visor' | 'ranger-hat' | 'work-cap' | 'vendor-cap' | 'wide-brim' | 'marshall-cap' | 'sun-hat' | 'straw-hat';
+  tool: 'clipboard' | 'binoculars' | 'rake' | 'soda-tray' | 'autograph-book' | 'pace-paddle' | 'watering-can' | 'cocktail-tray';
 }
 
 /** Public metadata keeps profession identity testable without needing a DOM canvas. */
 export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchetype> = {
+  clubpro: {
+    label: 'Club Pro',
+    primary: '#354b8c',
+    secondary: '#f1df8c',
+    trousers: '#e7e0c7',
+    skin: '#c9875d',
+    headwear: 'visor',
+    tool: 'clipboard',
+  },
   ranger: {
     label: 'Course Ranger',
     primary: '#456b3b',
     secondary: '#d0ad58',
     trousers: '#4a4435',
+    skin: '#b9784e',
     headwear: 'ranger-hat',
     tool: 'binoculars',
   },
@@ -389,16 +402,54 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
     primary: '#c98236',
     secondary: '#f0d36b',
     trousers: '#405946',
+    skin: '#e0a878',
     headwear: 'work-cap',
     tool: 'rake',
+  },
+  sodavendor: {
+    label: 'Soda Vendor',
+    primary: '#d54b45',
+    secondary: '#ffe168',
+    trousers: '#344f77',
+    skin: '#8d5a3a',
+    headwear: 'vendor-cap',
+    tool: 'soda-tray',
+  },
+  celebrity: {
+    label: 'Club Celebrity',
+    primary: '#8d4e9f',
+    secondary: '#ffd56a',
+    trousers: '#46335d',
+    skin: '#d79a72',
+    headwear: 'wide-brim',
+    tool: 'autograph-book',
+  },
+  marshall: {
+    label: 'Course Marshall',
+    primary: '#f0a52f',
+    secondary: '#fff1a3',
+    trousers: '#334b63',
+    skin: '#70472f',
+    headwear: 'marshall-cap',
+    tool: 'pace-paddle',
   },
   turftech: {
     label: 'Turf Gardener',
     primary: '#2f8172',
     secondary: '#eef0df',
     trousers: '#31534f',
+    skin: '#8d5a3a',
     headwear: 'sun-hat',
     tool: 'watering-can',
+  },
+  refreshment: {
+    label: 'Refreshment Host',
+    primary: '#2d8299',
+    secondary: '#f0c96b',
+    trousers: '#f0e4c5',
+    skin: '#e1a77c',
+    headwear: 'straw-hat',
+    tool: 'cocktail-tray',
   },
 };
 
@@ -420,18 +471,18 @@ function staffLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: nu
 }
 
 /**
- * Original 30x36 profession sprites, drawn facing right. Work frames raise the
- * ranger's binoculars, sweep the groundskeeper's rake and tip the gardener's
- * watering can. Walking frames keep the same tools in a safe carrying pose.
+ * Original 30x36 profession sprites, drawn facing right. Each work frame
+ * animates the role's signature prop; walking frames keep it in a safe carrying
+ * pose so the complete staff cast reads at normal game zoom.
  */
 export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame): HTMLCanvasElement {
-  const key = `course-staff-v1|${kind}|${frame}`;
+  const key = `course-staff-v2|${kind}|${frame}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   const spec = COURSE_STAFF_ARCHETYPES[kind];
   const [art, ctx, p] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
-  const skin = kind === 'ranger' ? '#b9784e' : kind === 'groundskeeper' ? '#e0a878' : '#8d5a3a';
+  const skin = spec.skin;
   const skinDark = shade(skin, 0.78);
   const shirtDark = shade(spec.primary, 0.72);
   const trouserDark = shade(spec.trousers, 0.7);
@@ -460,77 +511,173 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
   p(11, 6, 7, 7, skin);
   p(11, 7, 1, 6, skinDark);
   p(16, 9, 1, 1, '#24231f');
-  if (spec.headwear === 'ranger-hat') {
-    p(8, 4, 13, 2, spec.secondary);
-    p(11, 1, 7, 4, spec.secondary);
-    p(11, 4, 7, 1, shade(spec.secondary, 0.7));
-  } else if (spec.headwear === 'work-cap') {
-    p(10, 3, 9, 4, spec.secondary);
-    p(10, 3, 2, 4, shade(spec.secondary, 0.74));
-    p(18, 5, 5, 2, shade(spec.secondary, 0.78));
-  } else {
-    p(8, 4, 14, 2, spec.secondary);
-    p(11, 1, 8, 4, spec.secondary);
-    p(11, 4, 8, 1, shade(spec.secondary, 0.76));
-    p(9, 6, 1, 3, '#d8c58c'); // chin cord
+  switch (spec.headwear) {
+    case 'visor':
+      p(11, 1, 7, 3, '#5a3828');
+      p(10, 3, 9, 3, spec.secondary);
+      p(18, 5, 5, 2, shade(spec.secondary, 0.78));
+      break;
+    case 'ranger-hat':
+      p(8, 4, 13, 2, spec.secondary);
+      p(11, 1, 7, 4, spec.secondary);
+      p(11, 4, 7, 1, shade(spec.secondary, 0.7));
+      break;
+    case 'work-cap':
+      p(10, 3, 9, 4, spec.secondary);
+      p(10, 3, 2, 4, shade(spec.secondary, 0.74));
+      p(18, 5, 5, 2, shade(spec.secondary, 0.78));
+      break;
+    case 'vendor-cap':
+      p(10, 3, 9, 4, spec.secondary);
+      p(12, 3, 2, 4, spec.primary);
+      p(16, 3, 2, 4, spec.primary);
+      p(18, 5, 5, 2, shade(spec.primary, 0.8));
+      break;
+    case 'wide-brim':
+      p(8, 4, 14, 2, spec.secondary);
+      p(11, 1, 8, 4, spec.primary);
+      p(11, 4, 8, 1, shade(spec.secondary, 0.72));
+      p(13, 8, 7, 2, '#293044'); // star shades
+      p(14, 8, 2, 1, '#9fc6d1');
+      p(18, 8, 2, 1, '#9fc6d1');
+      break;
+    case 'marshall-cap':
+      p(10, 3, 9, 4, spec.primary);
+      p(13, 4, 3, 2, spec.secondary);
+      p(18, 5, 5, 2, shade(spec.primary, 0.72));
+      break;
+    case 'sun-hat':
+      p(8, 4, 14, 2, spec.secondary);
+      p(11, 1, 8, 4, spec.secondary);
+      p(11, 4, 8, 1, shade(spec.secondary, 0.76));
+      p(9, 6, 1, 3, '#d8c58c');
+      break;
+    case 'straw-hat':
+      p(7, 4, 15, 2, spec.secondary);
+      p(11, 1, 8, 4, spec.secondary);
+      p(11, 4, 8, 1, spec.primary);
+      break;
   }
 
-  // A small badge/apron detail keeps the torso readable under the carried tools.
-  if (kind === 'ranger') {
-    p(11, 15, 2, 2, '#e1c465');
-    p(18, 15, 2, 3, '#303b36'); // shoulder radio
-    staffLine(ctx, 19, 14, 19, 11, '#303b36');
-  } else if (kind === 'groundskeeper') {
-    p(11, 15, 2, 7, '#ead8b4');
-    p(17, 15, 2, 7, '#ead8b4');
-  } else {
-    p(11, 15, 7, 7, '#d9e2bd'); // gardener's apron
-    p(12, 19, 5, 1, '#6b7d55');
+  // Profession details stay visible even when a carried prop overlaps the body.
+  switch (kind) {
+    case 'clubpro':
+      p(11, 14, 3, 9, '#f5f0dc');
+      p(16, 14, 3, 9, '#f5f0dc');
+      p(14, 14, 2, 6, '#d85745');
+      break;
+    case 'ranger':
+      p(11, 15, 2, 2, '#e1c465');
+      p(18, 15, 2, 3, '#303b36');
+      staffLine(ctx, 19, 14, 19, 11, '#303b36');
+      break;
+    case 'groundskeeper':
+      p(11, 15, 2, 7, '#ead8b4');
+      p(17, 15, 2, 7, '#ead8b4');
+      break;
+    case 'sodavendor':
+      p(11, 14, 7, 9, '#f7e7bf');
+      p(13, 16, 3, 3, '#d54b45');
+      break;
+    case 'celebrity':
+      p(13, 14, 4, 2, spec.secondary);
+      p(14, 16, 2, 2, '#fff2a2');
+      break;
+    case 'marshall':
+      p(10, 14, 9, 3, spec.secondary);
+      p(13, 14, 2, 8, spec.primary);
+      p(17, 15, 2, 2, '#5f381d');
+      break;
+    case 'turftech':
+      p(11, 15, 7, 7, '#d9e2bd');
+      p(12, 19, 5, 1, '#6b7d55');
+      break;
+    case 'refreshment':
+      p(11, 14, 7, 9, '#f5ead1');
+      p(12, 16, 5, 2, '#e3bd5f');
+      break;
   }
 
-  if (kind === 'ranger') {
-    if (working) {
-      // Arms lift binoculars to the face; the two bright lenses stay legible.
-      p(8, 14, 3, 3, spec.primary);
-      p(18, 13, 3, 3, spec.primary);
-      p(9, 12, 3, 2, skin);
-      p(18, 11, 3, 2, skin);
-      p(14, alternate ? 8 : 9, 7, 4, '#263c39');
-      p(15, alternate ? 8 : 9, 2, 2, '#7eb0b2');
-      p(19, alternate ? 8 : 9, 2, 2, '#7eb0b2');
-    } else {
-      p(18, 15, 3, 6, spec.primary);
-      p(19, 21, 2, 2, skin);
-      p(13, 17, 6, 4, '#263c39');
-      p(14, 18, 2, 2, '#7eb0b2');
-      p(17, 18, 2, 2, '#7eb0b2');
-      staffLine(ctx, 14, 16, 13, 14, '#303b36');
-      staffLine(ctx, 18, 16, 19, 14, '#303b36');
+  p(18, 15, 3, 6, spec.primary);
+  p(19, 20, 2, 3, skin);
+  switch (spec.tool) {
+    case 'clipboard': {
+      const y = working ? 15 : 19;
+      p(20, y, 7, 9, '#d9ad55');
+      p(21, y + 1, 5, 6, '#f5edcf');
+      p(22, y - 1, 3, 2, '#6b5135');
+      if (working) staffLine(ctx, 22, y + 3, 25, y + 3, '#4e6c94');
+      break;
     }
-  } else if (kind === 'groundskeeper') {
-    // A long wooden rake gives a much clearer silhouette than a golf club.
-    const tipX = working ? (alternate ? 25 : 27) : 25;
-    const tipY = working ? (alternate ? 31 : 28) : 33;
-    p(18, 15, 3, 6, spec.primary);
-    p(19, 20, 2, 3, skin);
-    staffLine(ctx, 19, 20, tipX, tipY, '#79532c', 2);
-    staffLine(ctx, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
-    for (let i = -3; i <= 2; i += 2) staffLine(ctx, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
-  } else {
-    p(18, 15, 3, 6, spec.primary);
-    p(19, 20, 2, 3, skin);
-    // Chunky watering can + spout; work frames tip it and add animated droplets.
-    const canX = working ? 21 : 19;
-    const canY = working ? (alternate ? 22 : 21) : 23;
-    p(canX, canY, 6, 5, '#668fa0');
-    p(canX + 1, canY + 1, 4, 2, '#91bac0');
-    staffLine(ctx, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
-    staffLine(ctx, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
-    staffLine(ctx, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
-    if (working) {
-      p(28, canY + 6 + Number(alternate), 1, 2, '#7fc3d2');
-      p(26, canY + 8 - Number(alternate), 1, 2, '#7fc3d2');
-      p(29, canY + 10, 1, 1, '#7fc3d2');
+    case 'binoculars':
+      if (working) {
+        p(8, 14, 3, 3, spec.primary);
+        p(9, 12, 3, 2, skin);
+        p(14, alternate ? 8 : 9, 7, 4, '#263c39');
+        p(15, alternate ? 8 : 9, 2, 2, '#7eb0b2');
+        p(19, alternate ? 8 : 9, 2, 2, '#7eb0b2');
+      } else {
+        p(13, 17, 6, 4, '#263c39');
+        p(14, 18, 2, 2, '#7eb0b2');
+        p(17, 18, 2, 2, '#7eb0b2');
+        staffLine(ctx, 14, 16, 13, 14, '#303b36');
+        staffLine(ctx, 18, 16, 19, 14, '#303b36');
+      }
+      break;
+    case 'rake': {
+      const tipX = working ? (alternate ? 25 : 27) : 25;
+      const tipY = working ? (alternate ? 31 : 28) : 33;
+      staffLine(ctx, 19, 20, tipX, tipY, '#79532c', 2);
+      staffLine(ctx, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
+      for (let i = -3; i <= 2; i += 2) staffLine(ctx, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
+      break;
+    }
+    case 'soda-tray':
+      staffLine(ctx, 17, 22, 28, working ? 17 : 21, '#5f4434', 2);
+      p(20, working ? 14 : 18, 9, 2, '#d8c09b');
+      p(21, working ? 9 : 13, 3, 5, '#e94c43');
+      p(25, working ? 10 : 14, 3, 4, '#f1d650');
+      staffLine(ctx, 22, working ? 9 : 13, 23, working ? 6 : 10, '#f3f1dc');
+      break;
+    case 'autograph-book': {
+      const y = working ? 14 : 19;
+      p(19, y, 9, 7, '#f4e8c7');
+      p(23, y, 1, 7, '#774c91');
+      if (working) staffLine(ctx, 20, y + 2, 22, y + 3, '#40536e');
+      p(27, y - 2, 2, 3, spec.secondary); // flash bulb
+      break;
+    }
+    case 'pace-paddle': {
+      const top = working ? 10 : 15;
+      staffLine(ctx, 21, 21, 24, top + 4, '#734d2e', 2);
+      p(20, top, 8, 7, '#f3d54e');
+      p(22, top + 2, 4, 3, alternate && working ? '#d54b45' : '#497a43');
+      break;
+    }
+    case 'watering-can': {
+      const canX = working ? 21 : 19;
+      const canY = working ? (alternate ? 22 : 21) : 23;
+      p(canX, canY, 6, 5, '#668fa0');
+      p(canX + 1, canY + 1, 4, 2, '#91bac0');
+      staffLine(ctx, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
+      staffLine(ctx, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
+      staffLine(ctx, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
+      if (working) {
+        p(28, canY + 6 + Number(alternate), 1, 2, '#7fc3d2');
+        p(26, canY + 8 - Number(alternate), 1, 2, '#7fc3d2');
+        p(29, canY + 10, 1, 1, '#7fc3d2');
+      }
+      break;
+    }
+    case 'cocktail-tray': {
+      const y = working ? 15 : 20;
+      staffLine(ctx, 17, 22, 28, y + 2, '#6c4c37', 2);
+      p(20, y + 1, 10, 2, '#d8c7a8');
+      p(21, y - 4, 3, 5, '#ef7b6d');
+      p(26, y - 3, 3, 4, '#7dc7c8');
+      p(22, y - 5, 1, 1, '#7cab4a');
+      p(27, y - 4, 1, 1, '#f3d14f');
+      break;
     }
   }
 

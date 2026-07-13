@@ -21,6 +21,45 @@ export const EMP_CATALOG: Record<EmployeeKind, EmployeeDef> = {
   refreshment: { name: 'Refreshment Consultant', wage: 2.4, skilled: true, short: '🍹', blurb: 'Drinks for everyone — attitude up.' },
 };
 
+export type EmployeeWorkZone = 'first-tee' | 'wildlife' | 'turf' | 'golfers' | 'clubhouse';
+
+/**
+ * A visible employee should behave like a character, not an anonymous modifier.
+ * Names and work zones are deterministic so saves keep the same cast between
+ * sessions without expanding the serialized Employee shape.
+ */
+const EMPLOYEE_NAMES: Record<EmployeeKind, readonly string[]> = {
+  clubpro: ['Maggie Mulligan', 'Chip Bunker', 'Theo Links'],
+  ranger: ['Rae Woods', 'Bucky Green', 'Fern Walker'],
+  groundskeeper: ['Moe Meadows', 'Daisy Divot', 'Artie Acres'],
+  sodavendor: ['Fizz Parker', 'Poppy Cola', 'Sunny Sips'],
+  celebrity: ['Dolly Driver', 'Rex Marquee', 'Gale Stardom'],
+  marshall: ['Pace Mullins', 'Marty Rules', 'June Fairplay'],
+  turftech: ['Tess Turf', 'Greta Green', 'Sod Stewart'],
+  refreshment: ['Lola Lime', 'Minnie Mint', 'Jules Spritz'],
+};
+
+export const EMPLOYEE_WORK_ZONES: Record<EmployeeKind, EmployeeWorkZone> = {
+  clubpro: 'first-tee',
+  ranger: 'wildlife',
+  groundskeeper: 'turf',
+  sodavendor: 'golfers',
+  celebrity: 'first-tee',
+  marshall: 'golfers',
+  turftech: 'turf',
+  refreshment: 'clubhouse',
+};
+
+export function employeeDisplayName(employee: Pick<Employee, 'id' | 'kind'>): string {
+  const names = EMPLOYEE_NAMES[employee.kind];
+  const seed = Math.abs(Math.floor(employee.id * 1000));
+  return names[seed % names.length];
+}
+
+export function employeeWorkZone(kind: EmployeeKind): EmployeeWorkZone {
+  return EMPLOYEE_WORK_ZONES[kind];
+}
+
 const HIRE_MULTIPLE = 60; // one-off hiring cost = 60s of wages
 
 export function hireCost(kind: EmployeeKind): number {
