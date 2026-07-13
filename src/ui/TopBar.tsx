@@ -103,6 +103,20 @@ export default function TopBar() {
       </div>
 
       <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} data-ui="simulation-controls" aria-label="Simulation controls">
+        <svg className="fieldControlSkin" viewBox="0 0 220 104" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="simGolfFanFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#d8d5ff" />
+              <stop offset="0.16" stopColor="#bdbaf1" />
+              <stop offset="0.72" stopColor="#918ed2" />
+              <stop offset="1" stopColor="#6667b1" />
+            </linearGradient>
+          </defs>
+          <path className="fieldControlSkinShadow" d="M-4 28 C26 14 61 9 91 18 C124 28 132 59 166 68 C190 74 202 62 208 39 C212 22 213 8 224 -3 L224 108 L-4 108 Z" />
+          <path className="fieldControlSkinBody" d="M-4 24 C26 10 61 5 91 14 C124 24 132 55 166 64 C190 70 202 58 208 35 C212 18 213 5 224 -6 L224 106 L-4 106 Z" />
+          <path className="fieldControlSkinHighlight" d="M0 25 C29 13 60 9 88 17 C120 26 132 56 163 65" />
+          <path className="fieldControlSkinLowlight" d="M0 94 C63 90 123 93 180 96 C197 97 210 94 220 87 L220 104 L0 104 Z" />
+        </svg>
         <details className="fieldMenu" ref={menuRef}>
           <summary className="orb" aria-label="Open clubhouse menu" title="Clubhouse menu"><Icon name="resort" size={27} /></summary>
           <span className="controlLegend" aria-hidden="true">Clubhouse</span>

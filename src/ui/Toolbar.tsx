@@ -68,8 +68,8 @@ function ToolGraphic({ item, active }: { item: ToolDef; active: boolean }) {
 }
 
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
-  { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
-  { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
+  { id: 'course', label: 'Course', icon: 'terrain', tools: ['pan', 'hole', 'fair', 'green'] },
+  { id: 'terrain', label: 'Terrain', icon: 'course', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
   { id: 'resort', label: 'Resort', icon: 'resort', tools: [] },
   { id: 'play', label: 'Play', icon: 'play', tools: ['play'] },
 ];
@@ -104,7 +104,9 @@ export default function Toolbar() {
             type="button"
             role="tab"
             aria-selected={group === item.id}
-            className={'toolGroup' + (group === item.id ? ' active' : '')}
+            className={'toolGroup' + (group === item.id ? ' active' : '') + (item.id === 'course' && group === 'terrain' ? ' familyActive' : '')}
+            data-group-id={item.id}
+            title={item.label}
             key={item.id}
             onClick={() => {
               setGroup(item.id);
@@ -113,7 +115,7 @@ export default function Toolbar() {
             }}
           >
             <Icon name={item.icon} size={16} />
-            <span>{item.label}</span>
+            <span className="toolGroupLabel">{item.label}</span>
           </button>
         ))}
       </div>

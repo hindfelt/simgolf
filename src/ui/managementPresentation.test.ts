@@ -74,7 +74,10 @@ describe('management presentation and accessibility', () => {
 
   it('keeps the play console on one original-height molded strip at laptop widths', () => {
     expect(shell).toMatch(/\.playHud\s*\{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?height: var\(--sg-bottom\);/);
-    expect(shell).toMatch(/@media \(max-width: 1100px\)[\s\S]*?\.fieldControls\s*\{[^}]*width: var\(--sg-control-width\);[^}]*\}[\s\S]*?\.playHud\s*\{ left: var\(--sg-control-width\); \}/);
+    expect(shell).toContain('--sg-control-width: 218px;');
+    const laptopRules = shell.slice(shell.indexOf('@media (max-width: 1100px)'), shell.indexOf('@media (max-width: 760px)'));
+    expect(laptopRules).not.toContain('--sg-control-width:');
+    expect(laptopRules).toContain('.playHud { left: var(--sg-control-width); }');
     expect(shell).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.fieldControls\.playControls\s*\{ display: none; \}/);
   });
 
