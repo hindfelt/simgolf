@@ -104,7 +104,7 @@ export default function TopBar() {
 
       <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} data-ui="simulation-controls" aria-label="Simulation controls">
         <details className="fieldMenu" ref={menuRef}>
-          <summary className="orb" aria-label="Open field desk menu" title="Field desk menu"><Icon name="course" size={27} /></summary>
+          <summary className="orb" aria-label="Open clubhouse menu" title="Clubhouse menu"><Icon name="resort" size={27} /></summary>
           <span className="controlLegend" aria-hidden="true">Clubhouse</span>
           <div className="fieldMenuCard" aria-label="Course management controls">
             <div className="fieldMenuHead"><span>Clubhouse</span><small>Course operations</small></div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useUI } from './store';
 import { setTool, startRound } from '../game/engine';
 import { ensureAudio } from '../game/audio';
@@ -13,6 +13,8 @@ interface ToolDef {
   tip?: string;
   icon: IconName;
   bg?: string;
+  side?: string;
+  art?: 'tile' | 'slab';
   gold?: boolean;
   tile?: Tile;
 }
@@ -24,8 +26,8 @@ const $ = (n: number) => '$' + n.toLocaleString('en-US');
 const pathwayCost = `${$(TINFO[Tile.PATH].cost)} land · ${$(TINFO[Tile.BRIDGE_WATER].cost)} water · ${$(TINFO[Tile.BRIDGE_STREAM].cost)} stream`;
 
 const TOOLS: ToolDef[] = [
-  { id: 'pan', nm: 'Pan', icon: 'pan', bg: 'linear-gradient(180deg,#c9c6e0,#9a96bf)' },
-  { id: 'hole', nm: 'New hole', ct: $(HOLE_COST), icon: 'hole', bg: grass },
+  { id: 'pan', nm: 'Pan', icon: 'pan', bg: 'linear-gradient(145deg,#e7e8f5,#a8abd2)', side: '#555b9b', art: 'slab' },
+  { id: 'hole', nm: 'New hole', ct: $(HOLE_COST), icon: 'hole', bg: 'linear-gradient(145deg,#f4dc2b,#c8a80c)', side: '#8c7423' },
   { id: 'fair', nm: 'Fairway', tile: Tile.FAIR, ct: $(TINFO[Tile.FAIR].cost), icon: 'fair', bg: `repeating-linear-gradient(90deg, ${TINFO[Tile.FAIR].c1} 0 7px, ${TINFO[Tile.FAIR].c2} 7px 14px)` },
   { id: 'firmfair', nm: 'Firm Fairway', tile: Tile.FIRM_FAIR, ct: $(TINFO[Tile.FIRM_FAIR].cost), icon: 'firmFair', bg: `linear-gradient(180deg,${TINFO[Tile.FIRM_FAIR].c1},${TINFO[Tile.FIRM_FAIR].c2})` },
   { id: 'deeprough', nm: 'Deep Rough', tile: Tile.DEEP_ROUGH, ct: $(TINFO[Tile.DEEP_ROUGH].cost), icon: 'deepRough', bg: `linear-gradient(180deg,${TINFO[Tile.DEEP_ROUGH].c1},${TINFO[Tile.DEEP_ROUGH].c2})` },
@@ -47,6 +49,23 @@ const TOOLS: ToolDef[] = [
   { id: 'build', nm: 'Facilities', ct: 'catalog', icon: 'build', bg: 'linear-gradient(180deg,#d7c8ae,#a99782)' },
   { id: 'play', nm: 'Tee off', ct: 'play round', icon: 'play', bg: 'linear-gradient(180deg,#ffe9a3,#e9b53c)', gold: true },
 ];
+
+function ToolGraphic({ item, active }: { item: ToolDef; active: boolean }) {
+  const style = {
+    '--tool-surface': item.bg ?? 'linear-gradient(145deg,#cfcef2,#8d91cb)',
+    '--tool-side': item.side ?? '#4d559a',
+  } as CSSProperties;
+
+  return (
+    <span className={'toolGraphic art-' + (item.art ?? 'tile')} style={style} aria-hidden="true">
+      {active && <span className="toolGraphicRing" />}
+      <span className="toolGraphicLeft" />
+      <span className="toolGraphicRight" />
+      <span className="toolGraphicTop" />
+      <Icon name={item.icon} size={24} className="toolGraphicIcon" />
+    </span>
+  );
+}
 
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
   { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
@@ -78,7 +97,7 @@ export default function Toolbar() {
   if (mode === 'play') return null;
 
   return (
-    <nav className="toolDock" data-ui="construction-dock" aria-label="Course construction tools">
+    <nav className="toolDock" data-group={group} data-ui="construction-dock" aria-label="Course construction tools">
       <div className="toolGroups" role="tablist" aria-label="Tool categories">
         {GROUPS.map((item) => (
           <button
@@ -121,6 +140,7 @@ export default function Toolbar() {
               title={`${label}${detail ? ` · ${detail}` : ''}`}
               aria-label={`${label}${detail ? `, ${detail}` : ''}`}
               aria-pressed={active}
+              data-tool={item.id}
               className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
               onClick={(event) => {
                 event.stopPropagation();
@@ -136,12 +156,7 @@ export default function Toolbar() {
                 }
               }}
             >
-              <span className="diaWrap" aria-hidden="true">
-                {active && <span className="dia ring" />}
-                <span className="dia side" />
-                <span className="dia top" style={{ background: item.bg }} />
-                <Icon name={item.icon} size={18} className="diaIc" />
-              </span>
+              <ToolGraphic item={item} active={active} />
               <span className="nm">{label}</span>
               <span className="ct">{item.ct ?? '\u00a0'}</span>
             </button>
