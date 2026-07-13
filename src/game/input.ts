@@ -1,8 +1,9 @@
 import { S } from './state';
-import { screenToWorld, screenToWorldT, zoomAt, rotateView } from './camera';
+import { screenToWorldT, zoomAt, rotateView } from './camera';
 import { lerp } from './rng';
 import { ensureAudio } from './audio';
-import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
+import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setClub, setShape, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
+import { shotShortcutForEvent } from './shotShortcuts';
 import type { Aim } from './types';
 
 const HOLE_HINT = 'Tap the map to place the TEE.';
@@ -204,13 +205,9 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     if (pointers.size < 2) pinch = null;
     if (S.player && S.player.aim && S.player.aim.on && S.player.aim.kind !== 'keyboard' && pointers.size === 0) {
       const a = S.player.aim;
-      const w0 = screenToWorld(a.sx, a.sy);
-      const w1 = screenToWorld(a.cx, a.cy);
-      const dx = w0.x - w1.x;
-      const dy = w0.y - w1.y;
-      const pl = Math.hypot(dx, dy);
+      const intent = playerAimIntent(a, S.player.lie);
       S.player.aim = null;
-      if (pl >= 0.3) playerFire(dx / pl, dy / pl, pl / 9);
+      if (intent && intent.rawPower >= 0.3 / 9) playerFire(intent.dirX, intent.dirY, intent.power);
     }
     painting = false;
     panDrag = null;
@@ -220,6 +217,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     e.preventDefault();
     S.camTarget = null;
     zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 0.89);
+    if (S.player?.aim?.on) updatePlayHud();
   }
   function onContext(e: Event) {
     e.preventDefault();
@@ -241,6 +239,13 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       }
     }
     if (canvasFocused && S.mode === 'play' && S.player?.state === 'aim' && S.player.ball) {
+      const shotShortcut = S.player.lie === 'green' ? null : shotShortcutForEvent(e);
+      if (shotShortcut) {
+        e.preventDefault();
+        if (shotShortcut.kind === 'club') setClub(shotShortcut.id);
+        else setShape(shotShortcut.id);
+        return;
+      }
       const hole = S.holes[S.player.holeIdx];
       const aimOrigin = `${S.player.holeIdx}:${S.player.ball.x.toFixed(3)}:${S.player.ball.y.toFixed(3)}`;
       if (aimOrigin !== keyboardAim.origin) {
@@ -276,8 +281,14 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       spaceHeld = true; // hold to pan
     }
     if (e.key === 'p' || e.key === 'P') setSpeed(S.speed === 0 ? 1 : 0);
-    if (e.key === 'r') rotateView(1);
-    if (e.key === 'R') rotateView(-1);
+    if (e.key === 'r') {
+      rotateView(1);
+      if (S.player?.aim?.on) updatePlayHud();
+    }
+    if (e.key === 'R') {
+      rotateView(-1);
+      if (S.player?.aim?.on) updatePlayHud();
+    }
   }
   function onKeyUp(e: KeyboardEvent) {
     spaceHeld = spaceHeldAfterKeyUp(spaceHeld, e.key);

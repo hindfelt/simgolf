@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { isCanvasShortcutTarget, isGameShortcutSurface, isInteractiveShortcutTarget, keyboardAimState, resetKeyboardAimMemory, spaceHeldAfterKeyUp, updatePointerAim } from '../game/input';
 import { playerAimIntent } from '../game/engine';
+import { shotShortcutForEvent } from '../game/shotShortcuts';
 import { S } from '../game/state';
 
 describe('play controls accessibility and shot-shape presentation', () => {
@@ -11,10 +12,24 @@ describe('play controls accessibility and shot-shape presentation', () => {
   const engineSource = readFileSync(new URL('../game/engine.ts', import.meta.url), 'utf8');
   const store = readFileSync(new URL('./store.ts', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  const shell = readFileSync(new URL('../simgolf-shell.css', import.meta.url), 'utf8');
 
   it('exposes an explicit Hook alongside Draw and Fade', () => {
     expect(hud).toContain("['straight', 'fade', 'draw', 'hook', 'backspin', 'punch']");
-    expect(hud).toContain("hook: { mark: '⤺', note: 'hard left' }");
+    expect(hud).toContain("hook: { label: 'Hook Shot', note: 'hard right-to-left flight'");
+  });
+
+  it('matches the original molded play console instead of a card workbench', () => {
+    expect(hud).toContain('className="playShotPalette"');
+    expect(hud).toContain('className="playConsolePanes"');
+    expect(hud).toContain("label: 'Fade Shot (L to R)'");
+    expect(hud).toContain("label: 'Draw Shot (R to L)'");
+    expect(hud).toContain("label: 'High Backspin Shot'");
+    expect(hud).toContain("['powerHitter', 'Power Hitter']");
+    expect(hud).toContain("['luck', 'Luck']");
+    expect(shell).toMatch(/\.playHud\s*\{[\s\S]*?height: var\(--sg-bottom\);[\s\S]*?overflow: visible;/);
+    expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on\s*\{[\s\S]*?#20d365/);
+    expect(shell).not.toMatch(/\.playShotPalette \.shapeBtn\.on\s*\{[^}]*0 0 0 3px #f5ed21/s);
   });
 
   it('announces selected clubs and shot shapes to assistive technology', () => {
@@ -41,10 +56,9 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain('role="group" aria-label="Shot technique selection"');
     expect(hud).toContain('disabled={!option.available}');
     expect(hud).toContain("option.reason ?? 'Unavailable from this lie'");
-    expect(hud).toContain(": option.reason ?? 'Unavailable from this lie'}</small>");
     expect(hud).toContain('playHud.selectedRole');
-    expect(hud).toContain("'Carry → est. finish'");
-    expect(hud).toContain('yards(playHud.finishDistance)');
+    expect(hud).toContain('playHud.carry ?? playHud.pinDistance');
+    expect(hud).toContain('SHAPE_PRESENTATION[playHud.shape].label');
   });
 
   it('publishes the shared canopy forecast as a compact static status with contextual caddie advice', () => {
@@ -99,6 +113,25 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(input).toContain('keyboardIntent?.dirX');
     expect(input).toContain("kind: 'keyboard'");
     expect(input).toContain('updatePlayHud()');
+  });
+
+  it('maps number-row and numpad keys to clubs and flight shapes without modifiers', () => {
+    expect(shotShortcutForEvent({ code: 'Digit1' })).toEqual({ kind: 'club', id: 'driver' });
+    expect(shotShortcutForEvent({ code: 'Digit3' })).toEqual({ kind: 'club', id: 'wedge' });
+    expect(shotShortcutForEvent({ code: 'Digit4' })).toEqual({ kind: 'shape', id: 'straight' });
+    expect(shotShortcutForEvent({ code: 'Digit5' })).toEqual({ kind: 'shape', id: 'fade' });
+    expect(shotShortcutForEvent({ code: 'Numpad6' })).toEqual({ kind: 'shape', id: 'draw' });
+    expect(shotShortcutForEvent({ code: 'Digit7' })).toEqual({ kind: 'shape', id: 'hook' });
+    expect(shotShortcutForEvent({ code: 'Digit8' })).toEqual({ kind: 'shape', id: 'backspin' });
+    expect(shotShortcutForEvent({ code: 'Digit9' })).toEqual({ kind: 'shape', id: 'punch' });
+    expect(shotShortcutForEvent({ code: 'Digit1', ctrlKey: true })).toBeNull();
+    expect(shotShortcutForEvent({ code: 'KeyP' })).toBeNull();
+  });
+
+  it('fires pointer shots with the same clamped intent shown by the HUD', () => {
+    expect(input).toContain('const intent = playerAimIntent(a, S.player.lie);');
+    expect(input).toContain('playerFire(intent.dirX, intent.dirY, intent.power)');
+    expect(input).toContain('if (S.player?.aim?.on) updatePlayHud();');
   });
 
   it('keeps global game shortcuts away from interactive controls', () => {
