@@ -125,6 +125,8 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(shotShortcutForEvent({ code: 'Digit8' })).toEqual({ kind: 'shape', id: 'backspin' });
     expect(shotShortcutForEvent({ code: 'Digit9' })).toEqual({ kind: 'shape', id: 'punch' });
     expect(shotShortcutForEvent({ code: 'Digit1', ctrlKey: true })).toBeNull();
+    expect(shotShortcutForEvent({ code: 'Digit1', shiftKey: true })).toBeNull();
+    expect(shotShortcutForEvent({ code: 'Numpad6', shiftKey: true })).toBeNull();
     expect(shotShortcutForEvent({ code: 'KeyP' })).toBeNull();
   });
 

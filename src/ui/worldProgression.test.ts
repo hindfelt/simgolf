@@ -6,6 +6,7 @@ describe('World Screen career progression presentation', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   const shell = readFileSync(new URL('../simgolf-shell.css', import.meta.url), 'utf8');
   const engine = readFileSync(new URL('../game/engine.ts', import.meta.url), 'utf8');
+  const releaseToast = readFileSync(new URL('./DestinationReleaseToast.tsx', import.meta.url), 'utf8');
 
   it('uses the shared engine availability model for selection, cards, inspection, and purchase', () => {
     expect(source).toContain('propertyAvailability(candidate');
@@ -38,13 +39,18 @@ describe('World Screen career progression presentation', () => {
     expect(css).toMatch(/\.portfolioDeed/);
   });
 
-  it('announces newly earned deeds after rounds and links directly to the World Screen', () => {
-    expect(engine).toContain('newlyAvailableProperties(roundPropertyAccessAtStart');
+  it('announces newly earned deeds from every milestone path and links directly to the World Screen', () => {
+    expect(engine).toContain('checkDestinationReleases(roundPropertyAccessAtStart, true)');
+    expect(engine).toContain('checkDestinationReleases();');
+    expect(engine).toContain('releasedProperties');
     expect(engine).toContain("ticker('World Screen'");
     expect(source).toContain('className="destinationUnlock"');
     expect(source).toContain("setStore({ modal: { kind: 'newCourse' } })");
+    expect(releaseToast).toContain('className="destinationReleaseToast"');
+    expect(releaseToast).toContain("modal: { kind: 'newCourse' }");
     expect(shell).toMatch(/\.destinationUnlock\s*\{/);
     expect(shell).toMatch(/\.destinationUnlock button\s*\{/);
+    expect(shell).toMatch(/\.destinationReleaseToast\s*\{/);
   });
 
   it('collapses career stats and requirement lists cleanly on phone layouts', () => {

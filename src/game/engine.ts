@@ -66,7 +66,7 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, isPropertyId, newlyAvailableProperties, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, isPropertyId, newlyAvailableProperties, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
 import type { PropertyAvailabilityContext } from './properties';
 import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 
@@ -2146,6 +2146,8 @@ function updateCamGlide(dt: number) {
 /* ---------------- play your own course / pro circuit ---------------- */
 let isolatedReturnSave: ReturnType<typeof buildSaveData> | null = null;
 let roundPropertyAccessAtStart: PropertyAvailabilityContext | null = null;
+let propertyReleaseBaseline: PropertyAvailabilityContext | null = null;
+let propertyReleaseAcknowledged = new Set<PropertyId>();
 
 export function activePlayingPro(): ProProfile {
   return S.activeChampionship?.pro ?? S.proProfile;
@@ -2769,9 +2771,7 @@ function endRound() {
   S.roundHistory.push(record);
   if (S.roundHistory.length > ROUND_HISTORY_LIMIT) S.roundHistory.splice(0, S.roundHistory.length - ROUND_HISTORY_LIMIT);
   saveRoundHistory();
-  const unlockedProperties = roundPropertyAccessAtStart
-    ? newlyAvailableProperties(roundPropertyAccessAtStart, currentPropertyAccessContext()).map((property) => property.id)
-    : [];
+  const unlockedProperties = roundPropertyAccessAtStart ? checkDestinationReleases(roundPropertyAccessAtStart, true) : [];
   roundPropertyAccessAtStart = null;
   if (restoredHome) saveGame();
   S.mode = 'build';
@@ -2780,10 +2780,6 @@ function endRound() {
   S.activeProChallenge = null;
   S.camTarget = null;
   updateTopbar();
-  if (unlockedProperties.length) {
-    const names = unlockedProperties.map((propertyId) => propertyById(propertyId).name);
-    ticker('World Screen', `${names.join(' · ')} ${names.length === 1 ? 'is' : 'are'} now available for development.`, 'money');
-  }
   ui.set({
     mode: 'build',
     playHud: null,
@@ -2920,12 +2916,14 @@ export function careerProgressSnapshot(): CareerProgress {
   const currentTop18 = S.holes.some((hole) => hole.top18);
   const retiredTop100 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top100') || snapshotHasSgaFlag(course.snapshot, 'top18'));
   const retiredTop18 = S.retiredCourses.some((course) => snapshotHasSgaFlag(course.snapshot, 'top18'));
+  const releasedProperties = sanitizePropertyHistory(existing.releasedProperties);
   return {
     version: 1,
     bestReputation: clamp(Math.max(existing.bestReputation, Number.isFinite(S.rep) ? S.rep : 0, historyBest), 0, 5),
     tournamentHosted: existing.tournamentHosted || S.tournamentHostedEver || S.goalsAchieved.tournament === true,
     sgaTop100Earned: existing.sgaTop100Earned || currentTop100 || retiredTop100,
     sgaTop18Earned: existing.sgaTop18Earned || currentTop18 || retiredTop18,
+    ...(releasedProperties.length ? { releasedProperties: [...releasedProperties] } : {}),
   };
 }
 
@@ -2943,6 +2941,57 @@ function currentPropertyAccessContext(): PropertyAvailabilityContext {
     currentPropertyId: S.propertyId,
     sandbox: S.sandbox,
   };
+}
+
+/**
+ * Establish a silent baseline after loading/travelling. Legacy profiles adopt
+ * deeds already reachable in that snapshot, so only genuinely new crossings
+ * produce the original-style worldwide release announcement.
+ */
+export function resetDestinationReleaseTracking() {
+  const context = currentPropertyAccessContext();
+  propertyReleaseBaseline = context;
+  const released = new Set(sanitizePropertyHistory(S.careerProgress.releasedProperties));
+  if (!context.sandbox) {
+    for (const property of WORLD_PROPERTIES) {
+      if (propertyAvailability(property, context).status === 'available') released.add(property.id);
+    }
+  }
+  propertyReleaseAcknowledged = released;
+}
+
+/**
+ * Central destination watcher. Cash, best reputation, tournament/SGA flags,
+ * pro fame and championship results all flow through the same comparison, and
+ * profile-level acknowledgement prevents a cash dip from replaying a release.
+ */
+export function checkDestinationReleases(before?: PropertyAvailabilityContext, suppressSound = false): PropertyId[] {
+  if (isolatedReturnSave && !before) return [];
+  const after = currentPropertyAccessContext();
+  const previous = before ?? propertyReleaseBaseline;
+  propertyReleaseBaseline = after;
+  if (!previous) {
+    resetDestinationReleaseTracking();
+    return [];
+  }
+  const acknowledged = new Set([
+    ...propertyReleaseAcknowledged,
+    ...sanitizePropertyHistory(S.careerProgress.releasedProperties),
+  ]);
+  const fresh = newlyAvailableProperties(previous, after).filter((property) => !acknowledged.has(property.id));
+  if (!fresh.length) return [];
+
+  const propertyIds = fresh.map((property) => property.id);
+  for (const propertyId of propertyIds) acknowledged.add(propertyId);
+  propertyReleaseAcknowledged = acknowledged;
+  S.careerProgress = { ...careerProgressSnapshot(), releasedProperties: [...acknowledged] };
+  saveRoundHistory();
+  const names = fresh.map((property) => property.name);
+  ticker('World Screen', `${names.join(' · ')} ${names.length === 1 ? 'is' : 'are'} now released for development.`, 'money');
+  setHint(`New worldwide ${names.length === 1 ? 'destination' : 'destinations'}: ${names.join(' · ')}. Open the World Screen to develop ${names.length === 1 ? 'it' : 'them'}.`);
+  ui.set({ destinationRelease: [...new Set([...ui.get().destinationRelease, ...propertyIds])] });
+  if (!suppressSound) sfx.tada();
+  return propertyIds;
 }
 
 function captureCareerProgress() {
@@ -3321,6 +3370,7 @@ function applySaveData(d: any): boolean {
   if (!activeSpecials.has('ivana') && !S.specialVisitors.landmarkDonated && S.specialVisitors.ivanaCooldown > 600) S.specialVisitors.ivanaCooldown = 45;
   recomputeAllBeauty();
   captureCareerProgress();
+  resetDestinationReleaseTracking();
   rebuildStatics();
   updateTopbar();
   return true;
@@ -3583,10 +3633,11 @@ export function newCourse(
   centerCam(S.holes[0]?.tee.x ?? CH.x, S.holes[0]?.tee.y ?? CH.y);
   const purchasedProperty = !sandbox && !S.propertiesPurchased.includes(property.id);
   if (purchasedProperty) S.propertiesPurchased.push(property.id);
+  resetDestinationReleaseTracking();
   const courseSaved = persistCourseSave(buildSaveData());
   if (purchasedProperty && courseSaved) saveRoundHistory();
   updateTopbar();
-  ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, sandbox, difficulty, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId });
+  ui.set({ mode: 'build', speed: 1, playHud: null, modal: null, destinationRelease: [], buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, sandbox, difficulty, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId });
   setTool('hole');
   const pack = themePackById(S.themePackId);
   const course = themePackCourse(S.themePackId, S.themeCourseId);
@@ -3830,6 +3881,7 @@ export function update(dt: number) {
   tickAcc += dt;
   if (tickAcc >= 1) {
     tickAcc = 0;
+    checkDestinationReleases();
     ui.set({ simTick: ui.get().simTick + 1 });
   }
   historyAcc += dt;

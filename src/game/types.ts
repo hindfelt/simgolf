@@ -532,6 +532,8 @@ export interface CareerProgress {
   tournamentHosted: boolean;
   sgaTop100Earned: boolean;
   sgaTop18Earned: boolean;
+  /** Sticky acknowledgement prevents the same worldwide deed release replaying after cash dips. */
+  releasedProperties?: PropertyId[];
 }
 
 export interface RetiredCourse {
