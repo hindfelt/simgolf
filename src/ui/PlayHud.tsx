@@ -4,6 +4,7 @@ import { CLUBS, SHOT_SHAPES } from '../game/constants';
 import type { ClubId, ProSkillId, ShotShape } from '../game/types';
 import { S } from '../game/state';
 import { weatherDescription, weatherLabel } from '../game/weather';
+import { shotWindLabel, worldWindScreenVector } from '../game/shotFeedback';
 
 const CLUB_IDS: ClubId[] = ['driver', 'iron', 'wedge'];
 const SHAPE_IDS: ShotShape[] = ['straight', 'fade', 'draw', 'hook', 'backspin', 'punch'];
@@ -23,13 +24,6 @@ const POWER_SKILLS: Array<[ProSkillId, string]> = [
   ['accurateIrons', 'Accurate Irons'],
   ['accuratePutter', 'Accurate Putter'],
 ];
-const FLIGHT_SKILLS: Array<[ProSkillId, string]> = [
-  ['drawShot', 'Draw Shot (R to L)'],
-  ['fadeShot', 'Fade Shot (L to R)'],
-  ['highBackspin', 'High Backspin Shot'],
-  ['recovery', 'Recovery Skills'],
-  ['luck', 'Luck'],
-];
 const LIE_LABELS: Record<string, string> = {
   tee: 'Tees', fair: 'Fairway', firmfair: 'Firm fairway', rough: 'Rough', deeprough: 'Deep rough',
   sand: 'Sand', waste: 'Waste bunker', pot: 'Pot bunker', stream: 'Stream', brush: 'Brush',
@@ -37,6 +31,7 @@ const LIE_LABELS: Record<string, string> = {
 };
 const lieLabel = (lie: string) => LIE_LABELS[lie] ?? lie.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (letter) => letter.toUpperCase());
 const yards = (tiles: number) => Math.max(1, Math.round(tiles * YARDS_PER_TILE));
+const resultYards = (tiles: number) => Math.max(0, Math.round(tiles * YARDS_PER_TILE));
 const WEATHER_MARKS = { clear: '☀', overcast: '☁', drizzle: '☂', rain: '☔' } as const;
 
 function FlightGlyph({ shape }: { shape: ShotShape }) {
@@ -53,10 +48,12 @@ function FlightGlyph({ shape }: { shape: ShotShape }) {
 export default function PlayHud() {
   const playHud = useUI((s) => s.playHud);
   if (!playHud) return null;
-  const windDeg = (Math.atan2(playHud.windDy, playHud.windDx) * 180) / Math.PI;
+  const windWorldDeg = (Math.atan2(playHud.windDy, playHud.windDx) * 180) / Math.PI;
+  const windScreen = worldWindScreenVector(playHud.windDx, playHud.windDy, S.rot);
+  const windDeg = (Math.atan2(windScreen.y, windScreen.x) * 180) / Math.PI;
   const windMph = Math.round(playHud.windSpeed * 25);
   const windPoints = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
-  const windPoint = windPoints[Math.round(((windDeg + 360) % 360) / 45) % 8];
+  const windPoint = windPoints[Math.round(((windWorldDeg + 360) % 360) / 45) % 8];
   const weather = { condition: playHud.weatherCondition, intensity: playHud.weatherIntensity, wetness: playHud.weatherWetness };
   const conditionLabel = weatherLabel(weather.condition);
   const conditionDescription = weatherDescription(weather);
@@ -67,6 +64,23 @@ export default function PlayHud() {
   const playingPro = S.activeChampionship?.pro ?? S.proProfile;
   const stroke = playHud.strokeLabel.split(' · ')[0];
   const shotDistance = playHud.carry ?? playHud.pinDistance;
+  const windEffect = playHud.windDisplacement === null ? null : {
+    along: playHud.windAlong ?? 0,
+    cross: playHud.windCross ?? 0,
+    displacement: playHud.windDisplacement,
+  };
+  const windEffectCopy = shotWindLabel(windEffect, YARDS_PER_TILE);
+  const result = playHud.lastShotFeedback;
+  const caddieCarry = result?.carryDistance ?? (playHud.shotInFlight ? null : playHud.carry ?? playHud.clubOptions[playHud.club].carry);
+  const caddieRoll = result?.rollDistance ?? (playHud.shotInFlight ? null : playHud.rollout);
+  const caddieFinish = result?.finishDistance ?? (playHud.shotInFlight ? null : playHud.finishDistance);
+  const resultShape = result?.shape === 'putt' ? 'Putt' : result?.shape ? SHOT_SHAPES[result.shape].label : null;
+  const resultClub = result?.club === 'putter' ? 'Putter' : result?.club ? CLUBS[result.club].label : null;
+  const resultNote = result
+    ? `${result.holed ? 'Holed' : `Finished on ${lieLabel(result.resultLie)}`}${result.penalty ? ` · +${result.penalty} penalty` : ''}`
+    : playHud.shotInFlight
+      ? `Tracking ${SHOT_SHAPES[playHud.shape].label.toLowerCase()} flight…`
+      : windEffectCopy;
 
   return (
     <div className={'playHud' + (playHud.onGreen ? ' puttingHud' : '')} data-ui="play-shell" role="region" aria-label="Player round controls">
@@ -148,7 +162,7 @@ export default function PlayHud() {
             </div>
           )}
           <div className="playShotFacts">
-            <span>Distance: <b>{yards(shotDistance)} yds</b></span>
+            <span>{playHud.carry === null ? 'Pin' : 'Carry'}: <b>{yards(shotDistance)} yds</b></span>
             <span>Lie: <b>{lieLabel(playHud.lie)}</b></span>
             {!playHud.onGreen && <span>Flight: <b>{SHAPE_PRESENTATION[playHud.shape].label}</b></span>}
           </div>
@@ -158,8 +172,17 @@ export default function PlayHud() {
         <section className="playSkillPane" aria-label={`${playingPro.name} power and accuracy skills`}>
           {POWER_SKILLS.map(([id, label]) => <span key={id}><b>{label}</b><em>+{playingPro.skills[id] * 10}%</em></span>)}
         </section>
-        <section className="playSkillPane playFlightSkills" aria-label={`${playingPro.name} flight and recovery skills`}>
-          {FLIGHT_SKILLS.map(([id, label]) => <span key={id}><b>{label}</b><em>+{playingPro.skills[id] * 10}%</em></span>)}
+        <section className={'playCaddieBook' + (result ? ' hasResult' : '')} aria-label={result ? 'Last shot result' : 'Caddie shot forecast'} aria-live="polite">
+          <div className="caddieBookHead">
+            <b>{result ? 'SHOT RESULT' : playHud.shotInFlight ? 'TRACKING SHOT' : 'CADDIE BOOK'}</b>
+            <span>{result ? `${resultClub} · ${resultShape} · ${Math.round(result.power * 100)}%` : `${CLUBS[playHud.club].label} · ${SHOT_SHAPES[playHud.shape].label}`}</span>
+          </div>
+          <div className="caddieMetrics">
+            <span><small>CARRY</small><b>{caddieCarry === null ? '—' : `${resultYards(caddieCarry)} yd`}</b></span>
+            <span><small>RELEASE</small><b>{caddieRoll === null ? '—' : `${resultYards(caddieRoll)} yd`}</b></span>
+            <span><small>FINISH</small><b>{caddieFinish === null ? '—' : `${resultYards(caddieFinish)} yd`}</b></span>
+          </div>
+          <p>{resultNote}</p>
         </section>
       </div>
 

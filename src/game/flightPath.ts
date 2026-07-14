@@ -36,6 +36,38 @@ export function ballFlightPosition(path: Pick<FlightPath, 'fx' | 'fy' | 'tx' | '
   return { x, y };
 }
 
+export interface FlightTrailSample extends Vec {
+  t: number;
+  lift: number;
+  alpha: number;
+}
+
+/** Recent player-flight history for a readable, shape-colored tracer. */
+export function flightTrailSamples(
+  path: FlightPath & Pick<Ball, 't' | 'canopyImpact'>,
+  count = 12,
+  history = 0.34,
+): FlightTrailSample[] {
+  const endT = Math.min(clamp(path.t, 0, 1), path.canopyImpact?.t ?? 1);
+  if (endT <= 0.0001) {
+    const position = ballFlightPosition(path, 0);
+    return [{ ...position, t: 0, lift: 0, alpha: 1 }];
+  }
+  const samples = Math.max(2, Math.min(32, Math.round(count)));
+  const startT = Math.max(0, endT - Math.max(0.04, history));
+  return Array.from({ length: samples }, (_, index) => {
+    const progress = index / (samples - 1);
+    const t = lerp(startT, endT, progress);
+    const position = ballFlightPosition(path, t);
+    return {
+      ...position,
+      t,
+      lift: Math.sin(Math.PI * t) * path.h,
+      alpha: 0.12 + progress * 0.88,
+    };
+  });
+}
+
 /** Absolute altitude includes local terrain, matching PE() plus the rendered arc. */
 export function flightAltitude(path: FlightPath, t: number, elevationAt: (x: number, y: number) => number): number {
   const position = ballFlightPosition(path, t);

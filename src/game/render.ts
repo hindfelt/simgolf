@@ -14,9 +14,10 @@ import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp, employeeDisplayName, employeeWorkZone } from './employees';
 import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './bridges';
-import { ballFlightPosition } from './flightPath';
+import { ballFlightPosition, flightTrailSamples } from './flightPath';
 import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
 import { resolveGolferFrame, resolveManualGolferFrame } from './golferPose';
+import { worldWindScreenVector } from './shotFeedback';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1015,9 +1016,10 @@ function drawWeather(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
     const count = Math.min(150, Math.max(18, Math.round((cssW * cssH) / 12500 * intensity)));
     const spanX = cssW + 180;
     const spanY = cssH + 120;
-    const drift = S.time * (55 + S.wind.speed * 150) * S.wind.dx;
+    const screenWind = worldWindScreenVector(S.wind.dx, S.wind.dy, S.rot);
+    const drift = S.time * (55 + S.wind.speed * 150) * screenWind.x;
     const fall = S.time * (360 + intensity * 260);
-    const slant = 9 + S.wind.dx * (15 + S.wind.speed * 24);
+    const slant = 9 + screenWind.x * (15 + S.wind.speed * 24);
     ctx.strokeStyle = `rgba(210,235,244,${(0.16 + intensity * 0.26).toFixed(3)})`;
     ctx.lineWidth = Math.max(0.75, 0.8 + intensity * 0.65);
     ctx.beginPath();
@@ -1966,16 +1968,61 @@ function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {
 function drawFlyingBall(ctx: CanvasRenderingContext2D, b: Ball, u: number) {
   const p = PE(b.x, b.y);
   const e = b.kind === 'fly' ? Math.sin(Math.PI * clamp(b.t, 0, 1)) * b.h * u : 0;
+  const playerBall = b.owner === 'P';
+  const tracerU = Math.max(0.82, u);
+  const traceColor = b.shotShape === 'fade'
+    ? '#67d8ff'
+    : b.shotShape === 'draw'
+      ? '#ffe36a'
+      : b.shotShape === 'hook'
+        ? '#ff9b3d'
+        : b.shotShape === 'backspin'
+          ? '#95f6dc'
+          : b.shotShape === 'punch'
+            ? '#ffc66d'
+            : '#ffffff';
+  if (playerBall && b.kind === 'fly') {
+    const samples = flightTrailSamples(b);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let index = 1; index < samples.length; index++) {
+      const previous = samples[index - 1];
+      const current = samples[index];
+      const from = PE(previous.x, previous.y);
+      const to = PE(current.x, current.y);
+      ctx.globalAlpha = current.alpha * 0.82;
+      ctx.strokeStyle = traceColor;
+      ctx.lineWidth = Math.max(1.15, (0.75 + current.alpha * 1.85) * tracerU);
+      ctx.shadowColor = traceColor;
+      ctx.shadowBlur = 3.5 * tracerU;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y - previous.lift * u);
+      ctx.lineTo(to.x, to.y - current.lift * u);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
   ctx.fillStyle = 'rgba(0,0,0,.25)';
   const sh = clamp(1 - e / (70 * u), 0.35, 1);
   ctx.beginPath();
   ctx.ellipse(p.x, p.y + 0.6 * u, 2.4 * u * sh + 0.6 * u, 1.2 * u * sh + 0.3 * u, 0, 0, 7);
   ctx.fill();
+  const radius = playerBall ? Math.max(3.2, 3.15 * u) : 2.2 * u;
+  if (playerBall) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = traceColor;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 1 * u - e, radius * 2.05, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
   ctx.fillStyle = '#fff';
-  ctx.strokeStyle = 'rgba(0,0,0,.3)';
-  ctx.lineWidth = 0.6 * u;
+  ctx.strokeStyle = playerBall ? '#263578' : 'rgba(0,0,0,.3)';
+  ctx.lineWidth = (playerBall ? 1.15 : 0.6) * u;
   ctx.beginPath();
-  ctx.arc(p.x, p.y - 1 * u - e, 2.2 * u, 0, 7);
+  ctx.arc(p.x, p.y - 1 * u - e, radius, 0, 7);
   ctx.fill();
   ctx.stroke();
 }

@@ -242,6 +242,8 @@ export interface Ball {
   rollMultiplier?: number;
   /** Player-only precomputed first tree impact. AI balls intentionally omit this. */
   canopyImpact?: TreeCanopyImpact;
+  /** Airborne distance retained when a player flight becomes a ground-roll ball. */
+  carryDistance?: number;
 }
 
 export interface Floater {
@@ -289,8 +291,25 @@ export interface PlayerShotRecord {
   power: number;
   intendedDistance: number;
   distance: number;
+  /** Actual airborne and ground-release distances. Optional for older saved scorecards. */
+  carryDistance?: number;
+  rollDistance?: number;
   start: Vec;
   end: Vec;
+  events: string[];
+  penalty: number;
+  holed: boolean;
+}
+
+export interface PlayerShotFeedback {
+  stroke: number;
+  club: ClubId | 'putter';
+  shape: ShotShape | 'putt';
+  power: number;
+  carryDistance: number;
+  rollDistance: number;
+  finishDistance: number;
+  resultLie: LieKey;
   events: string[];
   penalty: number;
   holed: boolean;
@@ -364,6 +383,8 @@ export interface PlayerRound {
   card: PlayerHoleScore[];
   currentHole: PlayerHoleScore | null;
   pendingShot: PlayerShotRecord | null;
+  /** Ephemeral caddie result shown until the next aim begins. */
+  lastShotFeedback?: PlayerShotFeedback | null;
   ball: Vec | null;
   lie: LieKey;
   state: 'aim' | 'wait' | 'between';
