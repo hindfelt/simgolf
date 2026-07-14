@@ -136,7 +136,24 @@ export default function Toolbar() {
     buttons[next].scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
-  if (mode === 'play') return null;
+  if (mode === 'play') {
+    return (
+      <div className="toolDock playModeDock" data-group="play" data-ui="play-mode-medallions" aria-hidden="true">
+        <div className="toolGroups playModeGroups">
+          {GROUPS.filter((item) => item.id === 'course' || item.id === 'resort' || item.id === 'play').map((item) => (
+            <span
+              className={'toolGroup' + (item.id === 'play' ? ' active' : '')}
+              data-group-id={item.id}
+              key={item.id}
+            >
+              <Icon name={item.icon} size={16} />
+              <span className="toolGroupLabel">{item.label}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <nav className={'toolDock' + (buildPanel ? ' facilitySurfaceOpen' : '')} data-group={group} data-ui="construction-dock" aria-label="Course construction tools" aria-hidden={clubhouseMenu || undefined}>

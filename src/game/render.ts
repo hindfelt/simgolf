@@ -7,7 +7,7 @@ import { P, PE, viewDepth, viewXY } from './camera';
 import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
-import { GOLFER_SPRITE_SIZE, golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
+import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
 import type { CourseStaffFrame, CourseStaffKind } from './sprites';
 import type { GolferFrame, BSprite } from './sprites';
 import { facilityActivityPose } from './facilityActivity';
@@ -18,6 +18,17 @@ import { ballFlightPosition, flightTrailSamples } from './flightPath';
 import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
 import { resolveGolferFrame, resolveManualGolferFrame } from './golferPose';
 import { worldWindScreenVector } from './shotFeedback';
+import {
+  COURSE_STAFF_FOOT_ANCHOR,
+  COURSE_STAFF_METRICS,
+  COURSE_STAFF_SPRITE_SIZE,
+  GOLFER_FOOT_ANCHOR,
+  GOLFER_SPRITE_SIZE,
+  actorSpriteScale,
+  actorVisualGeometry,
+  actorWalkingBob,
+  golferVisualGeometry,
+} from './actorGeometry';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1821,11 +1832,20 @@ function drawGolferSprite(
   view: 'front' | 'rear' = 'front',
   identity = ''
 ) {
-  const k = clamp(u, 0.65, 1.7) * 0.96;
+  const geometry = golferVisualGeometry({ x, y }, u, bob);
+  const k = geometry.scale;
   const planted = frame === 'address' || frame === 'back' || frame === 'follow' || frame === 'putt';
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
-  ctx.ellipse(x, y + 1.2 * k, (planted ? 7.4 : 6.5) * k, (planted ? 2.5 : 2.2) * k, 0.08, 0, Math.PI * 2);
+  ctx.ellipse(
+    geometry.shadow.x,
+    geometry.shadow.y,
+    geometry.shadow.radiusX * (planted ? 1.12 : 1),
+    geometry.shadow.radiusY * (planted ? 1.08 : 1),
+    0.08,
+    0,
+    Math.PI * 2,
+  );
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame, view, identity);
   ctx.save();
@@ -1834,8 +1854,8 @@ function drawGolferSprite(
   ctx.scale(face, 1);
   ctx.drawImage(
     spr,
-    -(GOLFER_SPRITE_SIZE.width / 2) * k,
-    -(GOLFER_SPRITE_SIZE.height - 1) * k,
+    -GOLFER_FOOT_ANCHOR.x * k,
+    -GOLFER_FOOT_ANCHOR.y * k,
     GOLFER_SPRITE_SIZE.width * k,
     GOLFER_SPRITE_SIZE.height * k,
   );
@@ -1851,28 +1871,43 @@ function drawCourseStaff(
   name: string
 ) {
   const p = PE(pose.x, pose.y);
-  const k = clamp(u, 0.65, 1.75) * 0.82;
-  const bob = pose.working ? 0 : Math.abs(Math.sin(pose.phase)) * 1.05 * u;
-  const shadowWidth = kind === 'groundskeeper' ? 8.2 : 7.2;
+  const bob = actorWalkingBob(pose.phase, !pose.working, u, 1.05);
+  const geometry = actorVisualGeometry(p, u, COURSE_STAFF_METRICS, bob);
+  const k = geometry.scale;
+  const shadowWidth = kind === 'groundskeeper' ? 1.14 : 1;
   ctx.fillStyle = 'rgba(5,22,17,.23)';
   ctx.beginPath();
-  ctx.ellipse(p.x + 2.5 * u, p.y + 1.5 * u, shadowWidth * u, 2.6 * u, 0.1, 0, Math.PI * 2);
+  ctx.ellipse(
+    geometry.shadow.x,
+    geometry.shadow.y,
+    geometry.shadow.radiusX * shadowWidth,
+    geometry.shadow.radiusY,
+    0.1,
+    0,
+    Math.PI * 2,
+  );
   ctx.fill();
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y - bob);
   ctx.scale(pose.face, 1);
-  ctx.drawImage(courseStaffSprite(kind, pose.frame), -15 * k, -35 * k, 30 * k, 36 * k);
+  ctx.drawImage(
+    courseStaffSprite(kind, pose.frame),
+    -COURSE_STAFF_FOOT_ANCHOR.x * k,
+    -COURSE_STAFF_FOOT_ANCHOR.y * k,
+    COURSE_STAFF_SPRITE_SIZE.width * k,
+    COURSE_STAFF_SPRITE_SIZE.height * k,
+  );
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
   const hovered = !!S.hover && Math.floor(pose.x) === S.hover.x && Math.floor(pose.y) === S.hover.y;
-  if (S.cam.z > 0.82 || hovered) {
-    drawActorName(ctx, name, p.x, p.y - 36 * k - 2 * u - bob, Math.max(u * 0.86, 0.58));
+  if (S.cam.z > 0.8 || hovered) {
+    drawActorName(ctx, name, p.x, geometry.labelY, Math.max(k * 0.9, 0.72));
   }
 }
 
 function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, u: number, gold = false) {
-  const size = clamp(7.2 * u, 6.5, 10.5);
+  const size = clamp(7.8 * u, 7.25, 11.5);
   ctx.save();
   ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
   ctx.textAlign = 'center';
@@ -1889,7 +1924,8 @@ function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, 
 function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const p = PE(g.x, g.y);
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
-  const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
+  const bob = actorWalkingBob(g.phase, walking, u);
+  const geometry = golferVisualGeometry(p, u, bob);
   const view = g.facingAway ? 'rear' : 'front';
   const selected = S.selectedGolfer === g;
   if (selected) {
@@ -1897,21 +1933,28 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
     ctx.save();
     ctx.fillStyle = 'rgba(255,235,50,.28)';
     ctx.strokeStyle = '#fff132';
-    ctx.lineWidth = Math.max(2, 2.2 * u);
+    ctx.lineWidth = Math.max(2, 2.2 * geometry.scale);
     ctx.beginPath();
-    ctx.ellipse(p.x, p.y + 1.5 * u, 12 * u * pulse, 5 * u * pulse, .08, 0, Math.PI * 2);
+    ctx.ellipse(
+      geometry.ring.x,
+      geometry.ring.y,
+      geometry.ring.radiusX * pulse,
+      geometry.ring.radiusY * pulse,
+      .08,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
     ctx.stroke();
     ctx.strokeStyle = '#252d79';
-    ctx.lineWidth = Math.max(1, 1.1 * u);
+    ctx.lineWidth = Math.max(1, 1.1 * geometry.scale);
     ctx.stroke();
     ctx.restore();
   }
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
   if (selected || (g.specialGuest && S.cam.z > 0.58) || hovered || S.cam.z > 0.9) {
-    const spriteHeight = GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96;
-    drawActorName(ctx, g.name, p.x, p.y - spriteHeight - 2 * u - bob, Math.max(u * 0.88, 0.58), selected || !!g.specialGuest);
+    drawActorName(ctx, g.name, p.x, geometry.labelY, Math.max(geometry.scale * 0.9, 0.72), selected || !!g.specialGuest);
   }
 }
 
@@ -1947,7 +1990,8 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   const frame = resolveManualGolferFrame(pl, chargedAim);
   const pro = activePlayingPro();
   drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, face, 0, view, pro.visualSeed);
-  drawActorName(ctx, pro.name, px, py - GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96, u, true);
+  const geometry = golferVisualGeometry({ x: px, y: py }, u);
+  drawActorName(ctx, pro.name, px, geometry.labelY, Math.max(actorSpriteScale(u) * 0.9, 0.72), true);
 }
 
 function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {

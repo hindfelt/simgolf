@@ -1,9 +1,19 @@
-// Baked pixel-art sprites. Everything is drawn once into small offscreen
-// canvases (1 unit = 1 pixel), given a dark outline, and upscaled with
-// image smoothing off — that chunky scaling is what makes it read as
-// game pixel art instead of smooth vector shapes.
+// Native pixel-art sprites. Everything is plotted once onto an integer pixel
+// grid and given a dark one-pixel outline. The world renderer keeps image
+// smoothing off so the cast reads as chunky toy figurines, never vector blobs.
 
 import type { EmployeeKind } from './types';
+import { COURSE_STAFF_SPRITE_SIZE, GOLFER_SPRITE_SIZE } from './actorGeometry';
+
+export {
+  ACTOR_SCALE_MAX,
+  ACTOR_SCALE_MIN,
+  COURSE_STAFF_FOOT_ANCHOR,
+  COURSE_STAFF_SPRITE_SIZE,
+  GOLFER_FOOT_ANCHOR,
+  GOLFER_SPRITE_SIZE,
+  actorSpriteScale,
+} from './actorGeometry';
 
 const cache = new Map<string, HTMLCanvasElement>();
 
@@ -21,6 +31,32 @@ function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingCo
     ctx.fillRect(x, y, pw, ph);
   };
   return [cv, ctx, px];
+}
+
+interface PixelTransform {
+  scaleX: number;
+  scaleY: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+function transformedPlotter(base: Px, transform: PixelTransform): Px {
+  return (x, y, width = 1, height = 1, color) => {
+    const left = Math.round(transform.offsetX + x * transform.scaleX);
+    const top = Math.round(transform.offsetY + y * transform.scaleY);
+    const right = Math.round(transform.offsetX + (x + width) * transform.scaleX);
+    const bottom = Math.round(transform.offsetY + (y + height) * transform.scaleY);
+    base(left, top, Math.max(1, right - left), Math.max(1, bottom - top), color);
+  };
+}
+
+/** Crisp logical-pixel line used for club shafts and profession tools. */
+function pixelLine(p: Px, x0: number, y0: number, x1: number, y1: number, color: string, width = 1) {
+  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2));
+  for (let step = 0; step <= steps; step++) {
+    const progress = step / steps;
+    p(x0 + (x1 - x0) * progress, y0 + (y1 - y0) * progress, width, width, color);
+  }
 }
 
 /** Stamp a dark outline around everything drawn in `art`, return final sprite. */
@@ -51,8 +87,7 @@ function shade(hex: string, f: number): string {
 
 export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt' | 'puttFollow';
 
-const GOLFER_SOURCE_SIZE = { width: 24, height: 32 } as const;
-export const GOLFER_SPRITE_SIZE = { width: 30, height: 40 } as const;
+const GOLFER_ART_TRANSFORM: PixelTransform = { scaleX: 1.2, scaleY: 1.25, offsetX: 2, offsetY: 4 };
 
 export type GolferBuild = 'compact' | 'classic' | 'broad';
 export type GolferHeadwear = 'cap' | 'visor' | 'flat-cap' | 'bucket-hat';
@@ -130,16 +165,19 @@ const BUILD_GEOMETRY: Record<GolferBuild, {
 };
 
 /**
- * A 24x32 hand-plotted golfer enlarged onto a 30x40 baked canvas, drawn facing right.
+ * A native 32×44 hand-plotted golfer, drawn facing right. Logical coordinates
+ * are expanded onto the larger pixel grid before painting, so there is no
+ * second bitmap bake or browser smoothing pass to blur identity details.
  * `view: 'rear'` is used while walking or swinging away from the camera (up-screen) —
  * no face or forward-only hat bill is visible, so it reads as a back view.
  */
 export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front', identity = ''): HTMLCanvasElement {
-  const key = 'g2|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
+  const key = 'g3|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const [art, ctx, p] = makeCanvas(GOLFER_SOURCE_SIZE.width, GOLFER_SOURCE_SIZE.height);
+  const [art, , baseP] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
+  const p = transformedPlotter(baseP, GOLFER_ART_TRANSFORM);
   const identitySeed = identity || shirt + skin + cap;
   const normalizedIdentity = identitySeed.trim().toLowerCase() || 'anonymous golfer';
   const appearance = golferAppearance(normalizedIdentity);
@@ -233,7 +271,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   if (!rear) p(chestCenter - 1, ty - 1, 3, 1, '#f2f0e8');
 
   // Head, hair and headwear are deliberately stronger silhouette cues than the
-  // one-pixel facial details: they remain legible after the art is baked to 30x40.
+  // facial details: they remain legible at fitted-course scale.
   const hy = address ? 4 : 3;
   const headRight = headX + headW;
   if (appearance.hair === 'close') p(headX - 1, hy + 2, 1, 4, hair);
@@ -297,43 +335,26 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     // arms up behind, club raised over the shoulder
     p(torsoX, ty - 3, 2, 4, shirt);
     p(torsoX - 1, ty - 4, 2, 2, skin);
-    ctx.strokeStyle = grey;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(torsoX - 0.5, ty - 4);
-    ctx.lineTo(2.5, ty - 9);
-    ctx.stroke();
+    pixelLine(p, torsoX - 0.5, ty - 4, 2.5, ty - 9, grey);
     p(1, ty - 11, 2, 2, steel);
   } else if (follow) {
     // follow-through: club swung up in front
     p(frontArmX, ty - 3, 2, 4, shirt);
     p(frontArmX + 1, ty - 4, 2, 2, skin);
-    ctx.strokeStyle = grey;
-    ctx.beginPath();
-    ctx.moveTo(frontArmX + 2, ty - 4);
-    ctx.lineTo(21.5, ty - 9);
-    ctx.stroke();
+    pixelLine(p, frontArmX + 2, ty - 4, 21.5, ty - 9, grey);
     p(21, ty - 11, 2, 2, steel);
   } else if (puttFollow) {
     // Putter remains below the waist through a short finish instead of jumping
     // to the full raised-club follow-through used by drives and iron shots.
     p(frontArmX, ty + 1, 2, 5, shirt);
     p(frontArmX + 1, ty + 6, 2, 2, skin);
-    ctx.strokeStyle = grey;
-    ctx.beginPath();
-    ctx.moveTo(frontArmX + 2, ty + 8);
-    ctx.lineTo(18, 27);
-    ctx.stroke();
+    pixelLine(p, frontArmX + 2, ty + 8, 18, 27, grey);
     p(17, 27, 4, 1.5, steel);
   } else if (address) {
     // both arms down to the grip, club to the ball
     p(frontArmX, ty + 1, 2, 5, shirt);
     p(frontArmX, ty + 6, 2, 2, skin);
-    ctx.strokeStyle = grey;
-    ctx.beginPath();
-    ctx.moveTo(frontArmX + 1, ty + 8);
-    ctx.lineTo(putt ? 16 : 19, 29);
-    ctx.stroke();
+    pixelLine(p, frontArmX + 1, ty + 8, putt ? 16 : 19, 29, grey);
     p(putt ? 15 : 18, 29, 3, 1.5, steel);
   } else {
     // relaxed arm at the side
@@ -341,20 +362,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(frontArmX, ty + 6, 2, 2, skin);
   }
 
-  const raw = outlined(art, '#20242b');
-  const [done, doneCtx] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
-  doneCtx.imageSmoothingEnabled = false;
-  doneCtx.drawImage(
-    raw,
-    0,
-    0,
-    GOLFER_SOURCE_SIZE.width,
-    GOLFER_SOURCE_SIZE.height,
-    0,
-    0,
-    GOLFER_SPRITE_SIZE.width,
-    GOLFER_SPRITE_SIZE.height,
-  );
+  const done = outlined(art, '#20242b');
   cache.set(key, done);
   return done;
 }
@@ -453,35 +461,26 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
 };
 
-export const COURSE_STAFF_SPRITE_SIZE = { width: 30, height: 36 } as const;
+const COURSE_STAFF_ART_TRANSFORM: PixelTransform = { scaleX: 1.06, scaleY: 1.08, offsetX: 1, offsetY: 1 };
 
 export function courseStaffAnimationFrame(working: boolean, phase: number): CourseStaffFrame {
   const alternate = Math.sin(phase) < 0;
   return working ? (alternate ? 'workB' : 'workA') : alternate ? 'walkB' : 'walkA';
 }
 
-function staffLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, color: string, width = 1) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.lineCap = 'square';
-  ctx.beginPath();
-  ctx.moveTo(x0 + 0.5, y0 + 0.5);
-  ctx.lineTo(x1 + 0.5, y1 + 0.5);
-  ctx.stroke();
-}
-
 /**
- * Original 30x36 profession sprites, drawn facing right. Each work frame
+ * Native 36×42 profession sprites, drawn facing right. Each work frame
  * animates the role's signature prop; walking frames keep it in a safe carrying
  * pose so the complete staff cast reads at normal game zoom.
  */
 export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame): HTMLCanvasElement {
-  const key = `course-staff-v2|${kind}|${frame}`;
+  const key = `course-staff-v3|${kind}|${frame}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   const spec = COURSE_STAFF_ARCHETYPES[kind];
-  const [art, ctx, p] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
+  const [art, , baseP] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
+  const p = transformedPlotter(baseP, COURSE_STAFF_ART_TRANSFORM);
   const skin = spec.skin;
   const skinDark = shade(skin, 0.78);
   const shirtDark = shade(spec.primary, 0.72);
@@ -569,7 +568,7 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
     case 'ranger':
       p(11, 15, 2, 2, '#e1c465');
       p(18, 15, 2, 3, '#303b36');
-      staffLine(ctx, 19, 14, 19, 11, '#303b36');
+      pixelLine(p, 19, 14, 19, 11, '#303b36');
       break;
     case 'groundskeeper':
       p(11, 15, 2, 7, '#ead8b4');
@@ -606,7 +605,7 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
       p(20, y, 7, 9, '#d9ad55');
       p(21, y + 1, 5, 6, '#f5edcf');
       p(22, y - 1, 3, 2, '#6b5135');
-      if (working) staffLine(ctx, 22, y + 3, 25, y + 3, '#4e6c94');
+      if (working) pixelLine(p, 22, y + 3, 25, y + 3, '#4e6c94');
       break;
     }
     case 'binoculars':
@@ -620,36 +619,36 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
         p(13, 17, 6, 4, '#263c39');
         p(14, 18, 2, 2, '#7eb0b2');
         p(17, 18, 2, 2, '#7eb0b2');
-        staffLine(ctx, 14, 16, 13, 14, '#303b36');
-        staffLine(ctx, 18, 16, 19, 14, '#303b36');
+        pixelLine(p, 14, 16, 13, 14, '#303b36');
+        pixelLine(p, 18, 16, 19, 14, '#303b36');
       }
       break;
     case 'rake': {
       const tipX = working ? (alternate ? 25 : 27) : 25;
       const tipY = working ? (alternate ? 31 : 28) : 33;
-      staffLine(ctx, 19, 20, tipX, tipY, '#79532c', 2);
-      staffLine(ctx, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
-      for (let i = -3; i <= 2; i += 2) staffLine(ctx, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
+      pixelLine(p, 19, 20, tipX, tipY, '#79532c', 2);
+      pixelLine(p, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
+      for (let i = -3; i <= 2; i += 2) pixelLine(p, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
       break;
     }
     case 'soda-tray':
-      staffLine(ctx, 17, 22, 28, working ? 17 : 21, '#5f4434', 2);
+      pixelLine(p, 17, 22, 28, working ? 17 : 21, '#5f4434', 2);
       p(20, working ? 14 : 18, 9, 2, '#d8c09b');
       p(21, working ? 9 : 13, 3, 5, '#e94c43');
       p(25, working ? 10 : 14, 3, 4, '#f1d650');
-      staffLine(ctx, 22, working ? 9 : 13, 23, working ? 6 : 10, '#f3f1dc');
+      pixelLine(p, 22, working ? 9 : 13, 23, working ? 6 : 10, '#f3f1dc');
       break;
     case 'autograph-book': {
       const y = working ? 14 : 19;
       p(19, y, 9, 7, '#f4e8c7');
       p(23, y, 1, 7, '#774c91');
-      if (working) staffLine(ctx, 20, y + 2, 22, y + 3, '#40536e');
+      if (working) pixelLine(p, 20, y + 2, 22, y + 3, '#40536e');
       p(27, y - 2, 2, 3, spec.secondary); // flash bulb
       break;
     }
     case 'pace-paddle': {
       const top = working ? 10 : 15;
-      staffLine(ctx, 21, 21, 24, top + 4, '#734d2e', 2);
+      pixelLine(p, 21, 21, 24, top + 4, '#734d2e', 2);
       p(20, top, 8, 7, '#f3d54e');
       p(22, top + 2, 4, 3, alternate && working ? '#d54b45' : '#497a43');
       break;
@@ -659,9 +658,9 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
       const canY = working ? (alternate ? 22 : 21) : 23;
       p(canX, canY, 6, 5, '#668fa0');
       p(canX + 1, canY + 1, 4, 2, '#91bac0');
-      staffLine(ctx, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
-      staffLine(ctx, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
-      staffLine(ctx, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
+      pixelLine(p, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
+      pixelLine(p, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
+      pixelLine(p, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
       if (working) {
         p(28, canY + 6 + Number(alternate), 1, 2, '#7fc3d2');
         p(26, canY + 8 - Number(alternate), 1, 2, '#7fc3d2');
@@ -671,7 +670,7 @@ export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame
     }
     case 'cocktail-tray': {
       const y = working ? 15 : 20;
-      staffLine(ctx, 17, 22, 28, y + 2, '#6c4c37', 2);
+      pixelLine(p, 17, 22, 28, y + 2, '#6c4c37', 2);
       p(20, y + 1, 10, 2, '#d8c7a8');
       p(21, y - 4, 3, 5, '#ef7b6d');
       p(26, y - 3, 3, 4, '#7dc7c8');

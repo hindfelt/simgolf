@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useUI, type TickerItem } from './store';
 import CharacterPortrait from './CharacterPortrait';
+import type { GameMode } from '../game/types';
 
 const LIFETIME = 8200;
 
-export function selectSimFotoTicker(tickers: readonly TickerItem[]): TickerItem | null {
+export function selectSimFotoTicker(tickers: readonly TickerItem[], mode: GameMode = 'build'): TickerItem | null {
+  if (mode === 'play') return null;
   for (let index = tickers.length - 1; index >= 0; index--) {
     if (tickers[index].character) return tickers[index];
   }
@@ -13,6 +15,7 @@ export function selectSimFotoTicker(tickers: readonly TickerItem[]): TickerItem 
 
 export default function Ticker() {
   const tickers = useUI((s) => s.tickers);
+  const mode = useUI((s) => s.mode);
   const dropTicker = useUI((s) => s.dropTicker);
   const scheduled = useRef<Set<number>>(new Set());
 
@@ -27,7 +30,9 @@ export default function Ticker() {
     }
   }, [tickers, dropTicker]);
 
-  const simFoto = selectSimFotoTicker(tickers);
+  // During a round the original game kept course chatter as light world text;
+  // the portrait card would compete with aiming, wind, and the shot console.
+  const simFoto = selectSimFotoTicker(tickers, mode);
 
   return (
     <div className="ticker" aria-live="polite" aria-label="Course activity">

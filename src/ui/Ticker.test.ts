@@ -22,4 +22,8 @@ describe('SimFoto ticker selection', () => {
     expect(selected).toBe(newest);
     expect(selected).toMatchObject({ name: 'Tex', txt: 'Lovely course!' });
   });
+
+  it('keeps round chatter as lightweight world text instead of a portrait card', () => {
+    expect(selectSimFotoTicker([character(2, 'Gale')], 'play')).toBeNull();
+  });
 });

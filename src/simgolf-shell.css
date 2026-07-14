@@ -1074,6 +1074,8 @@ body,
   left: 190px;
   top: -29px;
   z-index: 3;
+}
+.playShotPaletteRail {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1538,7 +1540,7 @@ body,
 
 @media (max-width: 520px) {
   .destinationReleaseToast p { display: none; }
-  .playShotPalette { gap: 4px; }
+  .playShotPaletteRail { gap: 4px; }
   .playShotPalette .shapeBtn {
     width: 49px;
     min-width: 49px;
@@ -1564,7 +1566,7 @@ body,
 
 @media (pointer: coarse) {
   .toolGroup { min-width: 41px; min-height: 41px; }
-  .playShotPalette .shapeBtn { min-height: 42px; }
+  .playShotPalette .shapeBtn { min-height: 44px; }
   .playClubLine button { min-height: 15px; }
 }
 
@@ -1596,6 +1598,14 @@ body,
 }
 
 .controllerShell > * { pointer-events: auto; }
+
+.controllerShell .playHud {
+  position: absolute;
+}
+
+.controllerShell[data-mode='play'] .fieldControls {
+  z-index: 26;
+}
 
 .controllerShell .fieldControls {
   position: absolute;
@@ -1740,6 +1750,42 @@ body,
     linear-gradient(180deg, rgba(255,255,255,.5) 0 3px, transparent 3px),
     linear-gradient(180deg, #b9b7ef 0 10%, var(--sg-shell) 10% 73%, #817fc6 73% 91%, #6463aa 91% 100%);
   box-shadow: inset 0 -8px 0 rgba(43,48,137,.22), inset 3px 3px rgba(255,255,255,.28), 0 -4px 0 var(--sg-rim), 0 -10px 22px rgba(0,0,0,.23);
+}
+
+.controllerShell .playModeDock {
+  z-index: 28;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.controllerShell .playModeDock .playModeGroups {
+  pointer-events: none;
+}
+
+.controllerShell .playModeDock .toolGroup {
+  pointer-events: none;
+}
+
+.controllerShell .playModeDock .toolGroup[data-group-id='course'] {
+  left: 18px;
+  top: 13px;
+}
+
+.controllerShell .playModeDock .toolGroup[data-group-id='resort'] {
+  left: 101px;
+  top: 42px;
+}
+
+.controllerShell .playModeDock .toolGroup[data-group-id='play'] {
+  left: 229px;
+  top: 78px;
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  min-height: 58px;
+  border-width: 4px;
 }
 
 .controllerShell .toolDock::before {
@@ -2132,6 +2178,132 @@ body:has(.controllerShell[data-surface='management']) .ticker { opacity: 0; poin
     --sg-controller-visible-height: 166px;
   }
   .controllerShell { width: 100%; }
+}
+
+/* The original 800x600 play layout has a different fit threshold from the
+   construction shell. Reserve the sculpted fan, then compose the shot rail,
+   ticker, and three readout panes in the remaining 582px. */
+body:has(.controllerShell[data-mode='play']) .routingMap {
+  display: none;
+}
+
+@media (max-width: 862px) and (min-width: 781px) {
+  .controllerShell[data-mode='play'] .playConsolePanes {
+    left: 115px;
+    right: 8px;
+    width: auto;
+    grid-template-columns: minmax(138px, 146fr) minmax(132px, 144fr) minmax(150px, 155fr);
+  }
+
+  .controllerShell[data-mode='play'] .playShotPalette {
+    left: 152px;
+    transform: none;
+  }
+
+  .controllerShell[data-mode='play'] .playShotPaletteRail { gap: 7px; }
+
+  .controllerShell[data-mode='play'] .playShotPalette .shapeBtn {
+    width: 58px;
+    min-width: 58px;
+    transform: none;
+  }
+
+  .controllerShell[data-mode='play'] .playMessage {
+    left: 115px;
+    right: 124px;
+    width: auto;
+  }
+
+  .controllerShell[data-mode='play'] .playConditions {
+    right: 8px;
+  }
+}
+
+/* Below the original game's native width, keep every shot control reachable
+   and retire the fan rather than scaling the whole interface into illegibility. */
+@media (max-width: 780px) {
+  .controllerShell[data-mode='play'] .fieldControls,
+  .controllerShell[data-mode='play'] .playModeDock {
+    display: none;
+  }
+
+  .controllerShell[data-mode='play'] .playHud {
+    left: 0;
+    border-left: 0;
+    border-radius: 26px 26px 0 0;
+  }
+
+  .controllerShell[data-mode='play'] .playHud::after { display: none; }
+
+  .controllerShell[data-mode='play'] .playConsolePanes {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    grid-template-columns: 1.08fr 1fr 1.08fr;
+  }
+
+  .controllerShell[data-mode='play'] .playShotPalette {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .controllerShell[data-mode='play'] .playShotPalette .shapeBtn { transform: none; }
+  .controllerShell[data-mode='play'] .playMessage { left: 8px; width: min(390px, calc(100vw - 136px)); }
+  .controllerShell[data-mode='play'] .playConditions { right: 8px; }
+  .controllerShell[data-mode='play'] .quitBtn { left: 9px; top: -31px; }
+}
+
+@media (max-width: 520px) {
+  .controllerShell[data-mode='play'] .playShotPalette {
+    left: 57px;
+    right: 3px;
+    top: -34px;
+    width: auto;
+    overflow: visible;
+    transform: none;
+  }
+
+  .controllerShell[data-mode='play'] .playShotPaletteRail {
+    width: 100%;
+    gap: 4px;
+    padding: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 5px;
+    scrollbar-width: none;
+  }
+
+  .controllerShell[data-mode='play'] .playShotPaletteRail::-webkit-scrollbar { display: none; }
+  .controllerShell[data-mode='play'] .playShotPalette .shapeBtn { flex: 0 0 49px; scroll-snap-align: start; }
+}
+
+@media (pointer: coarse) and (max-width: 862px) {
+  .controllerShell[data-mode='play'] .playStatusPane { padding: 2px 3px 1px; }
+  .controllerShell[data-mode='play'] .playPaneTitle { height: 12px; }
+  .controllerShell[data-mode='play'] .playClubLine {
+    height: 44px;
+    gap: 1px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .controllerShell[data-mode='play'] .playClubLine::-webkit-scrollbar { display: none; }
+  .controllerShell[data-mode='play'] .playClubLine > span { display: none; }
+  .controllerShell[data-mode='play'] .playClubLine button {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 1px;
+  }
+  .controllerShell[data-mode='play'] .playShotFacts {
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    line-height: 10px;
+  }
+  .controllerShell[data-mode='play'] .playShotFacts span:nth-child(n + 3) { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

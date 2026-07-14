@@ -75,6 +75,7 @@ import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePac
 import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, isPropertyId, newlyAvailableProperties, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
 import type { PropertyAvailabilityContext } from './properties';
 import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
+import { actorWalkingBob } from './actorGeometry';
 
 /* ---------------- UI bridge ---------------- */
 export function setHint(t: string) {
@@ -109,7 +110,7 @@ export function pickGolferAtScreen(x: number, y: number, coarse = false): Golfer
     return {
       value: golfer,
       anchor: PE(golfer.x, golfer.y),
-      bob: walking ? Math.abs(Math.sin(golfer.phase)) * 1.2 * S.cam.z : 0,
+      bob: actorWalkingBob(golfer.phase, walking, S.cam.z),
       depth: viewDepth(golfer.x, golfer.y),
       order,
     };

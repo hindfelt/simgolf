@@ -12,10 +12,18 @@ const golfer = (patch: Partial<Golfer> = {}): Golfer => ({
 
 describe('on-course golfer inspection', () => {
   it('uses the actual sprite footprint and expands touch targets to 44 pixels', () => {
-    expect(golferScreenBounds({ x: 100, y: 100 }, 1)).toEqual({ left: 85.6, right: 114.4, top: 61.6, bottom: 102.88 });
-    const touch = golferScreenBounds({ x: 100, y: 100 }, .65, 0, true);
+    expect(golferScreenBounds({ x: 100, y: 100 }, 1)).toEqual({ left: 84, right: 116, top: 57, bottom: 101 });
+    const touch = golferScreenBounds({ x: 100, y: 100 }, .4, 0, true);
     expect(touch.right - touch.left).toBe(44);
     expect(touch.bottom - touch.top).toBe(44);
+  });
+
+  it('keeps visible and clickable bounds aligned across capped zoom levels', () => {
+    expect(golferScreenBounds({ x: 100, y: 100 }, .4)).toEqual(golferScreenBounds({ x: 100, y: 100 }, .76));
+    expect(golferScreenBounds({ x: 100, y: 100 }, 3.4)).toEqual(golferScreenBounds({ x: 100, y: 100 }, 2.4));
+    const walking = golferScreenBounds({ x: 100, y: 100 }, 1, 4);
+    expect(walking.top).toBe(53);
+    expect(walking.bottom).toBe(97);
   });
 
   it('selects the frontmost visible actor and uses painter order for exact ties', () => {
