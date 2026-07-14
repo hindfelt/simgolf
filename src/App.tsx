@@ -14,6 +14,7 @@ import Modals from './ui/Modals';
 import DestinationReleaseToast from './ui/DestinationReleaseToast';
 import GolferInspector from './ui/GolferInspector';
 import ActorAtlas from './ui/ActorAtlas';
+import BuildFreshness from './ui/BuildFreshness';
 import { useUI } from './ui/store';
 
 function Hint() {
@@ -46,6 +47,7 @@ export default function App() {
   return (
     <>
       <GameCanvas />
+      <BuildFreshness />
       <TopBar />
       <Hint />
       <Ticker />

@@ -2395,6 +2395,48 @@ body:has(.controllerShell[data-mode='play']) .routingMap {
 body:has(.controllerShell[data-mode='play']) .golferInspector,
 body:has(.playCompetitionHud) .ticker { display: none; }
 body:has(.playCompetitionHud) .playMessage { display: none; }
+/* Defense in depth for a stale or partially updated client: portrait chatter
+   must never reclaim the aiming area once the round controller is active. */
+body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !important; }
+
+.buildUpdateNotice {
+  position: fixed;
+  z-index: 42;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  width: min(390px, calc(100vw - 24px));
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 7px 6px 13px;
+  border: 3px solid #2c368e;
+  border-radius: 7px 20px 20px 7px;
+  background: linear-gradient(180deg, #d8d5ff, #aaa7e9 72%, #7b79c2);
+  color: #293783;
+  box-shadow: inset 2px 2px rgba(255,255,255,.48), 0 4px 0 #151b59, 0 9px 20px rgba(0,0,0,.32);
+  transform: translateX(-50%);
+}
+.buildUpdateNotice span { min-width: 0; flex: 1; }
+.buildUpdateNotice b,
+.buildUpdateNotice small { display: block; }
+.buildUpdateNotice b { color: #263487; font-family: var(--sg-font); font-size: 11px; }
+.buildUpdateNotice small { margin-top: 1px; color: #505a9b; font-family: var(--sg-small); font-size: 7px; font-weight: 800; }
+.buildUpdateNotice button {
+  min-height: 28px;
+  flex: 0 0 auto;
+  padding: 4px 11px;
+  border: 2px solid #323c81;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #fff58b, #f4df18 62%, #bf9400);
+  color: #2d3472;
+  font-family: var(--sg-font);
+  font-size: 8px;
+  font-weight: 900;
+  box-shadow: inset 1px 1px rgba(255,255,255,.62), 0 2px 0 #1d2461;
+  cursor: pointer;
+}
+.buildUpdateNotice button:hover { filter: brightness(1.05); transform: translateY(-1px); }
 
 /* At the original-height compact widths, lift conditions completely above the
    authored trajectory ovals. Horizontal overlap is then harmlessly avoided
