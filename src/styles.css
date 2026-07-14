@@ -4766,6 +4766,80 @@ canvas.game:focus-visible {
 .characterPortrait.onCourse i { position: absolute; z-index: 2; top: 4px; right: 4px; width: 7px; height: 7px; border: 1px solid #efffe8; border-radius: 50%; background: #52bb70; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 .regularCard { display: grid; grid-template-columns: 60px minmax(0, 1fr); align-items: center; gap: 12px; }
 .regularCardBody { min-width: 0; }
+.regularLocate {
+  width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 7px;
+  border: 2px solid #3d478f;
+  border-radius: 7px;
+  background: linear-gradient(180deg,#fff477,#e8cf17 72%,#b99208);
+  color: #263070;
+  font: 800 10px var(--sg-font, 'Trebuchet MS');
+  cursor: pointer;
+  box-shadow: inset 0 1px #ffffc3,0 2px 0 #252c72;
+}
+
+.golferInspector {
+  display: grid;
+  gap: 6px;
+  padding: 9px;
+  overflow: auto;
+}
+.golferInspector:focus-visible { outline: 3px solid #fff46b; outline-offset: 3px; }
+.golferInspectorHead {
+  display: grid;
+  grid-template-columns: 32px 68px minmax(0,1fr) 30px;
+  align-items: center;
+  gap: 7px;
+}
+.peopleSeal {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #393e8a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 25%,#fff98a,#f0db19 58%,#b69008);
+  color: #273379;
+  box-shadow: inset 1px 1px #fffbc0,0 2px 0 #242a70;
+}
+.golferInspector .inspectorPortrait { width: 66px; height: 66px; flex-basis: 66px; border-width: 3px; }
+.golferInspector .inspectorPortrait canvas { width: 50px; height: 66px; }
+.golferInspectorHead > div { min-width: 0; }
+.golferInspectorHead small {
+  display: block;
+  color: #5b62a1;
+  font: 900 6px var(--sg-small, Verdana);
+  letter-spacing: .14em;
+}
+.golferInspectorHead h2 { margin: 1px 0; overflow: hidden; color: #26358a; font: 900 17px var(--sg-font, 'Trebuchet MS'); text-overflow: ellipsis; white-space: nowrap; }
+.golferInspectorHead p { margin: 0; color: #535b98; font: 800 7px var(--sg-small, Verdana); }
+.golferInspectorClose { width: 29px; height: 29px; padding: 0; border: 2px solid #414991; border-radius: 50%; background: radial-gradient(circle at 35% 26%,#fff,#c8c7ef 55%,#8386c5); color: #29357d; }
+.golferSituation { display: grid; grid-template-columns: 1.3fr .65fr .8fr 1fr; gap: 2px; border: 2px solid #4a5196; border-radius: 6px; overflow: hidden; background: #555da0; }
+.golferSituation span { min-width: 0; padding: 4px 5px; background: linear-gradient(180deg,#eff0ff,#bebfea); }
+.golferSituation small,.golferSituation b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.golferSituation small { color: #666ca4; font: 900 5.5px var(--sg-small, Verdana); letter-spacing: .08em; text-transform: uppercase; }
+.golferSituation b { margin-top: 1px; color: #29337c; font: 900 9px var(--sg-font, 'Trebuchet MS'); }
+.golferAction { margin: 0; padding: 3px 6px; border-left: 3px solid #e2c915; color: #3f4787; font: 800 8px var(--sg-small, Verdana); }
+.golferInspectorMeters { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.golferInspectorMeters section { min-width: 0; padding: 5px; border: 2px solid #6c70b0; border-radius: 7px; background: rgba(246,246,255,.34); box-shadow: inset 0 1px rgba(255,255,255,.65); }
+.golferInspectorMeters h3 { margin: 0 0 3px; color: #303a88; font: 900 8px var(--sg-font, 'Trebuchet MS'); text-transform: uppercase; }
+.golferMeter { display: grid; grid-template-columns: 52px minmax(0,1fr) 20px; align-items: center; gap: 3px; margin: 3px 0; }
+.golferMeter > span { overflow: hidden; color: #535b91; font: 800 6px var(--sg-small, Verdana); text-overflow: ellipsis; white-space: nowrap; }
+.golferMeter > div { height: 7px; overflow: hidden; border: 1px solid #454c8f; border-radius: 4px; background: #7d80b5; box-shadow: inset 0 1px 2px rgba(22,27,78,.4); }
+.golferMeter i { display: block; height: 100%; background: linear-gradient(90deg,#46c49a,#8ef064); box-shadow: inset 0 1px rgba(255,255,255,.5); }
+.golferMeter.meter-skill i { background: linear-gradient(90deg,#e0b316,#fff154); }
+.golferMeter > b { color: #30397e; font: 900 7px var(--sg-small, Verdana); text-align: right; }
+.golferLatestComment { margin: 0; padding: 6px 8px; border: 2px solid #343c88; border-radius: 6px; background: linear-gradient(180deg,#202856,#101632); box-shadow: inset 0 1px rgba(255,255,255,.15); }
+.golferLatestComment small { color: #fff154; font: 900 5.5px var(--sg-small, Verdana); letter-spacing: .13em; }
+.golferLatestComment p { margin: 2px 0 0; color: #fff; font: 900 8px/1.25 var(--sg-font, 'Trebuchet MS'); text-shadow: 1px 1px #273078; }
+.golferInspectorActions { display: grid; grid-template-columns: 1.5fr .7fr; gap: 5px; }
+.golferInspectorActions button { min-height: 30px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 2px solid #3c448e; border-radius: 7px; background: linear-gradient(180deg,#f0efff,#aaaadc 72%,#8587c2); color: #28337b; font: 900 8px var(--sg-font, 'Trebuchet MS'); box-shadow: inset 0 1px #fff,0 2px 0 #282e75; cursor: pointer; }
+.golferInspectorActions button:first-child { background: linear-gradient(180deg,#fff77b,#e9d218 72%,#b68e08); }
 .characterPortrait.guestPortrait {
   flex-basis: 70px;
   width: 70px;

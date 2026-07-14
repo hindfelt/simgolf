@@ -2,6 +2,7 @@ import type { ToolId } from '../game/types';
 
 export type ToolPreviewMotif =
   | 'paper-hand'
+  | 'people-profile'
   | 'new-hole'
   | 'fairway-stripes'
   | 'firm-fairway'
@@ -40,6 +41,7 @@ export interface ToolPreviewRecipe {
  */
 export const TOOL_PREVIEW_RECIPES = {
   pan: { motif: 'paper-hand', base: 'slab', top: ['#f0eff9', '#aeb0d2'], left: '#555b9b', right: '#7378b8', ink: '#26347f' },
+  inspect: { motif: 'people-profile', base: 'slab', top: ['#f7e866', '#c9a913'], left: '#5b5594', right: '#7771b2', ink: '#27347c' },
   hole: { motif: 'new-hole', base: 'tile', top: ['#f7dc2a', '#c8a70b'], left: '#806c19', right: '#9e8420', ink: '#173e39' },
   fair: { motif: 'fairway-stripes', base: 'tile', top: ['#80bd59', '#4f8f3a'], left: '#315f35', right: '#477536', ink: '#e3f1a8' },
   firmfair: { motif: 'firm-fairway', base: 'tile', top: ['#9fc85d', '#6f9b3d'], left: '#486832', right: '#5c7d35', ink: '#e6ef9c' },

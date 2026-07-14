@@ -91,6 +91,7 @@ interface UIStore {
   simTick: number; // bumped ~once/sec so time-sensitive UI (tournament countdown) stays live
   roundsVersion: number; // bumped when scorecard history is added or imported
   proVersion: number; // bumped when resident-pro/circuit profile data changes
+  golferSelectionVersion: number; // bumped when the ephemeral People inspector selection changes
   portfolioVersion: number; // bumped after portfolio migration, purchase, save, or switch
   portfolioStatus: 'idle' | 'saving' | 'saved' | 'error';
 
@@ -134,6 +135,7 @@ export const useUI = create<UIStore>((set) => ({
   simTick: 0,
   roundsVersion: 0,
   proVersion: 0,
+  golferSelectionVersion: 0,
   portfolioVersion: 0,
   portfolioStatus: 'idle',
 

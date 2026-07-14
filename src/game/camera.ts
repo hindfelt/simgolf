@@ -17,6 +17,12 @@ export function viewXY(wx: number, wy: number): [number, number] {
   }
 }
 
+/** Painter depth in rotated view space, shared by rendering and actor picking. */
+export function viewDepth(wx: number, wy: number): number {
+  const [rx, ry] = viewXY(wx, wy);
+  return rx + ry;
+}
+
 export function isoOf(wx: number, wy: number) {
   const [rx, ry] = viewXY(wx, wy);
   return { ix: ((rx - ry) * TW) / 2, iy: ((rx + ry) * TH) / 2 };

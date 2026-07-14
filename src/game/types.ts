@@ -394,6 +394,7 @@ export interface Camera {
 
 export type ToolId =
   | 'pan'
+  | 'inspect'
   | 'hole'
   | 'fair'
   | 'firmfair'
@@ -683,6 +684,8 @@ export interface GameState {
   buildKind: BuildingKind | null; // pending placement when tool === 'build'
   employees: Employee[];
   golfers: Golfer[];
+  /** Ephemeral live actor selection used by the People inspector; never serialized. */
+  selectedGolfer: Golfer | null;
   /** The club's named cast — persists across saves and course rebuilds. */
   regulars: Regular[];
   /** Signed cash transactions used by the year-sorted Financial Report. */

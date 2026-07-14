@@ -3,7 +3,7 @@ import { Tile } from './types';
 import type { Ball, Building, Employee, Golfer, Hole, Vec } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
-import { P, PE, viewXY } from './camera';
+import { P, PE, viewDepth, viewXY } from './camera';
 import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
@@ -1064,11 +1064,8 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
 
   drawEditorOverlays(ctx, u);
 
-  // depth in view space so rotation keeps the painter's order correct
-  const dep = (x: number, y: number) => {
-    const [rx, ry] = viewXY(x, y);
-    return rx + ry;
-  };
+  // depth in view space so rotation keeps the painter's order and picking aligned
+  const dep = viewDepth;
   const D: { z: number; f: () => void }[] = [];
   for (let py = 0; py < PH; py++)
     for (let px = 0; px < PW; px++)
@@ -1892,11 +1889,27 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = walking ? Math.abs(Math.sin(g.phase)) * 1.2 * u : 0;
   const view = g.facingAway ? 'rear' : 'front';
+  const selected = S.selectedGolfer === g;
+  if (selected) {
+    const pulse = 1 + Math.sin(S.time * 6) * .08;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,235,50,.28)';
+    ctx.strokeStyle = '#fff132';
+    ctx.lineWidth = Math.max(2, 2.2 * u);
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 1.5 * u, 12 * u * pulse, 5 * u * pulse, .08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#252d79';
+    ctx.lineWidth = Math.max(1, 1.1 * u);
+    ctx.stroke();
+    ctx.restore();
+  }
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
-  if ((g.specialGuest && S.cam.z > 0.58) || hovered || S.cam.z > 0.9) {
+  if (selected || (g.specialGuest && S.cam.z > 0.58) || hovered || S.cam.z > 0.9) {
     const spriteHeight = GOLFER_SPRITE_SIZE.height * clamp(u, 0.65, 1.7) * 0.96;
-    drawActorName(ctx, g.name, p.x, p.y - spriteHeight - 2 * u - bob, Math.max(u * 0.88, 0.58), !!g.specialGuest);
+    drawActorName(ctx, g.name, p.x, p.y - spriteHeight - 2 * u - bob, Math.max(u * 0.88, 0.58), selected || !!g.specialGuest);
   }
 }
 

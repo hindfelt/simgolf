@@ -16,13 +16,14 @@ interface ToolDef {
   tile?: Tile;
 }
 
-type GroupId = 'course' | 'terrain' | 'resort' | 'play';
+type GroupId = 'course' | 'terrain' | 'resort' | 'people' | 'play';
 
 const $ = (n: number) => '$' + n.toLocaleString('en-US');
 const pathwayCost = `${$(TINFO[Tile.PATH].cost)} land · ${$(TINFO[Tile.BRIDGE_WATER].cost)} water · ${$(TINFO[Tile.BRIDGE_STREAM].cost)} stream`;
 
 const TOOLS: ToolDef[] = [
   { id: 'pan', nm: 'Pan' },
+  { id: 'inspect', nm: 'Inspect golfers', ct: 'people mode', gold: true },
   { id: 'hole', nm: 'New hole', ct: $(HOLE_COST) },
   { id: 'fair', nm: 'Fairway', tile: Tile.FAIR, ct: $(TINFO[Tile.FAIR].cost) },
   { id: 'firmfair', nm: 'Firm Fairway', tile: Tile.FIRM_FAIR, ct: $(TINFO[Tile.FIRM_FAIR].cost) },
@@ -54,11 +55,13 @@ const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] 
   { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
   { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
   { id: 'resort', label: 'Resort', icon: 'resort', tools: [] },
+  { id: 'people', label: 'People', icon: 'regulars', tools: ['inspect'] },
   { id: 'play', label: 'Play', icon: 'play', tools: ['play'] },
 ];
 
 function groupForTool(tool: ToolId): GroupId {
   if (tool === 'build') return 'resort';
+  if (tool === 'inspect') return 'people';
   return GROUPS.find((group) => group.tools.includes(tool))?.id ?? 'course';
 }
 
@@ -94,6 +97,10 @@ export default function Toolbar() {
             onClick={() => {
               setGroup(item.id);
               if (item.id === 'resort') setStore({ buildPanel: !(group === 'resort' && buildPanel), staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+              else if (item.id === 'people') {
+                setTool('inspect');
+                setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: true, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+              }
               else setStore({ buildPanel: false });
             }}
           >

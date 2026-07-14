@@ -44,6 +44,7 @@ export default function CharacterPortrait({
       className={`characterPortrait portrait-${variant} expression-${expression} ${className}`.trim()}
       data-expression={expression}
       title={name}
+      role="img"
       aria-label={`${name} portrait, ${expression}`}
     >
       <canvas ref={ref} width={GOLFER_PORTRAIT_SIZE.width} height={GOLFER_PORTRAIT_SIZE.height} aria-hidden="true" />

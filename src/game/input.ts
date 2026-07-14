@@ -2,7 +2,7 @@ import { S } from './state';
 import { screenToWorldT, zoomAt, rotateView } from './camera';
 import { lerp } from './rng';
 import { ensureAudio } from './audio';
-import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setClub, setShape, setSpeed, setHint, beginPaintStroke, updatePlayHud } from './engine';
+import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setClub, setShape, setSpeed, setHint, beginPaintStroke, updatePlayHud, pickGolferAtScreen, selectGolfer } from './engine';
 import { shotShortcutForEvent } from './shotShortcuts';
 import type { Aim } from './types';
 
@@ -83,7 +83,10 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
   let elevationRepeat: number | null = null;
   let elevationHold: { pointerId: number; x: number; y: number } | null = null;
 
-  const pos = (e: PointerEvent) => ({ x: e.clientX, y: e.clientY });
+  const pos = (e: PointerEvent) => {
+    const rect = cv.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
 
   function cancelElevationHold() {
     if (elevationDelay !== null) window.clearTimeout(elevationDelay);
@@ -140,6 +143,13 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     if (S.mode === 'play') {
       S.camTarget = null;
       panDrag = { sx: p.x, sy: p.y, cx: S.cam.x, cy: S.cam.y };
+      return;
+    }
+    if (S.tool === 'inspect') {
+      const golfer = pickGolferAtScreen(p.x, p.y, e.pointerType === 'touch');
+      selectGolfer(golfer);
+      S.camTarget = null;
+      if (!golfer) panDrag = { sx: p.x, sy: p.y, cx: S.cam.x, cy: S.cam.y };
       return;
     }
     if (S.tool === 'pan') {
@@ -228,14 +238,25 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     const canvasFocused = isCanvasShortcutTarget(e.target, cv, activeElement);
     if (!isGameShortcutSurface(e.target, cv, activeElement, doc?.body ?? null, doc?.documentElement ?? null)) return;
     if (e.key === 'Escape') {
+      let handled = false;
       if (S.player && S.player.aim) {
         S.player.aim = null;
         resetKeyboardAimMemory(keyboardAim);
         updatePlayHud();
+        handled = true;
       }
       else if (S.holeDraft) {
         S.holeDraft = null;
         setHint(HOLE_HINT);
+        handled = true;
+      }
+      else if (S.selectedGolfer) {
+        selectGolfer(null);
+        handled = true;
+      }
+      if (handled) {
+        e.preventDefault();
+        return;
       }
     }
     if (canvasFocused && S.mode === 'play' && S.player?.state === 'aim' && S.player.ball) {

@@ -27,6 +27,7 @@ export const S: GameState = {
   buildKind: null,
   employees: [],
   golfers: [],
+  selectedGolfer: null,
   regulars: [],
   financeLedger: [{ id: 1, time: 0, year: 1, amount: 20000, category: 'capital', detail: 'Founder capital' }],
   nextStoryCheck: 20,

@@ -8,6 +8,7 @@ import { fmt$ } from '../game/rng';
 import CharacterPortrait from './CharacterPortrait';
 import { useFloatingPanelFocus } from './panelA11y';
 import { REGULAR_SKILL_FACILITY, regularTrainingRates } from '../game/regularTraining';
+import { centerOnGolfer, selectGolfer, setTool } from '../game/engine';
 
 const STAT_LABEL: { key: 'length' | 'accuracy' | 'imagination'; label: string }[] = [
   { key: 'length', label: 'Length' },
@@ -25,6 +26,7 @@ export default function RegularsPanel() {
   if (!open) return null;
 
   const onCourse = new Set(S.golfers.map((g) => g.name));
+  const onCourseByName = new Map(S.golfers.map((golfer) => [golfer.name, golfer]));
   const year = financialYearAt(S.time);
   const roster = S.regulars.slice().sort((a, b) => b.visits - a.visits);
   const campus = regularTrainingRates(S.buildings);
@@ -100,6 +102,20 @@ export default function RegularsPanel() {
                   </div>
                 ))}
               </div>
+              {onCourseByName.has(r.name) && (
+                <button
+                  className="regularLocate"
+                  onClick={() => {
+                    const golfer = onCourseByName.get(r.name)!;
+                    setTool('inspect');
+                    selectGolfer(golfer);
+                    centerOnGolfer(golfer);
+                    setStore({ regularsPanel: false });
+                  }}
+                >
+                  <Icon name="pan" size={14} /> View {r.name} on the course
+                </button>
+              )}
             </div>
           </div>
         ))}
