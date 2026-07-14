@@ -26,7 +26,7 @@ export default function DestinationReleaseToast() {
       <div>
         <small>WORLD SCREEN · NEW {properties.length === 1 ? 'DEED' : 'DEEDS'}</small>
         <b>{properties.map((property) => property.name).join(' · ')}</b>
-        <p>Money and prestige requirements cleared. Development is now available.</p>
+        <p>Career milestones cleared permanently. Current bank balance still funds the deed purchase.</p>
       </div>
       <button type="button" className="destinationReleaseOpen" onClick={openWorld}>Open World Screen</button>
       <button type="button" className="destinationReleaseDismiss" aria-label="Dismiss destination release" onClick={dismiss}>×</button>

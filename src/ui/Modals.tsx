@@ -35,7 +35,7 @@ function DestinationUnlockBanner({ propertyIds, openWorld }: { propertyIds?: rea
   return (
     <aside className="destinationUnlock" aria-label={`${properties.length} new world ${properties.length === 1 ? 'destination' : 'destinations'} unlocked`}>
       <span className="destinationSeal" aria-hidden="true">✦</span>
-      <div><small>NEW DESTINATION {properties.length === 1 ? 'RELEASED' : 'RELEASES'}</small><b>{properties.map((property) => property.name).join(' · ')}</b><p>Your latest result cleared every deed requirement. The properties are ready for development.</p></div>
+      <div><small>NEW DESTINATION {properties.length === 1 ? 'RELEASED' : 'RELEASES'}</small><b>{properties.map((property) => property.name).join(' · ')}</b><p>Your latest result cleared the permanent career milestones. The current resort bank still funds each deed purchase.</p></div>
       <button type="button" onClick={openWorld}>Open World Screen</button>
     </aside>
   );
@@ -69,6 +69,8 @@ function PracticeProgress({ result }: { result?: ProPracticeResult }) {
 }
 
 function NewCoursePanel({ initial, close }: { initial: boolean; close: () => void }) {
+  const liveCash = useUI((s) => s.cash);
+  useUI((s) => s.simTick);
   const currentDifficulty = useUI((s) => s.difficulty);
   const currentThemePack = useUI((s) => s.themePackId);
   const portfolioVersion = useUI((s) => s.portfolioVersion);
@@ -82,7 +84,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
     void portfolioResorts().then((records) => { if (alive) setResorts(records); });
     return () => { alive = false; };
   }, [portfolioVersion]);
-  const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : S.cash;
+  const availableFunds = initial || S.sandbox ? PROPERTY_INHERITANCE : liveCash;
   const careerProgress = careerProgressSnapshot();
   const availabilityFor = (candidate: (typeof WORLD_PROPERTIES)[number]) => propertyAvailability(candidate, {
     funds: availableFunds,
@@ -124,7 +126,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
     <>
       <h1 id="modal-title">Choose your property</h1>
       <div className="tag">{initial ? 'New resort setup' : 'Resort portfolio & travel office'}</div>
-      <p className="setupIntro">Choose a Theme Pack and difficulty, then open one of sixteen properties around the world. New deeds release as your portfolio earns stronger ratings, SGA recognition, tournament prestige and pro fame.</p>
+      <p className="setupIntro">Choose a Theme Pack and difficulty, then open one of sixteen properties around the world. New deeds release permanently as your portfolio earns operating revenue, stronger ratings, SGA recognition, tournament prestige and pro fame.</p>
       <h2 className="setupLabel">Theme pack</h2>
       <div className="themePackGrid">
         {THEME_PACKS.map((pack) => {
@@ -159,6 +161,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         <span><b>World Screen</b><small>16 development opportunities</small></span>
         <div className="worldCareerStrip" aria-label="Portfolio career progress">
           <span><small>{initial ? 'Inheritance' : 'Available bank'}</small><b>{fmt$(availableFunds)}</b></span>
+          <span><small>Career revenue</small><b>{fmt$(careerProgress.lifetimeOperatingEarnings ?? 0)}</b></span>
           <span><small>Best rating</small><b>{careerProgress.bestReputation.toFixed(1)}★</b></span>
           <span><small>Pro fame</small><b>{S.proProfile.fame}</b></span>
           <span><small>Deeds</small><b>{S.propertiesPurchased.length} / 16</b></span>
@@ -173,13 +176,14 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
                 const isCurrent = !initial && S.propertyId === candidate.id;
                 const candidateAvailability = availabilityFor(candidate);
                 const isPurchased = candidateAvailability.status === 'purchased' || candidateAvailability.status === 'current';
-                const prestigeMissing = candidateAvailability.missing.filter((requirement) => requirement.id !== 'cash');
-                const state = isPurchased ? 'purchased' : candidateAvailability.canPurchase ? 'affordable' : 'locked';
-                const lockClass = prestigeMissing.length ? ' prestigeLocked' : candidateAvailability.cashShortfall ? ' cashLocked' : '';
+                const releaseMissing = candidateAvailability.missing.filter((requirement) => requirement.id !== 'cash');
+                const state = isPurchased ? 'purchased' : candidateAvailability.status === 'locked' ? 'locked' : candidateAvailability.affordable ? 'affordable' : 'released';
+                const lockClass = releaseMissing.length ? ' prestigeLocked' : candidateAvailability.cashShortfall ? ' cashLocked' : '';
                 const cardStatus = isCurrent
                   ? S.sandbox ? 'Current sandbox property' : 'Current course, already purchased'
                   : isPurchased ? 'Purchased'
-                  : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, available` : 'Inherited property, available'
+                  : candidateAvailability.canPurchase ? candidate.price ? `${fmt$(candidate.price)} property, released and affordable` : 'Inherited property, available'
+                  : candidateAvailability.released ? `Permanently released. Save ${fmt$(candidateAvailability.cashShortfall)} more to purchase`
                   : `Locked. ${candidateAvailability.missing.map((requirement) => requirement.label).join(', ')}`;
                 const candidateResorts = resortsForProperty(resorts, candidate.id);
                 const portfolioResort = candidateResorts.find((resort) => resort.kind === 'career');
@@ -190,7 +194,8 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
                   : isPurchased ? portfolioResort ? 'PORTFOLIO RESORT' : 'PURCHASED'
                   : sandboxCount ? `${sandboxCount} SANDBOX${sandboxCount === 1 ? '' : 'ES'}`
                   : candidateAvailability.canPurchase ? candidate.price ? fmt$(candidate.price) : 'INHERITED'
-                  : prestigeMissing.length ? `LOCKED · ${prestigeMissing[0].label}` : `${fmt$(candidateAvailability.cashShortfall)} SHORT`;
+                  : candidateAvailability.released ? `RELEASED · ${fmt$(candidateAvailability.cashShortfall)} SHORT`
+                  : releaseMissing.length ? `LOCKED · ${releaseMissing[0].label}` : 'CAREER LOCKED';
                 return (
                   <button
                     key={candidate.id}
@@ -210,7 +215,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
         </div>
 
         <div className={`propertyInspector inspector-${property.theme}`} aria-live="polite">
-          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : availability.canPurchase ? property.price ? 'Ready to purchase' : 'Inheritance ready' : 'Career locked'}</strong></div>
+          <div className="propertyIdentity"><span><b>{property.name}</b><small>{property.region} · {property.theme}</small></span><strong>{purchased ? 'Already developed' : !availability.released ? 'Career locked' : availability.cashShortfall ? 'Released · funding needed' : property.price ? 'Ready to purchase' : 'Inheritance ready'}</strong></div>
           <p>{property.description}</p>
           {propertyResorts.map((resort) => (
             <button
@@ -262,7 +267,7 @@ function NewCoursePanel({ initial, close }: { initial: boolean; close: () => voi
           {travelling ? 'Preparing resort…' : careerResort?.active ? `${careerResort.summary.courseName} is open` : careerResort ? `Visit ${careerResort.summary.courseName}` : 'Legacy deed owned · local resort save unavailable'}
         </button>
       ) : (
-        <button className="bigbtn" disabled={travelling || !availability.canPurchase} onClick={() => void start(false)}>{travelling ? 'Preparing resort…' : availability.missing.some((requirement) => requirement.id !== 'cash') ? 'Complete the career milestones above' : availability.cashShortfall ? `Earn ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
+        <button className="bigbtn" disabled={travelling || !availability.canPurchase} onClick={() => void start(false)}>{travelling ? 'Preparing resort…' : !availability.released ? 'Complete the career milestones above' : availability.cashShortfall ? `Save ${fmt$(availability.cashShortfall)} more to purchase` : `Purchase ${property.name}${property.price ? ` · ${fmt$(property.price)}` : ''}`}</button>
       )}
       <button className="bigbtn secondarySetup" disabled={travelling} onClick={() => void start(true)}>{travelling ? 'Saving portfolio…' : `Sandbox on ${property.name} — unlimited funds & land`}</button>
       {!initial && <button className="textBtn" onClick={close}>Keep current course</button>}

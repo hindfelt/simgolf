@@ -4,7 +4,10 @@ import { GOAL_DEFS, acceptLandOffer, newCourse } from './engine';
 import {
   PROPERTY_INHERITANCE,
   WORLD_PROPERTIES,
+  legacyCareerEligibleProperties,
   newlyAvailableProperties,
+  operatingEarningsAmount,
+  operatingEarningsFromLedger,
   propertyAvailability,
   propertyAffordable,
   propertyById,
@@ -17,13 +20,14 @@ import { Tile } from './types';
 import type { CareerProgress, ProProfile, PropertyId } from './types';
 import { createResidentPro } from './proCircuit';
 
-const emptyProgress = (): CareerProgress => ({ version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false });
+const emptyProgress = (): CareerProgress => ({ version: 1, earningsProgressionVersion: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false });
 
 function unlockedContext(propertyId: PropertyId) {
   const property = propertyById(propertyId);
   const progress = emptyProgress();
   const proProfile = createResidentPro();
   const unlock = property.unlock ?? {};
+  progress.lifetimeOperatingEarnings = unlock.earnings ?? 0;
   progress.bestReputation = unlock.reputation ?? 2.5;
   progress.tournamentHosted = !!unlock.tournament;
   progress.sgaTop100Earned = !!unlock.sgaTop100 || !!unlock.sgaTop18;
@@ -84,16 +88,16 @@ describe('World Screen property catalog', () => {
       'maui-grove': undefined,
       'kyoto-gardens': undefined,
       'skagen-dunes': undefined,
-      'atacama-wash': { reputation: 3 },
-      'fiji-lagoon': { fame: 25 },
-      'bavarian-vale': { reputation: 3.5, tournament: true },
-      'cape-breton-links': { reputation: 3.5, fame: 50 },
-      'namib-canyon': { reputation: 4, sgaTop100: true },
-      'palawan-bay': { reputation: 4, fame: 100, sgaTop100: true },
-      'ontario-lakes': { reputation: 4.5, fame: 125 },
-      'wadi-rum-reserve': { reputation: 4.5, fame: 175, sgaTop18: true, championshipStart: true },
-      'hebridean-reach': { reputation: 5, fame: 225, sgaTop18: true, championshipPodium: true },
-      'seychelles-crown': { reputation: 5, fame: 300, sgaTop18: true, championshipWin: true },
+      'atacama-wash': { earnings: 2_500, reputation: 3 },
+      'fiji-lagoon': { earnings: 4_000, fame: 25 },
+      'bavarian-vale': { earnings: 7_500, reputation: 3.5, tournament: true },
+      'cape-breton-links': { earnings: 12_000, reputation: 3.5, fame: 50 },
+      'namib-canyon': { earnings: 18_000, reputation: 4, sgaTop100: true },
+      'palawan-bay': { earnings: 28_000, reputation: 4, fame: 100, sgaTop100: true },
+      'ontario-lakes': { earnings: 40_000, reputation: 4.5, fame: 125 },
+      'wadi-rum-reserve': { earnings: 55_000, reputation: 4.5, fame: 175, sgaTop18: true, championshipStart: true },
+      'hebridean-reach': { earnings: 75_000, reputation: 5, fame: 225, sgaTop18: true, championshipPodium: true },
+      'seychelles-crown': { earnings: 100_000, reputation: 5, fame: 300, sgaTop18: true, championshipWin: true },
     } satisfies Record<PropertyId, (typeof WORLD_PROPERTIES)[number]['unlock']>;
 
     for (const property of WORLD_PROPERTIES) {
@@ -112,6 +116,7 @@ describe('World Screen property catalog', () => {
           progress: { ...context.progress },
           proProfile: { ...context.proProfile } as ProProfile,
         };
+        if (key === 'earnings') failing.progress.lifetimeOperatingEarnings = unlock.earnings! - 1;
         if (key === 'reputation') failing.progress.bestReputation = unlock.reputation! - 0.1;
         if (key === 'fame') failing.proProfile.fame = unlock.fame! - 1;
         if (key === 'tournament') failing.progress.tournamentHosted = false;
@@ -129,11 +134,15 @@ describe('World Screen property catalog', () => {
 
   it('distinguishes current, purchased, locked, available, and sandbox states without spending prestige', () => {
     const property = propertyById('seychelles-crown');
-    const locked = propertyAvailability(property, { ...unlockedContext(property.id), funds: property.price - 1 });
-    expect(locked).toMatchObject({ status: 'locked', canPurchase: false, cashShortfall: 1 });
+    const releasedUnfunded = propertyAvailability(property, { ...unlockedContext(property.id), funds: property.price - 1 });
+    expect(releasedUnfunded).toMatchObject({ status: 'available', released: true, affordable: false, canPurchase: false, cashShortfall: 1 });
+
+    const careerLocked = unlockedContext(property.id);
+    careerLocked.progress.lifetimeOperatingEarnings = property.unlock!.earnings! - 1;
+    expect(propertyAvailability(property, careerLocked)).toMatchObject({ status: 'locked', released: false, affordable: true, canPurchase: false });
 
     const available = propertyAvailability(property, unlockedContext(property.id));
-    expect(available).toMatchObject({ status: 'available', canPurchase: true, cashShortfall: 0 });
+    expect(available).toMatchObject({ status: 'available', released: true, affordable: true, canPurchase: true, cashShortfall: 0 });
     expect(available.requirements.every((requirement) => requirement.met)).toBe(true);
 
     expect(propertyAvailability(property, { ...unlockedContext(property.id), purchased: [property.id] })).toMatchObject({ status: 'purchased', canPurchase: false });
@@ -141,11 +150,56 @@ describe('World Screen property catalog', () => {
     expect(propertyAvailability(property, { funds: 0, progress: emptyProgress(), proProfile: createResidentPro(), purchased: [], sandbox: true })).toMatchObject({ status: 'available', canPurchase: true });
   });
 
-  it('reports only deeds that cross from locked to purchasable at an earned threshold', () => {
+  it('keeps an acknowledged legacy release coherent even when a newer milestone is absent', () => {
+    const property = propertyById('atacama-wash');
+    const result = propertyAvailability(property, {
+      funds: 0,
+      progress: { ...emptyProgress(), lifetimeOperatingEarnings: 0, releasedProperties: [property.id] },
+      proProfile: createResidentPro(),
+      purchased: [],
+    });
+
+    expect(result).toMatchObject({ status: 'available', released: true, affordable: false, canPurchase: false });
+    expect(result.missing.map((requirement) => requirement.id)).toEqual(['cash']);
+    expect(result.requirements.filter((requirement) => requirement.id !== 'cash').every((requirement) => requirement.met)).toBe(true);
+  });
+
+  it('uses the exact former cash boundary when grandfathering unacknowledged legacy deeds', () => {
+    const progress = { ...emptyProgress(), earningsProgressionVersion: undefined, bestReputation: 3 };
+    const proProfile = createResidentPro();
+    proProfile.fame = 25;
+    const below = legacyCareerEligibleProperties({ funds: 5_499, progress, proProfile, purchased: [] }).map((property) => property.id);
+    const atPrice = legacyCareerEligibleProperties({ funds: 5_500, progress, proProfile, purchased: [] }).map((property) => property.id);
+
+    expect(below).toContain('atacama-wash');
+    expect(below).not.toContain('fiji-lagoon');
+    expect(atPrice).toEqual(expect.arrayContaining(['atacama-wash', 'fiji-lagoon']));
+    expect(atPrice).not.toContain('bavarian-vale');
+  });
+
+  it('grandfathers purchased and acknowledged deeds even after the operating bank is spent', () => {
+    const progress = { ...emptyProgress(), earningsProgressionVersion: undefined, releasedProperties: ['fiji-lagoon'] as PropertyId[] };
+    const eligible = legacyCareerEligibleProperties({
+      funds: 0,
+      progress,
+      proProfile: createResidentPro(),
+      purchased: ['atacama-wash'],
+    }).map((property) => property.id);
+
+    expect(eligible).toEqual(expect.arrayContaining(['atacama-wash', 'fiji-lagoon']));
+  });
+
+  it('reports only deeds that cross from career-locked to permanently released', () => {
     const beforeCash = unlockedContext('kyoto-gardens');
     beforeCash.funds = propertyById('kyoto-gardens').price - 1;
     const afterCash = { ...beforeCash, funds: propertyById('kyoto-gardens').price };
-    expect(newlyAvailableProperties(beforeCash, afterCash).map((property) => property.id)).toContain('kyoto-gardens');
+    expect(newlyAvailableProperties(beforeCash, afterCash).map((property) => property.id)).not.toContain('kyoto-gardens');
+
+    const beforeEarnings = unlockedContext('atacama-wash');
+    beforeEarnings.funds = 0;
+    beforeEarnings.progress.lifetimeOperatingEarnings = propertyById('atacama-wash').unlock!.earnings! - 1;
+    const afterEarnings = { ...beforeEarnings, progress: { ...beforeEarnings.progress, lifetimeOperatingEarnings: propertyById('atacama-wash').unlock!.earnings } };
+    expect(newlyAvailableProperties(beforeEarnings, afterEarnings).map((property) => property.id)).toContain('atacama-wash');
 
     const beforeFame = unlockedContext('fiji-lagoon');
     beforeFame.proProfile.fame = 24;
@@ -160,7 +214,25 @@ describe('World Screen property catalog', () => {
     expect(sanitizeCareerProgress(null, ['rep4', 'tournament'])).toEqual({ version: 1, bestReputation: 4, tournamentHosted: true, sgaTop100Earned: false, sgaTop18Earned: false });
     expect(sanitizeCareerProgress({ bestReputation: 99, tournamentHosted: 'yes', sgaTop100Earned: true, sgaTop18Earned: 1 })).toEqual({ version: 1, bestReputation: 5, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false });
     expect(sanitizeCareerProgress({ sgaTop100Earned: false, sgaTop18Earned: true })).toMatchObject({ sgaTop100Earned: true, sgaTop18Earned: true });
+    expect(sanitizeCareerProgress({ lifetimeOperatingEarnings: 12_345.9 }).lifetimeOperatingEarnings).toBe(12_345);
+    expect(sanitizeCareerProgress({ lifetimeOperatingEarnings: -50 }).lifetimeOperatingEarnings).toBeUndefined();
+    expect(sanitizeCareerProgress({ earningsProgressionVersion: 1 }).earningsProgressionVersion).toBe(1);
     expect(sanitizeCareerProgress({ releasedProperties: ['fiji-lagoon', 'fiji-lagoon', 'not-a-place'] as PropertyId[] }).releasedProperties).toEqual(['fiji-lagoon']);
+  });
+
+  it('counts gross operating revenue while excluding capital, refunds, and losses', () => {
+    expect(operatingEarningsAmount(125.9, 'greenFees')).toBe(125);
+    expect(operatingEarningsAmount(900, 'capital')).toBe(0);
+    expect(operatingEarningsAmount(300, 'refunds')).toBe(0);
+    expect(operatingEarningsAmount(-200, 'proChallenge')).toBe(0);
+    expect(operatingEarningsFromLedger([
+      { amount: 1_000, category: 'capital' },
+      { amount: 450, category: 'greenFees' },
+      { amount: 700, category: 'property' },
+      { amount: 300, category: 'refunds' },
+      { amount: -80, category: 'proChallenge' },
+      { amount: 120, category: 'roundBonuses' },
+    ])).toBe(1_270);
   });
 });
 
@@ -179,6 +251,7 @@ describe('property purchase flow', () => {
 
   it('charges the deed, grants its starting parcels, and records profile ownership', () => {
     const property = propertyById('fiji-lagoon');
+    S.careerProgress.lifetimeOperatingEarnings = property.unlock!.earnings;
     S.proProfile.fame = 25;
     expect(newCourse(false, 'moderate', property.theme, 'standard', null, property.id, PROPERTY_INHERITANCE)).toBe(true);
 
@@ -208,6 +281,7 @@ describe('property purchase flow', () => {
     expect(S.propertiesPurchased).toEqual([]);
 
     S.careerProgress.bestReputation = 3;
+    S.careerProgress.lifetimeOperatingEarnings = propertyById('atacama-wash').unlock!.earnings;
     expect(newCourse(false, 'moderate', 'desert', 'standard', null, 'atacama-wash', 50_000)).toBe(true);
     expect(S.propertyId).toBe('atacama-wash');
     expect(S.cash).toBe(50_000 - propertyById('atacama-wash').price);
@@ -225,6 +299,7 @@ describe('property purchase flow', () => {
   it('does not carry an unlimited Sandbox treasury into a normal property purchase', () => {
     expect(newCourse(true, 'moderate', 'parklands', 'standard', null, 'maple-crossing', 0)).toBe(true);
     S.propertiesPurchased = [];
+    S.careerProgress.lifetimeOperatingEarnings = propertyById('fiji-lagoon').unlock!.earnings;
     S.proProfile.fame = 25;
 
     expect(newCourse(false, 'moderate', 'tropical', 'standard', null, 'fiji-lagoon', S.cash)).toBe(true);
@@ -232,7 +307,7 @@ describe('property purchase flow', () => {
   });
 
   it('awards county-expansion progress only after a Picky parcel purchase', () => {
-    S.careerProgress = { version: 1, bestReputation: 4.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.careerProgress = { version: 1, bestReputation: 4.5, lifetimeOperatingEarnings: 40_000, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
     S.proProfile.fame = 125;
     expect(newCourse(false, 'moderate', 'parklands', 'standard', null, 'ontario-lakes', PROPERTY_INHERITANCE)).toBe(true);
     const pickyLand = GOAL_DEFS.find((goal) => goal.id === 'pickyLand')!;
@@ -250,7 +325,7 @@ describe('property purchase flow', () => {
     const mapleElevation = Array.from(S.elevC);
 
     S.propertiesPurchased = [];
-    S.careerProgress = { version: 1, bestReputation: 4.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.careerProgress = { version: 1, bestReputation: 4.5, lifetimeOperatingEarnings: 40_000, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
     S.proProfile.fame = 125;
     expect(newCourse(false, 'moderate', 'parklands', 'standard', null, 'ontario-lakes', PROPERTY_INHERITANCE)).toBe(true);
     const ontarioWater = Array.from(S.tiles).filter((tile) => tile === Tile.WATER).length;

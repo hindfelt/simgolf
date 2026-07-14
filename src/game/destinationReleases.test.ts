@@ -65,8 +65,10 @@ describe('central worldwide destination releases', () => {
   });
 
   it('announces a fame-and-cash crossing outside manual-round completion', () => {
-    const before = context(5_500, progress(), 24);
-    S.cash = 5_500;
+    const earned = progress({ lifetimeOperatingEarnings: 4_000 });
+    const before = context(0, earned, 24);
+    S.cash = 0;
+    S.careerProgress = earned;
     S.proProfile.fame = 25;
 
     expect(checkDestinationReleases(before)).toEqual(['fiji-lagoon']);
@@ -76,7 +78,8 @@ describe('central worldwide destination releases', () => {
   });
 
   it('keeps the background watcher active while managing the course', () => {
-    S.cash = 5_500;
+    S.cash = 0;
+    S.careerProgress = progress({ lifetimeOperatingEarnings: 4_000 });
     S.proProfile.fame = 24;
     resetDestinationReleaseTracking();
 
@@ -88,10 +91,11 @@ describe('central worldwide destination releases', () => {
   });
 
   it('defers the background watcher during play so round completion owns the release', () => {
-    S.cash = 5_500;
+    S.cash = 0;
+    S.careerProgress = progress({ lifetimeOperatingEarnings: 4_000 });
     S.proProfile.fame = 24;
     resetDestinationReleaseTracking();
-    const roundStart = context(5_500, progress(), 24);
+    const roundStart = context(0, progress({ lifetimeOperatingEarnings: 4_000 }), 24);
 
     S.mode = 'play';
     S.proProfile.fame = 25;
@@ -106,27 +110,67 @@ describe('central worldwide destination releases', () => {
   });
 
   it('persists acknowledgement so a later cash dip cannot replay the same release', () => {
-    const before = context(5_500, progress(), 24);
-    S.cash = 5_500;
+    const earned = progress({ lifetimeOperatingEarnings: 4_000 });
+    const before = context(0, earned, 24);
+    S.cash = 0;
+    S.careerProgress = earned;
     S.proProfile.fame = 25;
     expect(checkDestinationReleases(before)).toEqual(['fiji-lagoon']);
 
-    const repeatBefore = context(5_499, { ...S.careerProgress }, 25);
-    S.cash = 5_500;
+    const repeatBefore = context(5_500, { ...S.careerProgress }, 25);
+    S.cash = 0;
     expect(checkDestinationReleases(repeatBefore)).toEqual([]);
     expect(ui.get().destinationRelease.filter((id) => id === 'fiji-lagoon')).toHaveLength(1);
   });
 
   it('uses the same watcher for reputation and tournament milestones', () => {
-    const reputationBefore = context(4_500, progress({ bestReputation: 2.99 }));
-    S.cash = 4_500;
+    const reputationBefore = context(0, progress({ bestReputation: 2.99, lifetimeOperatingEarnings: 2_500 }));
+    S.cash = 0;
+    S.careerProgress = progress({ bestReputation: 2.99, lifetimeOperatingEarnings: 2_500 });
     S.rep = 3;
     expect(checkDestinationReleases(reputationBefore)).toContain('atacama-wash');
 
-    const tournamentBefore = context(6_500, progress({ bestReputation: 3.5, tournamentHosted: false }));
-    S.cash = 6_500;
+    const tournamentBefore = context(0, progress({ bestReputation: 3.5, lifetimeOperatingEarnings: 7_500, tournamentHosted: false }));
+    S.cash = 0;
+    S.careerProgress = progress({ bestReputation: 3.5, lifetimeOperatingEarnings: 7_500, tournamentHosted: false });
     S.rep = 3.5;
     S.tournamentHostedEver = true;
     expect(checkDestinationReleases(tournamentBefore)).toContain('bavarian-vale');
+  });
+
+  it('releases an earned-money destination permanently even with an empty bank', () => {
+    S.cash = 0;
+    S.rep = 3;
+    S.careerProgress = progress({ bestReputation: 3, lifetimeOperatingEarnings: 2_499 });
+    resetDestinationReleaseTracking();
+    const before = context(0, { ...S.careerProgress });
+
+    S.careerProgress.lifetimeOperatingEarnings = 2_500;
+
+    expect(checkDestinationReleases(before)).toContain('atacama-wash');
+    expect(S.careerProgress.releasedProperties).toContain('atacama-wash');
+    expect(S.cash).toBe(0);
+  });
+
+  it('routes SGA and championship milestones through the same permanent release watcher', () => {
+    S.cash = 0;
+    S.rep = 4;
+    S.careerProgress = progress({ bestReputation: 4, lifetimeOperatingEarnings: 18_000, sgaTop100Earned: false });
+    resetDestinationReleaseTracking();
+    const sgaBefore = context(0, { ...S.careerProgress });
+    S.careerProgress.sgaTop100Earned = true;
+    expect(checkDestinationReleases(sgaBefore)).toContain('namib-canyon');
+
+    S.rep = 5;
+    S.proProfile.fame = 300;
+    S.proProfile.wins = 0;
+    S.careerProgress = progress({ bestReputation: 5, lifetimeOperatingEarnings: 100_000, sgaTop100Earned: true, sgaTop18Earned: true });
+    resetDestinationReleaseTracking();
+    const championshipBefore: PropertyAvailabilityContext = {
+      ...context(0, { ...S.careerProgress }, 300),
+      proProfile: { fame: 300, starts: 1, podiums: 1, wins: 0 },
+    };
+    S.proProfile.wins = 1;
+    expect(checkDestinationReleases(championshipBefore)).toContain('seychelles-crown');
   });
 });

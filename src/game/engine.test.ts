@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { H, LIE, MAXE, PW, PH, SHOT_SHAPES, W } from './constants';
-import { acceptProChallenge, ballFlightPosition, beginPaintStroke, cachedPlayerShotForecast, exportSaveText, flightApexHeight, holeToolTap, loadFromSlot, loadGame, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotForecast, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud, usesLegacyEndpointTreeDeflection } from './engine';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, cachedPlayerShotForecast, exportSaveText, flightApexHeight, holeToolTap, loadFromSlot, loadGame, migrateLegacyCareerRevenue, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotForecast, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud, usesLegacyEndpointTreeDeflection } from './engine';
 import { clubLieProfile, fallbackClubForLie, SEVERE_RECOVERY_LIES } from './clubProfiles';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { P } from './camera';
@@ -11,6 +11,8 @@ import type { Golfer, Hole, ProChallengeOffer } from './types';
 import { ui } from '../ui/store';
 import { CLEAR_WEATHER } from './weather';
 import { createRegularTraining } from './regularTraining';
+import { operatingEarningsFromLedger } from './properties';
+import type { ResortRecord } from './portfolio';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -123,13 +125,14 @@ describe('save / load round-trip', () => {
       } as Storage;
     })();
 
+    S.sandbox = false;
     S.cash = 12_345;
     S.time = 410;
     S.courseName = 'Home Course';
     S.theme = 'tropical';
     S.propertyId = 'fiji-lagoon';
     S.propertiesPurchased = ['fiji-lagoon'];
-    S.careerProgress = { version: 1, bestReputation: 4.2, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false };
+    S.careerProgress = { version: 1, earningsProgressionVersion: 1, bestReputation: 4.2, lifetimeOperatingEarnings: 12_345, tournamentHosted: false, sgaTop100Earned: true, sgaTop18Earned: false };
     S.themePackId = 'neighborhood-nine';
     S.themeCourseId = 'garden-loop';
     S.difficulty = 'difficult';
@@ -233,7 +236,7 @@ describe('save / load round-trip', () => {
     expect(S.comments).toHaveLength(1);
     expect(S.comments[0].txt).toBe('Frame that scorecard!');
     expect(S.proProfile.name).toBe('Ada Irons');
-    expect(S.careerProgress).toEqual({ version: 1, bestReputation: 4.2, tournamentHosted: true, sgaTop100Earned: true, sgaTop18Earned: false });
+    expect(S.careerProgress).toEqual({ version: 1, earningsProgressionVersion: 1, bestReputation: 4.2, lifetimeOperatingEarnings: 12_345, tournamentHosted: true, sgaTop100Earned: true, sgaTop18Earned: false });
     expect(JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).version).toBe(3);
     expect(S.specialVisitors.landmarkDonated).toBe(true);
     expect(S.specialVisitors.landmarkCredits).toBe(1);
@@ -245,6 +248,137 @@ describe('save / load round-trip', () => {
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
     expect(S.regulars[0].training).toEqual({ progress: { length: 25, accuracy: 50, imagination: 75 }, gained: { length: 2, accuracy: 3, imagination: 4 }, holes: 16 });
+  });
+
+  it('preserves a full legacy ledger floor when the next live revenue entry arrives', () => {
+    S.sandbox = false;
+    S.speed = 1;
+    S.golfers = [];
+    S.nextGolfer = 999;
+    S.buildings = [{ id: 99, kind: 'buildinglot', x: 10, y: 10, w: 2, h: 2, open: true, stage: 2 }];
+    S.careerProgress = { version: 1, earningsProgressionVersion: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.financeLedger = Array.from({ length: 600 }, (_, index) => ({
+      id: index + 1,
+      time: index,
+      year: 1,
+      amount: 1,
+      category: 'greenFees' as const,
+      detail: `Legacy fee ${index}`,
+    }));
+    const beforeFloor = operatingEarningsFromLedger(S.financeLedger);
+    const beforeCash = S.cash;
+
+    update(10);
+
+    const liveRevenue = S.cash - beforeCash;
+    expect(liveRevenue).toBeGreaterThan(0);
+    expect(S.financeLedger).toHaveLength(600);
+    expect(S.careerProgress.lifetimeOperatingEarnings).toBe(beforeFloor + liveRevenue);
+  });
+
+  it('migrates all career resort ledgers once and excludes sandbox revenue', () => {
+    S.sandbox = false;
+    S.propertyId = 'maple-crossing';
+    S.propertiesPurchased = [];
+    S.cash = 0;
+    S.careerProgress = { version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.proProfile = createResidentPro();
+    const record = (id: string, kind: ResortRecord['kind'], amount: number): ResortRecord => ({
+      id,
+      propertyId: 'maple-crossing',
+      kind,
+      updatedAt: 1,
+      summary: { courseName: id, cash: 0, rep: 2.5, holes: 0, theme: 'parklands' },
+      snapshot: {
+        v: 2,
+        propertyId: 'maple-crossing',
+        courseName: id,
+        cash: 0,
+        rep: 2.5,
+        holes: [],
+        theme: 'parklands',
+        tiles: Array.from({ length: W * H }, () => Tile.ROUGH),
+        sandbox: kind === 'sandbox',
+        financeLedger: [{ id: 1, time: 0, year: 1, amount, category: 'greenFees', detail: id }],
+      },
+    });
+
+    expect(migrateLegacyCareerRevenue([record('one', 'career', 1_200), record('two', 'career', 1_800), record('free', 'sandbox', 99_000)])).toBe(true);
+    expect(S.careerProgress).toMatchObject({ earningsProgressionVersion: 1, lifetimeOperatingEarnings: 3_000 });
+    expect(migrateLegacyCareerRevenue([record('later', 'career', 50_000)])).toBe(false);
+    expect(S.careerProgress.lifetimeOperatingEarnings).toBe(3_000);
+  });
+
+  it('grandfathers legacy deed eligibility at the former cash boundary', () => {
+    S.sandbox = false;
+    S.cash = 5_500;
+    S.propertyId = 'maple-crossing';
+    S.propertiesPurchased = [];
+    S.rep = 3;
+    S.careerProgress = { version: 1, bestReputation: 3, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.proProfile = createResidentPro();
+    S.proProfile.fame = 25;
+
+    expect(migrateLegacyCareerRevenue()).toBe(true);
+    expect(S.careerProgress.lifetimeOperatingEarnings).toBe(4_000);
+    expect(S.careerProgress.releasedProperties).toEqual(expect.arrayContaining(['atacama-wash', 'fiji-lagoon']));
+  });
+
+  it('persists the one-time migration marker when loading a legacy profile', () => {
+    S.propertyId = 'maple-crossing';
+    S.propertiesPurchased = ['maple-crossing'];
+    S.cash = 5_500;
+    S.rep = 3;
+    S.proProfile.fame = 25;
+    saveGame();
+    const profile = JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!);
+    delete profile.careerProgress.earningsProgressionVersion;
+    delete profile.careerProgress.lifetimeOperatingEarnings;
+    profile.careerProgress.bestReputation = 3;
+    profile.proProfile.fame = 25;
+    localStorage.setItem('fairway-mogul-profile-v1', JSON.stringify(profile));
+
+    expect(loadGame()).toBe(true);
+
+    const migrated = JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).careerProgress;
+    expect(migrated).toMatchObject({ earningsProgressionVersion: 1, lifetimeOperatingEarnings: 4_000 });
+    expect(migrated.releasedProperties).toEqual(expect.arrayContaining(['atacama-wash', 'fiji-lagoon']));
+  });
+
+  it('migrates a surviving legacy course when its separate profile is missing', () => {
+    S.propertyId = 'maple-crossing';
+    S.propertiesPurchased = ['maple-crossing'];
+    S.cash = 4_500;
+    S.rep = 3;
+    saveGame();
+    localStorage.removeItem('fairway-mogul-profile-v1');
+    // Simulate a fresh page runtime, whose default state already carries the
+    // current marker before the legacy course is discovered.
+    S.careerProgress = { version: 1, earningsProgressionVersion: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false };
+    S.proProfile = createResidentPro();
+    S.propertiesPurchased = [];
+
+    expect(loadGame()).toBe(true);
+
+    const migrated = JSON.parse(localStorage.getItem('fairway-mogul-profile-v1')!).careerProgress;
+    expect(migrated).toMatchObject({ earningsProgressionVersion: 1, lifetimeOperatingEarnings: 2_500 });
+    expect(migrated.releasedProperties).toContain('atacama-wash');
+  });
+
+  it('uses the normal development fund and no current deed when migrating from Sandbox', () => {
+    S.sandbox = true;
+    S.cash = 5_000_000;
+    S.propertyId = 'seychelles-crown';
+    S.propertiesPurchased = [];
+    S.careerProgress = { version: 1, bestReputation: 5, tournamentHosted: true, sgaTop100Earned: true, sgaTop18Earned: true };
+    S.proProfile = createResidentPro();
+    Object.assign(S.proProfile, { fame: 300, starts: 1, podiums: 1, wins: 1 });
+
+    expect(migrateLegacyCareerRevenue()).toBe(true);
+
+    expect(S.careerProgress.lifetimeOperatingEarnings).toBe(75_000);
+    expect(S.careerProgress.releasedProperties).toContain('hebridean-reach');
+    expect(S.careerProgress.releasedProperties).not.toContain('seychelles-crown');
   });
 
   it('round-trips bridge backing types, connectivity, and bulldozer restoration', () => {

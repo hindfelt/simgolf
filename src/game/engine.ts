@@ -72,7 +72,7 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, isPropertyId, newlyAvailableProperties, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, isPropertyId, legacyCareerEligibleProperties, newlyAvailableProperties, operatingEarningsAmount, operatingEarningsFromLedger, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
 import type { PropertyAvailabilityContext } from './properties';
 import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 import { actorWalkingBob } from './actorGeometry';
@@ -245,6 +245,18 @@ let financeSeq = 1;
 function recordFinance(amount: number, category: FinanceCategory, detail: string) {
   const whole = Math.trunc(amount);
   if (!whole) return;
+  const operatingEarnings = S.sandbox ? 0 : operatingEarningsAmount(whole, category);
+  if (operatingEarnings) {
+    const progress = sanitizeCareerProgress(S.careerProgress, S.proProfile.accomplishments);
+    const existingFloor = Math.max(
+      Math.trunc(progress.lifetimeOperatingEarnings ?? 0),
+      operatingEarningsFromLedger(S.financeLedger),
+    );
+    S.careerProgress = {
+      ...progress,
+      lifetimeOperatingEarnings: existingFloor + operatingEarnings,
+    };
+  }
   const year = financialYearAt(S.time);
   const safeDetail = detail.slice(0, 80);
   // The report is a journal, not a receipt printer: roll repeated per-hole and
@@ -3043,6 +3055,10 @@ function snapshotHasSgaFlag(snapshot: unknown, flag: 'top100' | 'top18'): boolea
 /** Current sticky portfolio milestones, including achievements earned since the last autosave. */
 export function careerProgressSnapshot(): CareerProgress {
   const existing = sanitizeCareerProgress(S.careerProgress, S.proProfile.accomplishments);
+  const lifetimeOperatingEarnings = Math.max(
+    Math.trunc(existing.lifetimeOperatingEarnings ?? 0),
+    S.sandbox ? 0 : operatingEarningsFromLedger(S.financeLedger),
+  );
   const historyBest = S.history.reduce((best, entry) => Math.max(best, Number.isFinite(entry.rep) ? entry.rep : 0), 0);
   const currentTop100 = S.holes.some((hole) => hole.top100 || hole.top18);
   const currentTop18 = S.holes.some((hole) => hole.top18);
@@ -3051,12 +3067,48 @@ export function careerProgressSnapshot(): CareerProgress {
   const releasedProperties = sanitizePropertyHistory(existing.releasedProperties);
   return {
     version: 1,
+    ...(existing.earningsProgressionVersion === 1 ? { earningsProgressionVersion: 1 as const } : {}),
     bestReputation: clamp(Math.max(existing.bestReputation, Number.isFinite(S.rep) ? S.rep : 0, historyBest), 0, 5),
+    ...(lifetimeOperatingEarnings ? { lifetimeOperatingEarnings } : {}),
     tournamentHosted: existing.tournamentHosted || S.tournamentHostedEver || S.goalsAchieved.tournament === true,
     sgaTop100Earned: existing.sgaTop100Earned || currentTop100 || retiredTop100,
     sgaTop18Earned: existing.sgaTop18Earned || currentTop18 || retiredTop18,
     ...(releasedProperties.length ? { releasedProperties: [...releasedProperties] } : {}),
   };
+}
+
+/** One-time compatibility bridge for careers created before revenue releases. */
+export function migrateLegacyCareerRevenue(records: readonly ResortRecord[] = []): boolean {
+  const existing = sanitizeCareerProgress(S.careerProgress, S.proProfile.accomplishments);
+  if (existing.earningsProgressionVersion === 1) return false;
+  const careerLedgers = records.length
+    ? records.filter((record) => record.kind === 'career' && record.snapshot.sandbox !== true)
+      .map((record) => sanitizeFinanceLedger(record.snapshot.financeLedger))
+    : S.sandbox ? [] : [S.financeLedger];
+  const ledgerFloor = careerLedgers.reduce((total, ledger) => total + operatingEarningsFromLedger(ledger), 0);
+  const liveContext = currentPropertyAccessContext();
+  const context: PropertyAvailabilityContext = S.sandbox ? {
+    ...liveContext,
+    funds: PROPERTY_INHERITANCE,
+    progress: existing,
+    currentPropertyId: undefined,
+    sandbox: false,
+  } : { ...liveContext, progress: existing };
+  const grandfathered = legacyCareerEligibleProperties(context);
+  const milestoneFloor = grandfathered.reduce((highest, property) => Math.max(highest, property.unlock?.earnings ?? 0), 0);
+  const releasedProperties = sanitizePropertyHistory([
+    ...(existing.releasedProperties ?? []),
+    ...grandfathered.map((property) => property.id),
+  ]);
+  S.careerProgress = {
+    ...existing,
+    earningsProgressionVersion: 1,
+    ...((ledgerFloor || milestoneFloor || existing.lifetimeOperatingEarnings) ? {
+      lifetimeOperatingEarnings: Math.max(ledgerFloor, milestoneFloor, existing.lifetimeOperatingEarnings ?? 0),
+    } : {}),
+    ...(releasedProperties.length ? { releasedProperties } : {}),
+  };
+  return true;
 }
 
 function currentPropertyAccessContext(): PropertyAvailabilityContext {
@@ -3093,9 +3145,10 @@ export function resetDestinationReleaseTracking() {
 }
 
 /**
- * Central destination watcher. Cash, best reputation, tournament/SGA flags,
- * pro fame and championship results all flow through the same comparison, and
- * profile-level acknowledgement prevents a cash dip from replaying a release.
+ * Central destination watcher. Sticky lifetime revenue, best reputation,
+ * tournament/SGA flags, pro fame and championship results all flow through the
+ * same comparison. Current bank balance only controls whether a released deed
+ * can be purchased; spending can never revoke or replay a release.
  */
 export function checkDestinationReleases(before?: PropertyAvailabilityContext, suppressSound = false): PropertyId[] {
   // A played round owns its release presentation. Keep the background watcher
@@ -3122,8 +3175,8 @@ export function checkDestinationReleases(before?: PropertyAvailabilityContext, s
   S.careerProgress = { ...careerProgressSnapshot(), releasedProperties: [...acknowledged] };
   saveRoundHistory();
   const names = fresh.map((property) => property.name);
-  ticker('World Screen', `${names.join(' · ')} ${names.length === 1 ? 'is' : 'are'} now released for development.`, 'money');
-  setHint(`New worldwide ${names.length === 1 ? 'destination' : 'destinations'}: ${names.join(' · ')}. Open the World Screen to develop ${names.length === 1 ? 'it' : 'them'}.`);
+  ticker('World Screen', `${names.join(' · ')} ${names.length === 1 ? 'is' : 'are'} now permanently released.`, 'money');
+  setHint(`New worldwide ${names.length === 1 ? 'destination' : 'destinations'}: ${names.join(' · ')}. Open the World Screen to review ${names.length === 1 ? 'the deed' : 'their deeds'} and current purchase price.`);
   ui.set({ destinationRelease: [...new Set([...ui.get().destinationRelease, ...propertyIds])] });
   if (!suppressSound) sfx.tada();
   return propertyIds;
@@ -3189,7 +3242,13 @@ function sanitizeProChallengeHistory(value: unknown): ProChallengeResult[] {
 export function loadRoundHistory() {
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
-    if (!raw) return;
+    if (!raw) {
+      // A legacy course may outlive a cleared/missing profile. Mark that case
+      // pending so the course ledger and old deed rules can rebuild progress;
+      // a genuinely new install keeps the current-version initial marker.
+      if (localStorage.getItem(SAVE_KEY)) S.careerProgress = sanitizeCareerProgress(null);
+      return;
+    }
     const parsed = JSON.parse(raw);
     S.roundHistory = sanitizeRoundHistory(parsed?.rounds);
     S.proProfile = sanitizeProProfile(parsed?.proProfile);
@@ -3556,6 +3615,10 @@ export function loadGame(): boolean {
       S.propertiesPurchased.push(S.propertyId);
       saveRoundHistory();
     }
+    if (!portfolioSupported() && migrateLegacyCareerRevenue()) {
+      resetDestinationReleaseTracking();
+      saveRoundHistory();
+    }
     return true;
   } catch {
     return false;
@@ -3570,11 +3633,20 @@ export async function loadPortfolioGame(): Promise<boolean> {
     const active = await bootstrapPortfolio(legacyResumed ? buildSaveData() : null);
     portfolioReady = true;
     if (!active) {
+      if (migrateLegacyCareerRevenue()) {
+        resetDestinationReleaseTracking();
+        saveRoundHistory();
+      }
       setPortfolioStatus('idle', true);
       return legacyResumed;
     }
     if (!applySaveData(active.snapshot)) throw new Error('Active resort is incompatible');
     if (!S.sandbox && !S.propertiesPurchased.includes(S.propertyId)) S.propertiesPurchased.push(S.propertyId);
+    const records = await listPortfolioResorts();
+    if (migrateLegacyCareerRevenue(records)) {
+      resetDestinationReleaseTracking();
+      saveRoundHistory();
+    }
     persistCourseSave(buildSaveData()); // compatibility mirror + emergency recovery
     saveRoundHistory();
     setPortfolioStatus('saved', true);

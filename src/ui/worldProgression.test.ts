@@ -15,8 +15,10 @@ describe('World Screen career progression presentation', () => {
     expect(source).toContain('availability.requirements.map');
   });
 
-  it('exposes money, best rating, fame, and deed count as a portfolio strip', () => {
+  it('exposes spendable bank, sticky career revenue, rating, fame, and deed count', () => {
     expect(source).toContain('className="worldCareerStrip"');
+    expect(source).toContain('Career revenue');
+    expect(source).toContain('careerProgress.lifetimeOperatingEarnings ?? 0');
     expect(source).toContain('Best rating');
     expect(source).toContain('Pro fame');
     expect(source).toContain('S.propertiesPurchased.length');
@@ -28,6 +30,9 @@ describe('World Screen career progression presentation', () => {
     expect(source).toContain("requirement.met ? '✓' : '○'");
     expect(css).toMatch(/\.propertyUnlocks\s+li\.missing/);
     expect(css).toMatch(/\.worldProperty\.prestigeLocked/);
+    expect(css).toMatch(/\.worldProperty\.released/);
+    expect(source).toContain("candidateAvailability.status === 'locked'");
+    expect(source).toContain('Permanently released. Save');
   });
 
   it('shows developed resorts as visitable portfolio deeds instead of destructive replacements', () => {
@@ -55,7 +60,7 @@ describe('World Screen career progression presentation', () => {
   });
 
   it('collapses career stats and requirement lists cleanly on phone layouts', () => {
-    expect(css).toMatch(/@media \(max-width: 430px\)[\s\S]*\.worldCareerStrip\s*\{[^}]*grid-template-columns:\s*repeat\(4,/);
+    expect(css).toMatch(/@media \(max-width: 430px\)[\s\S]*\.worldCareerStrip\s*\{[^}]*grid-template-columns:\s*repeat\(5,/);
     expect(css).toMatch(/@media \(max-width: 430px\)[\s\S]*\.propertyUnlocks ul\s*\{[^}]*grid-template-columns:\s*1fr/);
   });
 });

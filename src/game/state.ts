@@ -43,7 +43,7 @@ export const S: GameState = {
   },
   proProfile: createResidentPro(),
   propertiesPurchased: [],
-  careerProgress: { version: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false },
+  careerProgress: { version: 1, earningsProgressionVersion: 1, bestReputation: 2.5, tournamentHosted: false, sgaTop100Earned: false, sgaTop18Earned: false },
   retiredCourses: [],
   championshipHistory: [],
   activeChampionship: null,
