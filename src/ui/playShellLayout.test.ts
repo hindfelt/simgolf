@@ -26,7 +26,7 @@ describe('original play shell responsive geometry', () => {
       const fan = { x: 0, width: 280 };
       const hudPaddingX = 218 + 4;
       const quit = { x: hudPaddingX + 67, width: 45 };
-      const palette = { x: hudPaddingX + 152, width: (58 * 6) + (7 * 5) };
+      const palette = { x: hudPaddingX + 152, width: (58 * 5) + (7 * 4) };
       const panes = { x: hudPaddingX + 115, width: viewportWidth - (hudPaddingX + 115) - 8 };
       const message = { x: hudPaddingX + 115, width: viewportWidth - 124 - (hudPaddingX + 115) };
       const conditions = { x: viewportWidth - 8 - 104, width: 104 };
@@ -48,8 +48,8 @@ describe('original play shell responsive geometry', () => {
     const quit = { x: 9, width: 45 };
     const paletteRail = (viewportWidth: number): Rect => ({ x: 62, width: viewportWidth - 70 });
     expect(intersects(quit, paletteRail(390))).toBe(false);
-    expect((49 * 6) + (4 * 5)).toBeLessThanOrEqual(paletteRail(390).width);
-    expect((49 * 6) + (4 * 5)).toBeGreaterThan(paletteRail(320).width);
+    expect((49 * 5) + (4 * 4)).toBeLessThanOrEqual(paletteRail(390).width);
+    expect((49 * 5) + (4 * 4)).toBeGreaterThan(paletteRail(320).width);
   });
 
   it('removes the routing monitor whenever the round controller is active', () => {
@@ -82,7 +82,7 @@ describe('original play shell responsive geometry', () => {
     const viewportWidth = 796;
     const consolePanes = { x: 59, width: viewportWidth - 59 - 5 };
     const message = { x: 8, width: 210 };
-    const palette = { x: viewportWidth / 2 - 166, width: (51 * 6) + (5 * 5) };
+    const palette = { x: viewportWidth / 2 - 166, width: (51 * 5) + (5 * 4) };
     const conditions = { x: viewportWidth - 6 - 104, width: 104 };
     expect(right(consolePanes)).toBe(viewportWidth - 5);
     expect(intersects(message, palette)).toBe(false);

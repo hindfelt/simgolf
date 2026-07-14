@@ -106,6 +106,30 @@ test.describe('wide native shell', () => {
     expect(panes).toMatchObject({ x: 350, width: 1234, height: 72 });
     expect(right(caddie)).toBe(1584);
 
+    const readableType = await page.locator('.playHud').evaluate((hud) => {
+      const size = (selector: string) => Number.parseFloat(getComputedStyle(hud.querySelector(selector)!).fontSize);
+      return {
+        paneTitle: size('.playPaneTitle b'),
+        club: size('.clubCurrent'),
+        facts: size('.playShotFacts'),
+        skills: size('.playSkillPane'),
+        caddieTitle: size('.caddieBookHead b'),
+        metricLabel: size('.caddieMetrics small'),
+        metricValue: size('.caddieMetrics b'),
+        resultCopy: size('.playCaddieBook p'),
+      };
+    });
+    expect(readableType).toEqual({
+      paneTitle: 10,
+      club: 8.5,
+      facts: 8.5,
+      skills: 9,
+      caddieTitle: 9.5,
+      metricLabel: 7.5,
+      metricValue: 11,
+      resultCopy: 8,
+    });
+
     await page.locator('.playHud').evaluate((hud) => {
       const competition = document.createElement('div');
       competition.className = 'playCompetitionHud';

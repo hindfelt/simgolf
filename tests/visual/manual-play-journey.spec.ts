@@ -3,9 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 type Point = { x: number; y: number };
 
 const journeys = [
-  { club: 'Driver', shapeButton: /^Fade Shot/, resultShape: 'Fade' },
-  { club: '3 Wood', shapeButton: /^Draw \/ Hook Shot/, resultShape: 'Draw' },
-  { club: 'Lob Wedge', shapeButton: /^Low Punch Shot/, resultShape: 'Punch' },
+  { club: 'Driver', shapeButton: /^Fade Shot/, resultShape: 'Fade', activations: 1 },
+  { club: '3 Wood', shapeButton: /^Draw \/ Hook Shot/, resultShape: 'Draw', activations: 1 },
+  { club: '5 Wood', shapeButton: /^Draw \/ Hook Shot/, resultShape: 'Hook', activations: 2 },
+  { club: 'Lob Wedge', shapeButton: /^Low Punch Shot/, resultShape: 'Punch', activations: 1 },
 ] as const;
 
 async function enterRainyRound(page: Page) {
@@ -67,8 +68,9 @@ for (const journey of journeys) {
 
     await chooseClub(page, journey.club);
     const shape = page.getByRole('button', { name: journey.shapeButton });
-    await shape.click();
+    for (let activation = 0; activation < journey.activations; activation += 1) await shape.click();
     await expect(shape).toHaveAttribute('aria-pressed', 'true');
+    await expect(shape).toHaveAttribute('data-selected-shape', journey.resultShape.toLowerCase());
 
     const canvas = page.locator('canvas.game');
     const beforePan = await playerBallDrag(page);

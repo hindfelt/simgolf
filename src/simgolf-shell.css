@@ -938,7 +938,7 @@ body,
     0 1px 0 rgba(47,52,128,.54);
 }
 
-.playStatusPane { position: relative; padding: 4px 6px 3px; color: #263584; font-family: var(--sg-font); }
+.playStatusPane { position: relative; padding: 3px 5px 2px; color: #263584; font-family: var(--sg-font); }
 .playPaneTitle {
   display: flex;
   align-items: baseline;
@@ -949,8 +949,8 @@ body,
   border-bottom: 1px solid rgba(56,63,147,.22);
   white-space: nowrap;
 }
-.playPaneTitle b { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
-.playPaneTitle span { flex: 0 0 auto; color: #4a57a2; font-size: 7px; }
+.playPaneTitle b { overflow: hidden; font-size: 10px; text-overflow: ellipsis; }
+.playPaneTitle span { flex: 0 0 auto; color: #4a57a2; font-size: 8px; }
 
 .playClubLine,
 .playClubReadout {
@@ -960,7 +960,7 @@ body,
   gap: 2px;
   color: #34418e;
   font-family: var(--sg-font);
-  font-size: 8px;
+  font-size: 9px;
   white-space: nowrap;
 }
 .playClubLine > span { margin-right: 1px; }
@@ -975,7 +975,7 @@ body,
   background: transparent;
   color: #2f3d89;
   font-family: var(--sg-font);
-  font-size: 7px;
+  font-size: 8.5px;
   line-height: 12px;
   box-shadow: none;
 }
@@ -1001,7 +1001,7 @@ body,
   padding: 0 3px;
   border-radius: 3px;
   font-family: var(--sg-font);
-  font-size: 7px;
+  font-size: 8.5px;
   line-height: 12px;
 }
 .controllerShell .playHud .playClubLine .clubCurrent {
@@ -1010,7 +1010,7 @@ body,
   min-width: 43px;
   max-width: 70px;
   overflow: hidden;
-  font-size: 7px;
+  font-size: 8.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1036,8 +1036,8 @@ body,
   gap: 0;
   color: #34418e;
   font-family: var(--sg-font);
-  font-size: 7.5px;
-  line-height: 10px;
+  font-size: 8.5px;
+  line-height: 10.25px;
   white-space: nowrap;
 }
 .playShotFacts span { overflow: hidden; text-overflow: ellipsis; }
@@ -1052,8 +1052,8 @@ body,
   padding: 4px 6px;
   color: #f4f3ff;
   font-family: var(--sg-font);
-  font-size: 7.5px;
-  line-height: 10px;
+  font-size: 9px;
+  line-height: 11px;
   text-shadow: 1px 1px #50569a;
 }
 .playSkillPane > span { min-width: 0; display: flex; justify-content: space-between; gap: 4px; white-space: nowrap; }
@@ -1089,8 +1089,8 @@ body,
   border-bottom: 1px solid rgba(47,72,76,.3);
   white-space: nowrap;
 }
-.caddieBookHead b { color: #254d4e; font-size: 8px; letter-spacing: .05em; }
-.caddieBookHead span { min-width: 0; overflow: hidden; color: #725b32; font-size: 7px; text-overflow: ellipsis; }
+.caddieBookHead b { color: #254d4e; font-size: 9.5px; letter-spacing: .05em; }
+.caddieBookHead span { min-width: 0; overflow: hidden; color: #725b32; font-size: 8.5px; text-overflow: ellipsis; }
 .caddieMetrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 3px; align-items: stretch; }
 .caddieMetrics > span {
   min-width: 0;
@@ -1102,9 +1102,9 @@ body,
   background: rgba(255,255,239,.48);
   text-align: center;
 }
-.caddieMetrics small { color: #58706b; font-family: var(--sg-small); font-size: 6px; font-weight: 900; letter-spacing: .05em; }
-.caddieMetrics b { overflow: hidden; color: #223e45; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
-.playCaddieBook p { margin: 0; overflow: hidden; color: #5b4b31; font-family: var(--sg-small); font-size: 7px; line-height: 10px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.caddieMetrics small { color: #58706b; font-family: var(--sg-small); font-size: 7.5px; font-weight: 900; letter-spacing: .04em; }
+.caddieMetrics b { overflow: hidden; color: #223e45; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.playCaddieBook p { margin: 0; overflow: hidden; color: #5b4b31; font-family: var(--sg-small); font-size: 8px; line-height: 10px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 @keyframes caddie-result-pop {
   from { filter: brightness(1.18); transform: translateY(3px) scale(.98); }
   to { filter: none; transform: none; }
@@ -1160,6 +1160,34 @@ body,
 }
 .flightGlyph { width: 46px; height: 24px; overflow: visible; fill: #fff8ff; stroke: #fff8ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px #465489); }
 .flightGlyph path { fill: none; }
+.drawHookControl .flightGlyph { transform: translateY(-2px) scale(.92); }
+.shapeComboState {
+  position: absolute;
+  right: 5px;
+  bottom: 2px;
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+}
+.shapeComboState i {
+  width: 10px;
+  height: 8px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 4px;
+  background: rgba(22,39,66,.55);
+  color: rgba(255,255,255,.78);
+  font: 900 5px/1 var(--sg-small);
+  font-style: normal;
+  box-shadow: 0 1px rgba(21,28,74,.52);
+}
+.shapeBtn.on .shapeComboState i.current {
+  border-color: #5f4d00;
+  background: #fff35b;
+  color: #263476;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.72);
+}
 .playVisuallyHidden {
   position: absolute;
   width: 1px;
