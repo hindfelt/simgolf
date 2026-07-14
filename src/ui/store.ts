@@ -79,6 +79,7 @@ interface UIStore {
   destinationRelease: PropertyId[];
   modal: ModalDescriptor;
   playHud: PlayHudInfo | null;
+  clubhouseMenu: boolean;
   buildPanel: boolean;
   staffPanel: boolean;
   reportsPanel: boolean;
@@ -123,6 +124,7 @@ export const useUI = create<UIStore>((set) => ({
   destinationRelease: [],
   modal: null,
   playHud: null,
+  clubhouseMenu: false,
   buildPanel: false,
   staffPanel: false,
   reportsPanel: false,
@@ -139,7 +141,13 @@ export const useUI = create<UIStore>((set) => ({
   portfolioVersion: 0,
   portfolioStatus: 'idle',
 
-  set: (patch) => set(patch),
+  set: (patch) => set(() => {
+    const surfaceKeys = ['clubhouseMenu', 'buildPanel', 'staffPanel', 'reportsPanel', 'regularsPanel', 'scorecardsPanel', 'onlinePanel', 'proPanel'] as const;
+    const opened = surfaceKeys.find((key) => patch[key] === true);
+    if (!opened) return patch;
+    const closed = Object.fromEntries(surfaceKeys.map((key) => [key, false])) as Pick<UIStore, typeof surfaceKeys[number]>;
+    return { ...closed, ...patch, [opened]: true };
+  }),
   pushTicker: (name, txt, cls, character) =>
     set((st) => {
       const item: TickerItem = { id: ++tickerSeq, name, txt, cls, character };

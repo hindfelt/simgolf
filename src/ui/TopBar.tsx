@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useUI } from './store';
 import { setFee, setSpeed, setMuted, setCourseName } from '../game/engine';
 import { rotateView } from '../game/camera';
@@ -19,14 +19,19 @@ function ControlButton({ label, icon, active = false, disabled = false, onClick 
   );
 }
 
-export default function TopBar() {
-  const menuRef = useRef<HTMLDetailsElement>(null);
-  const courseName = useUI((s) => s.courseName);
-  const cash = useUI((s) => s.cash);
-  const rep = useUI((s) => s.rep);
-  const fee = useUI((s) => s.fee);
-  const golfers = useUI((s) => s.golfers);
-  const holes = useUI((s) => s.holes);
+function MenuCommand({ label, icon, active = false, disabled = false, onClick }: { label: string; icon: IconName; active?: boolean; disabled?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={'fieldMenuCommand' + (active ? ' active' : '')} role="menuitem" disabled={disabled} onClick={onClick}>
+      <span className="menuBullet" aria-hidden="true" />
+      <Icon name={icon} size={14} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+export function FieldControls() {
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const clubhouseMenu = useUI((s) => s.clubhouseMenu);
   const speed = useUI((s) => s.speed);
   const muted = useUI((s) => s.muted);
   const mode = useUI((s) => s.mode);
@@ -36,17 +41,92 @@ export default function TopBar() {
   const scorecardsPanel = useUI((s) => s.scorecardsPanel);
   const onlinePanel = useUI((s) => s.onlinePanel);
   const proPanel = useUI((s) => s.proPanel);
+  const setStore = useUI((s) => s.set);
+  const fromMenu = (action: () => void) => {
+    setStore({ clubhouseMenu: false });
+    action();
+  };
+
+  useEffect(() => {
+    if (!clubhouseMenu) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setStore({ clubhouseMenu: false });
+      window.setTimeout(() => launcherRef.current?.focus(), 0);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [clubhouseMenu, setStore]);
+
+  return (
+    <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} data-ui="simulation-controls" aria-label="Simulation controls">
+      <svg className="fieldControlSkin" viewBox="0 0 280 166" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="simGolfFanFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#d8d5ff" />
+            <stop offset="0.16" stopColor="#bdbaf1" />
+            <stop offset="0.72" stopColor="#918ed2" />
+            <stop offset="1" stopColor="#6667b1" />
+          </linearGradient>
+        </defs>
+        <path className="fieldControlSkinShadow" d="M-5 52 C34 25 80 16 119 31 C155 45 174 91 213 104 C244 114 260 84 266 46 C270 20 274 6 284 -5 L284 171 L-5 171 Z" />
+        <path className="fieldControlSkinBody" d="M-5 46 C35 20 79 12 117 27 C154 41 173 87 212 100 C241 110 256 81 262 43 C266 18 271 4 284 -8 L284 168 L-5 168 Z" />
+        <path className="fieldControlSkinHighlight" d="M0 47 C37 24 79 18 113 31 C149 45 169 89 207 101" />
+        <path className="fieldControlSkinLowlight" d="M0 146 C76 140 151 146 220 151 C245 153 265 145 280 132 L280 166 L0 166 Z" />
+      </svg>
+
+      <div className={'fieldMenu' + (clubhouseMenu ? ' open' : '')}>
+        <button
+          ref={launcherRef}
+          type="button"
+          className={'orb clubhouseLauncher' + (clubhouseMenu ? ' on' : '')}
+          aria-label={clubhouseMenu ? 'Close clubhouse menu' : 'Open clubhouse menu'}
+          aria-expanded={clubhouseMenu}
+          aria-controls="clubhouse-command-list"
+          title="Clubhouse menu"
+          onClick={() => setStore({ clubhouseMenu: !clubhouseMenu })}
+        >
+          <Icon name="resort" size={22} />
+        </button>
+        <span className="controlLegend" aria-hidden="true">Clubhouse</span>
+        {clubhouseMenu && (
+          <div className="fieldMenuCard" id="clubhouse-command-list" role="menu" aria-label="Clubhouse commands">
+            <MenuCommand label={muted ? 'Turn Sound On' : 'Turn Sound Off'} icon={muted ? 'mute' : 'volume'} active={muted} onClick={() => fromMenu(() => { setMuted(!muted); ensureAudio(); })} />
+            <MenuCommand label="Rotate View Left" icon="rotateLeft" onClick={() => fromMenu(() => rotateView(-1))} />
+            <MenuCommand label="Rotate View Right" icon="rotateRight" onClick={() => fromMenu(() => rotateView(1))} />
+            <MenuCommand label="Manage Staff" icon="staff" active={staffPanel} disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ staffPanel: !staffPanel }))} />
+            <MenuCommand label="Course Report" icon="report" active={reportsPanel} onClick={() => fromMenu(() => setStore({ reportsPanel: !reportsPanel }))} />
+            <MenuCommand label="Regular Golfers" icon="regulars" active={regularsPanel} onClick={() => fromMenu(() => setStore({ regularsPanel: !regularsPanel }))} />
+            <MenuCommand label="Player Scorecards" icon="scorecard" active={scorecardsPanel} onClick={() => fromMenu(() => setStore({ scorecardsPanel: !scorecardsPanel }))} />
+            <MenuCommand label="Resident Pro & Championships" icon="trophy" active={proPanel} disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ proPanel: !proPanel }))} />
+            <MenuCommand label="World Screen" icon="land" disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ modal: { kind: 'newCourse' } }))} />
+            <MenuCommand label="Clubhouse Online" icon="account" active={onlinePanel} onClick={() => fromMenu(() => setStore({ onlinePanel: !onlinePanel }))} />
+            <MenuCommand label="Save or Load Game" icon="save" onClick={() => fromMenu(() => setStore({ modal: { kind: 'saves' } }))} />
+            <MenuCommand label="Help" icon="help" onClick={() => fromMenu(() => setStore({ modal: { kind: 'help' } }))} />
+          </div>
+        )}
+      </div>
+      <ControlButton label="Pause simulation" icon="pause" active={speed === 0} disabled={mode === 'play' || clubhouseMenu} onClick={() => setSpeed(0)} />
+      <ControlButton label="Normal simulation speed" icon="play" active={speed === 1} disabled={clubhouseMenu} onClick={() => setSpeed(1)} />
+      <ControlButton label="Fast simulation speed" icon="fast" active={speed === 3} disabled={clubhouseMenu} onClick={() => setSpeed(3)} />
+    </div>
+  );
+}
+
+export default function TopBar() {
+  const courseName = useUI((s) => s.courseName);
+  const cash = useUI((s) => s.cash);
+  const rep = useUI((s) => s.rep);
+  const fee = useUI((s) => s.fee);
+  const golfers = useUI((s) => s.golfers);
+  const holes = useUI((s) => s.holes);
   const sandbox = useUI((s) => s.sandbox);
   const difficulty = useUI((s) => s.difficulty);
   const themePackId = useUI((s) => s.themePackId);
   const propertyId = useUI((s) => s.propertyId);
   const portfolioStatus = useUI((s) => s.portfolioStatus);
   const simTick = useUI((s) => s.simTick);
-  const setStore = useUI((s) => s.set);
-  const fromMenu = (action: () => void) => {
-    action();
-    if (menuRef.current) menuRef.current.open = false;
-  };
 
   const full = Math.round(clamp(rep, 0, 5));
   const stars = '★'.repeat(full) + '☆'.repeat(5 - full);
@@ -102,46 +182,6 @@ export default function TopBar() {
         </div>
       </div>
 
-      <div className={'orbCluster fieldControls' + (mode === 'play' ? ' playControls' : '')} data-ui="simulation-controls" aria-label="Simulation controls">
-        <svg className="fieldControlSkin" viewBox="0 0 220 104" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <defs>
-            <linearGradient id="simGolfFanFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#d8d5ff" />
-              <stop offset="0.16" stopColor="#bdbaf1" />
-              <stop offset="0.72" stopColor="#918ed2" />
-              <stop offset="1" stopColor="#6667b1" />
-            </linearGradient>
-          </defs>
-          <path className="fieldControlSkinShadow" d="M-4 28 C26 14 61 9 91 18 C124 28 132 59 166 68 C190 74 202 62 208 39 C212 22 213 8 224 -3 L224 108 L-4 108 Z" />
-          <path className="fieldControlSkinBody" d="M-4 24 C26 10 61 5 91 14 C124 24 132 55 166 64 C190 70 202 58 208 35 C212 18 213 5 224 -6 L224 106 L-4 106 Z" />
-          <path className="fieldControlSkinHighlight" d="M0 25 C29 13 60 9 88 17 C120 26 132 56 163 65" />
-          <path className="fieldControlSkinLowlight" d="M0 94 C63 90 123 93 180 96 C197 97 210 94 220 87 L220 104 L0 104 Z" />
-        </svg>
-        <details className="fieldMenu" ref={menuRef}>
-          <summary className="orb" aria-label="Open clubhouse menu" title="Clubhouse menu"><Icon name="resort" size={27} /></summary>
-          <span className="controlLegend" aria-hidden="true">Clubhouse</span>
-          <div className="fieldMenuCard" aria-label="Course management controls">
-            <div className="fieldMenuHead"><span>Clubhouse</span><small>Course operations</small></div>
-            <div className="fieldMenuGrid">
-              <ControlButton label={muted ? 'Turn sound on' : 'Mute sound'} icon={muted ? 'mute' : 'volume'} active={muted} onClick={() => fromMenu(() => { setMuted(!muted); ensureAudio(); })} />
-              <ControlButton label="Rotate view left" icon="rotateLeft" onClick={() => fromMenu(() => rotateView(-1))} />
-              <ControlButton label="Rotate view right" icon="rotateRight" onClick={() => fromMenu(() => rotateView(1))} />
-              <ControlButton label="Manage staff" icon="staff" active={staffPanel} disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ staffPanel: !staffPanel, buildPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
-              <ControlButton label="Open course report" icon="report" active={reportsPanel} onClick={() => fromMenu(() => setStore({ reportsPanel: !reportsPanel, buildPanel: false, staffPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
-              <ControlButton label="View regulars roster" icon="regulars" active={regularsPanel} onClick={() => fromMenu(() => setStore({ regularsPanel: !regularsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
-              <ControlButton label="Open player scorecards" icon="scorecard" active={scorecardsPanel} onClick={() => fromMenu(() => setStore({ scorecardsPanel: !scorecardsPanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, onlinePanel: false, proPanel: false }))} />
-              <ControlButton label="Resident pro and Championship Mode" icon="trophy" active={proPanel} disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ proPanel: !proPanel, onlinePanel: false, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false }))} />
-              <ControlButton label="World Screen and resort portfolio" icon="land" disabled={mode === 'play'} onClick={() => fromMenu(() => setStore({ modal: { kind: 'newCourse' }, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false }))} />
-              <ControlButton label="Account, cloud saves, and competitions" icon="account" active={onlinePanel} onClick={() => fromMenu(() => setStore({ onlinePanel: !onlinePanel, buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, proPanel: false }))} />
-              <ControlButton label="Save, load, or export courses" icon="save" onClick={() => fromMenu(() => setStore({ modal: { kind: 'saves' } }))} />
-              <ControlButton label="Open help" icon="help" onClick={() => fromMenu(() => setStore({ modal: { kind: 'help' } }))} />
-            </div>
-          </div>
-        </details>
-        <ControlButton label="Pause simulation" icon="pause" active={speed === 0} disabled={mode === 'play'} onClick={() => setSpeed(0)} />
-        <ControlButton label="Normal simulation speed" icon="play" active={speed === 1} onClick={() => setSpeed(1)} />
-        <ControlButton label="Fast simulation speed" icon="fast" active={speed === 3} onClick={() => setSpeed(3)} />
-      </div>
     </>
   );
 }

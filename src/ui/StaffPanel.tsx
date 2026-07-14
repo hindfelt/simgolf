@@ -33,7 +33,7 @@ export default function StaffPanel() {
   const locked = !skilledUnlocked();
 
   return (
-    <section className="buildPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="staff-title" tabIndex={-1}>
+    <section className="buildPanel managementPanel staffPanel" ref={panelRef} role="dialog" aria-modal="false" aria-labelledby="staff-title" tabIndex={-1}>
       <div className="bpHead">
         <b id="staff-title">Staff</b>
         <span>

@@ -1518,6 +1518,527 @@ body,
   .playClubLine button { min-height: 15px; }
 }
 
+/* --- original controller shell v2 ---------------------------------------- */
+/* One fixed parent now owns the fan, mode medallions, tool rail, and resort
+   palette. This removes the cross-stacking-context collisions of the former
+   independently fixed controls. */
+:root {
+  --sg-bottom: 108px;
+  --sg-fan-height: 166px;
+  --sg-controller-visible-height: 166px;
+  --sg-control-width: 218px;
+  --sg-fan-width: 280px;
+  --sg-controller-scale: 1;
+}
+
+.controllerShell {
+  position: fixed;
+  z-index: 27;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--sg-fan-height);
+  overflow: visible;
+  pointer-events: none;
+  transform: scale(var(--sg-controller-scale));
+  transform-origin: left bottom;
+}
+
+.controllerShell > * { pointer-events: auto; }
+
+.controllerShell .fieldControls {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: auto;
+  width: var(--sg-fan-width);
+  height: var(--sg-fan-height);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.controllerShell .fieldControlSkin {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 -4px 0 var(--sg-rim)) drop-shadow(4px -1px 0 var(--sg-rim-dark)) drop-shadow(8px -9px 13px rgba(0,0,0,.3));
+  pointer-events: none;
+}
+
+.controllerShell .fieldControls .fieldMenu {
+  position: absolute;
+  z-index: 8;
+  left: 14px;
+  top: 108px;
+  pointer-events: auto;
+}
+
+.controllerShell .clubhouseLauncher,
+.controllerShell .fieldControls .fieldMenu > .orb {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 3px solid var(--sg-rim);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 24%, #faf9ff 0 10%, #c8c5f1 38%, #8386cd 70%, #5b60ae);
+  color: #27327b;
+  box-shadow: inset 2px 2px rgba(255,255,255,.72), inset -3px -4px rgba(37,45,126,.18), 0 3px 0 #151c61, 0 5px 7px rgba(0,0,0,.25);
+}
+
+.controllerShell .clubhouseLauncher.on {
+  border-color: #3d3d7d;
+  background: radial-gradient(circle at 34% 25%, var(--sg-yellow-hi), var(--sg-yellow) 58%, #bd9200);
+  box-shadow: 0 0 0 3px #fff452, 0 4px 0 #303167;
+}
+
+.controllerShell .fieldMenuCard {
+  position: absolute;
+  left: 58px;
+  bottom: 13px;
+  width: 296px;
+  max-height: min(270px, calc(100dvh - var(--sg-controller-visible-height) + 112px));
+  display: grid;
+  gap: 0;
+  padding: 7px 8px 8px;
+  overflow-y: auto;
+  border: 3px solid #2e388c;
+  border-radius: 4px 8px 6px 5px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.18), transparent 12%, transparent 88%, rgba(46,43,127,.14)),
+    linear-gradient(180deg, #cfccf8 0 5px, #aaa7e9 5px 84%, #8583c9 100%);
+  box-shadow: inset 2px 2px rgba(255,255,255,.52), 0 4px 0 #171d60, 0 12px 25px rgba(0,0,0,.34);
+}
+
+.fieldMenuCommand {
+  position: relative;
+  width: 100%;
+  min-height: 20px;
+  display: grid;
+  grid-template-columns: 13px 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #187b83;
+  font-family: var(--sg-font);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: left;
+  text-shadow: 1px 1px rgba(255,255,255,.42);
+}
+.fieldMenuCommand:hover,
+.fieldMenuCommand:focus-visible { background: rgba(255,255,255,.28); color: #164d7d; outline: 2px solid rgba(255,244,73,.86); outline-offset: -1px; }
+.fieldMenuCommand.active { color: #26347f; }
+.fieldMenuCommand:disabled { color: #666d99; filter: grayscale(.7); opacity: .62; }
+.fieldMenuCommand .menuBullet {
+  width: 11px;
+  height: 11px;
+  border: 1px solid #5c4b08;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #fff47e 0 10%, #d7b100 48%, #776000 100%);
+  box-shadow: 0 1px 0 #26224d;
+}
+
+.controllerShell .fieldControls > .orb {
+  position: absolute;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 3px solid var(--sg-rim);
+  border-radius: 50%;
+  background: radial-gradient(circle at 33% 24%, #faf9ff 0 10%, #c8c5f1 34%, #918fce 67%, #686ab1);
+  color: #27327b;
+  box-shadow: inset 2px 2px rgba(255,255,255,.72), inset -3px -4px rgba(37,45,126,.18), 0 3px 0 #151c61;
+  pointer-events: auto;
+}
+.controllerShell .fieldControls > .orb:nth-of-type(1) { left: 58px; top: 126px; }
+.controllerShell .fieldControls > .orb:nth-of-type(2) { left: 116px; top: 128px; }
+.controllerShell .fieldControls > .orb:nth-of-type(3) { left: 174px; top: 130px; }
+.controllerShell .fieldControls > .orb.on {
+  border-color: #3e3b79;
+  background: radial-gradient(circle at 33% 24%, var(--sg-yellow-hi), var(--sg-yellow) 52%, #c59e05 82%);
+  box-shadow: 0 0 0 2px #fff84d, 0 4px 0 #38316d, inset 2px 2px rgba(255,255,255,.72);
+}
+
+.controllerShell .toolDock {
+  position: absolute;
+  left: var(--sg-control-width);
+  right: 0;
+  bottom: 0;
+  z-index: auto;
+  height: var(--sg-bottom);
+  min-height: var(--sg-bottom);
+  overflow: visible;
+  border: 0;
+  border-top: 4px solid var(--sg-shell-hi);
+  border-left: 3px solid var(--sg-rim);
+  border-radius: 28px 0 0 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.5) 0 3px, transparent 3px),
+    linear-gradient(180deg, #b9b7ef 0 10%, var(--sg-shell) 10% 73%, #817fc6 73% 91%, #6463aa 91% 100%);
+  box-shadow: inset 0 -8px 0 rgba(43,48,137,.22), inset 3px 3px rgba(255,255,255,.28), 0 -4px 0 var(--sg-rim), 0 -10px 22px rgba(0,0,0,.23);
+}
+
+.controllerShell .toolDock::before {
+  left: 68px;
+  top: 8px;
+  bottom: 7px;
+  width: 3px;
+  display: block;
+}
+
+.controllerShell .toolGroups {
+  position: absolute;
+  z-index: 4;
+  left: calc(-1 * var(--sg-control-width));
+  top: -58px;
+  width: var(--sg-fan-width);
+  height: var(--sg-fan-height);
+  min-height: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
+}
+
+.controllerShell .toolGroup,
+.controllerShell .toolGroup[data-group-id] {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border: 3px solid var(--sg-rim);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 24%, #f7f6ff, #c6c3ef 39%, #898bcc 72%, #6367b2);
+  color: #27347f;
+  box-shadow: inset 2px 2px rgba(255,255,255,.7), 0 3px 0 #1f276f;
+  pointer-events: auto;
+}
+.controllerShell .toolGroup[data-group-id='course'] { left: 7px; top: 4px; width: 74px; height: 74px; min-width: 74px; min-height: 74px; border-width: 4px; }
+.controllerShell .toolGroup[data-group-id='resort'] { left: 87px; top: 34px; width: 66px; height: 66px; min-width: 66px; min-height: 66px; }
+.controllerShell .toolGroup[data-group-id='people'] { left: 157px; top: 49px; width: 60px; height: 60px; min-width: 60px; min-height: 60px; }
+.controllerShell .toolGroup[data-group-id='play'] { left: 230px; top: 79px; width: 50px; height: 50px; min-width: 50px; min-height: 50px; }
+.controllerShell .toolGroup[data-group-id='terrain'] { left: 230px; top: 19px; width: 46px; height: 46px; min-width: 46px; min-height: 46px; }
+.controllerShell .toolGroup[data-group-id='course'] .gameIcon { width: 36px; height: 36px; }
+.controllerShell .toolGroup[data-group-id='resort'] .gameIcon { width: 31px; height: 31px; }
+.controllerShell .toolGroup[data-group-id='people'] .gameIcon { width: 28px; height: 28px; }
+.controllerShell .toolGroup[data-group-id='play'] .gameIcon { width: 25px; height: 25px; }
+.controllerShell .toolGroup[data-group-id='terrain'] .gameIcon { width: 22px; height: 22px; }
+.controllerShell .toolGroup.active,
+.controllerShell .toolGroup.familyActive {
+  border-color: #474077;
+  background: radial-gradient(circle at 34% 24%, var(--sg-yellow-hi), var(--sg-yellow) 55%, #c19a04);
+  box-shadow: 0 0 0 3px #fff446, 0 4px 0 #34316e, inset 2px 2px rgba(255,255,255,.72);
+}
+
+.controllerShell .toolbar,
+.controllerShell .toolDock[data-group='terrain'] .toolbar {
+  position: absolute;
+  top: 4px;
+  left: 73px;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 0;
+  padding: 3px 10px calc(3px + env(safe-area-inset-bottom)) 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47,52,135,.72) transparent;
+}
+
+.controllerShell .toolDock[data-group='terrain'] .tool,
+.controllerShell .tool {
+  flex: 0 0 82px;
+  width: 82px;
+  height: 101px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 65px 16px 13px;
+  justify-items: center;
+  align-items: center;
+  gap: 0;
+  padding: 1px 2px;
+  overflow: visible;
+  border: 0;
+  border-radius: 12px 12px 6px 6px;
+  background: transparent;
+  color: #fff;
+}
+.controllerShell .tool:hover { background: rgba(255,255,255,.1); }
+.controllerShell .tool.active { background: linear-gradient(180deg, rgba(255,248,82,.08), rgba(40,45,129,.2)); }
+.controllerShell .toolGraphic,
+.controllerShell .toolDock[data-group='terrain'] .toolGraphic {
+  width: 78px;
+  height: 63px;
+  flex-basis: 63px;
+  grid-row: auto;
+  filter: drop-shadow(0 4px 2px rgba(19,24,80,.42));
+}
+.controllerShell .tool .nm,
+.controllerShell .toolDock[data-group='terrain'] .tool .nm {
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--sg-font);
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #29337e;
+}
+.controllerShell .tool .ct,
+.controllerShell .toolDock[data-group='terrain'] .tool .ct {
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  color: #f7f4ff;
+  font-family: var(--sg-small);
+  font-size: 7px;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 1px 1px #29337e;
+}
+.controllerShell .tool.active .nm { color: #fff945; }
+
+.dockStatus {
+  min-width: min(430px, calc(100vw - 330px));
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 2px 10px;
+  margin: 0 8px;
+  padding: 8px 12px;
+  border: 3px solid var(--sg-rim);
+  border-radius: 12px 34px 34px 12px;
+  background: linear-gradient(180deg, #d9d6fa, #aaa7e9 75%, #8583c9);
+  color: #28357f;
+  box-shadow: inset 2px 2px rgba(255,255,255,.54), 0 4px 0 #252d78;
+}
+.dockStatus b { font-family: var(--sg-font); font-size: 12px; }
+.dockStatus span { overflow: hidden; color: #515c9f; font-family: var(--sg-small); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.dockStatus button { grid-column: 2; grid-row: 1 / span 2; min-height: 38px; padding: 4px 12px; border: 2px solid #303a84; border-radius: 20px; background: linear-gradient(180deg, var(--sg-yellow-hi), var(--sg-yellow)); color: #30346e; font-family: var(--sg-font); font-size: 9px; }
+
+.controllerShell .facilitySurfaceOpen .toolbar { opacity: 0; pointer-events: none; }
+
+.controllerShell .fieldDeskPanel.catalogMode {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--sg-control-width) + 70px);
+  right: 7px;
+  bottom: 0;
+  width: auto;
+  height: var(--sg-bottom);
+  max-width: none;
+  max-height: none;
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr) 226px;
+  grid-template-rows: 29px minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 3px 5px 4px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #2c3989;
+}
+.controllerShell .catalogMode .bpHead {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 27px;
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0 3px;
+}
+.controllerShell .catalogMode .bpHead b { overflow: hidden; color: #29378b; font-family: var(--sg-font); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.controllerShell .catalogMode .bpHead > span:not(.deskSeal) { display: none; }
+.controllerShell .catalogMode .deskSeal { width: 23px; height: 23px; border: 2px solid #3b438b; background: radial-gradient(circle at 35% 25%, var(--sg-yellow-hi), var(--sg-yellow) 58%, #bd9500); color: #30336d; }
+.controllerShell .catalogMode .bpClose { width: 23px; height: 23px; border: 2px solid #3f478f; background: radial-gradient(circle at 34% 24%, #fff, #c6c4ef 55%, #8286ca); color: #28347c; }
+.controllerShell .catalogMode .facilityTabs {
+  grid-column: 3;
+  grid-row: 1;
+  width: 226px;
+  height: 26px;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid #6670b6;
+  border-radius: 14px;
+  background: rgba(45,55,143,.13);
+}
+.controllerShell .catalogMode .facilityTabs button { min-height: 20px; padding: 1px 6px; border-radius: 11px; color: #34418f; font-size: 7px; }
+.controllerShell .catalogMode .facilityTabs button.active { border-color: #49447f; background: linear-gradient(180deg, var(--sg-yellow-hi), var(--sg-yellow)); color: #30336b; }
+.controllerShell .catalogMode .facilityCatalog { display: contents; }
+.controllerShell .catalogMode .catalogFilters {
+  position: absolute;
+  top: 4px;
+  left: 178px;
+  right: 236px;
+  height: 25px;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  border: 0;
+  background: transparent;
+}
+.controllerShell .catalogMode .catalogFilters button { flex: 0 0 auto; min-width: 54px; min-height: 23px; padding: 2px 5px; border: 1px solid rgba(75,84,157,.42); border-radius: 12px; background: rgba(255,255,255,.12); color: #48569a; font-size: 6px; }
+.controllerShell .catalogMode .catalogFilters button.active { border-color: #4c467f; background: linear-gradient(180deg, var(--sg-yellow-hi), var(--sg-yellow)); color: #30336b; }
+.controllerShell .catalogMode .facilityCatalogGrid {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: 74px;
+  display: flex;
+  gap: 4px;
+  padding: 1px 3px 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #5961ad transparent;
+}
+.controllerShell .catalogMode .catalogCard {
+  flex: 0 0 126px;
+  width: 126px;
+  min-height: 70px;
+  height: 70px;
+  display: grid;
+  grid-template-rows: 45px 18px;
+  gap: 1px;
+  padding: 3px;
+  overflow: hidden;
+  border: 2px solid #343c82;
+  border-radius: 6px 8px 5px 7px;
+  background: linear-gradient(180deg, #fff8dc, #e2d6ae);
+  box-shadow: 0 2px 0 #20265e;
+}
+.controllerShell .catalogMode .bpCardHead { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 4px; min-height: 0; }
+.controllerShell .catalogMode .bpPreview { height: 43px; }
+.controllerShell .catalogMode .bpIdentity b { display: block; color: #26372c; font-size: 8px; line-height: 1.05; }
+.controllerShell .catalogMode .bpIdentity small { color: #61705c; font-size: 5.5px; }
+.controllerShell .catalogMode .catalogCard .bpBlurb,
+.controllerShell .catalogMode .bpAvailability { display: none; }
+.controllerShell .catalogMode .bpMeta { align-self: end; min-width: 0; }
+.controllerShell .catalogMode .bpMeta strong { color: #695015; font-size: 7px; }
+.controllerShell .catalogMode .bpMeta span { padding: 1px 3px; font-size: 6px; }
+
+.controllerShell .fieldDeskPanel.manageMode {
+  position: absolute;
+  z-index: 7;
+  left: calc(var(--sg-control-width) + 70px);
+  right: 8px;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  max-height: min(320px, calc(100dvh - 8px));
+  margin: 0;
+  overflow: auto;
+}
+
+body:has(.controllerShell[data-surface='clubhouse']) .ticker,
+body:has(.controllerShell[data-surface='facilities']) .ticker,
+body:has(.controllerShell[data-surface='management']) .ticker { opacity: 0; pointer-events: none; }
+.ticker { bottom: calc(var(--sg-controller-visible-height) + 8px); }
+.managementPanel { bottom: calc(var(--sg-controller-visible-height) + 12px); }
+
+.controllerShell[data-surface='clubhouse'] .toolDock,
+.controllerShell[data-surface='clubhouse'] .fieldControls > .orb { pointer-events: none; }
+.controllerShell[data-surface='clubhouse'] .fieldMenu { pointer-events: auto; }
+
+@media (max-width: 1000px) {
+  .controllerShell .catalogMode .catalogFilters { display: none; }
+  .controllerShell .fieldDeskPanel.catalogMode { grid-template-columns: minmax(0, 1fr) 226px; }
+  .controllerShell .catalogMode .bpHead { grid-column: 1; }
+  .controllerShell .catalogMode .facilityTabs { grid-column: 2; }
+}
+
+@media (max-height: 520px) {
+  :root {
+    --sg-controller-scale: .72;
+    --sg-controller-visible-height: 120px;
+  }
+  .controllerShell { right: auto; width: 138.889%; }
+  .controllerShell .fieldMenuCard { max-height: 260px; }
+  .managementPanel { max-height: calc(100dvh - var(--sg-controller-visible-height) - 22px); }
+}
+
+@media (max-width: 620px) and (min-height: 521px) {
+  :root {
+    --sg-controller-scale: .8;
+    --sg-controller-visible-height: 133px;
+  }
+  .controllerShell { right: auto; width: 125%; }
+}
+
+@media (max-width: 420px) and (max-height: 520px) {
+  :root {
+    --sg-controller-scale: .66;
+    --sg-controller-visible-height: 110px;
+  }
+  .controllerShell { width: 151.516%; }
+}
+
+@media (pointer: coarse) {
+  .controllerShell .fieldControls > .orb::after,
+  .controllerShell .clubhouseLauncher::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+  }
+  .controllerShell .toolGroup[data-group-id='terrain']::after,
+  .controllerShell .toolGroup[data-group-id='play']::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+  }
+}
+
+@media (pointer: coarse) and (max-height: 520px) {
+  :root {
+    --sg-controller-scale: .82;
+    --sg-controller-visible-height: 136px;
+  }
+  .controllerShell { width: 121.952%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tool:hover .toolGraphic,
   .playShotPalette .shapeBtn:hover,
