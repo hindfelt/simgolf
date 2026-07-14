@@ -46,8 +46,9 @@ describe('original People inspector presentation', () => {
     const drawGolfer = render.slice(render.indexOf('function drawGolfer('), render.indexOf('function drawAvatar('));
     expect(drawGolfer).toContain('const selected = S.selectedGolfer === g');
     expect(drawGolfer.indexOf("ctx.strokeStyle = '#fff132'")).toBeLessThan(drawGolfer.indexOf('drawGolferSprite('));
-    expect(drawGolfer).toContain('if (selected ||');
-    expect(drawGolfer).toContain('selected || !!g.specialGuest');
+    expect(drawGolfer).toContain("shouldShowActorName({ actor: 'golfer'");
+    expect(drawGolfer).toContain('selected, special: !!g.specialGuest');
+    expect(drawGolfer).toContain('selected || !!g.specialGuest);');
   });
 
   it('keeps the inspector in the visible course area above the original control fan', () => {
