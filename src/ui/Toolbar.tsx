@@ -239,6 +239,7 @@ export default function Toolbar() {
               >
                 <ToolGraphic item={item} active={active} />
                 <span className="nm">{label}</span>
+                {item.ct && <span className="ct" aria-hidden="true">{item.ct}</span>}
               </button>
             );
           })}
