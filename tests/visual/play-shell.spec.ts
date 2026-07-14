@@ -50,6 +50,8 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   expect(intersects(palette, conditions)).toBe(false);
   expect(intersects(status, skills)).toBe(false);
   expect(intersects(skills, caddie)).toBe(false);
+  await expect(page.locator('.fieldControls')).toBeHidden();
+  await expect(page.locator('.playModeDock')).toBeHidden();
 
   await page.addStyleTag({ content: `
     canvas.game { visibility: hidden !important; }
@@ -97,6 +99,8 @@ test.describe('wide native shell', () => {
 
   test('uses the full slab and keeps the event card outside course-safe space', async ({ page }) => {
     await enterSandboxRound(page);
+    await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(5);
+    await expect(page.locator('.playMessage')).toBeHidden();
     const panes = await page.locator('.playConsolePanes').boundingBox() as Box;
     const caddie = await page.locator('.playCaddieBook').boundingBox() as Box;
     expect(panes).toMatchObject({ x: 350, width: 1234, height: 72 });
@@ -113,5 +117,13 @@ test.describe('wide native shell', () => {
     expect(competition.y).toBeGreaterThanOrEqual(716 - 166 - 12);
     expect(bottom(competition)).toBeLessThanOrEqual(palette.y);
     await expect(page.locator('.playMessage')).toBeHidden();
+
+    await page.locator('.ticker').evaluate((ticker) => {
+      const stalePortrait = document.createElement('article');
+      stalePortrait.className = 'simFotoTicker';
+      stalePortrait.textContent = 'Stale portrait chatter';
+      ticker.append(stalePortrait);
+    });
+    await expect(page.locator('.simFotoTicker')).toBeHidden();
   });
 });

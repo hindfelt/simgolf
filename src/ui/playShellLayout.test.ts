@@ -56,6 +56,10 @@ describe('original play shell responsive geometry', () => {
     expect(shell).toMatch(/body:has\(\.controllerShell\[data-mode='play'\]\) \.routingMap\s*\{\s*display: none;/);
   });
 
+  it('keeps portrait chatter out of the aiming area even if stale DOM injects it', () => {
+    expect(shell).toMatch(/body:has\(\.controllerShell\[data-mode='play'\]\) \.simFotoTicker\s*\{\s*display: none !important;/);
+  });
+
   it('keeps the visible club row native-size instead of letting legacy coarse targets clip it', () => {
     expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn\s*\{[^}]*height: 15px;[^}]*min-height: 15px;/s);
     expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn::after\s*\{[^}]*inset: -7px 0;/s);
