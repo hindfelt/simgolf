@@ -6,6 +6,8 @@ import type { Vec } from './types';
 /** Clears the full three-gauge desktop stack (ends at y=111) plus breathing room. */
 export const COURSE_SAFE_TOP = 116;
 export const CONTROLLER_VISIBLE_HEIGHT = 166;
+export const COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT = 136;
+export const COMPACT_PLAY_MAX_VIEWPORT_HEIGHT = 520;
 export const COURSE_SAFE_GAP = 12;
 const COURSE_SAFE_SIDE = 10;
 
@@ -20,13 +22,21 @@ export interface CourseSafeViewport {
   centerY: number;
 }
 
+/** Mirrors the short-landscape play shell without asking render code to read CSS. */
+export function controllerVisibleHeightForViewport(viewportHeight: number, manualPlay = Boolean(S.player)): number {
+  const height = Number.isFinite(viewportHeight) ? viewportHeight : 1;
+  return manualPlay && height <= COMPACT_PLAY_MAX_VIEWPORT_HEIGHT
+    ? COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT
+    : CONTROLLER_VISIBLE_HEIGHT;
+}
+
 /** Unobscured course rectangle shared by fitting, follow, rotation, and glide. */
-export function courseSafeViewport(cw: number, ch: number): CourseSafeViewport {
+export function courseSafeViewport(cw: number, ch: number, manualPlay = Boolean(S.player)): CourseSafeViewport {
   const width = Math.max(1, Number.isFinite(cw) ? cw : 1);
   const height = Math.max(1, Number.isFinite(ch) ? ch : 1);
   const left = Math.min(COURSE_SAFE_SIDE, Math.max(0, width - 1));
   const right = Math.max(left + 1, width - COURSE_SAFE_SIDE);
-  const desiredBottom = height - CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP;
+  const desiredBottom = height - controllerVisibleHeightForViewport(height, manualPlay) - COURSE_SAFE_GAP;
   const top = Math.min(COURSE_SAFE_TOP, Math.max(0, desiredBottom - 1));
   const bottom = Math.max(top + 1, desiredBottom);
   return {

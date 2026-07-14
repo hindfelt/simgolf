@@ -56,8 +56,33 @@ describe('original play shell responsive geometry', () => {
     expect(shell).toMatch(/body:has\(\.controllerShell\[data-mode='play'\]\) \.routingMap\s*\{\s*display: none;/);
   });
 
-  it('provides real non-overlapping 44px coarse club and shape targets', () => {
-    expect(shell).toMatch(/@media \(pointer: coarse\) and \(max-width: 862px\)[\s\S]*?\.playClubLine button\s*\{[^}]*width: 44px;[^}]*min-width: 44px;[^}]*height: 44px;[^}]*min-height: 44px;/s);
-    expect(shell).toMatch(/@media \(pointer: coarse\)[\s\S]*?\.playShotPalette \.shapeBtn \{ min-height: 44px; \}/);
+  it('keeps the visible club row native-size instead of letting legacy coarse targets clip it', () => {
+    expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn\s*\{[^}]*height: 15px;[^}]*min-height: 15px;/s);
+    expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn::after\s*\{[^}]*inset: -7px 0;/s);
+  });
+
+  it('recomposes short landscape play without scaling text or clipping the caddie pane', () => {
+    const shortMarker = shell.indexOf('/* Short landscape windows');
+    const shortStart = shell.indexOf('@media (max-height: 520px)', shortMarker);
+    const shortEnd = shell.indexOf('@media (max-height: 520px) and (max-width: 650px)', shortStart);
+    const short = shell.slice(shortStart, shortEnd);
+    expect(shortStart).toBeGreaterThan(-1);
+    expect(short).toContain('--sg-bottom: 92px;');
+    expect(short).toContain('--sg-controller-visible-height: 136px;');
+    expect(short).toContain('height: 136px;');
+    expect(short).toMatch(/\.fieldControls,[\s\S]*?\.playModeDock \{ display: none; \}/);
+    expect(short).toMatch(/\.playHud\s*\{[^}]*left: 0;[^}]*height: 92px;/s);
+    expect(short).toMatch(/\.playConsolePanes\s*\{[^}]*left: 59px;[^}]*right: 5px;[^}]*grid-template-columns: 190px 114px minmax\(230px, 1fr\);/s);
+    expect(short).toMatch(/\.playShotPalette\s*\{[^}]*left: calc\(50% - 166px\);[^}]*top: -40px;/s);
+
+    const viewportWidth = 796;
+    const consolePanes = { x: 59, width: viewportWidth - 59 - 5 };
+    const message = { x: 8, width: 210 };
+    const palette = { x: viewportWidth / 2 - 166, width: (51 * 6) + (5 * 5) };
+    const conditions = { x: viewportWidth - 6 - 104, width: 104 };
+    expect(right(consolePanes)).toBe(viewportWidth - 5);
+    expect(intersects(message, palette)).toBe(false);
+    expect(intersects(palette, conditions)).toBe(false);
+    expect(right(conditions)).toBe(viewportWidth - 6);
   });
 });
