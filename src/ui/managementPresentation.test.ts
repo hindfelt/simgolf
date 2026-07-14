@@ -102,17 +102,17 @@ describe('management presentation and accessibility', () => {
     expect(shell).toMatch(/\.playClubLine button:disabled\s*\{[^}]*text-decoration: line-through;[^}]*cursor: not-allowed;/s);
   });
 
-  it('keeps mobile World and Field Desk content reachable in short viewports', () => {
+  it('keeps mobile World and the embedded facility rail reachable in short viewports', () => {
     expect(css).toMatch(/@media \(max-width:760px\)[\s\S]*?\.worldMap\s*\{[^}]*max-height: 42dvh;[^}]*overflow-y: auto;/);
-    expect(css).toContain('max-height: min(238px, calc(100dvh - 164px));');
-    expect(css).toMatch(/\.fieldDeskPanel\.catalogMode\s*\{[^}]*overflow-y: auto;/s);
-    expect(css).toMatch(/\.catalogMode \.facilityCatalogGrid\s*\{[^}]*overflow-x: auto;/s);
+    expect(shell).toMatch(/\.controllerShell \.fieldDeskPanel\.catalogMode\s*\{[^}]*height: var\(--sg-bottom\);[^}]*overflow: hidden;/s);
+    expect(shell).toMatch(/\.controllerShell \.catalogMode \.facilityCatalogGrid\s*\{[^}]*overflow-x: auto;[^}]*overflow-y: hidden;/s);
+    expect(shell).toMatch(/@media \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: \.72;/);
   });
 
-  it('raises touch targets without changing desktop control density', () => {
-    expect(css).toContain('@media (pointer: coarse)');
-    expect(css).toMatch(/\.fieldControls \.orb,[\s\S]*?\.reportTabs button\s*\{[^}]*min-width: 40px;[^}]*min-height: 40px;/);
+  it('raises touch hit areas without inflating or overlapping visible fan controls', () => {
+    expect(shell).toContain('@media (pointer: coarse)');
+    expect(shell).toMatch(/\.controllerShell \.fieldControls > \.orb::after,[\s\S]*?inset: -7px;/s);
+    expect(shell).toMatch(/@media \(pointer: coarse\) and \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: \.82;/);
     expect(css).toMatch(/\.holeReorder button,[\s\S]*?\.retiredCourseRemove\s*\{[^}]*min-width: 32px;[^}]*min-height: 32px;/);
-    expect(css).toMatch(/@media \(max-width: 700px\) and \(pointer: coarse\)[\s\S]*?\.fieldControls\s*\{\s*bottom: 124px;/);
   });
 });

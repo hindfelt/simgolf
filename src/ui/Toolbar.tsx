@@ -52,11 +52,11 @@ function ToolGraphic({ item, active }: { item: ToolDef; active: boolean }) {
 }
 
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
-  { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'fair', 'green'] },
-  { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['firmfair', 'deeprough', 'sand', 'waste', 'pot', 'water', 'stream', 'brush', 'rocks', 'tree', 'flower', 'path', 'raise', 'lower', 'dozer', 'land'] },
+  { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'green', 'fair', 'firmfair', 'deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rocks', 'water', 'tree', 'flower', 'path'] },
+  { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['raise', 'lower', 'dozer', 'land'] },
   { id: 'resort', label: 'Resort', icon: 'resort', tools: [] },
   { id: 'people', label: 'People', icon: 'regulars', tools: ['inspect'] },
-  { id: 'play', label: 'Play', icon: 'play', tools: ['play'] },
+  { id: 'play', label: 'Play', icon: 'play', tools: [] },
 ];
 
 function groupForTool(tool: ToolId): GroupId {
@@ -68,6 +68,7 @@ function groupForTool(tool: ToolId): GroupId {
 export default function Toolbar() {
   const tool = useUI((s) => s.tool);
   const mode = useUI((s) => s.mode);
+  const clubhouseMenu = useUI((s) => s.clubhouseMenu);
   const buildPanel = useUI((s) => s.buildPanel);
   const hint = useUI((s) => s.hint);
   const courseTheme = useUI((s) => s.courseTheme);
@@ -83,7 +84,7 @@ export default function Toolbar() {
   if (mode === 'play') return null;
 
   return (
-    <nav className="toolDock" data-group={group} data-ui="construction-dock" aria-label="Course construction tools">
+    <nav className={'toolDock' + (buildPanel ? ' facilitySurfaceOpen' : '')} data-group={group} data-ui="construction-dock" aria-label="Course construction tools" aria-hidden={clubhouseMenu || undefined}>
       <div className="toolGroups" role="tablist" aria-label="Tool categories">
         {GROUPS.map((item) => (
           <button
@@ -94,14 +95,27 @@ export default function Toolbar() {
             data-group-id={item.id}
             title={item.label}
             key={item.id}
+            disabled={clubhouseMenu}
             onClick={() => {
+              if (item.id === 'play') {
+                setStore({ buildPanel: false, clubhouseMenu: false });
+                startRound();
+                return;
+              }
               setGroup(item.id);
-              if (item.id === 'resort') setStore({ buildPanel: !(group === 'resort' && buildPanel), staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+              if (item.id === 'resort') {
+                setTool('build');
+                setStore({ buildPanel: !(group === 'resort' && buildPanel) });
+              }
               else if (item.id === 'people') {
                 setTool('inspect');
-                setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: true, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+                setStore({ buildPanel: false, clubhouseMenu: false });
               }
-              else setStore({ buildPanel: false });
+              else {
+                setStore({ buildPanel: false, clubhouseMenu: false });
+                const groupTools = GROUPS.find((candidate) => candidate.id === item.id)!.tools;
+                if (!groupTools.includes(tool)) setTool(item.id === 'terrain' ? 'raise' : 'pan');
+              }
             }}
           >
             <Icon name={item.icon} size={16} />
@@ -110,17 +124,7 @@ export default function Toolbar() {
         ))}
       </div>
       <div className="toolbar" role="tabpanel">
-        {group === 'resort' && visible.length === 0 && (
-          <button
-            type="button"
-            className="dockPrompt"
-            aria-label={buildPanel ? 'Facility catalog is open' : 'Open the facility catalog'}
-            onClick={() => setStore({ buildPanel: !buildPanel })}
-          >
-            <Icon name="resort" size={19} />
-            <span><b>{buildPanel ? 'Facility tray open' : tool === 'build' ? 'Facility selected' : 'Open facility tray'}</b><small>{tool === 'build' && !buildPanel ? hint : 'Choose a building, then place it directly on the course.'}</small></span>
-          </button>
-        )}
+        {group === 'resort' && !buildPanel && <p className="dockStatus"><b>Facility selected</b><span>{hint}</span><button type="button" disabled={clubhouseMenu} onClick={() => setStore({ buildPanel: true })}>Browse facilities</button></p>}
         {visible.map((item) => {
           const active = tool === item.id || (item.id === 'build' && buildPanel);
           const label = item.tile === undefined ? item.nm : themedTerrainName(item.tile, courseTheme);
@@ -132,18 +136,19 @@ export default function Toolbar() {
               title={`${label}${detail ? ` · ${detail}` : ''}`}
               aria-label={`${label}${detail ? `, ${detail}` : ''}`}
               aria-pressed={active}
+              disabled={clubhouseMenu}
               data-tool={item.id}
               className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
               onClick={(event) => {
                 event.stopPropagation();
                 ensureAudio();
                 if (item.id === 'play') {
-                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+                  setStore({ buildPanel: false, clubhouseMenu: false });
                   startRound();
                 }
-                else if (item.id === 'build') setStore({ buildPanel: !buildPanel, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+                else if (item.id === 'build') setStore({ buildPanel: !buildPanel });
                 else {
-                  setStore({ buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
+                  setStore({ buildPanel: false, clubhouseMenu: false });
                   setTool(item.id);
                 }
               }}

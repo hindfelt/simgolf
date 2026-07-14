@@ -5,6 +5,8 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf
 
 describe('original SimGolf shell contract', () => {
   const main = read('../main.tsx');
+  const app = read('../App.tsx');
+  const controller = read('./ControllerShell.tsx');
   const topBar = read('./TopBar.tsx');
   const toolbar = read('./Toolbar.tsx');
   const toolPreview = read('./ToolPreview.tsx');
@@ -31,28 +33,36 @@ describe('original SimGolf shell contract', () => {
     expect(playHud).toContain('data-ui="play-shell"');
   });
 
-  it('uses the original corner-pod and scalloped-bottom-shell composition', () => {
+  it('uses one coordinated original corner-pod and bottom-shell composition', () => {
+    expect(app).toContain('<ControllerShell />');
+    expect(controller).toContain('<FieldControls />');
+    expect(controller).toContain('<Toolbar />');
+    expect(controller).toContain('<BuildPanel />');
+    expect(controller).toContain('data-ui="bottom-controller-shell"');
+    expect(controller).toContain("data-surface={clubhouseOpen ? 'clubhouse' : facilitiesOpen ? 'facilities' : managementOpen ? 'management' : 'tools'}");
     expect(topBar).toContain('className="courseCrest"');
     expect(topBar).toContain('className="simDate"');
     expect(topBar).toContain('className="fieldControlSkin"');
     expect(topBar).toContain('className="fieldControlSkinBody"');
-    expect(topBar).toContain('C124 24 132 55 166 64');
+    expect(topBar).toContain('viewBox="0 0 280 166"');
+    expect(topBar).toContain("className={'fieldMenuCommand'");
+    expect(topBar).not.toContain('<details');
     expect(shell).toMatch(/\.gauges \{[\s\S]*?flex-direction: column;/);
     expect(shell).toMatch(/--sg-control-width:\s*218px;/);
-    expect(shell).toMatch(/--sg-fan-height:\s*160px;/);
-    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?bottom: 0;[\s\S]*?width: var\(--sg-control-width\)/);
-    expect(shell).toMatch(/\.fieldControls \{[\s\S]*?height: 104px;[\s\S]*?background: transparent;/);
+    expect(shell).toMatch(/--sg-fan-height:\s*166px;/);
+    expect(shell).toMatch(/\.controllerShell \{[\s\S]*?position: fixed;[\s\S]*?height: var\(--sg-fan-height\);/);
+    expect(shell).toMatch(/\.controllerShell \.fieldControls \{[\s\S]*?width: var\(--sg-fan-width\);[\s\S]*?height: var\(--sg-fan-height\);/);
     expect(shell).toMatch(/\.fieldControlSkinBody \{[\s\S]*?fill: url\(#simGolfFanFill\);/);
-    expect(shell).toMatch(/\.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?display: none;/);
-    expect(shell).toMatch(/\.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-control-width\)\);[\s\S]*?top: -62px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-control-width\)\);[\s\S]*?top: -58px;/);
     expect(toolbar).toContain("data-group-id={item.id}");
     expect(toolbar).toContain('className="toolGroupLabel"');
-    expect(shell).toMatch(/\.toolGroup\[data-group-id='course'\] \{[\s\S]*?width: 70px;[\s\S]*?height: 70px;/);
-    expect(shell).toMatch(/\.toolGroup\[data-group-id='terrain'\] \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;/);
-    expect(shell).toMatch(/\.toolbar \{[\s\S]*?margin-left: 62px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='course'\] \{[^}]*width: 74px;[^}]*height: 74px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='people'\] \{[^}]*display: grid;|\.controllerShell \.toolGroup,[\s\S]*?display: grid;/);
+    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?position: absolute;[\s\S]*?left: 73px;/);
+    expect(shell).toMatch(/@media \(max-height: 520px\) \{[\s\S]*?--sg-controller-scale: \.72;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
-    expect(shell).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.toolDock::after \{ display: none; \}/);
   });
 
   it('renders circular yellow mode medallions and original trajectory ovals', () => {
@@ -76,7 +86,9 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.toolGraphic \{[\s\S]*?image-rendering: pixelated;/);
     expect(toolbar).toContain('data-group={group}');
     expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
-    expect(shell).toContain(".toolDock[data-group='terrain'] .toolbar");
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar \{[\s\S]*?display: flex;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \{[\s\S]*?flex: 0 0 82px;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 9\.5px;/);
     expect(shell).not.toContain('.toolGraphicIcon');
   });
 
