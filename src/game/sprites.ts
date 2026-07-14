@@ -28,34 +28,32 @@ function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingCo
   const px: Px = (x, y, pw = 1, ph = 1, c) => {
     if (c) cur = c;
     ctx.fillStyle = cur;
-    ctx.fillRect(x, y, pw, ph);
+    const left = Math.round(x);
+    const top = Math.round(y);
+    const width = Math.max(1, Math.round(pw));
+    const height = Math.max(1, Math.round(ph));
+    ctx.fillRect(left, top, width, height);
   };
   return [cv, ctx, px];
 }
 
-interface PixelTransform {
-  scaleX: number;
-  scaleY: number;
-  offsetX: number;
-  offsetY: number;
-}
-
-function transformedPlotter(base: Px, transform: PixelTransform): Px {
-  return (x, y, width = 1, height = 1, color) => {
-    const left = Math.round(transform.offsetX + x * transform.scaleX);
-    const top = Math.round(transform.offsetY + y * transform.scaleY);
-    const right = Math.round(transform.offsetX + (x + width) * transform.scaleX);
-    const bottom = Math.round(transform.offsetY + (y + height) * transform.scaleY);
-    base(left, top, Math.max(1, right - left), Math.max(1, bottom - top), color);
-  };
-}
-
-/** Crisp logical-pixel line used for club shafts and profession tools. */
+/** Integer Bresenham line used for club shafts and profession tools. */
 function pixelLine(p: Px, x0: number, y0: number, x1: number, y1: number, color: string, width = 1) {
-  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2));
-  for (let step = 0; step <= steps; step++) {
-    const progress = step / steps;
-    p(x0 + (x1 - x0) * progress, y0 + (y1 - y0) * progress, width, width, color);
+  let x = Math.round(x0);
+  let y = Math.round(y0);
+  const endX = Math.round(x1);
+  const endY = Math.round(y1);
+  const dx = Math.abs(endX - x);
+  const sx = x < endX ? 1 : -1;
+  const dy = -Math.abs(endY - y);
+  const sy = y < endY ? 1 : -1;
+  let error = dx + dy;
+  for (;;) {
+    p(x, y, width, width, color);
+    if (x === endX && y === endY) break;
+    const twice = error * 2;
+    if (twice >= dy) { error += dy; x += sx; }
+    if (twice <= dx) { error += dx; y += sy; }
   }
 }
 
@@ -86,8 +84,7 @@ function shade(hex: string, f: number): string {
 /* ================= golfers ================= */
 
 export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt' | 'puttFollow';
-
-const GOLFER_ART_TRANSFORM: PixelTransform = { scaleX: 1.2, scaleY: 1.25, offsetX: 2, offsetY: 4 };
+export type ActorSpriteView = 'front' | 'rear' | 'side';
 
 export type GolferBuild = 'compact' | 'classic' | 'broad';
 export type GolferHeadwear = 'cap' | 'visor' | 'flat-cap' | 'bucket-hat';
@@ -152,32 +149,28 @@ export function golferAppearance(name: string): GolferAppearance {
 }
 
 const BUILD_GEOMETRY: Record<GolferBuild, {
-  torsoX: number;
+  shouldersW: number;
   torsoW: number;
-  hipsX: number;
   hipsW: number;
-  headX: number;
   headW: number;
 }> = {
-  compact: { torsoX: 9, torsoW: 7, hipsX: 10, hipsW: 5, headX: 10, headW: 5 },
-  classic: { torsoX: 8, torsoW: 8, hipsX: 9, hipsW: 6, headX: 9, headW: 6 },
-  broad: { torsoX: 7, torsoW: 10, hipsX: 8, hipsW: 8, headX: 9, headW: 7 },
+  compact: { shouldersW: 8, torsoW: 7, hipsW: 6, headW: 7 },
+  classic: { shouldersW: 10, torsoW: 9, hipsW: 7, headW: 8 },
+  broad: { shouldersW: 13, torsoW: 11, hipsW: 9, headW: 9 },
 };
 
 /**
- * A native 32×44 hand-plotted golfer, drawn facing right. Logical coordinates
- * are expanded onto the larger pixel grid before painting, so there is no
- * second bitmap bake or browser smoothing pass to blur identity details.
- * `view: 'rear'` is used while walking or swinging away from the camera (up-screen) —
- * no face or forward-only hat bill is visible, so it reads as a back view.
+ * A native 32×44 hand-plotted golfer. Every rectangle and club-shaft pixel is
+ * authored on the final canvas grid: there is no logical-coordinate transform
+ * or second bitmap bake. The three views share identity cues while changing the
+ * actual body silhouette, face direction, bag placement and hat profile.
  */
-export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: 'front' | 'rear' = 'front', identity = ''): HTMLCanvasElement {
-  const key = 'g3|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
+export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: ActorSpriteView = 'front', identity = ''): HTMLCanvasElement {
+  const key = 'g4|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const [art, , baseP] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
-  const p = transformedPlotter(baseP, GOLFER_ART_TRANSFORM);
+  const [art, , p] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
   const identitySeed = identity || shirt + skin + cap;
   const normalizedIdentity = identitySeed.trim().toLowerCase() || 'anonymous golfer';
   const appearance = golferAppearance(normalizedIdentity);
@@ -192,174 +185,223 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
   const walking = frame === 'walkA' || frame === 'walkB';
   const swingBack = frame === 'back';
   const follow = frame === 'follow';
-  const puttFollow = frame === 'puttFollow';
-  const putt = frame === 'putt' || puttFollow;
-  const address = frame === 'address' || putt;
+  const putting = frame === 'putt' || frame === 'puttFollow';
+  const crouched = frame === 'address' || putting;
   const rear = view === 'rear';
+  const side = view === 'side';
+  const centre = 15 + (follow ? 1 : swingBack ? -1 : 0);
+  const crouch = crouched ? 2 : 0;
+  const torsoY = 15 + crouch;
+  const hipY = 26 + crouch;
+  const torsoW = side ? Math.max(6, geometry.torsoW - 2) : geometry.torsoW;
+  const shouldersW = side ? Math.max(7, geometry.shouldersW - 3) : geometry.shouldersW;
+  const torsoX = centre - Math.floor(torsoW / 2);
+  const shouldersX = centre - Math.floor(shouldersW / 2);
+  const hipsW = side ? Math.max(5, geometry.hipsW - 2) : geometry.hipsW;
+  const hipsX = centre - Math.floor(hipsW / 2);
 
-  // golf bag on the back while walking
+  // Walking golfers carry a tall, asymmetrical bag. Its position changes by
+  // view so rear-facing actors do not look like mirrored front sprites.
   if (walking) {
-    p(3, 12, 4, 10, bag);
-    p(3, 12, 1, 10, shade(bag, 0.68));
-    p(4, 11, 3, 1, shade(bag, 0.72));
-    // club heads poking out
-    p(4, 8, 1, 3, '#9aa0a8');
-    p(6, 9, 1, 2, '#9aa0a8');
-    p(5, 7, 2, 2, '#c9ced4');
-    // strap
-    p(6, 14, 1, 5, shade(bag, 1.22));
-    p(7, 12, 1, 1, shade(bag, 0.72));
-    p(8, 11, 1, 1, shade(bag, 0.72));
+    const bagX = rear ? centre - 7 : side ? 4 : 3;
+    const bagY = frame === 'walkA' ? 15 : 14;
+    p(bagX + 1, bagY, 6, 15, bag);
+    p(bagX, bagY + 2, 2, 12, shade(bag, 0.68));
+    p(bagX + 2, bagY - 2, 5, 3, shade(bag, 0.78));
+    pixelLine(p, bagX + 2, bagY - 2, bagX + 1, 8, '#9aa0a8');
+    pixelLine(p, bagX + 5, bagY - 2, bagX + 6, 7, '#c9ced4');
+    p(bagX, 7, 3, 2, '#c9ced4');
+    p(bagX + 5, 6, 3, 2, '#8f959c');
+    pixelLine(p, bagX + 6, bagY + 2, bagX + 9, bagY + 10, shade(bag, 1.22));
   }
 
-  // legs + shoes — a contrast sock band sits between pants and shoe (matches the
-  // knee-sock convention visible in the original's Bodies/*.pcx reference art)
+  // Whole-body posing starts at the feet. Address and putting use a visibly
+  // wider base; backswing/follow-through move weight to opposite legs.
   const shoe = '#2e2a26';
-  if (frame === 'walkA') {
-    p(9, 24, 2, 4, pants); // back leg
-    p(9, 28, 2, 1, socks);
-    p(8, 29, 3, 2, shoe);
-    p(13, 24, 2, 3, pants); // front leg forward
-    p(13, 27, 2, 1, socks);
-    p(14, 28, 3, 2, shoe);
+  const drawLeg = (x: number, top: number, bottom: number, footX: number, footY: number, dark = false) => {
+    p(x, top, 3, Math.max(2, bottom - top), dark ? shade(pants, 0.78) : pants);
+    p(x, bottom, 3, 2, socks);
+    p(footX, footY, 5, 3, shoe);
+  };
+  if (side) {
+    if (frame === 'walkA') {
+      drawLeg(centre - 3, hipY + 2, 37, centre - 5, 39, true);
+      drawLeg(centre + 1, hipY + 2, 38, centre + 2, 40);
+    } else if (frame === 'walkB') {
+      drawLeg(centre + 1, hipY + 2, 37, centre + 1, 39, true);
+      drawLeg(centre - 3, hipY + 2, 38, centre - 5, 40);
+    } else if (frame === 'follow') {
+      drawLeg(centre - 3, hipY + 2, 38, centre - 4, 40, true);
+      drawLeg(centre + 1, hipY + 2, 36, centre + 2, 38);
+      p(centre - 5, 38, 2, 3, socks);
+    } else {
+      const spread = putting ? 4 : frame === 'address' ? 3 : 2;
+      drawLeg(centre - spread, hipY + 2, 38, centre - spread - 1, 40, true);
+      drawLeg(centre + spread - 1, hipY + 2, 38, centre + spread - 1, 40);
+    }
+  } else if (frame === 'walkA') {
+    drawLeg(centre - 5, hipY + 2, 37, centre - 7, 39, true);
+    drawLeg(centre + 2, hipY + 2, 38, centre + 3, 40);
   } else if (frame === 'walkB') {
-    p(9, 24, 2, 3, pants);
-    p(9, 27, 2, 1, socks);
-    p(9, 28, 3, 2, shoe);
-    p(13, 24, 2, 4, pants);
-    p(13, 28, 2, 1, socks);
-    p(12, 29, 3, 2, shoe);
+    drawLeg(centre + 2, hipY + 2, 37, centre + 1, 39, true);
+    drawLeg(centre - 5, hipY + 2, 38, centre - 7, 40);
+  } else if (frame === 'back') {
+    drawLeg(centre - 5, hipY + 2, 38, centre - 6, 40, true);
+    drawLeg(centre + 2, hipY + 2, 38, centre + 2, 40);
+  } else if (frame === 'follow') {
+    drawLeg(centre - 5, hipY + 2, 36, centre - 7, 38, true);
+    drawLeg(centre + 2, hipY + 2, 38, centre + 2, 40);
+    p(centre - 7, 37, 2, 3, socks);
   } else {
-    p(9, 24, 2, 4, pants);
-    p(9, 28, 2, 1, socks);
-    p(8, 29, 3, 2, shoe);
-    p(13, 24, 2, 4, pants);
-    p(13, 28, 2, 1, socks);
-    p(13, 29, 3, 2, shoe);
+    const spread = putting ? 6 : frame === 'address' ? 5 : 4;
+    drawLeg(centre - spread, hipY + 2, 38, centre - spread - 1, 40, true);
+    drawLeg(centre + spread - 2, hipY + 2, 38, centre + spread - 2, 40);
   }
-  // hips / shorts
-  p(geometry.hipsX, 20, geometry.hipsW, 4, pants);
-  p(geometry.hipsX, 20, 1, 4, shade(pants, 0.8));
+  p(hipsX, hipY, hipsW, 5, pants);
+  p(hipsX, hipY, 2, 5, shade(pants, 0.78));
+  if (rear) p(hipsX + 2, hipY + 1, Math.max(2, hipsW - 4), 1, shade(pants, 1.12));
 
-  // torso (slight crouch for address/putt poses)
-  const ty = address ? 12 : 11;
-  const { torsoX, torsoW, headX, headW } = geometry;
-  const torsoRight = torsoX + torsoW;
-  const chestCenter = Math.floor(torsoX + torsoW / 2);
-  const frontArmX = torsoRight - 2;
-  p(torsoX, ty, torsoW, 8, shirt);
-  p(torsoX, ty, 1, 8, shirtDk); // back shading
-  p(torsoX, ty + 7, torsoW, 1, shirtDk);
-  // Named-cast outfit details: stripe, placket, vest or pocket reinforce the
-  // larger silhouette cues while staying readable at 1px.
-  if (appearance.outfit === 0) p(chestCenter - 1, ty + 1, 2, 6, shade(shirt, 1.22));
-  else if (appearance.outfit === 1) {
-    p(torsoX + 1, ty + 2, torsoW - 2, 1, shade(shirt, 1.2));
-    p(torsoX + 1, ty + 5, torsoW - 2, 1, shirtDk);
-  } else if (appearance.outfit === 2) {
-    p(torsoX + 1, ty + 1, 2, 6, shirtDk);
-    p(torsoRight - 2, ty + 1, 1, 6, shirtDk);
-  } else if (appearance.outfit === 3) p(torsoRight - 3, ty + 2, 2, 2, shade(shirt, 1.25));
-  else {
-    // Chunky argyle diamonds survive the world render better than another
-    // one-pixel facial mark and make this outfit recognizable at a glance.
-    p(chestCenter - 2, ty + 2, 2, 2, shade(shirt, 1.28));
-    p(chestCenter, ty + 4, 2, 2, shirtDk);
-    p(chestCenter - 2, ty + 6, 2, 1, shade(shirt, 1.2));
-  }
-  // collar (not visible from behind)
-  if (!rear) p(chestCenter - 1, ty - 1, 3, 1, '#f2f0e8');
-
-  // Head, hair and headwear are deliberately stronger silhouette cues than the
-  // facial details: they remain legible at fitted-course scale.
-  const hy = address ? 4 : 3;
-  const headRight = headX + headW;
-  if (appearance.hair === 'close') p(headX - 1, hy + 2, 1, 4, hair);
-  else if (appearance.hair === 'side-locks') {
-    p(headX - 1, hy + 2, 2, 5, hair);
-    p(headX, hy + 6, 2, 2, hair);
-  } else if (appearance.hair === 'curls') {
-    p(headX - 1, hy + 1, 2, 2, hair);
-    p(headX - 2, hy + 3, 2, 2, hair);
-    p(headX - 1, hy + 5, 2, 2, hair);
-  } else {
-    p(headX - 1, hy + 2, 2, 4, hair);
-    p(headX - 3, hy + 5, 3, 2, hair);
-    p(headX - 3, hy + 7, 2, 2, hair);
-  }
-  p(headX, hy + 2, headW, 5, skin);
+  // Stepped shoulders and a tapered waist keep compact/classic/broad builds
+  // visibly different in alpha silhouette, not just in clothing colour.
+  p(shouldersX + 1, torsoY, shouldersW - 2, 2, shirt);
+  p(shouldersX, torsoY + 2, shouldersW, 3, shirt);
+  p(torsoX, torsoY + 5, torsoW, 7, shirt);
+  p(shouldersX, torsoY + 2, 2, 3, shirtDk);
+  p(torsoX, torsoY + 5, 2, 7, shirtDk);
+  p(torsoX, torsoY + 10, torsoW, 2, shirtDk);
+  const chestCenter = centre;
   if (rear) {
-    // Back of the head: no face. Hair and each hat keep their identity shape.
-    p(headX, hy + 2, headW, 5, skinDk);
-    p(headX, hy + 4, headW, 3, hair);
+    p(torsoX + 2, torsoY + 5, Math.max(2, torsoW - 4), 2, shade(shirt, 1.15));
+    p(chestCenter, torsoY + 7, 1, 4, shirtDk);
+  } else if (side) {
+    p(torsoX + torsoW - 2, torsoY + 5, 2, 7, shade(shirt, 1.12));
+    p(torsoX + 1, torsoY + 7, torsoW - 2, 1, shirtDk);
+  } else if (appearance.outfit === 0) p(chestCenter - 1, torsoY + 3, 2, 8, shade(shirt, 1.22));
+  else if (appearance.outfit === 1) {
+    p(torsoX + 1, torsoY + 5, torsoW - 2, 2, shade(shirt, 1.2));
+    p(torsoX + 1, torsoY + 9, torsoW - 2, 1, shirtDk);
+  } else if (appearance.outfit === 2) {
+    p(torsoX + 1, torsoY + 4, 2, 7, shirtDk);
+    p(torsoX + torsoW - 3, torsoY + 4, 2, 7, shirtDk);
+  } else if (appearance.outfit === 3) p(torsoX + torsoW - 4, torsoY + 5, 3, 3, shade(shirt, 1.25));
+  else {
+    p(chestCenter - 3, torsoY + 5, 3, 3, shade(shirt, 1.28));
+    p(chestCenter, torsoY + 8, 3, 3, shirtDk);
+  }
+
+  if (!rear) p(chestCenter - 2, torsoY - 1, 4, 2, '#f2f0e8');
+
+  const headCentre = centre + (side ? 1 : 0) + (crouched ? 1 : 0);
+  const headW = side ? Math.max(6, geometry.headW - 1) : geometry.headW;
+  const headX = headCentre - Math.floor(headW / 2);
+  const headY = 6 + crouch;
+  const headRight = headX + headW;
+  // Hair is painted before the stepped face so long styles remain a silhouette cue.
+  if (appearance.hair === 'close') p(headX - 1, headY + 2, 2, 6, hair);
+  else if (appearance.hair === 'side-locks') {
+    p(headX - 2, headY + 2, 3, 7, hair);
+    p(headX - 1, headY + 8, 3, 2, hair);
+  } else if (appearance.hair === 'curls') {
+    p(headX - 2, headY + 1, 3, 3, hair);
+    p(headX - 2, headY + 5, 3, 3, hair);
+    p(headX, headY + 8, 3, 2, hair);
   } else {
-    p(headX, hy + 2, 1, 5, skinDk);
-    p(headRight - 2, hy + 4, 1, 1, '#26221e'); // eye
+    p(headX - 1, headY + 2, 2, 7, hair);
+    p(headX - 4, headY + 7, 4, 3, hair);
+    p(headX - 4, headY + 10, 2, 2, hair);
+  }
+  p(headX + 1, headY, headW - 2, 1, skin);
+  p(headX, headY + 1, headW, 6, skin);
+  p(headX + 1, headY + 7, headW - 2, 2, skin);
+  if (rear) {
+    p(headX, headY + 1, headW, 4, skinDk);
+    p(headX, headY + 4, headW, 5, hair);
+  } else if (side) {
+    p(headX, headY + 1, 2, 7, skinDk);
+    p(headRight, headY + 4, 2, 3, skin);
+    p(headRight, headY + 3, 1, 1, '#26221e');
+  } else {
+    p(headX, headY + 1, 2, 7, skinDk);
+    p(headX + 2, headY + 4, 1, 1, '#26221e');
+    p(headRight - 3, headY + 4, 1, 1, '#26221e');
   }
 
   if (appearance.headwear === 'cap') {
-    p(headX, hy, headW, rear ? 3 : 2, cap);
-    p(headX, hy, 1, rear ? 3 : 2, capDk);
-    if (!rear) p(headRight - 1, hy + 1, 4, 1, capDk);
+    p(headX + 1, headY - 3, headW - 2, 1, cap);
+    p(headX, headY - 2, headW, 3, cap);
+    p(headX, headY - 2, 2, 3, capDk);
+    if (side) p(headRight - 1, headY, 5, 2, capDk);
+    else if (!rear) p(headRight - 1, headY, 3, 1, capDk);
   } else if (appearance.headwear === 'visor') {
-    // Hair remains visible above the band; the long bill reads at course scale.
-    p(headX, hy, headW, 2, hair);
-    p(headX, hy + 1, headW, 1, cap);
-    p(headX, hy + 1, 1, 1, capDk);
-    if (!rear) p(headRight - 1, hy + 1, 4, 1, capDk);
+    p(headX + 1, headY - 2, headW - 2, 2, hair);
+    p(headX, headY, headW, 2, cap);
+    p(headX, headY, 2, 2, capDk);
+    if (side) p(headRight - 1, headY + 1, 5, 1, capDk);
+    else if (!rear) p(headRight - 1, headY + 1, 3, 1, capDk);
   } else if (appearance.headwear === 'flat-cap') {
-    p(headX, hy, Math.max(3, headW - 1), 1, cap);
-    p(headX - 1, hy + 1, headW + 1, 2, cap);
-    p(headX - 1, hy + 1, 1, 2, capDk);
-    if (!rear) p(headRight - 1, hy + 2, 3, 1, capDk);
+    p(headX + 1, headY - 3, headW - 2, 2, cap);
+    p(headX - 1, headY - 1, headW + 2, 3, cap);
+    p(headX - 1, headY - 1, 2, 3, capDk);
+    if (!rear) p(headRight - 1, headY + 1, side ? 5 : 3, 1, capDk);
   } else {
-    p(headX, hy, headW, 2, cap);
-    p(headX, hy, 1, 2, capDk);
-    p(headX - 2, hy + 2, headW + 4, 1, capDk);
+    p(headX + 1, headY - 3, headW - 2, 3, cap);
+    p(headX + 1, headY - 3, 2, 3, capDk);
+    p(headX - 3, headY, headW + 6, 2, capDk);
   }
 
-  if (!rear) {
+  if (!rear && !side) {
     if (appearance.face === 0) {
-      p(Math.max(headX + 1, headRight - 4), hy + 4, Math.min(4, headW - 1), 1, '#3b3028');
-      p(headRight - 3, hy + 4, 1, 1, '#d8e6df');
-    } else if (appearance.face === 1) p(headRight - 3, hy + 6, 3, 1, '#6a3f27');
-    else if (appearance.face === 2) p(headX, hy + 3, 1, 3, hair);
-    else if (appearance.face === 3) p(headRight - 1, hy + 5, 1, 1, '#c8786b');
-    else p(headRight - 3, hy + 3, 3, 1, hair);
+      p(headX + 1, headY + 4, headW - 2, 1, '#3b3028');
+      p(headX + 2, headY + 4, 1, 1, '#d8e6df');
+    } else if (appearance.face === 1) p(headCentre - 1, headY + 7, 3, 1, '#6a3f27');
+    else if (appearance.face === 2) p(headX, headY + 4, 2, 4, hair);
+    else if (appearance.face === 3) p(headRight - 2, headY + 6, 2, 1, '#c8786b');
+    else p(headCentre - 1, headY + 2, 3, 1, hair);
   }
 
-  // arms + club
+  // Arms and clubs complete eight genuinely different whole-body poses.
   const grey = '#8f959c';
   const steel = '#c9ced4';
   if (swingBack) {
-    // arms up behind, club raised over the shoulder
-    p(torsoX, ty - 3, 2, 4, shirt);
-    p(torsoX - 1, ty - 4, 2, 2, skin);
-    pixelLine(p, torsoX - 0.5, ty - 4, 2.5, ty - 9, grey);
-    p(1, ty - 11, 2, 2, steel);
+    p(shouldersX, torsoY + 1, 3, 4, shirt);
+    pixelLine(p, shouldersX + 1, torsoY + 1, centre - 4, torsoY - 3, skin, 2);
+    p(centre - 5, torsoY - 4, 3, 3, skin);
+    pixelLine(p, centre - 4, torsoY - 3, 4, 2, grey);
+    p(2, 1, 5, 2, steel);
   } else if (follow) {
-    // follow-through: club swung up in front
-    p(frontArmX, ty - 3, 2, 4, shirt);
-    p(frontArmX + 1, ty - 4, 2, 2, skin);
-    pixelLine(p, frontArmX + 2, ty - 4, 21.5, ty - 9, grey);
-    p(21, ty - 11, 2, 2, steel);
-  } else if (puttFollow) {
-    // Putter remains below the waist through a short finish instead of jumping
-    // to the full raised-club follow-through used by drives and iron shots.
-    p(frontArmX, ty + 1, 2, 5, shirt);
-    p(frontArmX + 1, ty + 6, 2, 2, skin);
-    pixelLine(p, frontArmX + 2, ty + 8, 18, 27, grey);
-    p(17, 27, 4, 1.5, steel);
-  } else if (address) {
-    // both arms down to the grip, club to the ball
-    p(frontArmX, ty + 1, 2, 5, shirt);
-    p(frontArmX, ty + 6, 2, 2, skin);
-    pixelLine(p, frontArmX + 1, ty + 8, putt ? 16 : 19, 29, grey);
-    p(putt ? 15 : 18, 29, 3, 1.5, steel);
+    const armX = shouldersX + shouldersW - 2;
+    p(armX, torsoY + 1, 3, 4, shirt);
+    pixelLine(p, armX + 1, torsoY + 1, centre + 5, torsoY - 3, skin, 2);
+    p(centre + 4, torsoY - 4, 3, 3, skin);
+    pixelLine(p, centre + 5, torsoY - 3, 28, 3, grey);
+    p(27, 1, 4, 3, steel);
+  } else if (frame === 'puttFollow') {
+    p(shouldersX, torsoY + 3, 3, 5, shirt);
+    p(shouldersX + shouldersW - 3, torsoY + 3, 3, 5, shirt);
+    pixelLine(p, centre - 3, torsoY + 6, centre + 5, torsoY + 12, skin, 2);
+    p(centre + 4, torsoY + 11, 3, 3, skin);
+    pixelLine(p, centre + 6, torsoY + 13, 26, 38, grey);
+    p(24, 38, 5, 2, steel);
+  } else if (frame === 'putt') {
+    p(shouldersX, torsoY + 3, 3, 5, shirt);
+    p(shouldersX + shouldersW - 3, torsoY + 3, 3, 5, shirt);
+    pixelLine(p, centre - 3, torsoY + 6, centre + 2, torsoY + 12, skin, 2);
+    p(centre + 1, torsoY + 11, 3, 3, skin);
+    pixelLine(p, centre + 3, torsoY + 13, 22, 39, grey);
+    p(20, 39, 5, 2, steel);
+  } else if (frame === 'address') {
+    p(shouldersX, torsoY + 3, 3, 5, shirt);
+    p(shouldersX + shouldersW - 3, torsoY + 3, 3, 5, shirt);
+    pixelLine(p, centre - 3, torsoY + 6, centre + 4, torsoY + 11, skin, 2);
+    p(centre + 3, torsoY + 10, 3, 3, skin);
+    pixelLine(p, centre + 5, torsoY + 12, 26, 39, grey);
+    p(24, 39, 5, 2, steel);
   } else {
-    // relaxed arm at the side
-    p(frontArmX, ty + 1, 2, 5, shirt);
-    p(frontArmX, ty + 6, 2, 2, skin);
+    const phase = frame === 'walkA' ? 2 : frame === 'walkB' ? -2 : 0;
+    p(shouldersX, torsoY + 2, 3, 5, shirt);
+    pixelLine(p, shouldersX + 1, torsoY + 6, shouldersX + 1 - phase, torsoY + 11, skin, 2);
+    p(shouldersX + shouldersW - 3, torsoY + 2, 3, 5, shirt);
+    pixelLine(p, shouldersX + shouldersW - 2, torsoY + 6, shouldersX + shouldersW - 2 + phase, torsoY + 11, skin, 2);
   }
 
   const done = outlined(art, '#20242b');
@@ -374,9 +416,11 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
 
 export type CourseStaffKind = EmployeeKind;
 export type CourseStaffFrame = 'walkA' | 'walkB' | 'workA' | 'workB';
+export type CourseStaffBuild = 'slim' | 'standard' | 'broad';
 
 export interface CourseStaffArchetype {
   label: string;
+  build: CourseStaffBuild;
   primary: string;
   secondary: string;
   trousers: string;
@@ -389,6 +433,7 @@ export interface CourseStaffArchetype {
 export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchetype> = {
   clubpro: {
     label: 'Club Pro',
+    build: 'slim',
     primary: '#354b8c',
     secondary: '#f1df8c',
     trousers: '#e7e0c7',
@@ -398,6 +443,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   ranger: {
     label: 'Course Ranger',
+    build: 'broad',
     primary: '#456b3b',
     secondary: '#d0ad58',
     trousers: '#4a4435',
@@ -407,6 +453,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   groundskeeper: {
     label: 'Groundskeeper',
+    build: 'broad',
     primary: '#c98236',
     secondary: '#f0d36b',
     trousers: '#405946',
@@ -416,6 +463,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   sodavendor: {
     label: 'Soda Vendor',
+    build: 'standard',
     primary: '#d54b45',
     secondary: '#ffe168',
     trousers: '#344f77',
@@ -425,6 +473,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   celebrity: {
     label: 'Club Celebrity',
+    build: 'slim',
     primary: '#8d4e9f',
     secondary: '#ffd56a',
     trousers: '#46335d',
@@ -434,6 +483,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   marshall: {
     label: 'Course Marshall',
+    build: 'broad',
     primary: '#f0a52f',
     secondary: '#fff1a3',
     trousers: '#334b63',
@@ -443,6 +493,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   turftech: {
     label: 'Turf Gardener',
+    build: 'broad',
     primary: '#2f8172',
     secondary: '#eef0df',
     trousers: '#31534f',
@@ -452,6 +503,7 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
   refreshment: {
     label: 'Refreshment Host',
+    build: 'standard',
     primary: '#2d8299',
     secondary: '#f0c96b',
     trousers: '#f0e4c5',
@@ -461,7 +513,16 @@ export const COURSE_STAFF_ARCHETYPES: Record<CourseStaffKind, CourseStaffArchety
   },
 };
 
-const COURSE_STAFF_ART_TRANSFORM: PixelTransform = { scaleX: 1.06, scaleY: 1.08, offsetX: 1, offsetY: 1 };
+const STAFF_BUILD_GEOMETRY: Record<CourseStaffBuild, {
+  shouldersW: number;
+  torsoW: number;
+  hipsW: number;
+  headW: number;
+}> = {
+  slim: { shouldersW: 9, torsoW: 8, hipsW: 7, headW: 7 },
+  standard: { shouldersW: 11, torsoW: 10, hipsW: 8, headW: 8 },
+  broad: { shouldersW: 14, torsoW: 12, hipsW: 10, headW: 9 },
+};
 
 export function courseStaffAnimationFrame(working: boolean, phase: number): CourseStaffFrame {
   const alternate = Math.sin(phase) < 0;
@@ -469,213 +530,283 @@ export function courseStaffAnimationFrame(working: boolean, phase: number): Cour
 }
 
 /**
- * Native 36×42 profession sprites, drawn facing right. Each work frame
- * animates the role's signature prop; walking frames keep it in a safe carrying
- * pose so the complete staff cast reads at normal game zoom.
+ * Native 36×42 profession sprites. Existing callers get the side view by
+ * default, while front and rear views are available to directional renderers.
+ * Every role keeps its palette, hat and tool across three actual silhouettes.
  */
-export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame): HTMLCanvasElement {
-  const key = `course-staff-v3|${kind}|${frame}`;
+export function courseStaffSprite(kind: CourseStaffKind, frame: CourseStaffFrame, view: ActorSpriteView = 'side'): HTMLCanvasElement {
+  const key = `course-staff-v4|${kind}|${frame}|${view}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   const spec = COURSE_STAFF_ARCHETYPES[kind];
-  const [art, , baseP] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
-  const p = transformedPlotter(baseP, COURSE_STAFF_ART_TRANSFORM);
+  const [art, , p] = makeCanvas(COURSE_STAFF_SPRITE_SIZE.width, COURSE_STAFF_SPRITE_SIZE.height);
+  const geometry = STAFF_BUILD_GEOMETRY[spec.build];
   const skin = spec.skin;
   const skinDark = shade(skin, 0.78);
   const shirtDark = shade(spec.primary, 0.72);
   const trouserDark = shade(spec.trousers, 0.7);
   const working = frame === 'workA' || frame === 'workB';
   const alternate = frame === 'walkB' || frame === 'workB';
+  const rear = view === 'rear';
+  const side = view === 'side';
+  const centre = 15;
+  const shouldersW = side ? Math.max(7, geometry.shouldersW - 3) : geometry.shouldersW;
+  const torsoW = side ? Math.max(7, geometry.torsoW - 2) : geometry.torsoW;
+  const hipsW = side ? Math.max(6, geometry.hipsW - 1) : geometry.hipsW;
+  const headW = side ? Math.max(6, geometry.headW - 1) : geometry.headW;
+  const shouldersX = centre - Math.floor(shouldersW / 2);
+  const torsoX = centre - Math.floor(torsoW / 2);
+  const hipsX = centre - Math.floor(hipsW / 2);
+  const headX = centre - Math.floor(headW / 2) + (side ? 1 : 0);
+  const headY = 6;
 
-  // Work boots and a wide, grounded stance. Staff are a touch broader than golfers.
-  const leftLegY = frame === 'walkA' ? 29 : frame === 'walkB' ? 28 : 29;
-  const rightLegY = frame === 'walkA' ? 28 : frame === 'walkB' ? 29 : 29;
-  p(10, 25, 3, leftLegY - 25, spec.trousers);
-  p(16, 25, 3, rightLegY - 25, spec.trousers);
-  p(9, leftLegY, 5, 3, '#34302a');
-  p(16, rightLegY, 5, 3, '#34302a');
-  p(10, 25, 1, Math.max(3, leftLegY - 25), trouserDark);
-  p(16, 25, 1, Math.max(3, rightLegY - 25), trouserDark);
+  // Boots and legs stop at y=36 so the established y=37 foot anchor remains
+  // exact. Walk cycles swap both the leading foot and the shaded rear leg.
+  const drawStaffLeg = (x: number, bottom: number, footX: number, dark = false) => {
+    p(x, 29, 3, Math.max(3, bottom - 29), dark ? trouserDark : spec.trousers);
+    p(footX, bottom, 5, 3, '#34302a');
+  };
+  if (side) {
+    if (frame === 'walkA') {
+      drawStaffLeg(centre - 3, 33, centre - 5, true);
+      drawStaffLeg(centre + 1, 34, centre + 2);
+    } else if (frame === 'walkB') {
+      drawStaffLeg(centre + 1, 33, centre + 1, true);
+      drawStaffLeg(centre - 3, 34, centre - 5);
+    } else {
+      drawStaffLeg(centre - 3, 34, centre - 4, true);
+      drawStaffLeg(centre + 1, 34, centre + 1);
+    }
+  } else if (frame === 'walkA') {
+    drawStaffLeg(centre - 5, 33, centre - 7, true);
+    drawStaffLeg(centre + 2, 34, centre + 3);
+  } else if (frame === 'walkB') {
+    drawStaffLeg(centre + 2, 33, centre + 1, true);
+    drawStaffLeg(centre - 5, 34, centre - 7);
+  } else {
+    drawStaffLeg(centre - 5, 34, centre - 6, true);
+    drawStaffLeg(centre + 2, 34, centre + 2);
+  }
+  p(hipsX, 26, hipsW, 5, spec.trousers);
+  p(hipsX, 26, 2, 5, trouserDark);
 
-  // Torso, shoulders, utility belt and high-contrast collar.
-  p(9, 13, 11, 12, spec.primary);
-  p(9, 13, 2, 12, shirtDark);
-  p(9, 23, 11, 2, shirtDark);
-  p(10, 12, 9, 2, spec.secondary);
-  p(9, 22, 11, 2, '#574733');
-  p(12, 22, 2, 2, '#d6b75b');
+  // Three build widths are authored directly into the shoulder/torso/hip alpha.
+  p(shouldersX + 1, 14, shouldersW - 2, 2, spec.primary);
+  p(shouldersX, 16, shouldersW, 4, spec.primary);
+  p(torsoX, 20, torsoW, 7, spec.primary);
+  p(shouldersX, 16, 2, 4, shirtDark);
+  p(torsoX, 20, 2, 7, shirtDark);
+  p(torsoX, 25, torsoW, 2, shirtDark);
+  p(hipsX, 25, hipsW, 2, '#574733');
+  p(centre - 1, 25, 3, 2, '#d6b75b');
+  if (rear) {
+    p(torsoX + 2, 17, torsoW - 4, 2, spec.secondary);
+    p(centre, 19, 1, 5, shirtDark);
+  } else if (side) {
+    p(torsoX + torsoW - 2, 18, 2, 7, shade(spec.primary, 1.12));
+    p(torsoX + 1, 20, torsoW - 2, 1, spec.secondary);
+  } else {
+    p(centre - 2, 14, 4, 2, spec.secondary);
+    p(centre, 16, 1, 8, shade(spec.secondary, 0.9));
+  }
 
-  // Head and profession-specific hat silhouette.
-  p(11, 6, 7, 7, skin);
-  p(11, 7, 1, 6, skinDark);
-  p(16, 9, 1, 1, '#24231f');
+  // Stepped face and profile nose. Rear view replaces facial pixels with hair.
+  p(headX + 1, headY, headW - 2, 1, skin);
+  p(headX, headY + 1, headW, 6, skin);
+  p(headX + 1, headY + 7, headW - 2, 2, skin);
+  p(headX, headY + 1, 2, 7, skinDark);
+  if (rear) {
+    p(headX, headY + 1, headW, 4, skinDark);
+    p(headX, headY + 5, headW, 4, '#4b3426');
+  } else if (side) {
+    p(headX + headW, headY + 4, 2, 3, skin);
+    p(headX + headW, headY + 3, 1, 1, '#24231f');
+  } else {
+    p(headX + 2, headY + 4, 1, 1, '#24231f');
+    p(headX + headW - 3, headY + 4, 1, 1, '#24231f');
+  }
+
+  const bill = (color: string, y: number, length = 5) => {
+    if (side) p(headX + headW - 1, y, length, 2, color);
+    else if (!rear) p(headX + headW - 1, y, 3, 1, color);
+  };
   switch (spec.headwear) {
     case 'visor':
-      p(11, 1, 7, 3, '#5a3828');
-      p(10, 3, 9, 3, spec.secondary);
-      p(18, 5, 5, 2, shade(spec.secondary, 0.78));
+      p(headX + 1, 2, headW - 2, 3, '#5a3828');
+      p(headX - 1, 4, headW + 2, 3, spec.secondary);
+      bill(shade(spec.secondary, 0.78), 6);
       break;
     case 'ranger-hat':
-      p(8, 4, 13, 2, spec.secondary);
-      p(11, 1, 7, 4, spec.secondary);
-      p(11, 4, 7, 1, shade(spec.secondary, 0.7));
+      p(headX - 3, 4, headW + 6, 2, spec.secondary);
+      p(headX + 1, 1, headW - 2, 4, spec.secondary);
+      p(headX + 1, 4, headW - 2, 1, shade(spec.secondary, 0.7));
       break;
     case 'work-cap':
-      p(10, 3, 9, 4, spec.secondary);
-      p(10, 3, 2, 4, shade(spec.secondary, 0.74));
-      p(18, 5, 5, 2, shade(spec.secondary, 0.78));
+      p(headX, 2, headW, 5, spec.secondary);
+      p(headX, 2, 2, 5, shade(spec.secondary, 0.74));
+      bill(shade(spec.secondary, 0.78), 5);
       break;
     case 'vendor-cap':
-      p(10, 3, 9, 4, spec.secondary);
-      p(12, 3, 2, 4, spec.primary);
-      p(16, 3, 2, 4, spec.primary);
-      p(18, 5, 5, 2, shade(spec.primary, 0.8));
+      p(headX, 2, headW, 5, spec.secondary);
+      p(headX + 2, 2, 2, 5, spec.primary);
+      p(headX + headW - 3, 2, 2, 5, spec.primary);
+      bill(shade(spec.primary, 0.8), 5);
       break;
     case 'wide-brim':
-      p(8, 4, 14, 2, spec.secondary);
-      p(11, 1, 8, 4, spec.primary);
-      p(11, 4, 8, 1, shade(spec.secondary, 0.72));
-      p(13, 8, 7, 2, '#293044'); // star shades
-      p(14, 8, 2, 1, '#9fc6d1');
-      p(18, 8, 2, 1, '#9fc6d1');
+      p(headX - 3, 4, headW + 7, 2, spec.secondary);
+      p(headX + 1, 1, headW - 1, 4, spec.primary);
+      p(headX + 1, 4, headW - 1, 1, shade(spec.secondary, 0.72));
+      if (!rear) {
+        p(headX + 2, 8, headW - 1, 2, '#293044');
+        p(headX + 3, 8, 2, 1, '#9fc6d1');
+      }
       break;
     case 'marshall-cap':
-      p(10, 3, 9, 4, spec.primary);
-      p(13, 4, 3, 2, spec.secondary);
-      p(18, 5, 5, 2, shade(spec.primary, 0.72));
+      p(headX, 2, headW, 5, spec.primary);
+      p(centre - 1, 3, 3, 2, spec.secondary);
+      bill(shade(spec.primary, 0.72), 5);
       break;
     case 'sun-hat':
-      p(8, 4, 14, 2, spec.secondary);
-      p(11, 1, 8, 4, spec.secondary);
-      p(11, 4, 8, 1, shade(spec.secondary, 0.76));
-      p(9, 6, 1, 3, '#d8c58c');
+      p(headX - 3, 4, headW + 7, 2, spec.secondary);
+      p(headX + 1, 1, headW - 1, 4, spec.secondary);
+      p(headX + 1, 4, headW - 1, 1, shade(spec.secondary, 0.76));
+      p(headX - 2, 6, 2, 4, '#d8c58c');
       break;
     case 'straw-hat':
-      p(7, 4, 15, 2, spec.secondary);
-      p(11, 1, 8, 4, spec.secondary);
-      p(11, 4, 8, 1, spec.primary);
+      p(headX - 4, 4, headW + 8, 2, spec.secondary);
+      p(headX + 1, 1, headW - 1, 4, spec.secondary);
+      p(headX + 1, 4, headW - 1, 1, spec.primary);
       break;
   }
 
-  // Profession details stay visible even when a carried prop overlaps the body.
+  // Profession details remain readable when tools overlap the torso.
+  const detailX = torsoX + 2;
   switch (kind) {
     case 'clubpro':
-      p(11, 14, 3, 9, '#f5f0dc');
-      p(16, 14, 3, 9, '#f5f0dc');
-      p(14, 14, 2, 6, '#d85745');
+      p(detailX, 17, 2, 8, '#f5f0dc');
+      p(torsoX + torsoW - 3, 17, 2, 8, '#f5f0dc');
+      if (!rear) p(centre, 16, 2, 7, '#d85745');
       break;
     case 'ranger':
-      p(11, 15, 2, 2, '#e1c465');
-      p(18, 15, 2, 3, '#303b36');
-      pixelLine(p, 19, 14, 19, 11, '#303b36');
+      p(detailX, 18, 3, 2, '#e1c465');
+      p(torsoX + torsoW - 3, 18, 3, 3, '#303b36');
+      pixelLine(p, torsoX + torsoW - 2, 18, torsoX + torsoW - 2, 14, '#303b36');
       break;
     case 'groundskeeper':
-      p(11, 15, 2, 7, '#ead8b4');
-      p(17, 15, 2, 7, '#ead8b4');
+      p(detailX, 17, 2, 8, '#ead8b4');
+      p(torsoX + torsoW - 3, 17, 2, 8, '#ead8b4');
       break;
     case 'sodavendor':
-      p(11, 14, 7, 9, '#f7e7bf');
-      p(13, 16, 3, 3, '#d54b45');
+      p(detailX, 17, torsoW - 4, 8, '#f7e7bf');
+      p(centre - 1, 19, 3, 3, '#d54b45');
       break;
     case 'celebrity':
-      p(13, 14, 4, 2, spec.secondary);
-      p(14, 16, 2, 2, '#fff2a2');
+      p(centre - 2, 16, 5, 2, spec.secondary);
+      p(centre - 1, 18, 3, 3, '#fff2a2');
       break;
     case 'marshall':
-      p(10, 14, 9, 3, spec.secondary);
-      p(13, 14, 2, 8, spec.primary);
-      p(17, 15, 2, 2, '#5f381d');
+      p(torsoX + 1, 17, torsoW - 2, 3, spec.secondary);
+      p(centre - 1, 17, 2, 8, spec.primary);
+      p(torsoX + torsoW - 3, 18, 2, 2, '#5f381d');
       break;
     case 'turftech':
-      p(11, 15, 7, 7, '#d9e2bd');
-      p(12, 19, 5, 1, '#6b7d55');
+      p(detailX, 18, torsoW - 4, 7, '#d9e2bd');
+      p(detailX + 1, 22, torsoW - 6, 1, '#6b7d55');
       break;
     case 'refreshment':
-      p(11, 14, 7, 9, '#f5ead1');
-      p(12, 16, 5, 2, '#e3bd5f');
+      p(detailX, 17, torsoW - 4, 8, '#f5ead1');
+      p(detailX + 1, 19, torsoW - 6, 2, '#e3bd5f');
       break;
   }
 
-  p(18, 15, 3, 6, spec.primary);
-  p(19, 20, 2, 3, skin);
+  // Arm swing is opposite the leading foot. Working arms stay near the prop.
+  const armX = shouldersX + shouldersW - 2;
+  p(armX, 17, 3, 5, spec.primary);
+  const armShift = working ? 0 : frame === 'walkA' ? 2 : -2;
+  pixelLine(p, armX + 1, 21, armX + 1 + armShift, 26, skin, 2);
+  if (!side) {
+    p(shouldersX, 17, 3, 5, spec.primary);
+    pixelLine(p, shouldersX + 1, 21, shouldersX + 1 - armShift, 26, skin, 2);
+  }
+
   switch (spec.tool) {
     case 'clipboard': {
-      const y = working ? 15 : 19;
-      p(20, y, 7, 9, '#d9ad55');
-      p(21, y + 1, 5, 6, '#f5edcf');
-      p(22, y - 1, 3, 2, '#6b5135');
-      if (working) pixelLine(p, 22, y + 3, 25, y + 3, '#4e6c94');
+      const y = working ? (alternate ? 15 : 13) : 19;
+      p(21, y, 7, 10, '#d9ad55');
+      p(22, y + 1, 5, 7, '#f5edcf');
+      p(23, y - 1, 3, 2, '#6b5135');
+      if (working) pixelLine(p, 23, y + 3, 26, y + 3 + Number(alternate), '#4e6c94');
       break;
     }
     case 'binoculars':
       if (working) {
-        p(8, 14, 3, 3, spec.primary);
-        p(9, 12, 3, 2, skin);
-        p(14, alternate ? 8 : 9, 7, 4, '#263c39');
-        p(15, alternate ? 8 : 9, 2, 2, '#7eb0b2');
-        p(19, alternate ? 8 : 9, 2, 2, '#7eb0b2');
+        const y = alternate ? 8 : 10;
+        p(20, 12, 3, 3, skin);
+        p(20, y, 8, 4, '#263c39');
+        p(21, y, 2, 2, '#7eb0b2');
+        p(26, y, 2, 2, '#7eb0b2');
       } else {
-        p(13, 17, 6, 4, '#263c39');
-        p(14, 18, 2, 2, '#7eb0b2');
-        p(17, 18, 2, 2, '#7eb0b2');
-        pixelLine(p, 14, 16, 13, 14, '#303b36');
-        pixelLine(p, 18, 16, 19, 14, '#303b36');
+        p(20, 20, 7, 4, '#263c39');
+        p(21, 21, 2, 2, '#7eb0b2');
+        p(25, 21, 2, 2, '#7eb0b2');
+        pixelLine(p, 21, 20, 19, 16, '#303b36');
       }
       break;
     case 'rake': {
-      const tipX = working ? (alternate ? 25 : 27) : 25;
-      const tipY = working ? (alternate ? 31 : 28) : 33;
-      pixelLine(p, 19, 20, tipX, tipY, '#79532c', 2);
+      const tipX = working ? (alternate ? 29 : 30) : 29;
+      const tipY = working ? (alternate ? 34 : 31) : 34;
+      pixelLine(p, 20, 20, tipX, tipY, '#79532c', 2);
       pixelLine(p, tipX - 4, tipY, tipX + 3, tipY, '#60676a', 2);
-      for (let i = -3; i <= 2; i += 2) pixelLine(p, tipX + i, tipY, tipX + i, tipY + 2, '#60676a');
+      if (tipY <= 34) for (let i = -3; i <= 2; i += 2) p(tipX + i, tipY + 1, 1, 2, '#60676a');
       break;
     }
-    case 'soda-tray':
-      pixelLine(p, 17, 22, 28, working ? 17 : 21, '#5f4434', 2);
-      p(20, working ? 14 : 18, 9, 2, '#d8c09b');
-      p(21, working ? 9 : 13, 3, 5, '#e94c43');
-      p(25, working ? 10 : 14, 3, 4, '#f1d650');
-      pixelLine(p, 22, working ? 9 : 13, 23, working ? 6 : 10, '#f3f1dc');
+    case 'soda-tray': {
+      const y = working ? (alternate ? 17 : 14) : 20;
+      pixelLine(p, 19, 24, 29, y + 2, '#5f4434', 2);
+      p(21, y + 1, 11, 2, '#d8c09b');
+      p(22, y - 4, 3, 5, '#e94c43');
+      p(27, y - 3, 3, 4, '#f1d650');
+      pixelLine(p, 23, y - 4, 24, y - 7, '#f3f1dc');
       break;
+    }
     case 'autograph-book': {
-      const y = working ? 14 : 19;
-      p(19, y, 9, 7, '#f4e8c7');
-      p(23, y, 1, 7, '#774c91');
-      if (working) pixelLine(p, 20, y + 2, 22, y + 3, '#40536e');
-      p(27, y - 2, 2, 3, spec.secondary); // flash bulb
+      const y = working ? (alternate ? 15 : 12) : 19;
+      p(21, y, 10, 8, '#f4e8c7');
+      p(26, y, 1, 8, '#774c91');
+      if (working) pixelLine(p, 22, y + 2, 25, y + 4, '#40536e');
+      p(30, y - 2, 3, 3, spec.secondary);
       break;
     }
     case 'pace-paddle': {
-      const top = working ? 10 : 15;
-      pixelLine(p, 21, 21, 24, top + 4, '#734d2e', 2);
-      p(20, top, 8, 7, '#f3d54e');
-      p(22, top + 2, 4, 3, alternate && working ? '#d54b45' : '#497a43');
+      const top = working ? (alternate ? 10 : 7) : 15;
+      pixelLine(p, 21, 25, 26, top + 5, '#734d2e', 2);
+      p(22, top, 9, 8, '#f3d54e');
+      p(24, top + 2, 5, 4, alternate && working ? '#d54b45' : '#497a43');
       break;
     }
     case 'watering-can': {
-      const canX = working ? 21 : 19;
-      const canY = working ? (alternate ? 22 : 21) : 23;
-      p(canX, canY, 6, 5, '#668fa0');
-      p(canX + 1, canY + 1, 4, 2, '#91bac0');
+      const canX = working ? (alternate ? 23 : 21) : 20;
+      const canY = working ? (alternate ? 23 : 20) : 23;
+      p(canX, canY, 7, 6, '#668fa0');
+      p(canX + 1, canY + 1, 5, 2, '#91bac0');
       pixelLine(p, canX + 1, canY, canX + 1, canY - 3, '#4c6f78', 2);
-      pixelLine(p, canX + 1, canY - 3, canX + 4, canY - 3, '#4c6f78', 2);
-      pixelLine(p, canX + 6, canY + 1, 29, working ? canY + 4 : canY + 2, '#4c6f78', 2);
+      pixelLine(p, canX + 1, canY - 3, canX + 5, canY - 3, '#4c6f78', 2);
+      pixelLine(p, canX + 7, canY + 1, 34, working ? canY + 4 : canY + 2, '#4c6f78', 2);
       if (working) {
-        p(28, canY + 6 + Number(alternate), 1, 2, '#7fc3d2');
-        p(26, canY + 8 - Number(alternate), 1, 2, '#7fc3d2');
-        p(29, canY + 10, 1, 1, '#7fc3d2');
+        p(33, Math.min(35, canY + 6), 1, 2, '#7fc3d2');
+        p(30, Math.min(34, canY + 8 - Number(alternate)), 1, 2, '#7fc3d2');
       }
       break;
     }
     case 'cocktail-tray': {
-      const y = working ? 15 : 20;
-      pixelLine(p, 17, 22, 28, y + 2, '#6c4c37', 2);
-      p(20, y + 1, 10, 2, '#d8c7a8');
-      p(21, y - 4, 3, 5, '#ef7b6d');
-      p(26, y - 3, 3, 4, '#7dc7c8');
-      p(22, y - 5, 1, 1, '#7cab4a');
-      p(27, y - 4, 1, 1, '#f3d14f');
+      const y = working ? (alternate ? 17 : 14) : 20;
+      pixelLine(p, 19, 24, 30, y + 2, '#6c4c37', 2);
+      p(21, y + 1, 12, 2, '#d8c7a8');
+      p(22, y - 4, 3, 5, '#ef7b6d');
+      p(28, y - 3, 3, 4, '#7dc7c8');
+      p(23, y - 5, 1, 1, '#7cab4a');
+      p(29, y - 4, 1, 1, '#f3d14f');
       break;
     }
   }

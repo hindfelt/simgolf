@@ -20,8 +20,8 @@ describe('staff world-actor render contract', () => {
   it('anchors staff art, shadows, bob, and labels to the shared actor geometry', () => {
     expect(renderSource).toContain('actorVisualGeometry(p, u, COURSE_STAFF_METRICS, bob)');
     expect(renderSource).toContain('actorWalkingBob(pose.phase, !pose.working, u, 1.05)');
-    expect(renderSource).toContain('-COURSE_STAFF_FOOT_ANCHOR.x * k');
-    expect(renderSource).toContain('-COURSE_STAFF_FOOT_ANCHOR.y * k');
+    expect(renderSource).toContain('actorDrawPlan(p, COURSE_STAFF_METRICS');
+    expect(renderSource).toContain('courseStaffSprite(kind, pose.frame, pose.view)');
     expect(renderSource).toContain('geometry.labelY');
     expect(renderSource).not.toContain('clamp(u, 0.65, 1.75) * 0.82');
   });
@@ -29,8 +29,18 @@ describe('staff world-actor render contract', () => {
   it('uses one native golfer renderer for AI and manual-play characters', () => {
     expect(renderSource.match(/drawGolferSprite\(ctx/g)).toHaveLength(2);
     expect(renderSource).toContain('golferVisualGeometry({ x, y }, u, bob)');
-    expect(renderSource).toContain('-GOLFER_FOOT_ANCHOR.x * k');
-    expect(renderSource).toContain('-GOLFER_FOOT_ANCHOR.y * k');
+    expect(renderSource).toContain('actorDrawPlan({ x, y }, GOLFER_METRICS');
+    expect(renderSource).toContain('ctx.scale(plan.mirrorX ? -1 : 1, 1)');
+    expect(renderSource).toContain('golferSprite(shirt, skin, cap, frame, view, identity)');
+    expect(renderSource).toContain('manualGolferFacing(screenX, screenY, px, bp.x)');
     expect(renderSource).not.toContain('clamp(u, 0.65, 1.7) * 0.96');
+  });
+
+  it('bounds actor labels and avoids naming every ambient actor by zoom alone', () => {
+    expect(renderSource).toContain('courseSafeViewport(S.view.w, S.view.h)');
+    expect(renderSource).toContain('const size = clamp(8 * u, 8, 11)');
+    expect(renderSource).toContain('ctx.lineWidth = 2');
+    expect(renderSource).toContain('if (selected || !!g.specialGuest || hovered)');
+    expect(renderSource).not.toContain('hovered || S.cam.z > 0.9');
   });
 });

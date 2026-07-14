@@ -1,9 +1,9 @@
 import { W, H, TW, TH, EH, MAXE, TINFO, themedTile, CH, PATH_MUD, PW, PH, PARCEL_W, PARCEL_H } from './constants';
 import { Tile } from './types';
-import type { Ball, Building, Employee, Golfer, Hole, Vec } from './types';
+import type { ActorView, Ball, Building, Employee, Golfer, Hole, Vec } from './types';
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
-import { P, PE, viewDepth, viewXY } from './camera';
+import { P, PE, courseSafeViewport, viewDepth, viewXY } from './camera';
 import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
@@ -17,13 +17,12 @@ import { BRIDGE_HALF_WIDTH, bridgeConnectionsAt, isStreamBackedTile } from './br
 import { ballFlightPosition, flightTrailSamples } from './flightPath';
 import { sharedTreeKindFor, treeCollisionProfile } from './treeGeometry';
 import { resolveGolferFrame, resolveManualGolferFrame } from './golferPose';
+import { actorFacingForScreenDelta, actorViewWithLegacyFallback, manualGolferFacing } from './golferFacing';
 import { worldWindScreenVector } from './shotFeedback';
 import {
-  COURSE_STAFF_FOOT_ANCHOR,
   COURSE_STAFF_METRICS,
-  COURSE_STAFF_SPRITE_SIZE,
-  GOLFER_FOOT_ANCHOR,
-  GOLFER_SPRITE_SIZE,
+  GOLFER_METRICS,
+  actorDrawPlan,
   actorSpriteScale,
   actorVisualGeometry,
   actorWalkingBob,
@@ -1366,12 +1365,17 @@ function courseStaffPose(id: Employee['id'], kind: CourseStaffKind, index: numbe
   const phase = S.time * (working ? 5.2 : 7.4) + index * 1.7;
   const startScreen = P(CH.x, CH.y);
   const targetScreen = P(target.x, target.y);
-  const outwardFace = targetScreen.x >= startScreen.x ? 1 : -1;
+  const direction = outbound || working ? 1 : -1;
+  const facing = actorFacingForScreenDelta(
+    (targetScreen.x - startScreen.x) * direction,
+    (targetScreen.y - startScreen.y) * direction,
+  );
   return {
     x: CH.x + (target.x - CH.x) * t,
     y: CH.y + (target.y - CH.y) * t,
     phase,
-    face: outbound || working ? outwardFace : -outwardFace,
+    face: facing.face,
+    view: facing.view,
     frame: courseStaffAnimationFrame(working, phase),
     working,
   };
@@ -1818,6 +1822,12 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
 }
 
 /* ================= actors ================= */
+function actorCanvasDpr(ctx: CanvasRenderingContext2D): number {
+  const transform = ctx.getTransform();
+  const dpr = Math.hypot(transform.a, transform.b);
+  return Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
+}
+
 function drawGolferSprite(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -1829,8 +1839,9 @@ function drawGolferSprite(
   frame: GolferFrame,
   face: number,
   bob: number,
-  view: 'front' | 'rear' = 'front',
-  identity = ''
+  view: ActorView = 'side',
+  identity = '',
+  mirrorAllViews = false,
 ) {
   const geometry = golferVisualGeometry({ x, y }, u, bob);
   const k = geometry.scale;
@@ -1848,16 +1859,17 @@ function drawGolferSprite(
   );
   ctx.fill();
   const spr = golferSprite(shirt, skin, cap, frame, view, identity);
+  const plan = actorDrawPlan({ x, y }, GOLFER_METRICS, k, view, face, actorCanvasDpr(ctx), bob, mirrorAllViews);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.translate(x, y - bob);
-  ctx.scale(face, 1);
+  ctx.translate(plan.anchor.x, plan.anchor.y);
+  ctx.scale(plan.mirrorX ? -1 : 1, 1);
   ctx.drawImage(
     spr,
-    -GOLFER_FOOT_ANCHOR.x * k,
-    -GOLFER_FOOT_ANCHOR.y * k,
-    GOLFER_SPRITE_SIZE.width * k,
-    GOLFER_SPRITE_SIZE.height * k,
+    plan.destination.x,
+    plan.destination.y,
+    plan.destination.width,
+    plan.destination.height,
   );
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
@@ -1866,7 +1878,7 @@ function drawGolferSprite(
 function drawCourseStaff(
   ctx: CanvasRenderingContext2D,
   kind: CourseStaffKind,
-  pose: { x: number; y: number; phase: number; face: number; frame: CourseStaffFrame; working: boolean },
+  pose: { x: number; y: number; phase: number; face: number; view: ActorView; frame: CourseStaffFrame; working: boolean },
   u: number,
   name: string
 ) {
@@ -1887,37 +1899,48 @@ function drawCourseStaff(
     Math.PI * 2,
   );
   ctx.fill();
+  const plan = actorDrawPlan(p, COURSE_STAFF_METRICS, k, pose.view, pose.face, actorCanvasDpr(ctx), bob);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.translate(p.x, p.y - bob);
-  ctx.scale(pose.face, 1);
+  ctx.translate(plan.anchor.x, plan.anchor.y);
+  ctx.scale(plan.mirrorX ? -1 : 1, 1);
   ctx.drawImage(
-    courseStaffSprite(kind, pose.frame),
-    -COURSE_STAFF_FOOT_ANCHOR.x * k,
-    -COURSE_STAFF_FOOT_ANCHOR.y * k,
-    COURSE_STAFF_SPRITE_SIZE.width * k,
-    COURSE_STAFF_SPRITE_SIZE.height * k,
+    courseStaffSprite(kind, pose.frame, pose.view),
+    plan.destination.x,
+    plan.destination.y,
+    plan.destination.width,
+    plan.destination.height,
   );
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
   const hovered = !!S.hover && Math.floor(pose.x) === S.hover.x && Math.floor(pose.y) === S.hover.y;
-  if (S.cam.z > 0.8 || hovered) {
+  if (hovered) {
     drawActorName(ctx, name, p.x, geometry.labelY, Math.max(k * 0.9, 0.72));
   }
 }
 
 function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, u: number, gold = false) {
-  const size = clamp(7.8 * u, 7.25, 11.5);
+  const size = clamp(8 * u, 8, 11);
   ctx.save();
   ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2, size * 0.3);
-  ctx.strokeStyle = 'rgba(22,27,72,.92)';
-  ctx.strokeText(label, x, y);
+  ctx.lineWidth = 2;
+  const safe = courseSafeViewport(S.view.w, S.view.h);
+  const maximumWidth = Math.max(8, Math.min(96, safe.width - 8));
+  let copy = label;
+  if (ctx.measureText(copy).width > maximumWidth) {
+    while (copy.length > 1 && ctx.measureText(copy + '…').width > maximumWidth) copy = copy.slice(0, -1);
+    copy += '…';
+  }
+  const measuredWidth = Math.min(maximumWidth, ctx.measureText(copy).width);
+  const labelX = clamp(x, safe.left + measuredWidth / 2 + 3, safe.right - measuredWidth / 2 - 3);
+  const labelY = clamp(y, safe.top + size + 2, safe.bottom - 2);
+  ctx.strokeStyle = '#161b48';
+  ctx.strokeText(copy, labelX, labelY, maximumWidth);
   ctx.fillStyle = gold ? '#fff06a' : '#fff';
-  ctx.fillText(label, x, y);
+  ctx.fillText(copy, labelX, labelY, maximumWidth);
   ctx.restore();
 }
 
@@ -1926,7 +1949,7 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const walking = g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave';
   const bob = actorWalkingBob(g.phase, walking, u);
   const geometry = golferVisualGeometry(p, u, bob);
-  const view = g.facingAway ? 'rear' : 'front';
+  const view = actorViewWithLegacyFallback(g);
   const selected = S.selectedGolfer === g;
   if (selected) {
     const pulse = 1 + Math.sin(S.time * 6) * .08;
@@ -1953,7 +1976,7 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   }
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
-  if (selected || (g.specialGuest && S.cam.z > 0.58) || hovered || S.cam.z > 0.9) {
+  if (selected || !!g.specialGuest || hovered) {
     drawActorName(ctx, g.name, p.x, geometry.labelY, Math.max(geometry.scale * 0.9, 0.72), selected || !!g.specialGuest);
   }
 }
@@ -1984,12 +2007,13 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   normalY /= normalLength;
   const px = bp.x + normalX * 8 * u;
   const py = bp.y + normalY * 4.5 * u - 1 * u;
-  const face = bp.x >= px ? 1 : -1;
-  const view = screenY < 0 ? 'rear' : 'front';
+  const facing = manualGolferFacing(screenX, screenY, px, bp.x);
+  const face = facing.face;
+  const view = facing.view;
   const chargedAim = !!intent && intent.rawPower > (pl.lie === 'green' ? 0.04 : 0.12);
   const frame = resolveManualGolferFrame(pl, chargedAim);
   const pro = activePlayingPro();
-  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, face, 0, view, pro.visualSeed);
+  drawGolferSprite(ctx, px, py, u, pro.shirt, pro.skin, pro.cap, frame, face, 0, view, pro.visualSeed, true);
   const geometry = golferVisualGeometry({ x: px, y: py }, u);
   drawActorName(ctx, pro.name, px, geometry.labelY, Math.max(actorSpriteScale(u) * 0.9, 0.72), true);
 }

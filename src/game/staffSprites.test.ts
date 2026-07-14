@@ -4,6 +4,7 @@ import {
   COURSE_STAFF_SPRITE_SIZE,
   GOLFER_SPRITE_SIZE,
   courseStaffAnimationFrame,
+  type CourseStaffBuild,
   type CourseStaffKind,
 } from './sprites';
 import { EMP_CATALOG, EMPLOYEE_WORK_ZONES, employeeDisplayName, employeeWorkZone } from './employees';
@@ -23,7 +24,9 @@ const KINDS: CourseStaffKind[] = [
 describe('dedicated course-staff sprites', () => {
   it('gives every paid role a distinct silhouette and profession tool', () => {
     const archetypes = KINDS.map((kind) => COURSE_STAFF_ARCHETYPES[kind]);
+    const builds: CourseStaffBuild[] = archetypes.map((archetype) => archetype.build);
 
+    expect(new Set(builds)).toEqual(new Set(['slim', 'standard', 'broad']));
     expect(new Set(archetypes.map((archetype) => archetype.primary)).size).toBe(KINDS.length);
     expect(new Set(archetypes.map((archetype) => archetype.headwear)).size).toBe(KINDS.length);
     expect(new Set(archetypes.map((archetype) => archetype.tool)).size).toBe(KINDS.length);

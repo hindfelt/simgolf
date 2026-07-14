@@ -13,6 +13,7 @@
     "typecheck": "tsc -b --noEmit",
     "typecheck:api": "tsc -p worker/tsconfig.json --noEmit",
     "test": "vitest run src",
+    "test:visual": "playwright test",
     "test:api": "GOOGLE_CLIENT_ID=test-client.apps.googleusercontent.com GOOGLE_CLIENT_SECRET=test-only SESSION_SECRET=test-session-secret-at-least-thirty-two-bytes vitest run --config worker/vitest.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply fairway-mogul-db --local",
     "cf:types": "wrangler types worker/worker-configuration.d.ts"
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@playwright/test": "1.61.1",
     "@types/node": "^26.1.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -13,6 +13,7 @@ import ProCircuitPanel from './ui/ProCircuitPanel';
 import Modals from './ui/Modals';
 import DestinationReleaseToast from './ui/DestinationReleaseToast';
 import GolferInspector from './ui/GolferInspector';
+import ActorAtlas from './ui/ActorAtlas';
 import { useUI } from './ui/store';
 
 function Hint() {
@@ -23,6 +24,7 @@ function Hint() {
 }
 
 export default function App() {
+  const showActorAtlas = new URLSearchParams(window.location.search).get('actor-atlas') === '1';
   // Never fail silently: surface runtime errors to the player.
   useEffect(() => {
     const onErr = (e: ErrorEvent) => {
@@ -38,6 +40,8 @@ export default function App() {
     window.addEventListener('error', onErr);
     return () => window.removeEventListener('error', onErr);
   }, []);
+
+  if (showActorAtlas) return <ActorAtlas />;
 
   return (
     <>
