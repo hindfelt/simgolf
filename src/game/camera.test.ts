@@ -14,7 +14,7 @@ describe('course camera safe viewport', () => {
 
   it('reserves top chrome and the compact short-landscape controller plus breathing room', () => {
     const safe = courseSafeViewport(688, 368, true);
-    expect(safe).toMatchObject({ left: 10, right: 678, top: COURSE_SAFE_TOP, bottom: 220, centerX: 344, centerY: 168 });
+    expect(safe).toMatchObject({ left: 10, right: 678, top: COURSE_SAFE_TOP, bottom: 216, centerX: 344, centerY: 166 });
     expect(368 - safe.bottom).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT + COURSE_SAFE_GAP);
   });
 

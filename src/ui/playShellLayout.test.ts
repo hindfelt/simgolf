@@ -65,33 +65,32 @@ describe('original play shell responsive geometry', () => {
     expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn::after\s*\{[^}]*inset: -7px 0;/s);
   });
 
-  it('restores the original fan and readable console at the native Retina landscape width', () => {
-    const shortMarker = shell.indexOf('/* A Retina capture of the native 796px-wide game');
+  it('uses a full-width readable console at the native Retina landscape width', () => {
+    const shortMarker = shell.indexOf('/* A Retina capture of a 796px-wide browser');
     const shortStart = shell.indexOf('@media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px)', shortMarker);
     const shortEnd = shell.indexOf('@media (max-height: 520px) and (max-width: 650px)', shortStart);
     const short = shell.slice(shortStart, shortEnd);
     expect(shortStart).toBeGreaterThan(-1);
-    expect(short).toContain('--sg-bottom: 116px;');
-    expect(short).toContain('--sg-controller-visible-height: 166px;');
-    expect(short).toContain('height: 166px;');
-    expect(short).toMatch(/\.fieldControls \{ display: block; \}/);
+    expect(short).toContain('--sg-bottom: 98px;');
+    expect(short).toContain('--sg-controller-visible-height: 140px;');
+    expect(short).toContain('height: 140px;');
+    expect(short).toMatch(/\.fieldControls \{ display: none; \}/);
     expect(short).toMatch(/\.playModeDock \{ display: none; \}/);
-    expect(short).toMatch(/\.playHud\s*\{[^}]*left: var\(--sg-control-width\);[^}]*height: 116px;/s);
-    expect(short).toMatch(/\.playConsolePanes\s*\{[^}]*left: 64px;[^}]*right: 5px;[^}]*grid-template-columns: minmax\(155px, 165fr\) minmax\(120px, 130fr\) minmax\(195px, 200fr\);/s);
-    expect(short).toMatch(/\.playShotPalette\s*\{[^}]*left: 126px;[^}]*top: -21px;/s);
-    expect(short).toMatch(/\.shapeBtn,[\s\S]*?flex: 0 0 68px;[\s\S]*?height: 46px;/s);
-    expect(short).toContain('font-size: 9.5px; line-height: 10px;');
+    expect(short).toMatch(/\.playHud\s*\{[^}]*left: 0;[^}]*height: 98px;/s);
+    expect(short).toMatch(/\.playConsolePanes\s*\{[^}]*left: 59px;[^}]*right: 6px;[^}]*grid-template-columns: minmax\(200px, \.95fr\) minmax\(150px, \.72fr\) minmax\(275px, 1\.55fr\);/s);
+    expect(short).toMatch(/\.playShotPalette\s*\{[^}]*left: 50%;[^}]*top: -41px;/s);
+    expect(short).toMatch(/\.shapeBtn,[\s\S]*?flex: 0 0 57px;[\s\S]*?height: 39px;/s);
+    expect(short).toContain('font-size: 9px; line-height: 9.5px;');
 
     const viewportWidth = 796;
-    const hudLeft = 218;
-    const hudBorder = 4;
-    const consolePanes = { x: hudLeft + hudBorder + 64, width: viewportWidth - hudLeft - hudBorder - 64 - 5 };
-    const message = { x: hudLeft + hudBorder + 74, width: 360 };
-    const palette = { x: hudLeft + hudBorder + 126, width: (68 * 5) + (10 * 4) };
-    const conditions = { x: viewportWidth - 9 - 120, width: 120 };
-    expect(right(consolePanes)).toBe(viewportWidth - 5);
+    const consolePanes = { x: 59, width: viewportWidth - 59 - 6 };
+    const message = { x: 8, width: 210 };
+    const palette = { x: (viewportWidth - ((57 * 5) + (6 * 4))) / 2, width: (57 * 5) + (6 * 4) };
+    const conditions = { x: viewportWidth - 6 - 120, width: 120 };
+    expect(right(consolePanes)).toBe(viewportWidth - 6);
     expect(intersects(message, conditions)).toBe(false);
-    expect(right(palette)).toBe(728);
-    expect(right(conditions)).toBe(viewportWidth - 9);
+    expect(intersects(message, palette)).toBe(false);
+    expect(intersects(palette, conditions)).toBe(false);
+    expect(right(conditions)).toBe(viewportWidth - 6);
   });
 });
