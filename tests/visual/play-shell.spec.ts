@@ -155,7 +155,9 @@ test.describe('retina native landscape', () => {
     await page.addStyleTag({ content: `
       canvas.game { visibility: hidden !important; }
       body { background: #344f42 !important; }
-      .plaque, .gauges, .ticker, .destinationReleaseToast { visibility: hidden !important; }
+      .plaque, .gauges, .ticker, .destinationReleaseToast, .playConditions { visibility: hidden !important; }
+      .playHud, .playHud * { color: transparent !important; text-shadow: none !important; }
+      .playHud .flightGlyph { fill: #fff8ff !important; stroke: #fff8ff !important; }
     ` });
     await expect(page).toHaveScreenshot('play-shell-retina-796x353.png', { scale: 'device', maxDiffPixels: 200 });
   });
