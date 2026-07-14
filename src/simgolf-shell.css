@@ -1440,15 +1440,18 @@ body,
 
 .overlay[data-modal-kind='newCourse'] {
   align-items: center;
-  padding: 12px;
+  padding: 4px;
   background: rgba(22, 25, 69, .18);
 }
 
 .modal[data-modal-kind='newCourse'] {
-  width: min(940px, calc(100vw - 24px));
-  max-width: 940px;
-  max-height: calc(100dvh - 24px);
-  padding: 13px 15px 12px;
+  width: min(800px, calc(100vw - 8px));
+  max-width: 800px;
+  height: min(600px, calc(100dvh - 8px));
+  max-height: 600px;
+  padding: 5px;
+  overflow: hidden;
+  border-radius: 7px;
   background:
     linear-gradient(90deg, rgba(255,255,255,.15), transparent 11%, transparent 89%, rgba(45,42,123,.18)),
     linear-gradient(180deg, #d9d7fa, #b5b3eb 76%, #8f8dce);
@@ -1481,7 +1484,7 @@ body,
   .overlay[data-modal-kind='saves'] { justify-content: center; padding: 80px 7px calc(var(--sg-bottom) + 8px); }
   .modal[data-modal-kind='saves'] { width: min(420px, 100%); max-width: 420px; max-height: calc(100dvh - var(--sg-bottom) - 92px); }
   .overlay[data-modal-kind='newCourse'] { padding: 7px; }
-  .modal[data-modal-kind='newCourse'] { width: 100%; max-width: 940px; max-height: calc(100dvh - 14px); }
+  .modal[data-modal-kind='newCourse'] { width: 100%; max-width: 800px; height: calc(100dvh - 14px); max-height: 600px; }
   .golferInspector { top: 82px; left: 6px; right: 6px; width: auto; max-height: calc(100dvh - var(--sg-bottom) - 94px); }
   .plaque { width: min(248px, 64vw); min-width: 0; min-height: 62px; padding-left: 52px; }
   .courseCrest { width: 57px; height: 69px; }
