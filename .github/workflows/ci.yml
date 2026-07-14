@@ -28,8 +28,11 @@ jobs:
 
       - run: npm ci
 
+      - run: npx playwright install --with-deps chromium
+
       - run: npm run typecheck
       - run: npm run typecheck:api
       - run: npm test
+      - run: npm run test:visual
       - run: npm run test:api
       - run: npm run build

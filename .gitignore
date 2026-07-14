@@ -12,3 +12,5 @@ tsconfig.node.tsbuildinfo
 worker/tsconfig.tsbuildinfo
 dist-worker/
 *.cpuprofile
+test-results/
+playwright-report/

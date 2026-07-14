@@ -94,6 +94,9 @@ export type GolferState =
   | 'prePutt'
   | 'watch';
 
+/** Screen-facing actor art. `side` uses `face` to mirror left/right. */
+export type ActorView = 'front' | 'rear' | 'side';
+
 export interface Golfer {
   name: string;
   skill: number;
@@ -115,7 +118,10 @@ export interface Golfer {
   chatCd: number;
   scenicSaid: boolean;
   face?: number; // 1 = facing screen-right, -1 = left
-  facingAway?: boolean; // walking predominantly up-screen — draw the rear-view sprite
+  /** Explicit screen-facing art; absent on saves written before actor views. */
+  view?: ActorView;
+  /** @deprecated Legacy save fallback. New code writes `view` as well. */
+  facingAway?: boolean;
   // distinct skills, copied from the matching `Regular` at spawn (P3)
   length?: number;
   accuracy?: number;

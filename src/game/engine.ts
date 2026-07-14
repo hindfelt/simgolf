@@ -1,11 +1,11 @@
-import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
+import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
 import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RegularSkill, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState, PlayerShotFeedback } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
-import { isoOf, PE, screenToWorld, viewDepth } from './camera';
+import { cameraPositionForWorldPoint, coursePointNeedsCameraFollow, PE, screenToWorld, viewDepth } from './camera';
 import { hitTestGolfers } from './golferInspection';
-import { golferFacingBetween } from './golferFacing';
+import { actorViewWithLegacyFallback, golferFacingBetween } from './golferFacing';
 import { sfx } from './audio';
 import { ui, type TickerCharacter } from '../ui/store';
 import {
@@ -41,7 +41,7 @@ import { applyRegularTraining, createRegularTraining, regularTrainingRates, sani
 import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
 import type { FlightPath } from './flightPath';
 export { ballFlightPosition, flightApexHeight, shapeCurveOffset } from './flightPath';
-import { playerBallNeedsCameraFollow, shotWindEffect } from './shotFeedback';
+import { shotWindEffect } from './shotFeedback';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -1705,7 +1705,8 @@ function say(g: Golfer, key: string, cls?: string) {
 function faceGolferToward(g: Golfer, from: Vec, to: Vec) {
   const facing = golferFacingBetween(from, to);
   g.face = facing.face;
-  g.facingAway = facing.facingAway;
+  g.view = facing.view;
+  g.facingAway = facing.view === 'rear';
 }
 /** Why a low-interest hole is dull, for anchored complaints ("Hole 3 is flat and hazard-free"). */
 function boringReason(h: Hole): string {
@@ -1969,7 +1970,7 @@ function updateBalls(dt: number) {
       if (b.owner === 'P') {
         const screen = PE(b.x, b.y);
         if (b.kind === 'fly') screen.y -= Math.sin(Math.PI * clamp(b.t, 0, 1)) * b.h * S.cam.z;
-        if (playerBallNeedsCameraFollow(screen, { width: S.view.w, height: S.view.h })) centerCam(b.x, b.y);
+        if (coursePointNeedsCameraFollow(screen)) centerCam(b.x, b.y);
       }
     }
   }
@@ -2236,9 +2237,9 @@ function updateCamGlide(dt: number) {
   S.camShake = Math.max(0, S.camShake - dt * 36);
   const t = S.camTarget;
   if (!t) return;
-  const iso = isoOf(t.x, t.y);
-  const wantX = S.view.w / 2 - iso.ix * S.cam.z;
-  const wantY = S.view.h / 2 - (iso.iy - elevAt(t.x, t.y) * EH) * S.cam.z;
+  const target = cameraPositionForWorldPoint(t.x, t.y);
+  const wantX = target.x;
+  const wantY = target.y;
   const k = Math.min(1, dt * 5);
   S.cam.x += (wantX - S.cam.x) * k;
   S.cam.y += (wantY - S.cam.y) * k;
@@ -3548,6 +3549,8 @@ function applySaveData(d: any): boolean {
       if (typeof g.hunger !== 'number') g.hunger = 1;
       if (typeof g.thirst !== 'number') g.thirst = 1;
       if (typeof g.energy !== 'number') g.energy = 1;
+      g.view = actorViewWithLegacyFallback(g);
+      g.facingAway = g.view === 'rear';
       if (g.state !== 'leave') {
         if (g.ball) {
           g.state = 'toBall';

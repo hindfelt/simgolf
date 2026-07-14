@@ -1,4 +1,4 @@
-import type { Vec } from './types';
+import type { ActorView, Vec } from './types';
 
 export const ACTOR_SCALE_MIN = 0.76;
 export const ACTOR_SCALE_MAX = 2.4;
@@ -19,6 +19,19 @@ export interface ActorScreenRect {
   right: number;
   top: number;
   bottom: number;
+}
+
+export interface ActorDestinationRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ActorDrawPlan {
+  anchor: Vec;
+  destination: ActorDestinationRect;
+  mirrorX: boolean;
 }
 
 export interface ActorVisualGeometry {
@@ -85,6 +98,41 @@ export function actorVisualGeometry(
 
 export function golferVisualGeometry(anchor: Vec, zoom: number, bob = 0): ActorVisualGeometry {
   return actorVisualGeometry(anchor, zoom, GOLFER_METRICS, bob);
+}
+
+/** Align destination edges to physical pixels while keeping layout in CSS pixels. */
+export function snapActorDestinationRect(rect: ActorDestinationRect, devicePixelRatio: number): ActorDestinationRect {
+  const dpr = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;
+  const left = Math.round(rect.x * dpr) / dpr;
+  const top = Math.round(rect.y * dpr) / dpr;
+  const right = Math.round((rect.x + rect.width) * dpr) / dpr;
+  const bottom = Math.round((rect.y + rect.height) * dpr) / dpr;
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+/** Shared production/atlas plan for device-pixel snapping and view-aware mirroring. */
+export function actorDrawPlan(
+  anchor: Vec,
+  metrics: ActorSpriteMetrics,
+  scale: number,
+  view: ActorView,
+  face: number,
+  devicePixelRatio: number,
+  bob = 0,
+  mirrorAllViews = false,
+): ActorDrawPlan {
+  const dpr = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;
+  const snap = (value: number) => Math.round(value * dpr) / dpr;
+  return {
+    anchor: { x: snap(anchor.x), y: snap(anchor.y - bob) },
+    destination: snapActorDestinationRect({
+      x: -metrics.foot.x * scale,
+      y: -metrics.foot.y * scale,
+      width: metrics.size.width * scale,
+      height: metrics.size.height * scale,
+    }, dpr),
+    mirrorX: face < 0 && (view === 'side' || mirrorAllViews),
+  };
 }
 
 export function expandActorTouchTarget(bounds: ActorScreenRect, minimum = ACTOR_TOUCH_TARGET): ActorScreenRect {

@@ -3,6 +3,64 @@ import { clamp, elevAt } from './rng';
 import { S, caches } from './state';
 import type { Vec } from './types';
 
+/** Clears the full three-gauge desktop stack (ends at y=111) plus breathing room. */
+export const COURSE_SAFE_TOP = 116;
+export const CONTROLLER_VISIBLE_HEIGHT = 166;
+export const COURSE_SAFE_GAP = 12;
+const COURSE_SAFE_SIDE = 10;
+
+export interface CourseSafeViewport {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+}
+
+/** Unobscured course rectangle shared by fitting, follow, rotation, and glide. */
+export function courseSafeViewport(cw: number, ch: number): CourseSafeViewport {
+  const width = Math.max(1, Number.isFinite(cw) ? cw : 1);
+  const height = Math.max(1, Number.isFinite(ch) ? ch : 1);
+  const left = Math.min(COURSE_SAFE_SIDE, Math.max(0, width - 1));
+  const right = Math.max(left + 1, width - COURSE_SAFE_SIDE);
+  const desiredBottom = height - CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP;
+  const top = Math.min(COURSE_SAFE_TOP, Math.max(0, desiredBottom - 1));
+  const bottom = Math.max(top + 1, desiredBottom);
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: right - left,
+    height: bottom - top,
+    centerX: (left + right) / 2,
+    centerY: (top + bottom) / 2,
+  };
+}
+
+export function cameraPositionForWorldPoint(wx: number, wy: number, cw = S.view.w, ch = S.view.h): Vec {
+  const safe = courseSafeViewport(cw, ch);
+  const iso = isoOf(wx, wy);
+  return {
+    x: safe.centerX - iso.ix * S.cam.z,
+    y: safe.centerY - (iso.iy - elevAt(wx, wy) * EH) * S.cam.z,
+  };
+}
+
+/** Follow before an airborne ball or actor can pass under permanent chrome. */
+export function coursePointNeedsCameraFollow(point: Vec, cw = S.view.w, ch = S.view.h): boolean {
+  const safe = courseSafeViewport(cw, ch);
+  const xInset = Math.min(40, safe.width * 0.12);
+  const yInset = Math.min(12, safe.height * 0.12);
+  return point.x < safe.left + xInset
+    || point.x > safe.right - xInset
+    || point.y < safe.top + yInset
+    || point.y > safe.bottom - yInset;
+}
+
 /** World -> view coords under the current 90°-step rotation. */
 export function viewXY(wx: number, wy: number): [number, number] {
   switch (S.rot & 3) {
@@ -30,13 +88,14 @@ export function isoOf(wx: number, wy: number) {
 
 /** Rotate the view a quarter turn, keeping the screen-centre point centred. */
 export function rotateView(dir: 1 | -1) {
-  const c = screenToWorld(S.view.w / 2, S.view.h / 2);
+  const safe = courseSafeViewport(S.view.w, S.view.h);
+  const c = screenToWorld(safe.centerX, safe.centerY);
   S.rot = (S.rot + dir + 4) & 3;
   caches.groundDirty = true;
   S.camTarget = null;
   const iso = isoOf(clamp(c.x, 0, W), clamp(c.y, 0, H));
-  S.cam.x = S.view.w / 2 - iso.ix * S.cam.z;
-  S.cam.y = S.view.h / 2 - iso.iy * S.cam.z;
+  S.cam.x = safe.centerX - iso.ix * S.cam.z;
+  S.cam.y = safe.centerY - iso.iy * S.cam.z;
 }
 
 /** World tile coords -> screen (css) pixels. */
@@ -110,12 +169,11 @@ export function fitCamera(cw: number, ch: number) {
   const ix1 = Math.max(...corners.map((c) => c.ix));
   const iy0 = Math.min(...corners.map((c) => c.iy));
   const iy1 = Math.max(...corners.map((c) => c.iy));
-  const TOP = 46; // floating plaque/gauges
-  const BOT = 86; // tile tray
-  const availW = cw - 20;
-  const availH = ch - TOP - BOT - 20;
+  const safe = courseSafeViewport(cw, ch);
+  const availW = safe.width;
+  const availH = safe.height;
   const z = clamp(Math.min(availW / (ix1 - ix0), availH / (iy1 - iy0)), 0.4, 2);
   S.cam.z = z;
-  S.cam.x = cw / 2 - ((ix0 + ix1) / 2) * z;
-  S.cam.y = TOP + (ch - TOP - BOT) / 2 - ((iy0 + iy1) / 2) * z;
+  S.cam.x = safe.centerX - ((ix0 + ix1) / 2) * z;
+  S.cam.y = safe.centerY - ((iy0 + iy1) / 2) * z;
 }
