@@ -916,11 +916,12 @@ body,
 .playConsolePanes {
   position: absolute;
   left: 128px;
+  right: 8px;
   top: 27px;
   bottom: calc(5px + env(safe-area-inset-bottom));
-  width: min(560px, calc(100% - 136px));
+  width: auto;
   display: grid;
-  grid-template-columns: 160px 120px minmax(150px, 1fr);
+  grid-template-columns: minmax(170px, .9fr) minmax(130px, .65fr) minmax(220px, 1.6fr);
   gap: 5px;
   min-width: 0;
 }
@@ -964,6 +965,7 @@ body,
 }
 .playClubLine > span { margin-right: 1px; }
 .playClubLine button {
+  position: relative;
   min-width: 0;
   min-height: 0;
   height: 15px;
@@ -976,6 +978,25 @@ body,
   font-size: 7px;
   line-height: 12px;
   box-shadow: none;
+}
+/* The legacy workbench stylesheet gives every `.clubBtn` a 34px web-card
+   target. The native console has a deliberately compact club row; keep the
+   visible key small and provide coarse-pointer reach with a pseudo hit area. */
+.controllerShell .playHud .playClubLine .clubBtn {
+  width: auto;
+  min-width: 0;
+  height: 15px;
+  min-height: 15px;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-family: var(--sg-font);
+  font-size: 7px;
+  line-height: 12px;
+}
+.controllerShell .playHud .playClubLine .clubBtn::after {
+  content: '';
+  position: absolute;
+  inset: -7px 0;
 }
 .playClubLine button:hover:not(:disabled) { background: rgba(236,235,255,.5); }
 .playClubLine button.on {
@@ -1215,22 +1236,29 @@ body,
 
 .playCompetitionHud {
   position: absolute;
-  left: 8px;
-  bottom: calc(100% + 72px);
+  left: 138px;
+  top: -66px;
+  bottom: auto;
   z-index: 3;
-  min-width: 165px;
-  display: grid;
+  width: min(390px, calc(100vw - 440px));
+  min-width: 0;
+  min-height: 27px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   padding: 5px 8px;
-  border: 3px solid #5f55a2;
-  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #5f55a2;
+  border-radius: 5px;
   background: linear-gradient(180deg, var(--sg-yellow-hi), #dfb710);
   color: #30336d;
   font-family: var(--sg-font);
-  box-shadow: 0 3px 0 #282c76, 0 7px 14px rgba(0,0,0,.28);
+  box-shadow: 0 2px 0 #282c76, 0 4px 8px rgba(0,0,0,.28);
+  white-space: nowrap;
 }
-.playCompetitionHud b { font-size: 7px; }
-.playCompetitionHud span { font-size: 10px; }
-.playCompetitionHud em { font-family: var(--sg-small); font-size: 6px; font-style: normal; }
+.playCompetitionHud b { flex: 0 0 auto; font-size: 7px; }
+.playCompetitionHud span { min-width: 0; overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
+.playCompetitionHud em { flex: 0 0 auto; font-family: var(--sg-small); font-size: 6px; font-style: normal; }
 
 /* --- original in-world dialog layer -------------------------------------- */
 /* SimGolf kept the course live and bright behind compact molded dialogs.    */
@@ -2304,6 +2332,162 @@ body:has(.controllerShell[data-mode='play']) .routingMap {
     line-height: 10px;
   }
   .controllerShell[data-mode='play'] .playShotFacts span:nth-child(n + 3) { display: none; }
+}
+
+/* Manual play owns the course focus. Build-mode inspection and a second event
+   ticker only duplicate the player/competition cards and used to cover them. */
+body:has(.controllerShell[data-mode='play']) .golferInspector,
+body:has(.playCompetitionHud) .ticker { display: none; }
+body:has(.playCompetitionHud) .playMessage { display: none; }
+
+/* At the original-height compact widths, lift conditions completely above the
+   authored trajectory ovals. Horizontal overlap is then harmlessly avoided
+   without moving the rail away from its original screen position. */
+@media (min-height: 521px) and (max-width: 936px) {
+  .controllerShell[data-mode='play'] .playConditions { top: -74px; }
+}
+
+/* Wide screens keep the original 218px fan but let the functional console use
+   the full remaining slab instead of abandoning half of it as empty purple. */
+@media (min-width: 1200px) {
+  .controllerShell[data-mode='play'] .playMessage,
+  .controllerShell[data-mode='play'] .playCompetitionHud {
+    left: 540px;
+    width: min(520px, calc(100% - 670px));
+  }
+}
+
+/* Short landscape windows are not miniature 800x600 monitors. Retire the
+   decorative fan during a round, preserve native-size text, and recompose the
+   same controls into a 92px console with one 44px tactical rail above it. */
+@media (max-height: 520px) {
+  .controllerShell[data-mode='play'] {
+    --sg-bottom: 92px;
+    --sg-controller-visible-height: 136px;
+    height: 136px;
+  }
+
+  .controllerShell[data-mode='play'] .fieldControls,
+  .controllerShell[data-mode='play'] .playModeDock { display: none; }
+
+  .controllerShell[data-mode='play'] .playHud {
+    left: 0;
+    right: 0;
+    height: 92px;
+    min-height: 92px;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
+  }
+  .controllerShell[data-mode='play'] .playHud::after { display: none; }
+
+  .controllerShell[data-mode='play'] .playConsolePanes {
+    left: 59px;
+    right: 5px;
+    top: 24px;
+    bottom: 4px;
+    width: auto;
+    grid-template-columns: 190px 114px minmax(230px, 1fr);
+    gap: 5px;
+  }
+
+  .controllerShell[data-mode='play'] .quitBtn {
+    left: 8px;
+    top: 30px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+  }
+
+  .controllerShell[data-mode='play'] .playShotPalette {
+    left: calc(50% - 166px);
+    top: -40px;
+    width: auto;
+    overflow: visible;
+    transform: none;
+  }
+  .controllerShell[data-mode='play'] .playShotPaletteRail {
+    width: auto;
+    gap: 5px;
+    padding: 0;
+    overflow: visible;
+  }
+  .controllerShell[data-mode='play'] .playShotPalette .shapeBtn,
+  .controllerShell[data-mode='play'] .playShotPalette .shapeBtn:nth-child(even) {
+    flex: 0 0 51px;
+    width: 51px;
+    min-width: 51px;
+    height: 35px;
+    min-height: 35px;
+    padding: 1px 4px;
+    border-width: 2px;
+    transform: none;
+  }
+  .controllerShell[data-mode='play'] .flightGlyph { width: 39px; height: 21px; }
+
+  .controllerShell[data-mode='play'] .playMessage {
+    left: 8px;
+    top: -40px;
+    width: 210px;
+    min-height: 35px;
+    padding: 4px 7px;
+    font-size: 8px;
+  }
+  .controllerShell[data-mode='play'] .playConditions {
+    right: 6px;
+    top: -40px;
+    min-width: 104px;
+  }
+
+  .controllerShell[data-mode='play'] .playStatusPane { padding: 3px 6px 2px; }
+  .controllerShell[data-mode='play'] .playPaneTitle { height: 13px; }
+  .controllerShell[data-mode='play'] .playClubLine,
+  .controllerShell[data-mode='play'] .playClubReadout { height: 16px; }
+  .controllerShell[data-mode='play'] .playShotFacts { font-size: 7px; line-height: 9px; }
+  .controllerShell[data-mode='play'] .playSkillPane { padding: 3px 5px; font-size: 7px; line-height: 9px; }
+  .controllerShell[data-mode='play'] .playCaddieBook { grid-template-rows: 12px 1fr 10px; padding: 3px 5px 2px; }
+  .controllerShell[data-mode='play'] .playHud .playClubLine .clubBtn {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    height: 16px;
+    min-height: 16px;
+    padding-inline: 4px;
+  }
+  .controllerShell[data-mode='play'] .playCompetitionHud {
+    left: 59px;
+    right: 5px;
+    top: 3px;
+    width: auto;
+    min-height: 18px;
+    padding: 1px 5px;
+    border-width: 1px;
+    box-shadow: 0 1px 0 #282c76;
+  }
+  .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 8px; }
+}
+
+@media (max-height: 520px) and (max-width: 650px) {
+  .controllerShell[data-mode='play'] .playConsolePanes {
+    grid-template-columns: minmax(132px, .85fr) minmax(0, 1.2fr);
+  }
+  .controllerShell[data-mode='play'] .playSkillPane { display: none; }
+  .controllerShell[data-mode='play'] .playMessage { display: none; }
+  .controllerShell[data-mode='play'] .playShotPalette {
+    left: 4px;
+    right: 112px;
+    width: auto;
+  }
+  .controllerShell[data-mode='play'] .playShotPaletteRail {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .controllerShell[data-mode='play'] .playShotPaletteRail::-webkit-scrollbar { display: none; }
+}
+
+@media (max-height: 520px) and (max-width: 480px) {
+  .controllerShell[data-mode='play'] .caddieBookHead span { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
