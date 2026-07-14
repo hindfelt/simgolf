@@ -3,7 +3,7 @@ import type { ToolId } from '../game/types';
 import { TOOL_PREVIEW_IDS, TOOL_PREVIEW_RECIPES, toolPreviewRecipe } from './toolPreviewRecipes';
 
 const ALL_TOOLS: ToolId[] = [
-  'pan', 'hole', 'fair', 'firmfair', 'deeprough', 'green', 'sand', 'waste', 'pot', 'stream', 'brush',
+  'pan', 'inspect', 'hole', 'fair', 'firmfair', 'deeprough', 'green', 'sand', 'waste', 'pot', 'stream', 'brush',
   'rocks', 'water', 'tree', 'flower', 'path', 'raise', 'lower', 'land', 'build', 'dozer', 'play',
 ];
 
@@ -21,6 +21,7 @@ describe('original-style construction tool previews', () => {
 
   it('uses semantic miniature scenes for the most visible rail tools', () => {
     expect(toolPreviewRecipe('pan')).toMatchObject({ base: 'slab', motif: 'paper-hand' });
+    expect(toolPreviewRecipe('inspect')).toMatchObject({ base: 'slab', motif: 'people-profile' });
     expect(toolPreviewRecipe('hole').motif).toBe('new-hole');
     expect(toolPreviewRecipe('fair').motif).toBe('fairway-stripes');
     expect(toolPreviewRecipe('green').motif).toBe('putting-green');

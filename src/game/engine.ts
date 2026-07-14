@@ -3,7 +3,8 @@ import { Tile } from './types';
 import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RegularSkill, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
-import { isoOf, screenToWorld } from './camera';
+import { isoOf, PE, screenToWorld, viewDepth } from './camera';
+import { hitTestGolfers } from './golferInspection';
 import { golferFacingBetween } from './golferFacing';
 import { sfx } from './audio';
 import { ui, type TickerCharacter } from '../ui/store';
@@ -86,6 +87,39 @@ function ticker(name: string, txt: string, cls?: string, character?: TickerChara
 }
 export function updateTopbar() {
   ui.set({ cash: S.cash, rep: S.rep, fee: S.fee, golfers: S.golfers.length, holes: S.holes.length, courseName: S.courseName, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId, difficulty: S.difficulty, sandbox: S.sandbox });
+}
+
+function bumpGolferSelection() {
+  ui.set({ golferSelectionVersion: ui.get().golferSelectionVersion + 1 });
+}
+
+/** Selects one live actor by object identity. Selection is deliberately absent from saves. */
+export function selectGolfer(golfer: Golfer | null) {
+  const next = golfer && S.golfers.includes(golfer) ? golfer : null;
+  if (S.selectedGolfer === next) return;
+  S.selectedGolfer = next;
+  bumpGolferSelection();
+  if (next) setHint(`${next.name} selected · inspect attitude, needs and skills · drag empty ground to pan.`);
+}
+
+export function pickGolferAtScreen(x: number, y: number, coarse = false): Golfer | null {
+  const candidates = S.golfers.map((golfer, order) => {
+    const walking = golfer.state === 'toTee' || golfer.state === 'toBall' || golfer.state === 'leave';
+    return {
+      value: golfer,
+      anchor: PE(golfer.x, golfer.y),
+      bob: walking ? Math.abs(Math.sin(golfer.phase)) * 1.2 * S.cam.z : 0,
+      depth: viewDepth(golfer.x, golfer.y),
+      order,
+    };
+  });
+  return hitTestGolfers({ x, y }, candidates, S.cam.z, coarse);
+}
+
+export function centerOnGolfer(golfer: Golfer | null = S.selectedGolfer): boolean {
+  if (!golfer || !S.golfers.includes(golfer)) return false;
+  centerCam(golfer.x, golfer.y);
+  return true;
 }
 
 function freshSpecialVisitors(): SpecialVisitorState {
@@ -1851,6 +1885,7 @@ function updateGolfers(dt: number) {
           else if (g.mood <= -2) ticker(g.name, pick(SAY.leaveMad), 'bad');
           finishSpecialGuestVisit(g);
           settleMembership(g);
+          if (S.selectedGolfer === g) selectGolfer(null);
           S.golfers.splice(i, 1);
           updateTopbar();
           continue;
@@ -2432,6 +2467,7 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
     sfx.err();
     return;
   }
+  selectGolfer(null);
   if (S.speed === 0) setSpeed(1);
   if (!roundPropertyAccessAtStart) roundPropertyAccessAtStart = currentPropertyAccessContext();
   const startedAt = Date.now();
@@ -2850,6 +2886,7 @@ export function quitRound(msg?: string) {
 /* ---------------- tools + speed + fee ---------------- */
 const HINTS: Record<string, string> = {
   pan: 'Drag to pan · pinch or scroll to zoom · hold SPACE to pan with any tool.',
+  inspect: 'PEOPLE · tap a golfer for their SimFoto profile · drag empty ground to pan.',
   hole: 'Tap the map to place a TEE · tap an existing green to move its flag.',
   fair: 'Drag to paint fairway. Golfers love a good lie.',
   firmfair: 'Firm fairway: baked turf that bounces balls higher and rolls them farther.',
@@ -2872,6 +2909,7 @@ const HINTS: Record<string, string> = {
   dozer: 'Tap to clear terrain, a hole, or a building. Refunds some cash.',
 };
 export function setTool(id: ToolId) {
+  if (id !== 'inspect') selectGolfer(null);
   S.tool = id;
   S.holeDraft = null;
   if (id !== 'build') S.buildKind = null;
@@ -3256,6 +3294,7 @@ function buildSaveData() {
 /** Applies a parsed save object to `S`. Returns false (and leaves `S` untouched) if it's incompatible. */
 function applySaveData(d: any): boolean {
   if ((d.v !== 1 && d.v !== 2) || !Array.isArray(d.tiles) || d.tiles.length !== W * H) return false;
+  selectGolfer(null);
   S.courseName = typeof d.courseName === 'string' && d.courseName.trim() ? d.courseName.slice(0, 40) : 'Fairway Mogul';
   const THEMES: CourseTheme[] = ['parklands', 'links', 'desert', 'tropical'];
   S.theme = THEMES.includes(d.theme) ? d.theme : 'parklands';
@@ -3621,6 +3660,7 @@ export function newCourse(
     sfx.err();
     return false;
   }
+  selectGolfer(null);
   S.courseName = property.name;
   S.theme = property.theme;
   S.propertyId = property.id;

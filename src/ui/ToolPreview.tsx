@@ -58,6 +58,17 @@ function pixel(ctx: CanvasRenderingContext2D, color: string, x: number, y: numbe
   ctx.fillRect(x, y, width, height);
 }
 
+function drawPeopleProfile(ctx: CanvasRenderingContext2D) {
+  ellipse(ctx, 34, 25, 23, 21, '#f5df27', '#303678');
+  ellipse(ctx, 34, 25, 19, 17, '#8fab70', '#fff58b');
+  polygon(ctx, [[18, 43], [23, 32], [31, 29], [38, 29], [46, 33], [50, 43]], '#426f9d', '#28316f');
+  ellipse(ctx, 34, 22, 9, 11, '#dba77b', '#43362f');
+  polygon(ctx, [[24, 18], [28, 11], [40, 12], [45, 18]], '#f4d83f', '#3e3c65');
+  line(ctx, '#252c65', 1.5, [[30, 22], [32, 22], [36, 22], [38, 22]]);
+  pixel(ctx, '#fff4b8', 28, 34, 4, 4);
+  pixel(ctx, '#fff4b8', 37, 34, 4, 4);
+}
+
 function drawTileBase(ctx: CanvasRenderingContext2D, recipe: ToolPreviewRecipe, active: boolean) {
   if (active) {
     polygon(ctx, [[34, 0], [68, 20], [34, 43], [0, 20]], '#fff449', '#3a3577', 2);
@@ -297,6 +308,7 @@ function drawTeeOff(ctx: CanvasRenderingContext2D) {
 function drawMotif(ctx: CanvasRenderingContext2D, motif: ToolPreviewMotif, active: boolean) {
   switch (motif) {
     case 'paper-hand': drawPaperHand(ctx, active); break;
+    case 'people-profile': drawPeopleProfile(ctx); break;
     case 'new-hole': drawFlag(ctx, 34, 8, true); break;
     case 'fairway-stripes': drawFairwayStripes(ctx); break;
     case 'firm-fairway': drawFairwayStripes(ctx, true); break;

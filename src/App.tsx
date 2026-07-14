@@ -14,6 +14,7 @@ import AccountPanel from './ui/AccountPanel';
 import ProCircuitPanel from './ui/ProCircuitPanel';
 import Modals from './ui/Modals';
 import DestinationReleaseToast from './ui/DestinationReleaseToast';
+import GolferInspector from './ui/GolferInspector';
 import { useUI } from './ui/store';
 
 function Hint() {
@@ -48,6 +49,7 @@ export default function App() {
       <PlayHud />
       <Ticker />
       <DestinationReleaseToast />
+      <GolferInspector />
       <BuildPanel />
       <StaffPanel />
       <ReportsPanel />
