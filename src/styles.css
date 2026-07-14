@@ -916,7 +916,7 @@ canvas.game {
 }
 .worldCareerStrip {
   display: grid;
-  grid-template-columns: repeat(4, auto);
+  grid-template-columns: repeat(5, auto);
   align-items: center;
   gap: 5px;
 }
@@ -1078,6 +1078,12 @@ canvas.game {
   background: #fff7c9;
 }
 .worldProperty.affordable em { color: #426226; }
+.worldProperty.released {
+  border-color: rgba(145, 98, 34, .7);
+  background: linear-gradient(180deg, rgba(255, 242, 190, .92), rgba(224, 199, 139, .82));
+}
+.worldProperty.released .propertyPin { border-color: #745119; background: linear-gradient(135deg, #f4d267, #b47d24); }
+.worldProperty.released em { color: #76531d; }
 .worldProperty.locked {
   border-style: dashed;
   border-color: rgba(126, 70, 58, .55);
@@ -3871,7 +3877,7 @@ canvas.game:focus-visible {
   .worldScreenHead { padding-left: 39px; }
   .worldScreenHead b { font-size: 10px; }
   .worldScreenHead { align-items: flex-start; flex-direction: column; gap: 6px; }
-  .worldCareerStrip { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .worldCareerStrip { width: 100%; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .worldCareerStrip > span,
   .worldCareerStrip > span:first-child { min-width: 0; padding-inline: 4px; text-align: left; }
   .worldCareerStrip b { font-size: 8px; }
@@ -3960,6 +3966,7 @@ canvas.game:focus-visible {
   .propertyInspector,
   .parcelDeed { background: Canvas; color: CanvasText; border-color: ButtonText; }
   .worldProperty.affordable { outline: 1px solid Highlight; }
+  .worldProperty.released { outline: 1px dashed Highlight; }
   .worldProperty.locked { border: 2px dashed GrayText; }
   .worldProperty.purchased { border: 3px double ButtonText; }
   .worldProperty.selected { outline: 3px solid Highlight; outline-offset: 2px; }
