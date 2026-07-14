@@ -7,6 +7,7 @@ import { useUI } from './store';
 import Icon from './Icon';
 import Scorecard, { sourceLabel } from './Scorecard';
 import { useFloatingPanelFocus } from './panelA11y';
+import { CLUBS } from '../game/constants';
 
 type HistoryFilter = 'all' | 'course' | 'competition';
 
@@ -141,7 +142,7 @@ export default function ScorecardsPanel() {
                   {chosenHole.shots.map((shot) => (
                     <div className="shotRow" key={shot.stroke}>
                       <b>{shot.stroke}</b>
-                      <span><strong>{shot.club === 'putter' ? 'Putter' : shot.club[0].toUpperCase() + shot.club.slice(1)}</strong><small>{shot.shape === 'putt' ? 'Putt' : shot.shape}</small></span>
+                      <span><strong>{shot.club === 'putter' ? 'Putter' : CLUBS[shot.club]?.label ?? 'Unknown club'}</strong><small>{shot.shape === 'putt' ? 'Putt' : shot.shape}</small></span>
                       <span><strong>{shot.distance.toFixed(1)} tiles</strong><small>{shot.fromLie} → {shot.resultLie}</small></span>
                       <span className={shot.penalty ? 'shotPenalty' : shot.holed ? 'shotHoled' : ''}><strong>{shot.holed ? 'Holed' : shot.penalty ? `+${shot.penalty} penalty` : 'Played'}</strong><small>{shot.events.length ? shot.events.join(', ') : `${Math.round(shot.power * 100)}% power`}</small></span>
                     </div>

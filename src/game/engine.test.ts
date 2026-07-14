@@ -560,40 +560,51 @@ describe('save / load round-trip', () => {
   });
 
   it('gives every club a distinct lie-aware strategic profile', () => {
-    expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'iron', 1));
-    expect(playerIntendedDistance('tee', 'iron', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'wedge', 1));
+    expect(playerIntendedDistance('tee', 'driver', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'threeWood', 1));
+    expect(playerIntendedDistance('tee', 'threeWood', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'fiveWood', 1));
+    expect(playerIntendedDistance('tee', 'fiveWood', 1)).toBeGreaterThan(playerIntendedDistance('tee', 'lobWedge', 1));
 
     const driver = clubLieProfile('tee', 'driver');
-    const iron = clubLieProfile('tee', 'iron');
-    const wedge = clubLieProfile('tee', 'wedge');
-    expect(driver.launchMultiplier).toBeLessThan(iron.launchMultiplier);
-    expect(iron.launchMultiplier).toBeLessThan(wedge.launchMultiplier);
-    expect(driver.rolloutMultiplier).toBeGreaterThan(iron.rolloutMultiplier);
-    expect(iron.rolloutMultiplier).toBeGreaterThan(wedge.rolloutMultiplier);
+    const threeWood = clubLieProfile('tee', 'threeWood');
+    const fiveWood = clubLieProfile('tee', 'fiveWood');
+    const lobWedge = clubLieProfile('tee', 'lobWedge');
+    expect(driver.launchMultiplier).toBeLessThan(threeWood.launchMultiplier);
+    expect(threeWood.launchMultiplier).toBeLessThan(fiveWood.launchMultiplier);
+    expect(fiveWood.launchMultiplier).toBeLessThan(lobWedge.launchMultiplier);
+    expect(driver.rolloutMultiplier).toBeGreaterThan(threeWood.rolloutMultiplier);
+    expect(threeWood.rolloutMultiplier).toBeGreaterThan(fiveWood.rolloutMultiplier);
+    expect(fiveWood.rolloutMultiplier).toBeGreaterThan(lobWedge.rolloutMultiplier);
 
-    for (const lie of SEVERE_RECOVERY_LIES) expect(clubLieProfile(lie, 'driver')).toMatchObject({ available: false });
+    for (const lie of SEVERE_RECOVERY_LIES) {
+      expect(clubLieProfile(lie, 'driver')).toMatchObject({ available: false });
+      expect(clubLieProfile(lie, 'threeWood')).toMatchObject({ available: false });
+      expect(clubLieProfile(lie, 'fiveWood')).toMatchObject({ available: false });
+      expect(clubLieProfile(lie, 'lobWedge')).toMatchObject({ available: true });
+    }
     expect(clubLieProfile('pot', 'driver').reason).toContain('pot bunker');
     expect(clubLieProfile('rough', 'driver')).toMatchObject({ available: true });
-    expect(fallbackClubForLie('sand', 'driver')).toBe('wedge');
+    expect(fallbackClubForLie('sand', 'driver')).toBe('lobWedge');
 
-    const ironRetention = clubLieProfile('sand', 'iron');
-    const wedgeRetention = clubLieProfile('sand', 'wedge');
-    expect(wedgeRetention.carryMultiplier).toBeGreaterThan(ironRetention.carryMultiplier);
-    expect(wedgeRetention.dispersionMultiplier).toBeLessThan(ironRetention.dispersionMultiplier);
+    const legacyIron = clubLieProfile('sand', 'iron');
+    expect(lobWedge.carryMultiplier).toBeGreaterThan(legacyIron.carryMultiplier);
+    expect(clubLieProfile('sand', 'lobWedge').dispersionMultiplier).toBeLessThan(legacyIron.dispersionMultiplier);
   });
 
-  it('uses the same club-aware dispersion model for wide Driver and tight Wedge shots', () => {
+  it('uses the same club-aware dispersion model across the original four-club bag', () => {
     const driver = playerShotDispersion('tee', 'driver', 'straight', 6);
-    const iron = playerShotDispersion('tee', 'iron', 'straight', 6);
-    const wedge = playerShotDispersion('tee', 'wedge', 'straight', 6);
-    expect(driver.angularScale).toBeGreaterThan(iron.angularScale);
-    expect(iron.angularScale).toBeGreaterThan(wedge.angularScale);
-    expect(driver.lateral).toBeGreaterThan(iron.lateral);
-    expect(iron.lateral).toBeGreaterThan(wedge.lateral);
-    expect(playerShotDispersion('tee', 'iron', 'punch', 6).angularScale).toBeLessThan(iron.angularScale);
+    const threeWood = playerShotDispersion('tee', 'threeWood', 'straight', 6);
+    const fiveWood = playerShotDispersion('tee', 'fiveWood', 'straight', 6);
+    const lobWedge = playerShotDispersion('tee', 'lobWedge', 'straight', 6);
+    expect(driver.angularScale).toBeGreaterThan(threeWood.angularScale);
+    expect(threeWood.angularScale).toBeGreaterThan(fiveWood.angularScale);
+    expect(fiveWood.angularScale).toBeGreaterThan(lobWedge.angularScale);
+    expect(driver.lateral).toBeGreaterThan(threeWood.lateral);
+    expect(threeWood.lateral).toBeGreaterThan(fiveWood.lateral);
+    expect(fiveWood.lateral).toBeGreaterThan(lobWedge.lateral);
+    expect(playerShotDispersion('tee', 'fiveWood', 'punch', 6).angularScale).toBeLessThan(fiveWood.angularScale);
   });
 
-  it('rejects Driver from a severe recovery lie without charging a stroke and falls back to Wedge', () => {
+  it('rejects Driver from a severe recovery lie without charging a stroke and falls back to Lob Wedge', () => {
     startRound();
     S.player!.lie = 'sand';
     S.player!.club = 'iron';
@@ -603,7 +614,7 @@ describe('save / load round-trip', () => {
     S.player!.club = 'driver'; // simulate a stale selection from an older save
     S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 };
     playerFire(1, 0, 0.5);
-    expect(S.player!.club).toBe('wedge');
+    expect(S.player!.club).toBe('lobWedge');
     expect(S.player!.aim).toBeNull();
     expect(S.player!.strokes).toBe(0);
     expect(S.balls.filter((ball) => ball.owner === 'P')).toHaveLength(0);
@@ -618,16 +629,18 @@ describe('save / load round-trip', () => {
     updatePlayHud();
     const teeHud = ui.get().playHud!;
     expect(teeHud.clubOptions.driver).toMatchObject({ available: true, role: 'Low · runs' });
-    expect(teeHud.clubOptions.wedge).toMatchObject({ available: true, role: 'High · checks' });
+    expect(teeHud.clubOptions.threeWood).toMatchObject({ available: true, role: 'Low-mid · long' });
+    expect(teeHud.clubOptions.fiveWood).toMatchObject({ available: true, role: 'Mid · accurate' });
+    expect(teeHud.clubOptions.lobWedge).toMatchObject({ available: true, role: 'Very high · stops' });
     expect(teeHud.finishDistance).toBeGreaterThan(teeHud.carry!);
 
     S.player!.lie = 'pot';
-    S.player!.club = 'wedge';
+    S.player!.club = 'lobWedge';
     updatePlayHud();
     const recoveryHud = ui.get().playHud!;
     expect(recoveryHud.clubOptions.driver.available).toBe(false);
     expect(recoveryHud.clubOptions.driver.reason).toContain('pot bunker');
-    expect(recoveryHud.selectedRole).toBe('High · checks');
+    expect(recoveryHud.selectedRole).toBe('Very high · stops');
     quitRound();
   });
 
@@ -738,9 +751,9 @@ describe('save / load round-trip', () => {
     S.holes = [{ id: 93, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
     S.tiles.fill(Tile.FAIR);
     S.elevC.fill(0);
-    const results = {} as Record<'driver' | 'iron' | 'wedge', { height: number; finish: number }>;
+    const results = {} as Record<'driver' | 'threeWood' | 'fiveWood' | 'lobWedge', { height: number; finish: number }>;
 
-    for (const club of ['driver', 'iron', 'wedge'] as const) {
+    for (const club of ['driver', 'threeWood', 'fiveWood', 'lobWedge'] as const) {
       startRound();
       S.wind.speed = 0;
       setClub(club);
@@ -755,10 +768,12 @@ describe('save / load round-trip', () => {
       quitRound();
     }
 
-    expect(results.driver.height).toBeLessThan(results.iron.height);
-    expect(results.iron.height).toBeLessThan(results.wedge.height);
-    expect(results.driver.finish).toBeGreaterThan(results.iron.finish);
-    expect(results.iron.finish).toBeGreaterThan(results.wedge.finish);
+    expect(results.driver.height).toBeLessThan(results.threeWood.height);
+    expect(results.threeWood.height).toBeLessThan(results.fiveWood.height);
+    expect(results.fiveWood.height).toBeLessThan(results.lobWedge.height);
+    expect(results.driver.finish).toBeGreaterThan(results.threeWood.finish);
+    expect(results.threeWood.finish).toBeGreaterThan(results.fiveWood.finish);
+    expect(results.fiveWood.finish).toBeGreaterThan(results.lobWedge.finish);
     random.mockRestore();
   });
 
@@ -904,7 +919,7 @@ describe('save / load round-trip', () => {
     expect(shot.end.y).toBeCloseTo(forecast.restingPoint!.y, 10);
     expect(shot.end.x).toBeLessThan(forecast.plan.target.x);
     expect(S.player!.currentHole!.hazards).toContain('tree');
-    expect(S.player!.club).toBe('wedge');
+    expect(S.player!.club).toBe('lobWedge');
     expect(S.balls.filter((ball) => ball.owner === 'P')).toHaveLength(0);
     quitRound();
     random.mockRestore();
@@ -934,7 +949,7 @@ describe('save / load round-trip', () => {
     expect(usesLegacyEndpointTreeDeflection({ owner: {} as Golfer, lowFlight: true })).toBe(false);
   });
 
-  it('automatically selects Wedge after a Driver lands in a severe recovery lie', () => {
+  it('automatically selects Lob Wedge after a Driver lands in a severe recovery lie', () => {
     const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
     S.holes = [{ id: 90, tee: { x: 5.5, y: 5.5 }, cup: { x: 30.5, y: 5.5 }, par: 5, teeTiles: [], greenTiles: [], beauty: 1, interest: 1 }];
     S.tiles.fill(Tile.SAND);
@@ -944,7 +959,7 @@ describe('save / load round-trip', () => {
     setClub('driver');
     playerFire(1, 0, 0.25);
     update(5);
-    expect(S.player).toMatchObject({ lie: 'sand', club: 'wedge', strokes: 1 });
+    expect(S.player).toMatchObject({ lie: 'sand', club: 'lobWedge', strokes: 1 });
     quitRound();
     random.mockRestore();
   });

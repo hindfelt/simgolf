@@ -193,7 +193,7 @@ describe('live player shot capture', () => {
     playerFire(1, 0, 0.2);
 
     expect(S.player?.currentHole?.shots).toHaveLength(1);
-    expect(S.player?.pendingShot?.club).toBe('iron');
+    expect(S.player?.pendingShot?.club).toBe('fiveWood');
     expect(S.player?.pendingShot?.shape).toBe('straight');
     expect(S.player?.pendingShot?.fromLie).toBe('tee');
     expect(S.player?.pendingShot?.power).toBeCloseTo(0.2);

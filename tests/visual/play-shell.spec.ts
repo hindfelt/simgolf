@@ -28,7 +28,7 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   };
 
   const hud = await box('.playHud');
-  const message = await box('.playMessage');
+  await expect(page.locator('.playMessage')).toBeHidden();
   const palette = await box('.playShotPalette');
   const conditions = await box('.playConditions');
   const panes = await box('.playConsolePanes');
@@ -47,7 +47,6 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   expect(quit.width).toBeGreaterThanOrEqual(42);
   expect(quit.height).toBeGreaterThanOrEqual(42);
 
-  expect(intersects(message, palette)).toBe(false);
   expect(intersects(palette, conditions)).toBe(false);
   expect(intersects(status, skills)).toBe(false);
   expect(intersects(skills, caddie)).toBe(false);
@@ -77,15 +76,18 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
 test.describe('coarse compact fallback', () => {
   test.use({ viewport: { width: 320, height: 358 }, hasTouch: true });
 
-  test('keeps every club key inside the status pane', async ({ page }) => {
+  test('keeps the complete club carousel inside the status pane', async ({ page }) => {
     await enterSandboxRound(page);
     const status = await page.locator('.playStatusPane').boundingBox() as Box;
-    const clubs = await page.locator('.playClubLine .clubBtn').evaluateAll((buttons) => buttons.map((button) => {
+    const clubs = await page.locator('.playClubLine button').evaluateAll((buttons) => buttons.map((button) => {
       const bounds = button.getBoundingClientRect();
       return { x: bounds.x, width: bounds.width, height: bounds.height, flex: getComputedStyle(button).flex };
     }));
     expect(clubs).toHaveLength(3);
-    expect(clubs.every((club) => club.height === 16 && club.flex !== '0 0 44px')).toBe(true);
+    expect(clubs.map((club) => club.height)).toEqual([44, 16, 44]);
+    expect(clubs[0].flex).toBe('0 0 44px');
+    expect(clubs[1].flex).not.toBe('0 0 44px');
+    expect(clubs[2].flex).toBe('0 0 44px');
     expect(Math.max(...clubs.map((club) => club.x + club.width))).toBeLessThanOrEqual(right(status));
   });
 });
