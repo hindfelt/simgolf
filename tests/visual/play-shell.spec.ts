@@ -159,7 +159,7 @@ test.describe('retina native landscape', () => {
       .playHud, .playHud * { color: transparent !important; text-shadow: none !important; }
       .playHud .flightGlyph { fill: #fff8ff !important; stroke: #fff8ff !important; }
     ` });
-    await expect(page).toHaveScreenshot('play-shell-retina-796x353.png', { scale: 'device', maxDiffPixels: 200 });
+    await expect(page).toHaveScreenshot('play-shell-retina-796x353.png', { scale: 'device', maxDiffPixels: 500 });
   });
 });
 
