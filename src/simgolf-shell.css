@@ -2596,47 +2596,44 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 8px; }
 }
 
-/* A Retina capture of the native 796px-wide game is 1592px across, but its
-   layout viewport is still the original game's width. Keep that composition
-   authored at CSS-pixel size: the fan remains visible, the five trajectory
-   ovals stay clear of the message/weather cards, and all four shot facts fit
-   without shrinking the console into a 7px web dashboard. */
+/* A Retina capture of a 796px-wide browser is only 353-358 CSS pixels tall.
+   The full 800x600 fan is proportionally enormous there and steals the left
+   third of the shot console. Keep the native toy-like controls and type, but
+   use the compact full-width play slab so the course and caddie book remain
+   readable without any decorative shell covering them. */
 @media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px) {
   .controllerShell[data-mode='play'] {
-    --sg-bottom: 116px;
-    --sg-controller-visible-height: 166px;
-    height: 166px;
+    --sg-bottom: 98px;
+    --sg-controller-visible-height: 140px;
+    height: 140px;
   }
 
-  .controllerShell[data-mode='play'] .fieldControls { display: block; }
+  .controllerShell[data-mode='play'] .fieldControls { display: none; }
   .controllerShell[data-mode='play'] .playModeDock { display: none; }
 
   .controllerShell[data-mode='play'] .playHud {
-    left: var(--sg-control-width);
+    left: 0;
     right: 0;
     z-index: 27;
-    height: 116px;
-    min-height: 116px;
-    border-left: 4px solid var(--sg-rim);
-    border-radius: 36px 0 0 0;
+    height: 98px;
+    min-height: 98px;
+    border-left: 0;
+    border-radius: 22px 22px 0 0;
   }
-  .controllerShell[data-mode='play'] .playHud::after {
-    left: 59px;
-    display: block;
-  }
+  .controllerShell[data-mode='play'] .playHud::after { display: none; }
 
   .controllerShell[data-mode='play'] .playConsolePanes {
-    left: 64px;
-    right: 5px;
-    top: 31px;
+    left: 59px;
+    right: 6px;
+    top: 18px;
     bottom: 4px;
-    grid-template-columns: minmax(155px, 165fr) minmax(120px, 130fr) minmax(195px, 200fr);
+    grid-template-columns: minmax(200px, .95fr) minmax(150px, .72fr) minmax(275px, 1.55fr);
     gap: 5px;
   }
 
   .controllerShell[data-mode='play'] .quitBtn {
-    left: 4px;
-    top: 35px;
+    left: 8px;
+    top: 31px;
     width: 45px;
     min-width: 45px;
     height: 45px;
@@ -2644,31 +2641,31 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   }
 
   .controllerShell[data-mode='play'] .playShotPalette {
-    left: 126px;
+    left: 50%;
     right: auto;
-    top: -21px;
+    top: -41px;
     width: auto;
     overflow: visible;
-    transform: none;
+    transform: translateX(-50%);
   }
   .controllerShell[data-mode='play'] .playShotPaletteRail {
     width: auto;
-    gap: 10px;
+    gap: 6px;
     padding: 0;
     overflow: visible;
   }
   .controllerShell[data-mode='play'] .playShotPalette .shapeBtn,
   .controllerShell[data-mode='play'] .playShotPalette .shapeBtn:nth-child(even) {
-    flex: 0 0 68px;
-    width: 68px;
-    min-width: 68px;
-    height: 46px;
-    min-height: 46px;
-    padding: 2px 5px;
+    flex: 0 0 57px;
+    width: 57px;
+    min-width: 57px;
+    height: 39px;
+    min-height: 39px;
+    padding: 1px 4px;
     border-width: 3px;
     transform: none;
   }
-  .controllerShell[data-mode='play'] .flightGlyph { width: 54px; height: 28px; }
+  .controllerShell[data-mode='play'] .flightGlyph { width: 47px; height: 25px; }
   .controllerShell[data-mode='play'] .shapeComboState i {
     width: 12px;
     height: 9px;
@@ -2677,14 +2674,14 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
 
   .controllerShell[data-mode='play'] .playMessage,
   .controllerShell[data-mode='play'] .playCompetitionHud {
-    left: 74px;
+    left: 8px;
     right: auto;
-    top: -67px;
-    width: min(360px, calc(100vw - 436px));
+    top: -41px;
+    width: 210px;
     min-height: 31px;
-    padding: 6px 9px;
+    padding: 4px 7px;
     border-width: 2px;
-    font-size: 10px;
+    font-size: 9px;
   }
   .controllerShell[data-mode='play'] .playMessage .canopyStatus { font-size: 8px; }
   .controllerShell[data-mode='play'] .playCompetitionHud b { font-size: 8.5px; }
@@ -2692,18 +2689,18 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   .controllerShell[data-mode='play'] .playCompetitionHud em { font-size: 7.5px; }
 
   .controllerShell[data-mode='play'] .playConditions {
-    right: 9px;
-    top: -67px;
+    right: 6px;
+    top: -41px;
     min-width: 120px;
-    padding: 5px 7px;
+    padding: 4px 6px;
   }
   .controllerShell[data-mode='play'] .playConditions .weatherReadout { font-size: 9.5px; }
   .controllerShell[data-mode='play'] .playConditions .weatherReadout small { font-size: 7.5px; }
   .controllerShell[data-mode='play'] .playConditions .windReadout { font-size: 8.5px; }
 
-  .controllerShell[data-mode='play'] .playStatusPane { padding: 3px 5px 2px; }
+  .controllerShell[data-mode='play'] .playStatusPane { padding: 3px 6px 2px; }
   .controllerShell[data-mode='play'] .playPaneTitle { height: 15px; }
-  .controllerShell[data-mode='play'] .playPaneTitle b { font-size: 11px; }
+  .controllerShell[data-mode='play'] .playPaneTitle b { font-size: 10.5px; }
   .controllerShell[data-mode='play'] .playPaneTitle span { display: inline; font-size: 9px; }
   .controllerShell[data-mode='play'] .playClubLine,
   .controllerShell[data-mode='play'] .playClubReadout { height: 17px; font-size: 10px; }
@@ -2716,12 +2713,12 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     font-size: 9.5px;
   }
   .controllerShell[data-mode='play'] .playHud .playClubLine .clubCurrent { font-size: 9.5px; }
-  .controllerShell[data-mode='play'] .playShotFacts { font-size: 9.5px; line-height: 10px; }
-  .controllerShell[data-mode='play'] .playSkillPane { padding: 4px 6px; font-size: 10px; line-height: 12px; }
+  .controllerShell[data-mode='play'] .playShotFacts { font-size: 9px; line-height: 9.5px; }
+  .controllerShell[data-mode='play'] .playSkillPane { padding: 3px 6px; font-size: 9.5px; line-height: 11px; }
 
   .controllerShell[data-mode='play'] .playCaddieBook {
-    grid-template-rows: 16px 1fr 12px;
-    padding: 4px 6px 3px;
+    grid-template-rows: 16px 1fr 11px;
+    padding: 3px 6px 2px;
   }
   .controllerShell[data-mode='play'] .caddieBookHead b { font-size: 10.5px; }
   .controllerShell[data-mode='play'] .caddieBookHead span { font-size: 9.5px; }
