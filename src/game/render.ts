@@ -28,6 +28,7 @@ import {
   actorWalkingBob,
   golferVisualGeometry,
 } from './actorGeometry';
+import { drawActorNameLabel, shouldShowActorName } from './actorLabels';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1914,34 +1915,13 @@ function drawCourseStaff(
   ctx.restore();
   ctx.imageSmoothingEnabled = true;
   const hovered = !!S.hover && Math.floor(pose.x) === S.hover.x && Math.floor(pose.y) === S.hover.y;
-  if (hovered) {
+  if (shouldShowActorName({ actor: 'staff', zoom: S.cam.z, hovered })) {
     drawActorName(ctx, name, p.x, geometry.labelY, Math.max(k * 0.9, 0.72));
   }
 }
 
 function drawActorName(ctx: CanvasRenderingContext2D, label: string, x: number, y: number, u: number, gold = false) {
-  const size = clamp(8 * u, 8, 11);
-  ctx.save();
-  ctx.font = `900 ${size}px "Trebuchet MS", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 2;
-  const safe = courseSafeViewport(S.view.w, S.view.h);
-  const maximumWidth = Math.max(8, Math.min(96, safe.width - 8));
-  let copy = label;
-  if (ctx.measureText(copy).width > maximumWidth) {
-    while (copy.length > 1 && ctx.measureText(copy + '…').width > maximumWidth) copy = copy.slice(0, -1);
-    copy += '…';
-  }
-  const measuredWidth = Math.min(maximumWidth, ctx.measureText(copy).width);
-  const labelX = clamp(x, safe.left + measuredWidth / 2 + 3, safe.right - measuredWidth / 2 - 3);
-  const labelY = clamp(y, safe.top + size + 2, safe.bottom - 2);
-  ctx.strokeStyle = '#161b48';
-  ctx.strokeText(copy, labelX, labelY, maximumWidth);
-  ctx.fillStyle = gold ? '#fff06a' : '#fff';
-  ctx.fillText(copy, labelX, labelY, maximumWidth);
-  ctx.restore();
+  drawActorNameLabel(ctx, label, x, y, u, courseSafeViewport(S.view.w, S.view.h), gold);
 }
 
 function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
@@ -1976,7 +1956,7 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   }
   drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
-  if (selected || !!g.specialGuest || hovered) {
+  if (shouldShowActorName({ actor: 'golfer', zoom: S.cam.z, hovered, selected, special: !!g.specialGuest })) {
     drawActorName(ctx, g.name, p.x, geometry.labelY, Math.max(geometry.scale * 0.9, 0.72), selected || !!g.specialGuest);
   }
 }

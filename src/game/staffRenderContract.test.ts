@@ -36,11 +36,10 @@ describe('staff world-actor render contract', () => {
     expect(renderSource).not.toContain('clamp(u, 0.65, 1.7) * 0.96');
   });
 
-  it('bounds actor labels and avoids naming every ambient actor by zoom alone', () => {
+  it('bounds actor labels and restores ambient names only at native course zoom', () => {
     expect(renderSource).toContain('courseSafeViewport(S.view.w, S.view.h)');
-    expect(renderSource).toContain('const size = clamp(8 * u, 8, 11)');
-    expect(renderSource).toContain('ctx.lineWidth = 2');
-    expect(renderSource).toContain('if (selected || !!g.specialGuest || hovered)');
-    expect(renderSource).not.toContain('hovered || S.cam.z > 0.9');
+    expect(renderSource).toContain("shouldShowActorName({ actor: 'staff', zoom: S.cam.z, hovered })");
+    expect(renderSource).toContain("shouldShowActorName({ actor: 'golfer', zoom: S.cam.z, hovered, selected, special: !!g.specialGuest })");
+    expect(renderSource).toContain('drawActorNameLabel(ctx, label, x, y, u');
   });
 });
