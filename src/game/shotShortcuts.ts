@@ -6,12 +6,12 @@ export type ShotShortcut =
 
 const SHOT_SHORTCUTS: Record<string, ShotShortcut> = {
   Digit1: { kind: 'club', id: 'driver' },
-  Digit2: { kind: 'club', id: 'iron' },
-  Digit3: { kind: 'club', id: 'wedge' },
-  Digit4: { kind: 'shape', id: 'straight' },
+  Digit2: { kind: 'club', id: 'threeWood' },
+  Digit3: { kind: 'club', id: 'fiveWood' },
+  Digit4: { kind: 'club', id: 'lobWedge' },
   Digit5: { kind: 'shape', id: 'fade' },
   Digit6: { kind: 'shape', id: 'draw' },
-  Digit7: { kind: 'shape', id: 'hook' },
+  Digit7: { kind: 'shape', id: 'straight' },
   Digit8: { kind: 'shape', id: 'backspin' },
   Digit9: { kind: 'shape', id: 'punch' },
 };

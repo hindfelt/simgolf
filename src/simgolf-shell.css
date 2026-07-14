@@ -979,6 +979,17 @@ body,
   line-height: 12px;
   box-shadow: none;
 }
+.playClubLine .clubStep {
+  flex: 0 0 15px;
+  width: 15px;
+  padding: 0;
+  border-color: rgba(49,64,133,.34);
+  background: rgba(235,234,255,.36);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 11px;
+}
+.playClubLine .clubStep:hover { background: rgba(255,255,255,.62); }
 /* The legacy workbench stylesheet gives every `.clubBtn` a 34px web-card
    target. The native console has a deliberately compact club row; keep the
    visible key small and provide coarse-pointer reach with a pseudo hit area. */
@@ -992,6 +1003,16 @@ body,
   font-family: var(--sg-font);
   font-size: 7px;
   line-height: 12px;
+}
+.controllerShell .playHud .playClubLine .clubCurrent {
+  flex: 0 1 70px;
+  width: auto;
+  min-width: 43px;
+  max-width: 70px;
+  overflow: hidden;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .controllerShell .playHud .playClubLine .clubBtn::after {
   content: '';

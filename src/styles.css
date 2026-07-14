@@ -41,6 +41,8 @@ canvas.game {
   touch-action: none;
   cursor: crosshair;
 }
+canvas.game.playerBallReady { cursor: grab; }
+canvas.game.playerAimActive { cursor: grabbing; }
 
 /* ---------- course plaque (top-left) ---------- */
 .plaque {

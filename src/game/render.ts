@@ -1131,7 +1131,10 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   }
   if (S.player && S.player.ball) {
     D.push({ z: dep(S.player.ball.x, S.player.ball.y), f: () => drawAvatar(ctx, u) });
-    if (S.player.state === 'aim') D.push({ z: dep(S.player.ball.x, S.player.ball.y) - 0.02, f: () => drawRestingBall(ctx, S.player!.ball!, u) });
+    if (S.player.state === 'aim') D.push({
+      z: dep(S.player.ball.x, S.player.ball.y) - 0.02,
+      f: () => drawRestingBall(ctx, S.player!.ball!, u, S.player!.aim?.on ? 'armed' : 'ready'),
+    });
   }
   for (const b of S.balls) D.push({ z: dep(b.x, b.y) + 2, f: () => drawFlyingBall(ctx, b, u) });
   D.sort((a, b) => a.z - b.z);
@@ -1998,8 +2001,23 @@ function drawAvatar(ctx: CanvasRenderingContext2D, u: number) {
   drawActorName(ctx, pro.name, px, geometry.labelY, Math.max(actorSpriteScale(u) * 0.9, 0.72), true);
 }
 
-function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number) {
+function drawRestingBall(ctx: CanvasRenderingContext2D, b: Vec, u: number, pickup: 'ready' | 'armed' | null = null) {
   const p = PE(b.x, b.y);
+  if (pickup) {
+    const halo = Math.max(7.5, 6.8 * u);
+    ctx.save();
+    ctx.fillStyle = pickup === 'armed' ? 'rgba(72, 238, 126, .18)' : 'rgba(255, 242, 76, .16)';
+    ctx.strokeStyle = pickup === 'armed' ? '#63f593' : '#fff25a';
+    ctx.lineWidth = Math.max(1.4, 1.25 * u);
+    ctx.setLineDash([Math.max(2, 1.8 * u), Math.max(1.5, 1.5 * u)]);
+    ctx.shadowColor = 'rgba(35, 39, 105, .7)';
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, halo, halo * .58, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
   ctx.fillStyle = 'rgba(0,0,0,.25)';
   ctx.beginPath();
   ctx.ellipse(p.x, p.y + 0.6 * u, 2 * u, 1 * u, 0, 0, 7);

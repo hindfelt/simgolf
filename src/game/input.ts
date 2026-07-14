@@ -1,10 +1,11 @@
 import { S } from './state';
-import { screenToWorldT, zoomAt, rotateView } from './camera';
+import { PE, screenToWorldT, zoomAt, rotateView } from './camera';
 import { lerp } from './rng';
 import { ensureAudio } from './audio';
 import { paintAt, holeToolTap, buildTap, buyLandTap, playerAimIntent, playerFire, setClub, setShape, setSpeed, setHint, beginPaintStroke, updatePlayHud, pickGolferAtScreen, selectGolfer } from './engine';
 import { shotShortcutForEvent } from './shotShortcuts';
 import type { Aim } from './types';
+import { pointerStartsAtPlayerBall } from './playerAimHit';
 
 const HOLE_HINT = 'Tap the map to place the TEE.';
 
@@ -88,6 +89,13 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
+  const updatePlayerAimCursor = (p: { x: number; y: number }, pointerType: string) => {
+    const player = S.mode === 'play' && S.player?.state === 'aim' ? S.player : null;
+    const ready = !!player?.ball && pointerStartsAtPlayerBall(p, PE(player.ball.x, player.ball.y), pointerType);
+    cv.classList.toggle('playerBallReady', ready);
+    return ready;
+  };
+
   function cancelElevationHold() {
     if (elevationDelay !== null) window.clearTimeout(elevationDelay);
     if (elevationRepeat !== null) window.clearInterval(elevationRepeat);
@@ -134,8 +142,9 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       panDrag = { sx: p.x, sy: p.y, cx: S.cam.x, cy: S.cam.y };
       return;
     }
-    if (S.mode === 'play' && S.player && S.player.state === 'aim') {
+    if (S.mode === 'play' && S.player && S.player.state === 'aim' && updatePlayerAimCursor(p, e.pointerType)) {
       S.player.aim = { on: true, sx: p.x, sy: p.y, cx: p.x, cy: p.y, kind: 'pointer' };
+      cv.classList.add('playerAimActive');
       updatePlayHud();
       return;
     }
@@ -178,6 +187,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
 
   function onMove(e: PointerEvent) {
     const p = pos(e);
+    if (!S.player?.aim?.on) updatePlayerAimCursor(p, e.pointerType);
     if (elevationHold && e.pointerId === elevationHold.pointerId && Math.hypot(p.x - elevationHold.x, p.y - elevationHold.y) > 7) cancelElevationHold();
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, p);
     const w = screenToWorldT(p.x, p.y);
@@ -219,6 +229,8 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       S.player.aim = null;
       if (intent && intent.rawPower >= 0.3 / 9) playerFire(intent.dirX, intent.dirY, intent.power);
     }
+    cv.classList.remove('playerAimActive');
+    if (S.player?.ball) updatePlayerAimCursor(pos(e), e.pointerType);
     painting = false;
     panDrag = null;
   }
@@ -334,6 +346,7 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
 
   return () => {
     cancelElevationHold();
+    cv.classList.remove('playerBallReady', 'playerAimActive');
     cv.removeEventListener('pointerdown', onDown);
     cv.removeEventListener('pointermove', onMove);
     cv.removeEventListener('pointerup', onUp);

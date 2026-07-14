@@ -273,7 +273,9 @@ export interface Particle {
   life: number;
 }
 
-export type ClubId = 'driver' | 'iron' | 'wedge';
+/** The four clubs shown in the original manual-play rail. `iron` and `wedge`
+ * remain valid legacy ids so imported scorecards keep replay/training meaning. */
+export type ClubId = 'driver' | 'threeWood' | 'fiveWood' | 'lobWedge' | 'iron' | 'wedge';
 /** Manual (p.21-22): shot techniques the player picks before each swing. */
 export type ShotShape = 'straight' | 'fade' | 'draw' | 'hook' | 'backspin' | 'punch';
 export type WeatherCondition = 'clear' | 'overcast' | 'drizzle' | 'rain';

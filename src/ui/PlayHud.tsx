@@ -6,16 +6,22 @@ import { S } from '../game/state';
 import { weatherDescription, weatherLabel } from '../game/weather';
 import { shotWindLabel, worldWindScreenVector } from '../game/shotFeedback';
 
-const CLUB_IDS: ClubId[] = ['driver', 'iron', 'wedge'];
-const SHAPE_IDS: ShotShape[] = ['straight', 'fade', 'draw', 'hook', 'backspin', 'punch'];
+const CLUB_IDS: ClubId[] = ['driver', 'threeWood', 'fiveWood', 'lobWedge'];
+const SHOT_CONTROLS: Array<{ id: Exclude<ShotShape, 'hook'>; key: number }> = [
+  { id: 'fade', key: 5 },
+  { id: 'draw', key: 6 },
+  { id: 'straight', key: 7 },
+  { id: 'backspin', key: 8 },
+  { id: 'punch', key: 9 },
+];
 const YARDS_PER_TILE = 18;
 const SHAPE_PRESENTATION: Record<ShotShape, { label: string; note: string; path: string; accent?: string }> = {
   straight: { label: 'Straight Shot', note: 'straight flight', path: 'M4 20 Q23 2 42 20' },
   fade: { label: 'Fade Shot (L to R)', note: 'left-to-right flight', path: 'M4 20 Q15 2 24 10 Q31 18 42 16' },
-  draw: { label: 'Draw Shot (R to L)', note: 'right-to-left flight', path: 'M42 20 Q31 2 22 10 Q15 18 4 16' },
+  draw: { label: 'Draw / Hook Shot (R to L)', note: 'right-to-left flight', path: 'M42 20 Q31 2 22 10 Q15 18 4 16' },
   hook: { label: 'Hook Shot', note: 'hard right-to-left flight', path: 'M42 20 Q30 0 17 8 Q7 14 11 21', accent: 'M11 21 L8 16 M11 21 L16 19' },
   backspin: { label: 'High Backspin Shot', note: 'high stopping flight', path: 'M4 20 Q21 -3 39 18', accent: 'M39 18 Q34 14 30 18 M30 18 L32 13 M30 18 L35 20' },
-  punch: { label: 'Punch Shot', note: 'low recovery flight', path: 'M4 20 Q23 12 42 18' },
+  punch: { label: 'Low Punch Shot', note: 'low recovery flight', path: 'M4 20 Q23 12 42 18' },
 };
 const POWER_SKILLS: Array<[ProSkillId, string]> = [
   ['powerHitter', 'Power Hitter'],
@@ -81,13 +87,21 @@ export default function PlayHud() {
     : playHud.shotInFlight
       ? `Tracking ${SHOT_SHAPES[playHud.shape].label.toLowerCase()} flight…`
       : windEffectCopy;
+  const showPlayMessage = playHud.shotInFlight || playHud.power !== null || !!playHud.canopyAdvice;
+  const availableClubs = CLUB_IDS.filter((id) => playHud.clubOptions[id].available);
+  const currentClubIndex = Math.max(0, availableClubs.indexOf(playHud.club));
+  const currentClub = availableClubs[currentClubIndex] ?? 'lobWedge';
+  const cycleClub = (direction: -1 | 1) => {
+    if (!availableClubs.length) return;
+    setClub(availableClubs[(currentClubIndex + direction + availableClubs.length) % availableClubs.length]);
+  };
 
   return (
     <div className={'playHud' + (playHud.onGreen ? ' puttingHud' : '')} data-ui="play-shell" role="region" aria-label="Player round controls">
       {S.activeChampionship && <div className="playCompetitionHud"><b>PRO CIRCUIT</b><span>{S.activeChampionship.title}</span><em>{S.activeChampionship.pro.name} · {S.activeChampionship.difficulty}</em></div>}
       {S.activeProChallenge && <div className="playCompetitionHud proChallengeHud"><b>PRO CHALLENGE</b><span>{S.proProfile.name} vs {S.activeProChallenge.opponent.name}</span><em>{S.activeProChallenge.wagerPerHole.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} per hole</em></div>}
 
-      <div className="playMessage" role="status" aria-live="polite" aria-atomic="true">
+      {showPlayMessage && <div className="playMessage" role="status" aria-live="polite" aria-atomic="true">
         {playHud.canopyLabel && (
           <span id="canopy-status" className={`canopyStatus canopy-${playHud.canopyStatus}`} role="note" aria-label={`Tree flight status: ${playHud.canopyLabel}`}>
             {playHud.canopyLabel}
@@ -95,7 +109,7 @@ export default function PlayHud() {
         )}
         <span>{playHud.coach}</span>
         {playHud.canopyAdvice && <span id="canopy-advice" className={`playCaddie canopy-${playHud.canopyStatus}`}><strong>Caddie:</strong> {playHud.canopyAdvice}</span>}
-      </div>
+      </div>}
 
       <div className="playConditions" role="group" aria-label="Course conditions">
         <div className={`weatherReadout weather-${weather.condition}`} title={conditionDescription} aria-label={`${conditionLabel}. ${conditionDescription}`}>
@@ -113,7 +127,7 @@ export default function PlayHud() {
         <div className="playShotSetup" role="group" aria-label="Shot setup">
           <div className="playShotPalette" role="group" aria-label="Shot technique selection" aria-describedby={canopyDescription}>
             <div className="playShotPaletteRail">
-              {SHAPE_IDS.map((id, index) => {
+              {SHOT_CONTROLS.map(({ id, key }) => {
                 const presentation = SHAPE_PRESENTATION[id];
                 return (
                   <button
@@ -121,8 +135,8 @@ export default function PlayHud() {
                     type="button"
                     className={'shapeBtn' + (playHud.shape === id ? ' on' : '')}
                     aria-pressed={playHud.shape === id}
-                    aria-label={`${presentation.label}, ${presentation.note}. Keyboard ${index + 4}`}
-                    title={`${presentation.label} · ${presentation.note} · key ${index + 4}`}
+                    aria-label={`${presentation.label}, ${presentation.note}. Keyboard ${key}`}
+                    title={`${presentation.label} · ${presentation.note} · key ${key}`}
                     onClick={() => setShape(id)}
                   >
                     <FlightGlyph shape={id} />
@@ -143,24 +157,18 @@ export default function PlayHud() {
           ) : (
             <div className="playClubLine" role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`} aria-describedby={canopyDescription} title={playHud.selectedRole}>
               <span>Club:</span>
-              {CLUB_IDS.map((id, index) => {
-                const option = playHud.clubOptions[id];
-                const detail = option.available ? `${yards(option.carry)} yards, ${option.role}` : option.reason ?? 'Unavailable from this lie';
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={'clubBtn' + (playHud.club === id ? ' on' : '')}
-                    aria-pressed={playHud.club === id}
-                    aria-label={`${CLUBS[id].label}, ${detail}. Keyboard ${index + 1}`}
-                    title={`${detail} · key ${index + 1}`}
-                    disabled={!option.available}
-                    onClick={() => setClub(id)}
-                  >
-                    {CLUBS[id].label}
-                  </button>
-                );
-              })}
+              <button type="button" className="clubStep" aria-label={`Previous club, currently ${CLUBS[currentClub].label}`} title="Previous available club" onClick={() => cycleClub(-1)}>‹</button>
+              <button
+                type="button"
+                className="clubBtn clubCurrent on"
+                aria-pressed="true"
+                aria-label={`${CLUBS[currentClub].label}, ${yards(playHud.clubOptions[currentClub].carry)} yards, ${playHud.clubOptions[currentClub].role}. Activate for next club. Keyboard ${CLUB_IDS.indexOf(currentClub) + 1}`}
+                title={`${yards(playHud.clubOptions[currentClub].carry)} yards · ${playHud.clubOptions[currentClub].role} · click for next club · key ${CLUB_IDS.indexOf(currentClub) + 1}`}
+                onClick={() => cycleClub(1)}
+              >
+                {CLUBS[currentClub].label}
+              </button>
+              <button type="button" className="clubStep" aria-label={`Next club, currently ${CLUBS[currentClub].label}`} title="Next available club" onClick={() => cycleClub(1)}>›</button>
             </div>
           )}
           <div className="playShotFacts">

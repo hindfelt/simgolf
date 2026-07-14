@@ -158,10 +158,13 @@ export function updatePlayHud() {
   const weatherCarry = p.lie === 'green' ? 1 : weatherCarryMultiplier(S.weather);
   const clubRanges = {
     driver: playerIntendedDistance(p.lie, 'driver', 1) * weatherCarry,
+    threeWood: playerIntendedDistance(p.lie, 'threeWood', 1) * weatherCarry,
+    fiveWood: playerIntendedDistance(p.lie, 'fiveWood', 1) * weatherCarry,
+    lobWedge: playerIntendedDistance(p.lie, 'lobWedge', 1) * weatherCarry,
     iron: playerIntendedDistance(p.lie, 'iron', 1) * weatherCarry,
     wedge: playerIntendedDistance(p.lie, 'wedge', 1) * weatherCarry,
   };
-  const clubOptions = Object.fromEntries((['driver', 'iron', 'wedge'] as ClubId[]).map((clubId) => {
+  const clubOptions = Object.fromEntries((['driver', 'threeWood', 'fiveWood', 'lobWedge', 'iron', 'wedge'] as ClubId[]).map((clubId) => {
     const profile = clubLieProfile(p.lie, clubId);
     return [clubId, { carry: clubRanges[clubId], available: profile.available, reason: profile.reason, role: profile.role }];
   })) as Record<ClubId, { carry: number; available: boolean; reason: string | null; role: string }>;
@@ -206,7 +209,7 @@ export function updatePlayHud() {
           ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing${keyboardRisk}.`
         : p.lie === 'green'
           ? 'Drag against the putting line, then release.'
-          : 'Choose club and flight, drag back, then release.',
+          : 'Choose club and flight, grab the gold ball ring, drag back, then release.',
       onGreen: p.lie === 'green',
       lie: p.lie,
       pinDistance: dist(p.ball ?? h.tee, h.cup),
@@ -2326,7 +2329,7 @@ export interface PlayerShotDispersion {
 export function playerShotDispersion(lie: LieKey, clubId: ClubId, shape: ShotShape, nominalTargetDistance: number, weather: WeatherState = S.weather): PlayerShotDispersion {
   const L = LIE[lie] || LIE.rough;
   const putting = lie === 'green';
-  const skill = playerShotSkill(lie, putting ? 'iron' : clubId, putting ? 'straight' : shape);
+  const skill = playerShotSkill(lie, putting ? 'fiveWood' : clubId, putting ? 'straight' : shape);
   // Putter has one fixed control profile. The hidden full-swing club and shape remain
   // selected for the next tee, but cannot alter either the preview or actual putt.
   const angularScale = putting ? 0.8 : clubLieProfile(lie, clubId).dispersionMultiplier * (shape === 'punch' ? 0.55 : 1) * weatherDispersionMultiplier(weather);
@@ -2541,7 +2544,7 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
     lie: 'tee',
     state: 'aim',
     aim: null,
-    club: 'iron',
+    club: 'fiveWood',
     shape: 'straight',
   };
   ui.set({ mode: 'play', buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
@@ -2627,7 +2630,7 @@ export function setShape(id: ShotShape) {
   S.player.shape = id;
   updatePlayHud();
 }
-export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'iron', weather: WeatherState = S.weather): number {
+export function playerEstimatedRoll(landingLie: LieKey, shape: ShotShape, clubId: ClubId = 'fiveWood', weather: WeatherState = S.weather): number {
   return shape === 'backspin' ? 0 : Math.max(0, ROLL[landingLie] ?? 0.3) * clubLieProfile(landingLie, clubId).rolloutMultiplier * weatherRollMultiplier(weather);
 }
 function setupPlayerHole(i: number) {
