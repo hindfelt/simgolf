@@ -60,8 +60,8 @@ describe('original SimGolf shell contract', () => {
     expect(toolbar).toContain('className="toolGroupLabel"');
     expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='course'\] \{[^}]*width: 74px;[^}]*height: 74px;/);
     expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='people'\] \{[^}]*display: grid;|\.controllerShell \.toolGroup,[\s\S]*?display: grid;/);
-    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?position: absolute;[\s\S]*?left: 73px;/);
-    expect(shell).toMatch(/@media \(max-height: 520px\) \{[\s\S]*?--sg-controller-scale: \.72;/);
+    expect(shell).toMatch(/\.controllerShell \.toolTray \{[\s\S]*?position: absolute;[\s\S]*?left: 28px;/);
+    expect(shell).toMatch(/@media \(max-height: 520px\) \{[\s\S]*?--sg-controller-scale: 1;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
   });
 
@@ -86,9 +86,9 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.toolGraphic \{[\s\S]*?image-rendering: pixelated;/);
     expect(toolbar).toContain('data-group={group}');
     expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
-    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar \{[\s\S]*?display: flex;/);
-    expect(shell).toMatch(/\.controllerShell \.tool \{[\s\S]*?flex: 0 0 82px;/);
-    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 9\.5px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(8, 64px\);/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.tool,[\s\S]*?width: 64px;[\s\S]*?height: 52px;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 8px;/);
     expect(shell).not.toContain('.toolGraphicIcon');
   });
 
