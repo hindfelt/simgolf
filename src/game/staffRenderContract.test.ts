@@ -16,4 +16,21 @@ describe('staff world-actor render contract', () => {
     expect(renderSource).toContain('drawActorName(ctx, name');
     expect(renderSource).toContain('D.sort((a, b) => a.z - b.z)');
   });
+
+  it('anchors staff art, shadows, bob, and labels to the shared actor geometry', () => {
+    expect(renderSource).toContain('actorVisualGeometry(p, u, COURSE_STAFF_METRICS, bob)');
+    expect(renderSource).toContain('actorWalkingBob(pose.phase, !pose.working, u, 1.05)');
+    expect(renderSource).toContain('-COURSE_STAFF_FOOT_ANCHOR.x * k');
+    expect(renderSource).toContain('-COURSE_STAFF_FOOT_ANCHOR.y * k');
+    expect(renderSource).toContain('geometry.labelY');
+    expect(renderSource).not.toContain('clamp(u, 0.65, 1.75) * 0.82');
+  });
+
+  it('uses one native golfer renderer for AI and manual-play characters', () => {
+    expect(renderSource.match(/drawGolferSprite\(ctx/g)).toHaveLength(2);
+    expect(renderSource).toContain('golferVisualGeometry({ x, y }, u, bob)');
+    expect(renderSource).toContain('-GOLFER_FOOT_ANCHOR.x * k');
+    expect(renderSource).toContain('-GOLFER_FOOT_ANCHOR.y * k');
+    expect(renderSource).not.toContain('clamp(u, 0.65, 1.7) * 0.96');
+  });
 });

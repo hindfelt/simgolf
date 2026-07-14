@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import GameCanvas from './ui/GameCanvas';
 import TopBar from './ui/TopBar';
 import ControllerShell from './ui/ControllerShell';
-import PlayHud from './ui/PlayHud';
 import Ticker from './ui/Ticker';
 import StaffPanel from './ui/StaffPanel';
 import ReportsPanel from './ui/ReportsPanel';
@@ -45,7 +44,6 @@ export default function App() {
       <GameCanvas />
       <TopBar />
       <Hint />
-      <PlayHud />
       <Ticker />
       <DestinationReleaseToast />
       <GolferInspector />

@@ -51,8 +51,8 @@ describe('dedicated course-staff sprites', () => {
   });
 
   it('keeps staff and golfers on distinct, readable actor canvases', () => {
-    expect(COURSE_STAFF_SPRITE_SIZE).toEqual({ width: 30, height: 36 });
-    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 30, height: 40 });
+    expect(COURSE_STAFF_SPRITE_SIZE).toEqual({ width: 36, height: 42 });
+    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 32, height: 44 });
     expect(GOLFER_SPRITE_SIZE).not.toEqual(COURSE_STAFF_SPRITE_SIZE);
   });
 

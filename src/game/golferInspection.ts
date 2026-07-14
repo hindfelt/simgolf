@@ -1,5 +1,6 @@
 import type { CommentEntry, Golfer, LieKey, Regular, Vec } from './types';
 import type { PortraitExpression } from './portraits';
+import { expandActorTouchTarget, golferVisualGeometry } from './actorGeometry';
 
 export interface GolferScreenCandidate<T> {
   value: T;
@@ -37,19 +38,10 @@ const LIE_LABELS: Record<LieKey, string> = {
   rock: 'Rock', tree: 'Trees', green: 'Green', flower: 'Flowers', water: 'Water', bridge: 'Bridge',
 };
 
-/** The real 30×40 world sprite footprint, expanded to a 44px touch target. */
+/** The exact rendered world-sprite footprint, expanded to a 44px touch target. */
 export function golferScreenBounds(anchor: Vec, zoom: number, bob = 0, coarse = false): ScreenBounds {
-  const scale = Math.min(1.7, Math.max(.65, zoom)) * .96;
-  const spriteWidth = 30 * scale;
-  const spriteHeight = 40 * scale;
-  const left = anchor.x - spriteWidth / 2;
-  const right = anchor.x + spriteWidth / 2;
-  const top = anchor.y - bob - spriteHeight;
-  const bottom = anchor.y - bob + 3 * scale;
-  if (!coarse) return { left, right, top, bottom };
-  const padX = Math.max(0, (44 - (right - left)) / 2);
-  const padY = Math.max(0, (44 - (bottom - top)) / 2);
-  return { left: left - padX, right: right + padX, top: top - padY, bottom: bottom + padY };
+  const bounds = golferVisualGeometry(anchor, zoom, bob).sprite;
+  return coarse ? expandActorTouchTarget(bounds) : bounds;
 }
 
 /** Chooses the same actor the painter draws last: greatest depth, then queue order. */

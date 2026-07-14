@@ -112,23 +112,25 @@ export default function PlayHud() {
       {!playHud.onGreen && (
         <div className="playShotSetup" role="group" aria-label="Shot setup">
           <div className="playShotPalette" role="group" aria-label="Shot technique selection" aria-describedby={canopyDescription}>
-            {SHAPE_IDS.map((id, index) => {
-              const presentation = SHAPE_PRESENTATION[id];
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={'shapeBtn' + (playHud.shape === id ? ' on' : '')}
-                  aria-pressed={playHud.shape === id}
-                  aria-label={`${presentation.label}, ${presentation.note}. Keyboard ${index + 4}`}
-                  title={`${presentation.label} · ${presentation.note} · key ${index + 4}`}
-                  onClick={() => setShape(id)}
-                >
-                  <FlightGlyph shape={id} />
-                  <span className="playVisuallyHidden">{SHOT_SHAPES[id].label}</span>
-                </button>
-              );
-            })}
+            <div className="playShotPaletteRail">
+              {SHAPE_IDS.map((id, index) => {
+                const presentation = SHAPE_PRESENTATION[id];
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className={'shapeBtn' + (playHud.shape === id ? ' on' : '')}
+                    aria-pressed={playHud.shape === id}
+                    aria-label={`${presentation.label}, ${presentation.note}. Keyboard ${index + 4}`}
+                    title={`${presentation.label} · ${presentation.note} · key ${index + 4}`}
+                    onClick={() => setShape(id)}
+                  >
+                    <FlightGlyph shape={id} />
+                    <span className="playVisuallyHidden">{SHOT_SHAPES[id].label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -148,7 +150,7 @@ export default function PlayHud() {
                   <button
                     key={id}
                     type="button"
-                    className={playHud.club === id ? 'on' : ''}
+                    className={'clubBtn' + (playHud.club === id ? ' on' : '')}
                     aria-pressed={playHud.club === id}
                     aria-label={`${CLUBS[id].label}, ${detail}. Keyboard ${index + 1}`}
                     title={`${detail} · key ${index + 1}`}

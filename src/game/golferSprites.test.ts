@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NAMES } from './constants';
-import { GOLFER_SPRITE_SIZE, golferAppearance } from './sprites';
+import { ACTOR_SCALE_MAX, ACTOR_SCALE_MIN, GOLFER_FOOT_ANCHOR, GOLFER_SPRITE_SIZE, actorSpriteScale, golferAppearance } from './sprites';
 
 const silhouette = (name: string) => {
   const appearance = golferAppearance(name);
@@ -53,6 +53,9 @@ describe('named golfer sprite identities', () => {
   });
 
   it('renders named golfers large enough for their identity details to survive course scale', () => {
-    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 30, height: 40 });
+    expect(GOLFER_SPRITE_SIZE).toEqual({ width: 32, height: 44 });
+    expect(GOLFER_FOOT_ANCHOR).toEqual({ x: 16, y: 43 });
+    expect(actorSpriteScale(0.2)).toBe(ACTOR_SCALE_MIN);
+    expect(actorSpriteScale(4)).toBe(ACTOR_SCALE_MAX);
   });
 });

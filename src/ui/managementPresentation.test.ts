@@ -95,6 +95,8 @@ describe('management presentation and accessibility', () => {
     expect(laptopRules).not.toContain('--sg-control-width:');
     expect(laptopRules).toContain('.playHud { left: var(--sg-control-width); }');
     expect(shell).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.fieldControls\.playControls\s*\{ display: none; \}/);
+    expect(shell).toContain('@media (max-width: 862px) and (min-width: 781px)');
+    expect(shell).toMatch(/\.controllerShell\[data-mode='play'\] \.playConsolePanes\s*\{[^}]*left: 115px;[^}]*right: 8px;/s);
   });
 
   it('keeps trajectory tools and unavailable clubs legible on compact screens', () => {

@@ -38,8 +38,10 @@ describe('original SimGolf shell contract', () => {
     expect(controller).toContain('<FieldControls />');
     expect(controller).toContain('<Toolbar />');
     expect(controller).toContain('<BuildPanel />');
+    expect(controller).toContain('<PlayHud />');
     expect(controller).toContain('data-ui="bottom-controller-shell"');
-    expect(controller).toContain("data-surface={clubhouseOpen ? 'clubhouse' : facilitiesOpen ? 'facilities' : managementOpen ? 'management' : 'tools'}");
+    expect(controller).toContain('data-mode={mode}');
+    expect(controller).toContain("data-surface={mode === 'play' ? 'play'");
     expect(topBar).toContain('className="courseCrest"');
     expect(topBar).toContain('className="simDate"');
     expect(topBar).toContain('className="fieldControlSkin"');
@@ -63,6 +65,7 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.controllerShell \.toolTray \{[\s\S]*?position: absolute;[\s\S]*?left: 28px;/);
     expect(shell).toMatch(/@media \(max-height: 520px\) \{[\s\S]*?--sg-controller-scale: 1;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/\.controllerShell \.playHud \{\s*position: absolute;/);
   });
 
   it('renders circular yellow mode medallions and original trajectory ovals', () => {
@@ -71,6 +74,9 @@ describe('original SimGolf shell contract', () => {
     expect(toolbar).toContain("id: 'course', label: 'Course', icon: 'course'");
     expect(toolbar).toContain("id: 'terrain', label: 'Terrain', icon: 'terrain'");
     expect(playHud).toContain('className="flightGlyph"');
+    expect(toolbar).toContain('data-ui="play-mode-medallions"');
+    expect(toolbar).toContain("item.id === 'course' || item.id === 'resort' || item.id === 'play'");
+    expect(toolbar).toContain("item.id === 'play' ? ' active' : ''");
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn \{[\s\S]*?border-radius: 54% 48% 50% 46%;/);
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on \{[\s\S]*?#20d365/);
   });
