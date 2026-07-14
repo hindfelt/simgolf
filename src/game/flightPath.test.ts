@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Tile } from './types';
 import type { Ball, CourseTheme } from './types';
-import { ballFlightPosition, firstTreeCanopyImpact, flightSampleCount, playerOnlyTreeCanopyImpact, treeDropPosition, type FlightCollisionEnvironment, type FlightPath } from './flightPath';
+import { ballFlightPosition, firstTreeCanopyImpact, flightSampleCount, flightTrailSamples, playerOnlyTreeCanopyImpact, treeDropPosition, type FlightCollisionEnvironment, type FlightPath } from './flightPath';
 import { treeCollisionProfile, treeImpactKind } from './treeGeometry';
 
 const environment = (trees: Array<[number, number]>, theme: CourseTheme = 'parklands', elevationAt: (x: number, y: number) => number = () => 0): FlightCollisionEnvironment => {
@@ -19,6 +19,39 @@ const straightPath = (height: number, y = 5.5, lowFlight = false): FlightPath =>
 });
 
 describe('sampled player tree-canopy flight', () => {
+  it('builds a fading recent-flight trail that ends on the same curved ball position', () => {
+    const path = {
+      ...straightPath(42),
+      tx: 9.5,
+      ty: 3.74,
+      shotShape: 'draw' as const,
+      curveDistance: 8,
+      t: 0.72,
+    };
+    const samples = flightTrailSamples(path, 12);
+    expect(samples).toHaveLength(12);
+    expect(samples.at(-1)).toMatchObject(ballFlightPosition(path, path.t));
+    expect(samples.at(-1)!.lift).toBeGreaterThan(0);
+    for (let index = 1; index < samples.length; index++) {
+      expect(samples[index].t).toBeGreaterThan(samples[index - 1].t);
+      expect(samples[index].alpha).toBeGreaterThan(samples[index - 1].alpha);
+    }
+    const midpoint = samples[Math.floor(samples.length / 2)];
+    const chordY = path.fy + (path.ty - path.fy) * midpoint.t;
+    expect(midpoint.y).not.toBeCloseTo(chordY);
+  });
+
+  it('caps the visible trail at a shortened canopy impact', () => {
+    const path = {
+      ...straightPath(30),
+      t: 0.8,
+      canopyImpact: { t: 0.42, x: 4.86, y: 5.5, treeX: 5, treeY: 5, kind: 'canopy' as const, altitude: 18 },
+    };
+    const samples = flightTrailSamples(path, 10);
+    expect(samples.at(-1)!.t).toBeCloseTo(0.42, 10);
+    expect(samples.at(-1)).toMatchObject(ballFlightPosition(path, 0.42));
+  });
+
   it('finds a low straight path while the same high path clears the visible crown', () => {
     const env = environment([[5, 5]]);
     expect(firstTreeCanopyImpact(straightPath(34), env)).toMatchObject({ treeX: 5, treeY: 5 });

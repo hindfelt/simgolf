@@ -1,6 +1,6 @@
 import { W, H, HOLE_COST, CH, TINFO, LIE, ROLL, SHIRTS, SKINS, SAY, ELEV_COST, MAXE, PW, PH, PARCEL_W, PARCEL_H, LAND_COST, EH, CLUBS, SHOT_SHAPES } from './constants';
 import { Tile } from './types';
-import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RegularSkill, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState } from './types';
+import type { Aim, Ball, CareerProgress, FacilityActivity, FinanceCategory, Golfer, Hole, LieKey, Vec, ToolId, ClubId, ShotShape, PlayerShotRecord, PlayerRound, RoundRecord, RoundSource, Difficulty, SpecialGuestKind, SpecialVisitorState, ProProfile, ProSkillId, Regular, RegularSkill, RetiredCourse, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, TreeCanopyImpact, WeatherState, PlayerShotFeedback } from './types';
 import { S, caches } from './state';
 import { idx, idxC, inb, tileAt, clamp, lerp, rand, pick, gauss, dist, fmt$, hash2, lieOf, elevAt, ownedAt, parcelIdx, cornerH } from './rng';
 import { isoOf, PE, screenToWorld, viewDepth } from './camera';
@@ -35,12 +35,13 @@ import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesP
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
 import { findPath } from './pathfind';
 import { isWaterBackedTile } from './bridges';
-import { generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
+import { CLEAR_WEATHER, generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
 import { applyRegularTraining, createRegularTraining, regularTrainingRates, sanitizeRegularTraining } from './regularTraining';
 import { ballFlightPosition, firstTreeCanopyImpact, flightApexHeight, playerOnlyTreeCanopyImpact, shapeCurveOffset, treeDropPosition } from './flightPath';
 import type { FlightPath } from './flightPath';
 export { ballFlightPosition, flightApexHeight, shapeCurveOffset } from './flightPath';
+import { playerBallNeedsCameraFollow, shotWindEffect } from './shotFeedback';
 import {
   ROUND_HISTORY_LIMIT,
   buildRoundRecord,
@@ -150,6 +151,7 @@ export function updatePlayHud() {
   if (!p) return;
   const h = S.holes[p.holeIdx];
   if (!h) return;
+  if (p.aim?.on && p.lastShotFeedback) p.lastShotFeedback = null;
   const aim = p.aim?.on ? playerAimIntent(p.aim, p.lie) : null;
   const power = aim?.power ?? null;
   const weatherCarry = p.lie === 'green' ? 1 : weatherCarryMultiplier(S.weather);
@@ -166,6 +168,7 @@ export function updatePlayHud() {
   // playerShotForecast(p.ball, p.lie, p.club, p.shape, aim.dirX, aim.dirY, aim.power)
   const forecast = aim ? cachedPlayerShotForecast(p, aim) : null;
   const plan = forecast?.plan ?? null;
+  const windEffect = plan ? shotWindEffect(plan) : null;
   const landingLie = plan ? lieOf(plan.target.x, plan.target.y) : null;
   const rollout = plan && p.lie !== 'green' && landingLie && !forecast?.canopyImpact ? playerEstimatedRoll(landingLie, p.shape, p.club) : null;
   const landingDistance = plan && p.ball ? dist(p.ball, plan.target) : null;
@@ -209,9 +212,14 @@ export function updatePlayHud() {
       clubRanges,
       clubOptions,
       power,
-      carry: forecast?.plan.intend ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
+      carry: landingDistance ?? (power === null ? null : playerIntendedDistance(p.lie, p.club, power)),
       rollout,
       finishDistance: restingDistance ?? (landingDistance === null ? null : landingDistance + (rollout ?? 0)),
+      shotInFlight: p.state === 'wait',
+      windAlong: windEffect?.along ?? null,
+      windCross: windEffect?.cross ?? null,
+      windDisplacement: windEffect?.displacement ?? null,
+      lastShotFeedback: p.lastShotFeedback ?? null,
       canopyStatus,
       canopyLabel,
       canopyAdvice,
@@ -1290,7 +1298,7 @@ function aimShot(from: Vec, target: Vec, lie: LieKey, skill: number, angScale: n
   d = Math.max(minD, d - (elevAt(lx, ly) - elevAt(from.x, from.y)) * slopePenalty);
   return { x: clamp(from.x + Math.cos(ang) * d, 0.6, W - 0.6), y: clamp(from.y + Math.sin(ang) * d, 0.6, H - 0.6), power: d };
 }
-type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'rollMultiplier'>;
+type BallSpec = Pick<Ball, 'kind' | 'owner' | 'cup' | 'fx' | 'fy' | 'tx' | 'ty' | 'events' | 'holed' | 'noRoll' | 'lowFlight' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'rollMultiplier' | 'carryDistance'>;
 function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number) {
   const d = dist({ x: spec.fx, y: spec.fy }, { x: spec.tx, y: spec.ty });
   const ball: Ball = {
@@ -1361,6 +1369,7 @@ function resolveFly(b: Ball) {
   const events: string[] = [];
   if (b.canopyImpact) {
     pos = treeDropPosition(b, b.canopyImpact);
+    b.carryDistance = dist(from, pos);
     events.push('tree');
     sfx.thunk();
     // A canopy strike drops immediately: no ground release, no extra stroke penalty.
@@ -1373,6 +1382,7 @@ function resolveFly(b: Ball) {
     events.push('tree');
     sfx.thunk();
   }
+  b.carryDistance = dist(from, pos);
   // Rocks don't merely produce a bad lie: the first impact kicks the ball in an
   // unpredictable direction, matching the manual's explicit random-deflection rule.
   if (lieOf(pos.x, pos.y) === 'rock') {
@@ -1414,7 +1424,7 @@ function resolveFly(b: Ball) {
       return;
     }
     if (dist(pos, r.pos) > 0.12) {
-      startBall({ kind: 'roll', owner: b.owner, cup: b.cup, fx: pos.x, fy: pos.y, tx: r.pos.x, ty: r.pos.y, events });
+      startBall({ kind: 'roll', owner: b.owner, cup: b.cup, fx: pos.x, fy: pos.y, tx: r.pos.x, ty: r.pos.y, events, carryDistance: b.carryDistance });
       return;
     }
   }
@@ -1433,7 +1443,7 @@ function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, for
   }
   if (holed && b.cup) pos = { x: b.cup.x, y: b.cup.y };
   if (b.owner === 'P') {
-    onPlayerLand(pos, events, holed, forcedLie);
+    onPlayerLand(pos, events, holed, forcedLie, b);
     return;
   }
   onGolferLand(b.owner, pos, events, holed);
@@ -1943,6 +1953,11 @@ function updateBalls(dt: number) {
       const position = b.kind === 'fly' ? ballFlightPosition(b, b.t) : { x: lerp(b.fx, b.tx, b.t), y: lerp(b.fy, b.ty, b.t) };
       b.x = position.x;
       b.y = position.y;
+      if (b.owner === 'P') {
+        const screen = PE(b.x, b.y);
+        if (b.kind === 'fly') screen.y -= Math.sin(Math.PI * clamp(b.t, 0, 1)) * b.h * S.cam.z;
+        if (playerBallNeedsCameraFollow(screen, { width: S.view.w, height: S.view.h })) centerCam(b.x, b.y);
+      }
     }
   }
 }
@@ -2128,6 +2143,23 @@ function splash(x: number, y: number) {
 function confetti(x: number, y: number) {
   for (let i = 0; i < 16; i++) S.parts.push({ x, y, vx: rand(-2, 2), vy: rand(-4, -1.4), g: 6, c: pick(SHIRTS), age: 0, life: 1 });
 }
+const SHOT_LANDING_COLORS: Record<ShotShape | 'putt', string> = {
+  straight: '#ffffff',
+  fade: '#71d8ff',
+  draw: '#ffe36e',
+  hook: '#ff9f43',
+  backspin: '#9df7de',
+  punch: '#ffcf78',
+  putt: '#ffffff',
+};
+function shotLandingBurst(x: number, y: number, shape: ShotShape | 'putt') {
+  const color = SHOT_LANDING_COLORS[shape];
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const speed = 0.8 + (i % 3) * 0.28;
+    S.parts.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1.5, g: 5, c: color, age: 0, life: 0.62 });
+  }
+}
 const FIREWORK_COLORS = ['#ff6b6b', '#ffd166', '#6bffb8', '#6bc5ff', '#d66bff', '#ffffff'];
 /** Three staggered radial bursts — brighter and wider than confetti, for an eagle-or-better. */
 function fireworks(x: number, y: number) {
@@ -2177,6 +2209,11 @@ function updateParts(dt: number) {
 /* ---------------- camera glide ---------------- */
 function centerCam(x: number, y: number) {
   S.camTarget = { x, y };
+}
+
+function resetPlayerConditions() {
+  S.wind = { dx: 1, dy: 0, speed: 0 };
+  S.weather = { ...CLEAR_WEATHER };
 }
 /** Nudges the camera-shake magnitude; overlapping shakes take the stronger one, not a sum. */
 export function shakeCamera(mag: number) {
@@ -2485,6 +2522,7 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
     card: [],
     currentHole: null,
     pendingShot: null,
+    lastShotFeedback: null,
     ball: null,
     lie: 'tee',
     state: 'aim',
@@ -2624,6 +2662,7 @@ export function playerFire(dirX: number, dirY: number, power: number) {
     return;
   }
   const start = { ...p.ball! };
+  p.lastShotFeedback = null;
   const fromLie = p.lie;
   p.strokes++;
   const plan = playerShotPlan(p.ball!, p.lie, p.club, p.shape, dirX, dirY, power);
@@ -2677,7 +2716,7 @@ export function playerFire(dirX: number, dirY: number, power: number) {
 function scoreName(diff: number): string {
   return diff <= -3 ? 'ALBATROSS?!' : diff === -2 ? 'EAGLE!' : diff === -1 ? 'BIRDIE!' : diff === 0 ? 'Par' : diff === 1 ? 'Bogey' : diff === 2 ? 'Double bogey' : '+' + diff;
 }
-function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLie?: LieKey) {
+function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLie?: LieKey, ball?: Ball) {
   const p = S.player;
   if (!p) return;
   const h = S.holes[p.holeIdx];
@@ -2699,6 +2738,8 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLi
     pending.end = { ...pos };
     pending.resultLie = resultLie;
     pending.distance = dist(pending.start, pos);
+    pending.carryDistance = Math.min(pending.distance, ball?.carryDistance ?? (ball?.kind === 'fly' ? pending.distance : 0));
+    pending.rollDistance = Math.max(0, pending.distance - pending.carryDistance);
     pending.events = [...events];
     pending.penalty = penalties;
     pending.holed = holed;
@@ -2711,6 +2752,20 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLi
       for (const hazard of hazards) if (!holeCard.hazards.includes(hazard)) holeCard.hazards.push(hazard);
     }
     p.pendingShot = null;
+    p.lastShotFeedback = {
+      stroke: pending.stroke,
+      club: pending.club,
+      shape: pending.shape,
+      power: pending.power,
+      carryDistance: pending.carryDistance,
+      rollDistance: pending.rollDistance,
+      finishDistance: pending.distance,
+      resultLie: pending.resultLie,
+      events: [...pending.events],
+      penalty: pending.penalty,
+      holed: pending.holed,
+    } satisfies PlayerShotFeedback;
+    shotLandingBurst(pos.x, pos.y, pending.shape);
   }
   p.ball = { x: pos.x, y: pos.y };
   p.lie = resultLie;
@@ -2850,6 +2905,7 @@ function endRound() {
   S.activeChampionship = null;
   S.activeProChallenge = null;
   S.camTarget = null;
+  resetPlayerConditions();
   updateTopbar();
   ui.set({
     mode: 'build',
@@ -2879,6 +2935,7 @@ export function quitRound(msg?: string) {
   roundPropertyAccessAtStart = null;
   S.camTarget = null;
   S.balls = S.balls.filter((b) => b.owner !== 'P');
+  resetPlayerConditions();
   ui.set({ mode: 'build', playHud: null });
   setHint(msg || 'Round abandoned. The course won’t judge. Much.');
 }

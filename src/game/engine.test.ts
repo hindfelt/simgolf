@@ -844,6 +844,48 @@ describe('save / load round-trip', () => {
     expect(playerEstimatedRoll('fair', 'backspin', 'iron', rain)).toBe(0);
   });
 
+  it('publishes aiming-frame wind displacement and the actual carry, release, and finish result', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    S.tiles.fill(Tile.FAIR);
+    S.balls = [];
+    S.parts = [];
+    startRound();
+    S.wind = { dx: 0, dy: 1, speed: 0.5 };
+    S.weather = { ...CLEAR_WEATHER };
+    setClub('iron');
+    setShape('draw');
+    S.player!.aim = { on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.45 };
+    updatePlayHud();
+
+    const forecastHud = ui.get().playHud!;
+    expect(forecastHud.windAlong).toBeCloseTo(0, 10);
+    expect(forecastHud.windCross).toBeGreaterThan(0);
+    expect(forecastHud.windDisplacement).toBeCloseTo(forecastHud.windCross!, 10);
+
+    playerFire(1, 0, 0.45);
+    for (let step = 0; step < 100 && !ui.get().playHud?.lastShotFeedback; step++) update(0.1);
+
+    const result = ui.get().playHud!.lastShotFeedback!;
+    expect(result).toMatchObject({ club: 'iron', shape: 'draw', power: 0.45, resultLie: 'fair', penalty: 0 });
+    expect(result.carryDistance).toBeGreaterThan(0);
+    expect(result.rollDistance).toBeGreaterThanOrEqual(0);
+    expect(result.finishDistance).toBeCloseTo(result.carryDistance + result.rollDistance, 10);
+    expect(S.parts.some((particle) => particle.c === '#ffe36e')).toBe(true);
+    quitRound();
+    random.mockRestore();
+  });
+
+  it('clears manual-round rain and wind before autonomous play resumes', () => {
+    startRound();
+    S.wind = { dx: -0.6, dy: 0.8, speed: 0.72 };
+    S.weather = { condition: 'rain', intensity: 0.9, wetness: 1 };
+
+    quitRound();
+
+    expect(S.weather).toEqual(CLEAR_WEATHER);
+    expect(S.wind).toEqual({ dx: 1, dy: 0, speed: 0 });
+  });
+
   it('uses one putter dispersion profile independent of hidden full-swing club and shape', () => {
     S.proProfile.skills.drawShot = 0;
     S.proProfile.skills.fadeShot = 0;

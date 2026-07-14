@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition } from '../game/types';
+import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition, PlayerShotFeedback } from '../game/types';
 import type { PortraitExpression } from '../game/portraits';
 import type { ProPracticeResult } from '../game/proCircuit';
 
@@ -43,6 +43,11 @@ export interface PlayHudInfo {
   carry: number | null;
   rollout: number | null;
   finishDistance: number | null;
+  shotInFlight: boolean;
+  windAlong: number | null;
+  windCross: number | null;
+  windDisplacement: number | null;
+  lastShotFeedback: PlayerShotFeedback | null;
   canopyStatus: 'clear' | 'canopy' | 'trunk' | 'pine' | null;
   canopyLabel: string | null;
   canopyAdvice: string | null;

@@ -26,7 +26,7 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain("label: 'Draw Shot (R to L)'");
     expect(hud).toContain("label: 'High Backspin Shot'");
     expect(hud).toContain("['powerHitter', 'Power Hitter']");
-    expect(hud).toContain("['luck', 'Luck']");
+    expect(hud).toContain("'CADDIE BOOK'");
     expect(shell).toMatch(/\.playHud\s*\{[\s\S]*?height: var\(--sg-bottom\);[\s\S]*?overflow: visible;/);
     expect(shell).toMatch(/\.playShotPalette \.shapeBtn\.on\s*\{[\s\S]*?#20d365/);
     expect(shell).not.toMatch(/\.playShotPalette \.shapeBtn\.on\s*\{[^}]*0 0 0 3px #f5ed21/s);
@@ -47,6 +47,22 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(render).toContain('drawWeather(ctx, cssW, cssH);');
     expect(render.indexOf('drawWeather(ctx, cssW, cssH);')).toBeLessThan(render.indexOf('drawAim(ctx, u);'));
     expect(css).toContain('.playHud .weather-rain');
+  });
+
+  it('makes curved flight, wind drift, and the landing result visibly legible', () => {
+    expect(render).toContain('flightTrailSamples(b)');
+    expect(render).toContain("b.shotShape === 'fade'");
+    expect(render).toContain('const radius = playerBall ? Math.max(3.2, 3.15 * u) : 2.2 * u');
+    expect(hud).toContain('shotWindLabel(windEffect, YARDS_PER_TILE)');
+    expect(hud).toContain('className="caddieMetrics"');
+    expect(hud).toContain('result?.carryDistance');
+    expect(hud).toContain('result?.rollDistance');
+    expect(hud).toContain('result?.finishDistance');
+    expect(store).toContain('lastShotFeedback: PlayerShotFeedback | null;');
+    expect(engineSource).toContain('shotLandingBurst(pos.x, pos.y, pending.shape)');
+    expect(engineSource).toContain('shotInFlight: p.state === \'wait\'');
+    expect(render).toContain('worldWindScreenVector(S.wind.dx, S.wind.dy, S.rot)');
+    expect(shell).toContain('.playCaddieBook.hasResult');
   });
 
   it('presents club strategy, lie restrictions, and shot forecasts as grouped controls', () => {
