@@ -106,13 +106,13 @@ describe('management presentation and accessibility', () => {
     expect(css).toMatch(/@media \(max-width:760px\)[\s\S]*?\.worldMap\s*\{[^}]*max-height: 42dvh;[^}]*overflow-y: auto;/);
     expect(shell).toMatch(/\.controllerShell \.fieldDeskPanel\.catalogMode\s*\{[^}]*height: var\(--sg-bottom\);[^}]*overflow: hidden;/s);
     expect(shell).toMatch(/\.controllerShell \.catalogMode \.facilityCatalogGrid\s*\{[^}]*overflow-x: auto;[^}]*overflow-y: hidden;/s);
-    expect(shell).toMatch(/@media \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: \.72;/);
+    expect(shell).toMatch(/@media \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: 1;/);
   });
 
   it('raises touch hit areas without inflating or overlapping visible fan controls', () => {
     expect(shell).toContain('@media (pointer: coarse)');
     expect(shell).toMatch(/\.controllerShell \.fieldControls > \.orb::after,[\s\S]*?inset: -7px;/s);
-    expect(shell).toMatch(/@media \(pointer: coarse\) and \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: \.82;/);
+    expect(shell).toMatch(/@media \(pointer: coarse\) and \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: 1;/);
     expect(css).toMatch(/\.holeReorder button,[\s\S]*?\.retiredCourseRemove\s*\{[^}]*min-width: 32px;[^}]*min-height: 32px;/);
   });
 });

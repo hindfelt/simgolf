@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { useUI } from './store';
 import { setTool, startRound } from '../game/engine';
 import { ensureAudio } from '../game/audio';
@@ -6,6 +6,7 @@ import { TINFO, HOLE_COST, ELEV_COST, LAND_COST, themedTerrainName } from '../ga
 import { Tile, type ToolId } from '../game/types';
 import Icon, { type IconName } from './Icon';
 import ToolPreview from './ToolPreview';
+import { toolTrayPageDistance, toolTrayPosition, toolTrayScrollState } from './toolTrayLayout';
 
 interface ToolDef {
   id: ToolId;
@@ -52,7 +53,9 @@ function ToolGraphic({ item, active }: { item: ToolDef; active: boolean }) {
 }
 
 const GROUPS: { id: GroupId; label: string; icon: IconName; tools: ToolId[] }[] = [
-  { id: 'course', label: 'Course', icon: 'course', tools: ['pan', 'hole', 'green', 'fair', 'firmfair', 'deeprough', 'sand', 'waste', 'pot', 'stream', 'brush', 'rocks', 'water', 'tree', 'flower', 'path'] },
+  // The original palette pairs eight surface/hazard columns across two rows.
+  // Keeping this order stable makes the whole construction set visible at 800×600.
+  { id: 'course', label: 'Course', icon: 'course', tools: ['hole', 'green', 'sand', 'deeprough', 'pot', 'stream', 'water', 'tree', 'pan', 'fair', 'firmfair', 'waste', 'brush', 'rocks', 'flower', 'path'] },
   { id: 'terrain', label: 'Terrain', icon: 'terrain', tools: ['raise', 'lower', 'dozer', 'land'] },
   { id: 'resort', label: 'Resort', icon: 'resort', tools: [] },
   { id: 'people', label: 'People', icon: 'regulars', tools: ['inspect'] },
@@ -74,12 +77,64 @@ export default function Toolbar() {
   const courseTheme = useUI((s) => s.courseTheme);
   const setStore = useUI((s) => s.set);
   const [group, setGroup] = useState<GroupId>(() => groupForTool(tool));
+  const railRef = useRef<HTMLDivElement>(null);
+  const [railState, setRailState] = useState(() => toolTrayScrollState(0, 0, 0));
 
   useEffect(() => setGroup(groupForTool(tool)), [tool]);
   const visible = useMemo(() => {
     const ids = GROUPS.find((item) => item.id === group)?.tools ?? [];
     return ids.map((id) => TOOLS.find((toolDef) => toolDef.id === id)!).filter(Boolean);
   }, [group]);
+
+  const updateRailState = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    setRailState(toolTrayScrollState(rail.scrollLeft, rail.clientWidth, rail.scrollWidth));
+  }, []);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollLeft = 0;
+    updateRailState();
+    rail.addEventListener('scroll', updateRailState, { passive: true });
+    window.addEventListener('resize', updateRailState);
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateRailState);
+    observer?.observe(rail);
+    return () => {
+      rail.removeEventListener('scroll', updateRailState);
+      window.removeEventListener('resize', updateRailState);
+      observer?.disconnect();
+    };
+  }, [group, updateRailState, visible.length]);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    const active = rail?.querySelector<HTMLElement>(`[data-tool="${tool}"]`);
+    active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    updateRailState();
+  }, [tool, updateRailState]);
+
+  const pageRail = (direction: -1 | 1) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: direction * toolTrayPageDistance(rail.clientWidth), behavior: 'smooth' });
+  };
+
+  const moveToolFocus = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('.tool:not(:disabled)')];
+    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (current < 0 || buttons.length === 0) return;
+    event.preventDefault();
+    const next = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? buttons.length - 1
+        : Math.min(buttons.length - 1, Math.max(0, current + (event.key === 'ArrowRight' ? 1 : -1)));
+    buttons[next].focus();
+    buttons[next].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
 
   if (mode === 'play') return null;
 
@@ -123,42 +178,62 @@ export default function Toolbar() {
           </button>
         ))}
       </div>
-      <div className="toolbar" role="tabpanel">
-        {group === 'resort' && !buildPanel && <p className="dockStatus"><b>Facility selected</b><span>{hint}</span><button type="button" disabled={clubhouseMenu} onClick={() => setStore({ buildPanel: true })}>Browse facilities</button></p>}
-        {visible.map((item) => {
-          const active = tool === item.id || (item.id === 'build' && buildPanel);
-          const label = item.tile === undefined ? item.nm : themedTerrainName(item.tile, courseTheme);
-          const detail = item.tip ?? item.ct;
-          return (
-            <button
-              type="button"
-              key={item.id}
-              title={`${label}${detail ? ` · ${detail}` : ''}`}
-              aria-label={`${label}${detail ? `, ${detail}` : ''}`}
-              aria-pressed={active}
-              disabled={clubhouseMenu}
-              data-tool={item.id}
-              className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
-              onClick={(event) => {
-                event.stopPropagation();
-                ensureAudio();
-                if (item.id === 'play') {
-                  setStore({ buildPanel: false, clubhouseMenu: false });
-                  startRound();
-                }
-                else if (item.id === 'build') setStore({ buildPanel: !buildPanel });
-                else {
-                  setStore({ buildPanel: false, clubhouseMenu: false });
-                  setTool(item.id);
-                }
-              }}
-            >
-              <ToolGraphic item={item} active={active} />
-              <span className="nm">{label}</span>
-              <span className="ct">{item.ct ?? '\u00a0'}</span>
-            </button>
-          );
-        })}
+      <div className="toolTray">
+        <button
+          type="button"
+          className="toolRailNav previous"
+          aria-label="Previous construction tools"
+          data-visible={railState.overflow || undefined}
+          disabled={!railState.canPrevious || clubhouseMenu}
+          onClick={() => pageRail(-1)}
+        >‹</button>
+        <div className="toolbar" role="tabpanel" ref={railRef} onKeyDown={moveToolFocus}>
+          {group === 'resort' && !buildPanel && <p className="dockStatus"><b>Facility selected</b><span>{hint}</span><button type="button" disabled={clubhouseMenu} onClick={() => setStore({ buildPanel: true })}>Browse facilities</button></p>}
+          {visible.map((item, index) => {
+            const active = tool === item.id || (item.id === 'build' && buildPanel);
+            const label = item.tile === undefined ? item.nm : themedTerrainName(item.tile, courseTheme);
+            const detail = item.tip ?? item.ct;
+            const position = toolTrayPosition(index, group === 'course' ? 8 : 2);
+            return (
+              <button
+                type="button"
+                key={item.id}
+                title={`${label}${detail ? ` · ${detail}` : ''}`}
+                aria-label={`${label}${detail ? `, ${detail}` : ''}`}
+                aria-pressed={active}
+                disabled={clubhouseMenu}
+                data-tool={item.id}
+                data-tool-row={position.row}
+                className={'tool' + (item.gold ? ' goldTool' : '') + (active ? ' active' : '')}
+                style={{ '--tool-column': position.column, '--tool-row': position.row } as CSSProperties}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  ensureAudio();
+                  if (item.id === 'play') {
+                    setStore({ buildPanel: false, clubhouseMenu: false });
+                    startRound();
+                  }
+                  else if (item.id === 'build') setStore({ buildPanel: !buildPanel });
+                  else {
+                    setStore({ buildPanel: false, clubhouseMenu: false });
+                    setTool(item.id);
+                  }
+                }}
+              >
+                <ToolGraphic item={item} active={active} />
+                <span className="nm">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          className="toolRailNav next"
+          aria-label="More construction tools"
+          data-visible={railState.overflow || undefined}
+          disabled={!railState.canNext || clubhouseMenu}
+          onClick={() => pageRail(1)}
+        >›</button>
       </div>
     </nav>
   );

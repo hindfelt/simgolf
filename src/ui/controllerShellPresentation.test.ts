@@ -29,20 +29,21 @@ describe('rebuilt original controller presentation', () => {
     expect(shell).toMatch(/\.fieldMenuCommand\s*\{[^}]*grid-template-columns: 13px 18px minmax\(0, 1fr\);[^}]*font-size: 10px;/s);
   });
 
-  it('keeps Course and Terrain tools in readable single-row horizontal rails', () => {
-    expect(toolbar).toContain("tools: ['pan', 'hole', 'green', 'fair', 'firmfair', 'deeprough'");
+  it('restores the original readable two-row construction palette', () => {
+    expect(toolbar).toContain("tools: ['hole', 'green', 'sand', 'deeprough', 'pot', 'stream', 'water', 'tree', 'pan', 'fair', 'firmfair', 'waste', 'brush', 'rocks', 'flower', 'path']");
     expect(toolbar).toContain("tools: ['raise', 'lower', 'dozer', 'land']");
     expect(toolbar).not.toContain('dockPrompt');
-    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar\s*\{[^}]*display: flex;/s);
-    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.tool,[\s\S]*?flex: 0 0 82px;/);
-    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 9\.5px;/);
-    expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 7px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?grid-template-columns: repeat\(8, 64px\);[\s\S]*?grid-template-rows: repeat\(2, 52px\);/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar\s*\{[^}]*grid-template-columns: repeat\(2, 64px\);[^}]*grid-template-rows: repeat\(2, 52px\);/s);
+    expect(shell).toMatch(/\.controllerShell \.toolGraphic,[\s\S]*?width: 58px;[\s\S]*?height: 46px;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 8px;/);
+    expect(toolbar).not.toContain('<span className="ct">');
   });
 
-  it('keeps every mode visible and scales the whole shell in short zoomed viewports', () => {
+  it('keeps every mode and native-size tool text visible in short viewports', () => {
     expect(shell.lastIndexOf(".controllerShell .toolGroup[data-group-id]"))
       .toBeGreaterThan(shell.lastIndexOf(".toolGroup[data-group-id='people'] { display: none; }"));
-    expect(shell).toMatch(/@media \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: \.72;[\s\S]*?width: 138\.889%;/);
+    expect(shell).toMatch(/@media \(max-height: 520px\)\s*\{[\s\S]*?--sg-controller-scale: 1;[\s\S]*?width: 100%;/);
     expect(shell).toContain("body:has(.controllerShell[data-surface='clubhouse']) .ticker");
     expect(toolbar).toContain('disabled={clubhouseMenu}');
   });
