@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('World Screen portfolio routes', () => {
-  const source = readFileSync(new URL('./Modals.tsx', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('./WorldScreen.tsx', import.meta.url), 'utf8');
 
   it('does not treat the active sandbox copy as ownership of its career deed', () => {
     expect(source).toContain('currentPropertyId: initial || S.sandbox ? null : S.propertyId');
@@ -12,9 +12,9 @@ describe('World Screen portfolio routes', () => {
     expect(source).toContain('const propertyResorts = resortsForProperty(resorts, property.id)');
     expect(source).toContain('propertyResorts.map((resort) =>');
     expect(source).toContain('switchPortfolioResort(resort.id)');
-    expect(source).toContain('`${resort.kind} resort · select to visit`');
-    expect(source).toContain("`${sandboxCount} saved sandbox ${sandboxCount === 1 ? 'copy' : 'copies'}.`");
-    expect(source).toContain('${cardStatus}. ${sandboxStatus}');
+    expect(source).toContain('${resort.kind} resort ${resort.summary.courseName},');
+    expect(source).toContain("className={'portfolioDeed' + (resort.active ? ' active' : '')}");
+    expect(source).toContain("resort.active ? 'Here now' : `Visit");
   });
 
   it('warns truthfully before replacing a course when IndexedDB portfolios are unavailable', () => {

@@ -3974,6 +3974,543 @@ canvas.game:focus-visible {
   .worldProperty.selected { outline: 3px solid Highlight; outline-offset: 2px; }
 }
 
+/* ---------- original World Screen --------------------------------------- */
+/* The 2002 game treated this as a fixed 800x600 travel office, not a web
+   dashboard. Keep a single readable globe, all sixteen deeds, and the deed
+   desk in one logical frame so nothing important falls below the fold. */
+.worldOffice {
+  --world-navy: #242a79;
+  --world-purple: #6968b4;
+  --world-paper: #fff7d6;
+  width: 100%;
+  height: 100%;
+  min-width: 760px;
+  min-height: 574px;
+  display: grid;
+  grid-template-rows: 44px 390px minmax(136px, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.64);
+  border-radius: 4px;
+  background:
+    radial-gradient(circle at 9% 24%, rgba(255,255,255,.32) 0 2px, transparent 3px),
+    linear-gradient(180deg, #c8c6f4 0 46px, #a5a3e1 46px 434px, #8b8acb 434px);
+  color: #283079;
+  font-family: var(--sg-font, 'Trebuchet MS', sans-serif);
+  box-shadow: inset 2px 2px rgba(255,255,255,.5), inset -2px -2px rgba(63,61,148,.3);
+}
+
+.worldOffice button,
+.worldOffice summary { font-family: inherit; }
+
+.worldOfficeHeader {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 7px 4px 11px;
+  border-bottom: 3px solid #4a4fa2;
+  background: linear-gradient(180deg, #e2e0ff 0 7px, #c4c2f2 7px 88%, #9594d6 88%);
+  box-shadow: inset 0 2px #f8f8ff, 0 2px 0 #282e7f;
+}
+
+.modal[data-modal-kind='newCourse'] .worldQuestion h1 {
+  margin: 0;
+  color: #2b3586;
+  font: 900 16px/1.05 var(--sg-font, 'Trebuchet MS', sans-serif);
+  letter-spacing: .01em;
+  text-shadow: 1px 1px #fff;
+}
+
+.worldQuestion small {
+  display: block;
+  margin-top: 2px;
+  color: #5f64a0;
+  font: 900 6.5px/1 var(--sg-small, Verdana, sans-serif);
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.worldProgressRibbon {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+}
+
+.worldProgressRibbon > span {
+  min-width: 63px;
+  padding: 3px 5px 2px;
+  border: 1px solid #6e70b4;
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(162,161,218,.76));
+  box-shadow: inset 0 1px #fff, 0 1px #55599d;
+  text-align: center;
+}
+
+.worldProgressRibbon small,
+.worldProgressRibbon b { display: block; white-space: nowrap; }
+.worldProgressRibbon small { color: #60649b; font: 900 5px var(--sg-small, Verdana, sans-serif); letter-spacing: .08em; text-transform: uppercase; }
+.worldProgressRibbon b { margin-top: 1px; color: #2c337c; font-size: 9px; line-height: 1.05; }
+
+.worldStage {
+  position: relative;
+  width: 760px;
+  height: 390px;
+  margin: 0 auto;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 26% 49%, rgba(255,255,255,.14) 0 21%, transparent 21.5%),
+    linear-gradient(180deg, #aaa9e3, #9897d5 70%, #7f7ec2);
+  box-shadow: inset 0 1px rgba(255,255,255,.55), inset 0 -3px rgba(54,53,139,.34);
+}
+
+.worldStage::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  z-index: 1;
+  width: 267px;
+  height: 24px;
+  border-radius: 4px 4px 9px 4px;
+  background: linear-gradient(90deg, rgba(62,65,147,.84), rgba(91,92,172,.32) 83%, transparent);
+  box-shadow: inset 0 1px rgba(255,255,255,.22);
+}
+
+.worldStage::after {
+  content: 'THE WORLD IS YOUR FAIRWAY';
+  position: absolute;
+  left: 18px;
+  top: 12px;
+  z-index: 2;
+  color: #fff776;
+  font: 900 8px var(--sg-small, Verdana, sans-serif);
+  letter-spacing: .16em;
+  text-shadow: 1px 1px #272e7c;
+}
+
+.worldGlobeArt {
+  position: absolute;
+  left: 1px;
+  top: 26px;
+  z-index: 1;
+  width: 356px;
+  height: 356px;
+  filter: drop-shadow(6px 8px 4px rgba(28,29,88,.34));
+}
+
+.worldConnections {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 760px;
+  height: 390px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.worldConnections line {
+  stroke: rgba(53,55,125,.64);
+  stroke-width: 1.6;
+  stroke-dasharray: 2.5 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.worldConnections line.affordable { stroke: #d9aa09; }
+.worldConnections line.released { stroke: #70664b; }
+.worldConnections line.purchased,
+.worldConnections line.current { stroke: #9e3d82; }
+.worldConnections line.selected { stroke: #fff36a; stroke-width: 3; stroke-dasharray: none; }
+
+.worldGlobePin {
+  position: absolute;
+  left: calc(var(--pin-x) - 8px);
+  top: calc(var(--pin-y) - 13px);
+  z-index: 5;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid #34346f;
+  border-radius: 50% 50% 50% 0;
+  background: linear-gradient(135deg, #fff473 8%, #e5b810 69%, #997009 70%);
+  box-shadow: 2px 3px 0 rgba(31,31,82,.36), inset 2px 2px rgba(255,255,255,.6);
+  cursor: pointer;
+  transform: rotate(-45deg);
+}
+.worldGlobePin > span {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #fffbd1;
+  box-shadow: 0 0 0 1px rgba(71,55,13,.5);
+}
+.worldGlobePin.released { background: linear-gradient(135deg, #dedac7, #918e82 70%); }
+.worldGlobePin.locked { background: linear-gradient(135deg, #bcbbe0, #62629b 70%); }
+.worldGlobePin.purchased,
+.worldGlobePin.current { background: linear-gradient(135deg, #fa9cce, #b94383 70%); }
+.worldGlobePin.selected { z-index: 8; box-shadow: 0 0 0 4px #fff564, 2px 4px 0 #303276; }
+.worldGlobePin:hover { filter: brightness(1.12); }
+.worldGlobePin:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+
+.worldDeed {
+  --deed-ink: #334130;
+  position: absolute;
+  left: var(--deed-x);
+  top: var(--deed-y);
+  z-index: 4;
+  width: var(--deed-width);
+  height: 35px;
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 2px 5px 2px 2px;
+  overflow: visible;
+  border: 2px solid #5f5b49;
+  border-radius: 3px 9px 9px 3px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.67), transparent 11%, transparent 88%, rgba(127,113,66,.1)),
+    linear-gradient(180deg, #fffbe7 0 70%, #e5dfbd 70% 100%);
+  box-shadow: inset 0 1px #fff, inset 0 -1px rgba(113,98,59,.22), 2px 3px 0 rgba(47,47,104,.38);
+  color: var(--deed-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.worldDeed::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 7px;
+  width: 14px;
+  height: 17px;
+  border: 2px solid #5f5b49;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  background: #eee7c7;
+  z-index: -1;
+}
+
+.worldDeed > span { min-width: 0; }
+.worldDeed b,
+.worldDeed small,
+.worldDeed em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worldDeed b { color: #28334d; font-size: 9.5px; line-height: 1.05; }
+.worldDeed small { margin-top: 1px; color: #777260; font: 900 5.5px/1 var(--sg-small, Verdana, sans-serif); letter-spacing: .07em; text-transform: uppercase; }
+.worldDeed em { margin-top: 2px; color: #806516; font: 900 5.5px/1 var(--sg-small, Verdana, sans-serif); font-style: normal; }
+
+.worldDeedMedallion,
+.worldSelectedMedallion {
+  display: grid;
+  place-items: center;
+  border: 2px solid #3f477c;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #fff9a5 0 22%, #e5c93f 23% 59%, #9a7512 60%);
+  color: #273478;
+  font-style: normal;
+  font-weight: 900;
+  text-shadow: 1px 1px #fff6a3;
+  box-shadow: inset 1px 1px rgba(255,255,255,.7), 1px 2px 0 #303571;
+}
+.worldDeedMedallion { width: 31px; height: 31px; font-size: 14px; }
+.world-links .worldDeedMedallion { background: radial-gradient(circle at 34% 28%, #f6f7ff 0 22%, #b7cbd4 23% 59%, #5f7784 60%); }
+.world-desert .worldDeedMedallion { background: radial-gradient(circle at 34% 28%, #fff4c0 0 22%, #e1a85c 23% 59%, #9b5635 60%); }
+.world-tropical .worldDeedMedallion { background: radial-gradient(circle at 34% 28%, #cffff0 0 22%, #54caaa 23% 59%, #236e68 60%); }
+
+.worldDeedPin {
+  width: 12px;
+  height: 12px;
+  border: 1px solid #5b4913;
+  border-radius: 50% 50% 50% 0;
+  background: #f2d42d;
+  box-shadow: inset 1px 1px rgba(255,255,255,.6);
+  transform: rotate(-45deg);
+}
+.worldDeed.released .worldDeedPin { border-color: #686256; background: #a9a598; }
+.worldDeed.locked .worldDeedPin { border-color: #4e4c70; background: #7776a5; }
+.worldDeed.purchased .worldDeedPin,
+.worldDeed.current .worldDeedPin { border-color: #6b284d; background: #bd4b88; }
+.worldDeed.released { filter: saturate(.7); }
+.worldDeed.locked { border-color: #77758c; background: linear-gradient(180deg, #eeeade, #c8c3b5); filter: grayscale(.18); }
+.worldDeed.purchased { background: linear-gradient(180deg, #f7e3ef, #d7b7cb); }
+.worldDeed.current { background: linear-gradient(180deg, #ffe9f4, #e9bdd8); }
+.worldDeed.selected { z-index: 7; border-color: #3f4088; box-shadow: 0 0 0 3px #fff359, 3px 4px 0 #34377e; }
+.worldDeed:hover { filter: brightness(1.04); }
+.worldDeed:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+.worldPinLegend {
+  position: absolute;
+  left: 9px;
+  bottom: 6px;
+  z-index: 7;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 3px 10px;
+  padding: 5px 8px;
+  border: 2px solid #4f528f;
+  border-radius: 6px;
+  background: rgba(247,247,255,.9);
+  box-shadow: 2px 3px 0 rgba(45,46,108,.34), inset 0 1px #fff;
+  color: #343a72;
+  font: 900 6px var(--sg-small, Verdana, sans-serif);
+}
+.worldPinLegend span { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.worldPinLegend i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #4a4771;
+  border-radius: 50%;
+  background: #f1d31f;
+}
+.worldPinLegend i.released { background: #a9a598; }
+.worldPinLegend i.locked { background: #7776a5; }
+.worldPinLegend i.purchased { background: #bd4b88; }
+
+.worldDeedDesk {
+  --property-dark: #394e3c;
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 223px minmax(222px, 1fr) 103px 165px;
+  gap: 5px;
+  min-height: 136px;
+  padding: 6px;
+  overflow: visible;
+  border-top: 4px solid #4c50a1;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.18), transparent 16%, transparent 86%, rgba(51,49,135,.16)),
+    linear-gradient(180deg, #c2c0ee, #9e9cda 77%, #7c7abd 77%);
+  box-shadow: inset 0 2px #eeeefe, 0 -2px #252b7a;
+}
+.worldDeedDesk.inspector-links { --property-dark: #3e5966; }
+.worldDeedDesk.inspector-desert { --property-dark: #704a30; }
+.worldDeedDesk.inspector-tropical { --property-dark: #28675c; }
+
+.worldSelectedIdentity,
+.worldDeedDesk > .propertyUnlocks,
+.worldDeedDesk > .worldDeedFacts {
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  border: 2px solid #5a5c99;
+  border-radius: 6px;
+  background: rgba(247,246,255,.57);
+  box-shadow: inset 1px 1px rgba(255,255,255,.75);
+}
+
+.worldSelectedIdentity {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: 29px auto minmax(0, 1fr);
+  gap: 2px 6px;
+  padding: 5px 6px;
+}
+.worldSelectedMedallion { grid-row: 1 / 3; width: 36px; height: 36px; font-size: 17px; }
+.worldSelectedIdentity > span { min-width: 0; align-self: center; }
+.worldSelectedIdentity > span b,
+.worldSelectedIdentity > span small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worldSelectedIdentity > span b { color: #29357e; font-size: 12px; line-height: 1.05; }
+.worldSelectedIdentity > span small { margin-top: 2px; color: #5f6396; font: 900 5.5px var(--sg-small, Verdana, sans-serif); letter-spacing: .07em; text-transform: uppercase; }
+.worldSelectedStatus {
+  grid-column: 1 / -1;
+  justify-self: start;
+  max-width: 100%;
+  padding: 2px 5px;
+  overflow: hidden;
+  border: 1px solid #a28113;
+  border-radius: 7px;
+  background: #fff17a;
+  color: #5e4a09;
+  font: 900 5.5px var(--sg-small, Verdana, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.worldSelectedStatus.locked { border-color: #646486; background: #d3d1e8; color: #46466e; }
+.worldSelectedStatus.released { border-color: #817965; background: #e0ddcf; color: #605b4e; }
+.worldSelectedStatus.purchased,
+.worldSelectedStatus.current { border-color: #8b3e6c; background: #efbdd6; color: #6a264c; }
+.modal[data-modal-kind='newCourse'] .worldSelectedIdentity > p {
+  grid-column: 1 / -1;
+  min-height: 0;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: #555b8c;
+  font: 700 6px/1.2 var(--sg-small, Verdana, sans-serif);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.worldPortfolioRail {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 4px;
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+}
+.worldPortfolioRail .portfolioDeed {
+  flex: 0 0 101px;
+  display: block;
+  margin: 0;
+  padding: 3px 4px;
+  border-width: 1px 1px 1px 3px;
+  border-radius: 4px;
+}
+.worldPortfolioRail .portfolioDeed b { font-size: 6.5px; }
+.worldPortfolioRail .portfolioDeed small { margin-top: 0; font-size: 4.8px; }
+
+.worldDeedDesk > .propertyUnlocks { padding: 5px; }
+.worldDeedDesk > .propertyUnlocks header { margin-bottom: 3px; padding-bottom: 3px; }
+.worldDeedDesk > .propertyUnlocks header b { font-size: 6.5px; }
+.worldDeedDesk > .propertyUnlocks header span { font-size: 6px; }
+.worldDeedDesk > .propertyUnlocks ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
+.worldDeedDesk > .propertyUnlocks li { gap: 3px; padding: 2px 3px; font-size: 5.5px; }
+.worldDeedDesk > .propertyUnlocks li i { flex-basis: 9px; width: 9px; height: 9px; font-size: 5px; }
+
+.worldDeedDesk > .worldDeedFacts {
+  display: grid;
+  grid-template-columns: 47px 1fr;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1px 4px;
+  padding: 4px;
+}
+.worldDeedDesk .parcelDeed {
+  grid-row: 1 / 5;
+  width: 47px;
+  height: 47px;
+  align-self: center;
+  gap: 1px;
+  padding: 3px;
+  border-width: 1px;
+  border-radius: 4px;
+}
+.worldDeedDesk .parcelDeed i { border-width: 1px; border-radius: 0; }
+.worldDeedDesk .worldDeedFacts > span { display: flex; align-items: baseline; gap: 2px; }
+.worldDeedDesk .worldDeedFacts > span > b:not(.propertyMeter) { color: #30386f; font-size: 7px; }
+.worldDeedDesk .worldDeedFacts > span > small { margin: 0; color: #656994; font-size: 4.5px; letter-spacing: 0; }
+
+.worldOfficeActions {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 35px;
+  grid-template-rows: 42px 34px 23px;
+  gap: 4px;
+  min-width: 0;
+}
+.worldCareerAction,
+.worldSandboxAction,
+.worldSetupOptions > summary,
+.worldBackAction {
+  border: 2px solid #343a86;
+  border-radius: 6px;
+  color: #26327f;
+  font-weight: 900;
+  box-shadow: inset 1px 1px rgba(255,255,255,.82), 0 2px 0 #242a72;
+  cursor: pointer;
+}
+.worldCareerAction,
+.worldSandboxAction { grid-column: 1 / -1; padding: 3px 6px; line-height: 1.08; }
+.worldCareerAction { background: linear-gradient(180deg, #fff978, #ead324 68%, #b6910c); font-size: 8px; }
+.worldSandboxAction { background: linear-gradient(180deg, #eef0ff, #b8b9e5 70%, #8f91c8); font-size: 6.3px; }
+.worldCareerAction:disabled,
+.worldSandboxAction:disabled { filter: grayscale(.7); cursor: not-allowed; opacity: .7; }
+.worldSetupOptions { position: relative; min-width: 0; }
+.worldSetupOptions > summary {
+  height: 23px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  list-style: none;
+  background: linear-gradient(180deg, #efeffe, #aaaadc);
+  font-size: 6.5px;
+}
+.worldSetupOptions > summary::-webkit-details-marker { display: none; }
+.worldBackAction {
+  width: 35px;
+  height: 23px;
+  padding: 0;
+  background: radial-gradient(circle at 36% 28%, #fff, #b9bae6 58%, #777abc);
+  font-size: 15px;
+}
+.worldCareerAction:focus-visible,
+.worldSandboxAction:focus-visible,
+.worldSetupOptions > summary:focus-visible,
+.worldBackAction:focus-visible { outline: 3px solid #fff769; outline-offset: 2px; }
+
+.worldSetupPopover {
+  position: absolute;
+  right: -39px;
+  bottom: 29px;
+  z-index: 30;
+  width: 442px;
+  padding: 8px;
+  border: 4px solid #353b8c;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #d9d7f9, #aaa9e2);
+  box-shadow: 0 5px 0 #24296f, 0 10px 25px rgba(25,27,72,.4), inset 0 2px #f4f4ff;
+}
+.worldSetupPopover header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.worldSetupPopover header b { color: #2c3682; font-size: 11px; }
+.worldSetupPopover header span { color: #66699c; font: 800 6px var(--sg-small, Verdana, sans-serif); }
+.worldOptionPacks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.worldOptionPacks button {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid #7779ac;
+  border-radius: 5px;
+  background: #eeeeff;
+  color: #363d79;
+  text-align: left;
+}
+.worldOptionPacks button > i { width: 8px; height: 100%; min-height: 24px; border-radius: 3px; background: var(--pack-accent); }
+.worldOptionPacks b,
+.worldOptionPacks small { display: block; }
+.worldOptionPacks b { font-size: 7px; }
+.worldOptionPacks small { font-size: 5px; }
+.worldOptionPacks button.active { border-color: #50440c; background: #fff692; box-shadow: 0 0 0 2px rgba(255,238,55,.35); }
+.modal[data-modal-kind='newCourse'] .worldSetupPopover > p { margin: 5px 2px; color: #5d6192; font: 700 6px/1.2 var(--sg-small, Verdana, sans-serif); }
+.worldOptionDifficulty { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.worldOptionDifficulty button,
+.worldOptionCourses button { padding: 4px; border: 1px solid #7779ac; border-radius: 4px; background: #e9e9fb; color: #373e7b; font-size: 6px; }
+.worldOptionDifficulty button b,
+.worldOptionDifficulty button span { display: block; }
+.worldOptionDifficulty button span { margin-top: 2px; color: #b58b14; font-size: 4.5px; }
+.worldOptionDifficulty button.active,
+.worldOptionCourses button.active { border-color: #6c5705; background: #fff37b; }
+.worldOptionCourses { display: flex; gap: 3px; margin-top: 5px; }
+
+@media (max-width: 790px) {
+  .worldOffice { width: 760px; }
+  .modal[data-modal-kind='newCourse'] { overflow: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .worldOffice * { scroll-behavior: auto; transition: none !important; }
+}
+
+@media (forced-colors: active) {
+  .worldOffice,
+  .worldOfficeHeader,
+  .worldDeedDesk,
+  .worldDeed,
+  .worldSelectedIdentity,
+  .worldDeedDesk > .propertyUnlocks,
+  .worldDeedDesk > .worldDeedFacts,
+  .worldSetupPopover { background: Canvas; color: CanvasText; border-color: ButtonText; }
+  .worldGlobePin,
+  .worldDeedPin { background: Highlight; }
+}
+
 /* ---------- v0.3 Groundskeeper's Field Desk ----------
    The world stays dominant; course operations live in one compact enamel desk. */
 :root {
