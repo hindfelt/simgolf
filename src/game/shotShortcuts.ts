@@ -14,6 +14,7 @@ const SHOT_SHORTCUTS: Record<string, ShotShortcut> = {
   Digit7: { kind: 'shape', id: 'straight' },
   Digit8: { kind: 'shape', id: 'backspin' },
   Digit9: { kind: 'shape', id: 'punch' },
+  Digit0: { kind: 'shape', id: 'hook' },
 };
 
 export interface ShotShortcutEvent {

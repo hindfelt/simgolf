@@ -14,14 +14,17 @@ describe('play controls accessibility and shot-shape presentation', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   const shell = readFileSync(new URL('../simgolf-shell.css', import.meta.url), 'utf8');
 
-  it('matches the original five-oval order and treats Hook as the Draw alias', () => {
+  it('matches the original five-oval order while making Draw and Hook independently selectable', () => {
     expect(hud).toContain("{ id: 'fade', key: 5 }");
-    expect(hud).toContain("{ id: 'draw', key: 6 }");
+    expect(hud).toContain("{ id: 'draw', key: 6, alternateKey: 0 }");
     expect(hud).toContain("{ id: 'straight', key: 7 }");
     expect(hud).toContain("{ id: 'backspin', key: 8 }");
     expect(hud).toContain("{ id: 'punch', key: 9 }");
     expect(hud).toContain("draw: { label: 'Draw / Hook Shot (R to L)'");
     expect(hud).not.toContain("{ id: 'hook', key:");
+    expect(hud).toContain("playHud.shape === 'draw' ? 'hook' : id");
+    expect(hud).toContain('Keyboard ${key} selects Draw; Keyboard ${alternateKey} selects Hook');
+    expect(hud).toContain('className="shapeComboState"');
   });
 
   it('matches the original molded play console instead of a card workbench', () => {
@@ -39,7 +42,7 @@ describe('play controls accessibility and shot-shape presentation', () => {
 
   it('announces selected clubs and shot shapes to assistive technology', () => {
     expect(hud).toContain('aria-pressed="true"');
-    expect(hud).toContain('aria-pressed={playHud.shape === id}');
+    expect(hud).toContain('aria-pressed={selected}');
     expect(hud).toContain('miles per hour toward ${windPoint}');
   });
 
@@ -147,6 +150,8 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(shotShortcutForEvent({ code: 'Digit7' })).toEqual({ kind: 'shape', id: 'straight' });
     expect(shotShortcutForEvent({ code: 'Digit8' })).toEqual({ kind: 'shape', id: 'backspin' });
     expect(shotShortcutForEvent({ code: 'Digit9' })).toEqual({ kind: 'shape', id: 'punch' });
+    expect(shotShortcutForEvent({ code: 'Digit0' })).toEqual({ kind: 'shape', id: 'hook' });
+    expect(shotShortcutForEvent({ code: 'Numpad0' })).toEqual({ kind: 'shape', id: 'hook' });
     expect(shotShortcutForEvent({ code: 'Digit1', ctrlKey: true })).toBeNull();
     expect(shotShortcutForEvent({ code: 'Digit1', shiftKey: true })).toBeNull();
     expect(shotShortcutForEvent({ code: 'Numpad6', shiftKey: true })).toBeNull();
