@@ -4,6 +4,17 @@ import type { SpecialGuestKind } from '../../src/game/types';
 
 const VIEWS = ['front', 'rear', 'side'] as const;
 const TEXT_MASK_COLOR = '#ff00ff';
+const TICKER_SNAPSHOT_CSS = `
+  .simFotoTicker {
+    border-radius: 0 !important;
+    background: #7a79c3 !important;
+    box-shadow: none !important;
+  }
+  .simFotoCopy {
+    overflow: hidden !important;
+    text-shadow: none !important;
+  }
+`;
 
 async function renderProductionMarqueeScene(page: Page) {
   await page.goto('/?actor-atlas=1');
@@ -223,7 +234,11 @@ test.describe('marquee character production art', () => {
       await expect(tickerPortrait.locator('canvas')).toHaveAttribute('width', '48');
       await expect(tickerPortrait.locator('canvas')).toHaveAttribute('height', '64');
       await expectNoOverflow(ticker);
-      await page.addStyleTag({ content: '.simFotoCopy { overflow: hidden !important; text-shadow: none !important; }' });
+      // Rounded gradient card chrome rasterizes differently in macOS and
+      // Ubuntu Chromium. Flatten only the snapshot fixture; production chrome,
+      // semantic copy, geometry, overflow, and portrait pixels are asserted
+      // independently above.
+      await page.addStyleTag({ content: TICKER_SNAPSHOT_CSS });
       await expect(ticker).toHaveScreenshot(`${kind}-ticker.png`, {
         mask: [ticker.locator('.simFotoCopy')],
         maskColor: TEXT_MASK_COLOR,
