@@ -16,6 +16,12 @@ const TICKER_SNAPSHOT_CSS = `
     text-shadow: none !important;
   }
 `;
+const MODAL_SNAPSHOT_CSS = `
+  .modal[data-modal-kind] .offerMeta,
+  .modal[data-modal-kind] .textBtn {
+    line-height: 14px !important;
+  }
+`;
 
 async function renderProductionMarqueeScene(page: Page) {
   await page.goto('/?actor-atlas=1');
@@ -272,6 +278,7 @@ test.describe('marquee character production art', () => {
         '.bigbtn',
         '.textBtn',
       ].join(', '));
+      await page.addStyleTag({ content: MODAL_SNAPSHOT_CSS });
       await expect(modal).toHaveScreenshot(`${kind}-${modalKind === 'landOffer' ? 'land-offer' : 'landmark-gift'}.png`, {
         mask: [modalText],
         maskColor: TEXT_MASK_COLOR,
