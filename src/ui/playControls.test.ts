@@ -125,8 +125,9 @@ describe('play controls accessibility and shot-shape presentation', () => {
   });
 
   it('renders tree species and scale from the same geometry profile used by collision', () => {
-    expect(render).toContain('treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme)');
-    expect(render).toContain('sharedTreeKindFor(S.theme, profile.seed)');
+    expect(render).toContain('const scenery = destinationSceneryFor(S.propertyId)');
+    expect(render).toContain('treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme, scenery.vegetation)');
+    expect(render).toContain('sharedTreeKindFor(S.theme, profile.seed, scenery.vegetation)');
     expect(render).toContain('const k = profile.visualScale * u');
     expect(render).not.toContain('function treeKindFor(');
   });

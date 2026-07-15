@@ -4,6 +4,7 @@
 
 import type { EmployeeKind } from './types';
 import type { CharacterVisualOverrides, GolferAppearance, GolferBuild } from './characterVisuals';
+import type { DestinationArchitecture } from './properties';
 import { COURSE_STAFF_SPRITE_SIZE, GOLFER_SPRITE_SIZE } from './actorGeometry';
 
 export type {
@@ -1302,7 +1303,11 @@ const DEFAULT_FOOTPRINTS: Record<string, [number, number]> = {
   airstrip: [8, 3],
 };
 
-export function buildingSprite(kind: string, footprintW?: number, footprintH?: number, rotation = 0): BSprite {
+export function regionalBuildingSpriteKey(kind: string, architecture: DestinationArchitecture = 'classic'): string {
+  return architecture === 'classic' ? kind : `${architecture}:${kind}`;
+}
+
+export function buildingSprite(kind: string, footprintW?: number, footprintH?: number, rotation = 0, architecture: DestinationArchitecture = 'classic'): BSprite {
   const [defaultW, defaultH] = DEFAULT_FOOTPRINTS[kind] ?? [2, 2];
   const w = footprintW ?? defaultW;
   const h = footprintH ?? defaultH;
@@ -1785,7 +1790,89 @@ export function buildingSprite(kind: string, footprintW?: number, footprintH?: n
       if (m) {
         const stage = +m[1];
         const vi = +m[2] % HOUSE_WALLS.length;
-        return makeB(kind, 120, stage === 1 ? 92 : 112, 2, 2, (ctx, c) => {
+        return makeB(regionalBuildingSpriteKey(kind, architecture), 120, stage === 1 ? 92 : 112, 2, 2, (ctx, c) => {
+          if (architecture === 'temple') {
+            isoPanel(ctx, c, 2, 2, 0.06, '#789b62', '#4f7147');
+            const inner = (x: number, y: number): P2 => c(0.16 + x * 0.72, 0.05 + y * 0.72);
+            const wallH = stage === 1 ? 16 : 28;
+            const roof = isoBox(ctx, inner, stage === 1 ? 1.3 : 1.7, stage === 1 ? 1.2 : 1.6, {
+              wall: '#efe2c8',
+              roofC: vi % 2 ? '#3d4a52' : '#303d48',
+              wallH,
+              roofH: stage === 1 ? 11 : 15,
+              roofStripes: 'rgba(216,229,220,.24)',
+              winRows: 1,
+              winCols: stage === 1 ? 1 : 2,
+              door: true,
+            });
+            // Heavy black eaves, a gold ridge cap and a small vermilion gate
+            // keep the house temple-like at the same tiny isometric scale.
+            const leftEave = up(inner(0, stage === 1 ? 1.2 : 1.6), wallH - 1);
+            const rightEave = up(inner(stage === 1 ? 1.3 : 1.7, stage === 1 ? 1.2 : 1.6), wallH - 1);
+            ctx.strokeStyle = '#252f35';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(leftEave[0] - 4, leftEave[1] + 1);
+            ctx.lineTo(rightEave[0] + 4, rightEave[1] + 1);
+            ctx.stroke();
+            ctx.fillStyle = '#d9ad36';
+            ctx.fillRect(roof.ridge[0] - 1, roof.ridge[1] - 5, 2, 6);
+            const gate = c(0.3, 1.76);
+            ctx.fillStyle = '#a9372f';
+            ctx.fillRect(gate[0] - 7, gate[1] - 12, 3, 13);
+            ctx.fillRect(gate[0] + 5, gate[1] - 12, 3, 13);
+            ctx.fillRect(gate[0] - 10, gate[1] - 14, 21, 3);
+            ctx.fillStyle = '#d5543c';
+            ctx.fillRect(gate[0] - 8, gate[1] - 17, 17, 3);
+            // Pale stepping stones make the garden read distinctly from the
+            // clipped suburban hedge used by the classic house.
+            for (let i = 0; i < 4; i++) {
+              const stone = c(0.72 + i * 0.22, 1.72 + i * 0.04);
+              ctx.fillStyle = i & 1 ? '#bbb49e' : '#d4ccb4';
+              ctx.fillRect(stone[0] - 2, stone[1] - 1, 5, 2);
+            }
+            return;
+          }
+
+          if (architecture === 'adobe') {
+            isoPanel(ctx, c, 2, 2, 0.06, '#c9a368', '#8b6841');
+            const inner = (x: number, y: number): P2 => c(0.14 + x * 0.76, 0.06 + y * 0.76);
+            const wallH = stage === 1 ? 16 : 25;
+            isoBox(ctx, inner, stage === 1 ? 1.35 : 1.7, stage === 1 ? 1.2 : 1.58, {
+              wall: vi % 2 ? '#d8a06a' : '#c98b57',
+              roofC: '#9b5f3d',
+              roof: 'flat',
+              wallH,
+              winRows: 1,
+              winCols: stage === 1 ? 1 : 2,
+              door: true,
+            });
+            // Mission-style stepped bell gable: an original blocky nod to
+            // Southwestern adobe architecture rather than a generic box.
+            const mission = inner(0.82, 0.72);
+            ctx.fillStyle = '#b86f49';
+            ctx.fillRect(mission[0] - 8, mission[1] - wallH - 10, 16, 10);
+            ctx.fillStyle = '#dca671';
+            ctx.fillRect(mission[0] - 6, mission[1] - wallH - 13, 12, 4);
+            ctx.fillRect(mission[0] - 3, mission[1] - wallH - 16, 6, 4);
+            ctx.fillStyle = '#553d31';
+            ctx.fillRect(mission[0] - 2, mission[1] - wallH - 9, 4, 6);
+            ctx.fillStyle = '#d4a02d';
+            ctx.fillRect(mission[0] - 1, mission[1] - wallH - 8, 2, 3);
+            if (stage === 2) {
+              const tower = (x: number, y: number): P2 => inner(0.52 + x * 0.55, 0.3 + y * 0.55);
+              isoBox(ctx, tower, 0.82, 0.72, { wall: '#e0ad75', roofC: '#985b3b', roof: 'flat', wallH: 33, winRows: 1 });
+            }
+            // A tiny planted saguaro ties the architecture to the destination
+            // without changing the gameplay footprint.
+            const cactus = c(1.72, 1.5);
+            ctx.fillStyle = '#397448';
+            ctx.fillRect(cactus[0] - 2, cactus[1] - 14, 4, 15);
+            ctx.fillRect(cactus[0] - 7, cactus[1] - 10, 6, 3);
+            ctx.fillRect(cactus[0] - 7, cactus[1] - 14, 3, 6);
+            return;
+          }
+
           // garden
           isoPanel(ctx, c, 2, 2, 0.06, '#7fb54a', '#5f9433');
           const inner = (x: number, y: number): P2 => c(0.16 + x * 0.72, 0.05 + y * 0.72);
@@ -1956,7 +2043,7 @@ const HOUSE_ROOFS = ['#a33d31', '#3f6f9c', '#6a8f3c', '#7a5233', '#9a3f5c'];
 
 /* ================= trees ================= */
 
-export type TreeKind = 'round' | 'pine' | 'blossom';
+export type TreeKind = 'round' | 'pine' | 'blossom' | 'cherry' | 'cactus';
 
 function ditherDisc(p: Px, cx: number, cy: number, r: number, base: string, mid: string, hi: string) {
   for (let y = -r; y <= r; y++)
@@ -1971,7 +2058,7 @@ function ditherDisc(p: Px, cx: number, cy: number, r: number, base: string, mid:
     }
 }
 
-/** 42x56 tree sprite. `tone` 0..2 picks a green ramp. */
+/** 42x56 vegetation sprite. `tone` 0..2 picks a green ramp. */
 export function treeSprite(kind: TreeKind, tone: number): HTMLCanvasElement {
   const key = 't|' + kind + '|' + tone;
   const hit = cache.get(key);
@@ -1983,11 +2070,39 @@ export function treeSprite(kind: TreeKind, tone: number): HTMLCanvasElement {
     ['#1e4d2a', '#306d38', '#559946'],
     ['#315f2d', '#4b8138', '#79ad4c'],
   ];
-  const [base, mid, hi] = ramps[tone % 3];
+  const [base, mid, hi] = kind === 'cherry'
+    ? [
+        ['#9f4f79', '#d878a0', '#f3afc7'],
+        ['#a9587d', '#df86a8', '#f8c1d2'],
+        ['#8f5078', '#ca73a0', '#efabd0'],
+      ][tone % 3]
+    : ramps[tone % 3];
   const trunk = '#6d4a2b';
   const trunkDk = '#54371e';
 
-  if (kind === 'pine') {
+  if (kind === 'cactus') {
+    const cactusBase = ['#26643f', '#2d7046', '#347846'][tone % 3];
+    const cactusMid = ['#3d8952', '#45985b', '#4f9d5d'][tone % 3];
+    const cactusHi = ['#70b368', '#82c071', '#8bc777'][tone % 3];
+    // Main saguaro column with stepped pixel caps.
+    p(17, 11, 9, 42, cactusBase);
+    p(19, 8, 5, 4, cactusMid);
+    p(20, 7, 3, 2, cactusHi);
+    p(19, 13, 2, 38, cactusHi);
+    p(24, 13, 2, 38, shade(cactusBase, 0.78));
+    // Uneven raised arms give each desert tree the classic readable silhouette.
+    p(8, 24, 6, 18, cactusBase);
+    p(10, 21, 4, 5, cactusMid);
+    p(13, 35, 6, 6, cactusMid);
+    p(29, 29, 6, 15, cactusBase);
+    p(29, 38, 4, 5, cactusMid);
+    p(33, 26, 4, 5, cactusMid);
+    p(10, 21, 2, 2, cactusHi);
+    p(34, 26, 2, 2, cactusHi);
+    // Sparse one-pixel spines and a tiny bloom survive nearest-neighbour zoom.
+    for (const [x, y] of [[16, 17], [27, 19], [16, 28], [27, 33], [16, 42], [27, 46], [7, 31], [36, 35]] as [number, number][]) p(x, y, 1, 1, '#d6d5a3');
+    p(20, 5, 4, 2, tone === 1 ? '#f3c74d' : '#e77968');
+  } else if (kind === 'pine') {
     p(18, 39, 6, 15, trunk);
     p(18, 39, 2, 15, trunkDk);
     p(15, 52, 4, 2, trunkDk);
@@ -2022,9 +2137,11 @@ export function treeSprite(kind: TreeKind, tone: number): HTMLCanvasElement {
     ditherDisc(p, 31, 24, 9, base, mid, hi);
     ditherDisc(p, 21, 27, 10, base, mid, hi);
     ditherDisc(p, 21, 7, 7, base, mid, hi);
-    if (kind === 'blossom') {
-      const pinks = ['#e990b5', '#f6bed3', '#cf6eab', '#fff0e8'];
-      for (let i = 0; i < 28; i++) {
+    if (kind === 'blossom' || kind === 'cherry') {
+      const pinks = kind === 'cherry'
+        ? ['#f7b9cf', '#ffe1e8', '#d974a2', '#fff4ed']
+        : ['#e990b5', '#f6bed3', '#cf6eab', '#fff0e8'];
+      for (let i = 0; i < (kind === 'cherry' ? 38 : 28); i++) {
         const a = (i * 137.5) % 360;
         const rr = 4 + ((i * 53) % 13);
         const x = 21 + Math.round(Math.cos((a * Math.PI) / 180) * rr);
@@ -2034,7 +2151,7 @@ export function treeSprite(kind: TreeKind, tone: number): HTMLCanvasElement {
     }
   }
 
-  const done = outlined(art, '#1e3a1a');
+  const done = outlined(art, kind === 'cherry' ? '#4a3040' : '#1e3a1a');
   cache.set(key, done);
   return done;
 }

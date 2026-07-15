@@ -73,7 +73,7 @@ import { classifySgaHole, sgaFeeMultiplier } from './sga';
 import { FINANCE_LEDGER_LIMIT, financialYearAt, sanitizeFinanceLedger } from './finance';
 import { MEMBER_GREEN_FEE_MULTIPLIER, membershipActive, membershipOfferFor, membershipVisitWeight, sanitizeMembership } from './memberships';
 import { fillThemeStory, isThemePackId, themePackById, themePackCourse, themePackPlayers, themePackStories, themePackTouringPros } from './themePacks';
-import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, isPropertyId, legacyCareerEligibleProperties, newlyAvailableProperties, operatingEarningsAmount, operatingEarningsFromLedger, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
+import { PROPERTY_INHERITANCE, WORLD_PROPERTIES, destinationSceneryFor, isPropertyId, legacyCareerEligibleProperties, newlyAvailableProperties, operatingEarningsAmount, operatingEarningsFromLedger, propertyAvailability, propertyById, sanitizeCareerProgress, sanitizePropertyHistory, starterPropertyForTheme } from './properties';
 import type { PropertyAvailabilityContext } from './properties';
 import { associateActivePortfolioMirror, bootstrapPortfolio, createPortfolioResort, listPortfolioResorts, portfolioSupported, saveActivePortfolioResort, sourceForPortfolioExpansion, switchPortfolioResortSnapshot, type ResortId, type ResortRecord } from './portfolio';
 import { actorWalkingBob } from './actorGeometry';
@@ -1381,7 +1381,7 @@ function startBall(spec: BallSpec, heightMul = 1, nominalFlightDistance?: number
     y: spec.fy,
   };
   if (ball.kind === 'fly') {
-    ball.canopyImpact = playerOnlyTreeCanopyImpact(ball, { theme: S.theme, tileAt, elevationAt: elevAt }) ?? undefined;
+    ball.canopyImpact = playerOnlyTreeCanopyImpact(ball, { theme: S.theme, vegetation: destinationSceneryFor(S.propertyId).vegetation, tileAt, elevationAt: elevAt }) ?? undefined;
   }
   S.balls.push(ball);
 }
@@ -2635,7 +2635,7 @@ export function playerShotForecast(
     curveDistance: plan.intend,
     lowFlight: plan.shape === 'punch',
   };
-  const canopyImpact = lie === 'green' ? null : firstTreeCanopyImpact(path, { theme: S.theme, tileAt, elevationAt: elevAt });
+  const canopyImpact = lie === 'green' ? null : firstTreeCanopyImpact(path, { theme: S.theme, vegetation: destinationSceneryFor(S.propertyId).vegetation, tileAt, elevationAt: elevAt });
   return {
     plan,
     path,

@@ -31,6 +31,7 @@ import {
   golferVisualGeometry,
 } from './actorGeometry';
 import { drawActorNameLabel, shouldShowActorName } from './actorLabels';
+import { destinationSceneryFor, type DestinationScenery } from './properties';
 
 /* ================= ground cache =================
    Terrain is painted in flat "ortho" grid space (rounded blob autotiles,
@@ -1081,6 +1082,7 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
 
   // depth in view space so rotation keeps the painter's order and picking aligned
   const dep = viewDepth;
+  const scenery = destinationSceneryFor(S.propertyId);
   const D: { z: number; f: () => void }[] = [];
   for (let py = 0; py < PH; py++)
     for (let px = 0; px < PW; px++)
@@ -1106,7 +1108,7 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
       f: () => drawCourseStaff(ctx, staffKind, pose, u, employeeDisplayName(employee)),
     });
   }
-  for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u) });
+  for (const tr of caches.trees) D.push({ z: dep(tr.x, tr.y), f: () => drawTree(ctx, tr, u, scenery) });
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++)
       if (S.tiles[idx(x, y)] === Tile.BRIDGE_WATER || S.tiles[idx(x, y)] === Tile.BRIDGE_STREAM)
@@ -1117,8 +1119,8 @@ export function draw(ctx: CanvasRenderingContext2D, cssW: number, cssH: number) 
   });
   const bDep = (x: number, y: number, w: number, h: number) =>
     Math.max(dep(x, y), dep(x + w, y), dep(x, y + h), dep(x + w, y + h)) - 0.4;
-  D.push({ z: bDep(Math.floor(CH.x) - 1, Math.floor(CH.y) - 1, 2, 2), f: () => drawClubhouse(ctx, u) });
-  for (const b of S.buildings) D.push({ z: bDep(b.x, b.y, b.w, b.h), f: () => drawBuilding(ctx, b, u) });
+  D.push({ z: bDep(Math.floor(CH.x) - 1, Math.floor(CH.y) - 1, 2, 2), f: () => drawClubhouse(ctx, u, scenery) });
+  for (const b of S.buildings) D.push({ z: bDep(b.x, b.y, b.w, b.h), f: () => drawBuilding(ctx, b, u, scenery) });
   for (const activity of S.facilityActivities) {
     if (activity.kind !== 'marina-boat') continue;
     const facility = S.buildings.find((building) => building.id === activity.facilityId);
@@ -1536,17 +1538,17 @@ function drawEditorOverlays(ctx: CanvasRenderingContext2D, u: number) {
 }
 
 /* ================= scenery ================= */
-function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number) {
-  const profile = treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme);
+function drawTree(ctx: CanvasRenderingContext2D, tr: { x: number; y: number; s: number }, u: number, scenery: DestinationScenery) {
+  const profile = treeCollisionProfile(Math.floor(tr.x), Math.floor(tr.y), S.theme, scenery.vegetation);
   const p = PE(profile.center.x, profile.center.y);
   const k = profile.visualScale * u;
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
   ctx.ellipse(p.x + 7.6 * k, p.y + 3 * u, 15.2 * k, 5.2 * k, 0.16, 0, Math.PI * 2);
   ctx.fill();
-  const kind = sharedTreeKindFor(S.theme, profile.seed);
+  const kind = sharedTreeKindFor(S.theme, profile.seed, scenery.vegetation);
   const spr = treeSprite(kind, ((profile.seed * 97) | 0) % 3);
-  const sway = Math.sin(S.time * 1.1 + profile.seed * 9) * 0.013;
+  const sway = kind === 'cactus' ? 0 : Math.sin(S.time * 1.1 + profile.seed * 9) * 0.013;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.translate(p.x, p.y);
@@ -1672,14 +1674,14 @@ function drawWorldLabel(ctx: CanvasRenderingContext2D, text: string, x: number, 
 /** Boxy facilities get a soft ground shadow; flat panels bring their own ground. */
 const SHADOWED = new Set(['proshop', 'snackbar', 'cartgarage', 'hotel', 'clubhouse']);
 
-function drawClubhouse(ctx: CanvasRenderingContext2D, u: number) {
+function drawClubhouse(ctx: CanvasRenderingContext2D, u: number, scenery: DestinationScenery) {
   const e = elevAt(CH.x, CH.y);
   const c = cornerAt(Math.floor(CH.x), Math.floor(CH.y), e, u);
   ctx.fillStyle = 'rgba(5,22,17,.24)';
   ctx.beginPath();
   ctx.ellipse(c.x + 8 * u, c.y + 4 * u, 42 * u, 14 * u, 0.12, 0, Math.PI * 2);
   ctx.fill();
-  drawAnchored(ctx, buildingSprite('clubhouse', 2, 2, S.rot), c.x, c.y, u);
+  drawAnchored(ctx, buildingSprite('clubhouse', 2, 2, S.rot, scenery.architecture), c.x, c.y, u);
   if (S.cam.z > 0.62) drawWorldLabel(ctx, 'CLUBHOUSE', c.x, c.y - 66 * u, u, 'gold');
 }
 
@@ -1794,7 +1796,7 @@ function drawFacilityUpgradeArt(ctx: CanvasRenderingContext2D, b: Building, c: P
   ctx.restore();
 }
 
-function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
+function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number, scenery: DestinationScenery) {
   const e = elevAt(b.x + 0.01, b.y + 0.01);
   const c = cornerAt(b.x + b.w / 2, b.y + b.h / 2, e, u);
   if (b.kind === 'bench' || b.kind === 'flowerbed' || b.kind === 'landmark' || b.kind === 'ballwasher' || b.kind === 'scenicbridge') {
@@ -1812,7 +1814,7 @@ function drawBuilding(ctx: CanvasRenderingContext2D, b: Building, u: number) {
     ctx.ellipse(c.x + 7 * u, c.y + 4 * u, ((b.w + b.h) / 2) * 20 * u, ((b.w + b.h) / 2) * 7.5 * u, 0.12, 0, Math.PI * 2);
     ctx.fill();
   }
-  const spr = buildingSprite(key, b.w, b.h, S.rot);
+  const spr = buildingSprite(key, b.w, b.h, S.rot, scenery.architecture);
   drawAnchored(ctx, spr, c.x, c.y, u);
   const topY = c.y - spr.ay * u;
   drawFacilityUpgradeArt(ctx, b, c, topY, u);
