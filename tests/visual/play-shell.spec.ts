@@ -150,14 +150,14 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   const quit = await box('.quitBtn');
   const club = await box('.playClubLine .clubBtn');
 
-  expect(hud).toMatchObject({ x: 0, y: 260, width: 796, height: 98 });
-  expect(panes).toMatchObject({ x: 59, y: 282, width: 731, height: 72 });
+  expect(hud).toMatchObject({ x: 0, y: 244, width: 796, height: 114 });
+  expect(panes).toMatchObject({ x: 59, y: 266, width: 731, height: 88 });
   expect(right(panes)).toBe(790);
   expect(right(caddie)).toBeLessThanOrEqual(790);
   expect(bottom(caddie)).toBeLessThanOrEqual(354);
-  expect(palette).toMatchObject({ x: 243.5, y: 223, width: 309, height: 39 });
+  expect(palette).toMatchObject({ x: 243.5, y: 207, width: 309, height: 39 });
   expect(club.height).toBe(17);
-  expect(quit).toMatchObject({ x: 8, y: 295, width: 45, height: 45 });
+  expect(quit).toMatchObject({ x: 8, y: 279, width: 45, height: 45 });
 
   expect(intersects(palette, conditions)).toBe(false);
   expect(intersects(status, skills)).toBe(false);
@@ -179,14 +179,14 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
     };
   });
   expect(readableType).toEqual({
-    paneTitle: 10.5,
-    club: 9.5,
-    facts: 9,
-    skills: 9.5,
-    caddieTitle: 10.5,
-    metricLabel: 8.5,
-    metricValue: 12,
-    resultCopy: 9,
+    paneTitle: 13,
+    club: 11,
+    facts: 11,
+    skills: 12,
+    caddieTitle: 13,
+    metricLabel: 10,
+    metricValue: 15,
+    resultCopy: 11,
   });
 
   await page.addStyleTag({ content: `
@@ -201,8 +201,8 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
 
   await activateCompetitionAimAdvice(page);
   await expectCompactTacticalStack(page, {
-    message: { x: 8, y: 223, width: 210, height: 31 },
-    competition: { x: 59, y: 263, width: 577, height: 18 },
+    message: { x: 8, y: 207, width: 210, height: 40 },
+    competition: { x: 59, y: 247, width: 577, height: 19 },
   });
 });
 
@@ -218,7 +218,7 @@ test.describe('native championship shell', () => {
     const palette = await page.locator('.playShotPalette').boundingBox() as Box;
     const conditions = await page.locator('.playConditions').boundingBox() as Box;
     expect(intersects(competition, palette)).toBe(false);
-    expect(intersects(competition, conditions)).toBe(false);
+    expect(intersects(competition, conditions), JSON.stringify({ competition, conditions })).toBe(false);
     expect(competition.x).toBeGreaterThanOrEqual(0);
     expect(right(competition)).toBeLessThanOrEqual(800);
     expect(competition.y).toBeGreaterThanOrEqual(0);
@@ -343,10 +343,10 @@ test.describe('wide short-landscape shell', () => {
     const panes = await page.locator('.playConsolePanes').boundingBox() as Box;
     const caddie = await page.locator('.playCaddieBook').boundingBox() as Box;
     const palette = await page.locator('.playShotPalette').boundingBox() as Box;
-    expect(hud).toMatchObject({ x: 0, y: 618, width: 1592, height: 98 });
-    expect(panes).toMatchObject({ x: 59, y: 640, width: 1527, height: 72 });
+    expect(hud).toMatchObject({ x: 0, y: 602, width: 1592, height: 114 });
+    expect(panes).toMatchObject({ x: 59, y: 624, width: 1527, height: 88 });
     expect(right(caddie)).toBe(1586);
-    expect(palette).toMatchObject({ x: 641.5, y: 581, width: 309, height: 39 });
+    expect(palette).toMatchObject({ x: 641.5, y: 565, width: 309, height: 39 });
     await expect(page.locator('.fieldControls')).toBeHidden();
     await expect(page.locator('.playModeDock')).toBeHidden();
     await expect(page.locator('.simFotoTicker')).toBeHidden();
@@ -365,20 +365,20 @@ test.describe('wide short-landscape shell', () => {
       };
     });
     expect(readableType).toEqual({
-      paneTitle: 10.5,
-      club: 9.5,
-      facts: 9,
-      skills: 9.5,
-      caddieTitle: 10.5,
-      metricLabel: 8.5,
-      metricValue: 12,
-      resultCopy: 9,
+      paneTitle: 13,
+      club: 11,
+      facts: 11,
+      skills: 12,
+      caddieTitle: 13,
+      metricLabel: 10,
+      metricValue: 15,
+      resultCopy: 11,
     });
 
     await activateCompetitionAimAdvice(page);
     await expectCompactTacticalStack(page, {
-      message: { x: 8, y: 581, width: 210, height: 31 },
-      competition: { x: 59, y: 621, width: 1373, height: 18 },
+      message: { x: 8, y: 565, width: 320, height: 40 },
+      competition: { x: 59, y: 605, width: 1373, height: 19 },
     });
 
     await page.locator('.ticker').evaluate((ticker) => {

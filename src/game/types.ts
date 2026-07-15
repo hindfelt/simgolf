@@ -88,6 +88,7 @@ export type SgaClass = 'Breather' | 'Freeway' | 'Precise' | 'Creative' | 'Challe
 
 export type GolferState =
   | 'toTee'
+  | 'waitTee'
   | 'toBall'
   | 'leave'
   | 'preshot'
@@ -130,9 +131,17 @@ export interface Golfer {
   energy: number;
   hunger: number;
   thirst: number;
-  /** A* waypoints (tile centers) toward `tx,ty`, walked in order before the final leg. */
-  path?: Vec[];
+  /** A* waypoints toward `tx,ty`; `null` means the route is currently blocked. */
+  path?: Vec[] | null;
   pathIdx?: number;
+  /** Terrain revision used to compute `path`, so construction invalidates stale routes. */
+  pathRevision?: number;
+  /** Sim-seconds spent without a safe route, bounded before the group abandons play. */
+  routeBlockedFor?: number;
+  /** Countdown to the next safe A* retry while a route remains blocked. */
+  routeRetryIn?: number;
+  /** Monotonic queue-arrival order, persisted so tee admission remains FIFO after reload. */
+  teeQueueSeq?: number;
   /** Manual special visitors whose completed round may unlock expansion or landmarks. */
   specialGuest?: SpecialGuestKind;
 }

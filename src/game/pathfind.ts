@@ -4,6 +4,42 @@ import { W, H } from './constants';
 import { Tile } from './types';
 import type { Vec } from './types';
 import { tileAt, inb, elevAt } from './rng';
+import { S } from './state';
+import { bridgeConnectionsAt, isBridgeTile, isPointOnBridgeDeck } from './bridges';
+
+/** Raw water is never valid walking ground; bridge decks remain ordinary route tiles. */
+export function golferTileWalkable(x: number, y: number): boolean {
+  if (!inb(x, y)) return false;
+  const tile = tileAt(x, y);
+  return tile !== Tile.WATER && tile !== Tile.STREAM;
+}
+
+/** Exact-point counterpart: bridge backing water is safe only on the authored deck. */
+export function golferPointWalkable(point: Vec): boolean {
+  const x = Math.floor(point.x);
+  const y = Math.floor(point.y);
+  if (!golferTileWalkable(x, y)) return false;
+  return !isBridgeTile(tileAt(x, y)) || isPointOnBridgeDeck(S.tiles, point.x, point.y);
+}
+
+/** Rare legacy/edit recovery: relocate a golfer standing in raw water to nearest dry land. */
+export function nearestDryGolferPoint(from: Vec): Vec | null {
+  let best: Vec | null = null;
+  let bestDistance = Infinity;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const tile = tileAt(x, y);
+      if (tile === Tile.WATER || tile === Tile.STREAM || isBridgeTile(tile)) continue;
+      const candidate = { x: x + 0.5, y: y + 0.5 };
+      const distance = (candidate.x - from.x) ** 2 + (candidate.y - from.y) ** 2;
+      if (distance < bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+  }
+  return best;
+}
 
 function terrainCost(x: number, y: number): number {
   switch (tileAt(x, y)) {
@@ -11,9 +47,6 @@ function terrainCost(x: number, y: number): number {
     case Tile.BRIDGE_WATER:
     case Tile.BRIDGE_STREAM:
       return 0.6;
-    case Tile.WATER:
-    case Tile.STREAM:
-      return 14;
     case Tile.TREE:
       return 5;
     case Tile.SAND:
@@ -94,18 +127,43 @@ const NEIGHBORS: [number, number, boolean][] = [
   [-1, 1, true],
   [-1, -1, true],
 ];
-const MAX_NODES = 2200; // safety cap so a mostly-blocked map can't stall a frame
+// The whole course is only 3,072 tiles. Searching all of it avoids turning a valid
+// long detour into a false "unreachable" result while retaining a hard upper bound.
+const MAX_NODES = W * H;
+
+function bridgeAllowsCardinalStep(x: number, y: number, dx: number, dy: number): boolean {
+  if (!isBridgeTile(tileAt(x, y))) return true;
+  const connections = bridgeConnectionsAt(S.tiles, x, y);
+  return dx < 0 ? connections.west : dx > 0 ? connections.east : dy < 0 ? connections.north : connections.south;
+}
+
+function golferStepWalkable(ax: number, ay: number, bx: number, by: number, diag: boolean): boolean {
+  if (!golferTileWalkable(bx, by)) return false;
+  const dx = bx - ax;
+  const dy = by - ay;
+  if (diag) {
+    // Bridge decks have authored cardinal openings. Diagonal endpoints and diagonal
+    // corner clips through a bridge backing tile would visibly walk through water.
+    if (isBridgeTile(tileAt(ax, ay)) || isBridgeTile(tileAt(bx, by))) return false;
+    const sideA = tileAt(ax + dx, ay);
+    const sideB = tileAt(ax, ay + dy);
+    if (isBridgeTile(sideA) || isBridgeTile(sideB)) return false;
+    return golferTileWalkable(ax + dx, ay) && golferTileWalkable(ax, ay + dy);
+  }
+  return bridgeAllowsCardinalStep(ax, ay, dx, dy) && bridgeAllowsCardinalStep(bx, by, -dx, -dy);
+}
 
 /**
  * A* over the tile grid; returns world-space tile-center waypoints from `from` to `to`
- * (excluding `from`), or `null` if unreachable within the search budget — callers should
- * fall back to a direct line when that happens.
+ * (excluding `from`), or `null` if unreachable. A blocked start is tolerated so a golfer
+ * caught by a terrain edit/legacy save can step back onto dry ground; a blocked goal is not.
  */
 export function findPath(from: Vec, to: Vec): Vec[] | null {
   const sx = Math.max(0, Math.min(W - 1, Math.floor(from.x)));
   const sy = Math.max(0, Math.min(H - 1, Math.floor(from.y)));
   const gx = Math.max(0, Math.min(W - 1, Math.floor(to.x)));
   const gy = Math.max(0, Math.min(H - 1, Math.floor(to.y)));
+  if (!golferPointWalkable(from) || !golferPointWalkable(to)) return null;
   if (sx === gx && sy === gy) return [];
 
   const startN = sy * W + sx;
@@ -131,7 +189,7 @@ export function findPath(from: Vec, to: Vec): Vec[] | null {
     for (const [dx, dy, diag] of NEIGHBORS) {
       const nx = cx + dx;
       const ny = cy + dy;
-      if (!inb(nx, ny)) continue;
+      if (!golferStepWalkable(cx, cy, nx, ny, diag)) continue;
       const nn = ny * W + nx;
       if (closed[nn]) continue;
       const tentative = gScore[cn] + stepCost(cx, cy, nx, ny, diag);

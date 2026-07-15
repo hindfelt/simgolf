@@ -262,50 +262,57 @@ body,
 /* --- transient course messages ------------------------------------------- */
 .hint {
   top: 10px;
-  max-width: min(470px, 44vw);
-  padding: 4px 12px;
-  border: 0;
-  border-radius: 0;
-  background: rgba(3,5,12,.66);
+  max-width: min(560px, 48vw);
+  padding: 6px 14px;
+  border: 2px solid rgba(137,143,205,.88);
+  border-radius: 7px 11px 6px 9px;
+  background:
+    linear-gradient(180deg, rgba(46,53,112,.94), rgba(12,18,54,.94));
   color: white;
   font-family: var(--sg-font);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
-  text-shadow: 1px 2px 0 #273279, -1px 0 #273279;
-  box-shadow: none;
+  line-height: 1.2;
+  text-shadow: 1px 2px 0 #202868, -1px 0 #202868;
+  box-shadow: inset 1px 1px rgba(255,255,255,.24), 0 3px 0 #151b58, 0 8px 16px rgba(0,0,0,.24);
 }
 
 .ticker {
   left: calc(var(--sg-control-width) + 12px);
   bottom: calc(var(--sg-fan-height) + 8px);
   max-width: min(520px, calc(100vw - 400px));
+  max-height: max(54px, calc(100dvh - var(--sg-controller-visible-height) - 92px));
   gap: 2px;
+  overflow: hidden;
 }
 
 .tk {
-  padding: 1px 6px;
+  flex: none;
+  padding: 2px 8px;
   border: 0;
   border-left: 0;
   border-radius: 0;
   background: transparent;
   color: #fff;
   font-family: var(--sg-font);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
-  text-shadow: 1px 2px 0 #273279, -1px 0 #273279;
+  line-height: 1.25;
+  text-shadow: 1px 2px 0 #273279, -1px 0 #273279, 0 -1px #273279;
   box-shadow: none;
 }
 .tk b { color: #fff68b; }
 .tk.money { color: #62f17e; }
 
 .simFotoTicker {
-  width: min(360px, calc(100vw - 420px));
-  min-width: 250px;
+  width: min(430px, calc(100vw - 350px));
+  min-width: 300px;
+  min-height: 94px;
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 82px minmax(0, 1fr);
   align-items: center;
-  gap: 9px;
-  padding: 7px 12px 8px 6px;
+  gap: 10px;
+  padding: 8px 14px 9px 7px;
   border: 3px solid var(--sg-rim);
   border-radius: 38px 13px 13px 38px;
   background:
@@ -318,16 +325,16 @@ body,
 .simFotoTicker.bad { border-color: #642f68; }
 .simFotoTicker.money { border-color: #6b5611; }
 .simFotoTicker .characterPortrait {
-  width: 66px;
-  height: 66px;
-  flex-basis: 66px;
-  margin: -4px 0 -5px -3px;
+  width: 78px;
+  height: 78px;
+  flex-basis: 78px;
+  margin: -3px 0 -4px -2px;
 }
-.simFotoTicker .characterPortrait canvas { width: 50px; height: 66px; }
-.simFotoCopy { min-width: 0; display: grid; gap: 2px; font-family: var(--sg-font); text-shadow: 1px 2px #273279; }
-.simFotoCopy b { overflow: hidden; color: #fff36e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.simFotoCopy small { overflow: hidden; color: #e9e7ff; font: 900 6px var(--sg-small); letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.simFotoCopy span { color: #fff; font-size: 10px; font-weight: 900; line-height: 1.2; }
+.simFotoTicker .characterPortrait canvas { width: 59px; height: 78px; }
+.simFotoCopy { min-width: 0; display: grid; gap: 3px; font-family: var(--sg-font); text-shadow: 1px 2px #273279; }
+.simFotoCopy b { overflow: hidden; color: #fff36e; font-size: 16px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+.simFotoCopy small { overflow: hidden; color: #e9e7ff; font: 900 9px/1.1 var(--sg-small); letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.simFotoCopy span { color: #fff; font-size: 13px; font-weight: 900; line-height: 1.25; }
 .simFotoTicker.money .simFotoCopy span { color: #79f293; }
 .simFotoTicker.bad .simFotoCopy span { color: #ffd0d7; }
 
@@ -648,22 +655,6 @@ body,
   text-overflow: ellipsis;
 }
 
-.dockPrompt {
-  width: min(470px, calc(100vw - 290px));
-  min-height: 72px;
-  align-self: center;
-  margin: 0 8px;
-  padding: 10px 17px;
-  border: 3px solid var(--sg-rim);
-  border-radius: 38px;
-  background: linear-gradient(180deg, #75dccb, #32aa9d);
-  color: #243379;
-  box-shadow: inset 2px 2px rgba(255,255,255,.55), 0 4px 0 #252d78;
-}
-.dockPrompt:hover { background: linear-gradient(180deg, #9ef2df, #48c5b4); }
-.dockPrompt b { font-family: var(--sg-font); font-size: 14px; }
-.dockPrompt small { color: #293c7f; font-family: var(--sg-small); font-size: 8px; }
-
 /* --- routing monitor ------------------------------------------------------ */
 .routingMap {
   right: max(9px, env(safe-area-inset-right));
@@ -765,9 +756,9 @@ body,
   box-shadow: inset 2px 2px rgba(255,255,255,.65), 0 3px 0 #272461;
 }
 .destinationUnlock div { min-width: 0; }
-.destinationUnlock small { display: block; color: #5a63a5; font-family: var(--sg-small); font-size: 6px; font-weight: 900; letter-spacing: .13em; }
-.destinationUnlock b { display: block; overflow: hidden; color: #26368c; font-family: var(--sg-font); font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
-.destinationUnlock p { margin: 1px 0 0; color: #4e589a; font-family: var(--sg-small); font-size: 7px; }
+.destinationUnlock small { display: block; color: #5a63a5; font-family: var(--sg-small); font-size: 8px; font-weight: 900; letter-spacing: .13em; }
+.destinationUnlock b { display: block; overflow: hidden; color: #26368c; font-family: var(--sg-font); font-size: 19px; text-overflow: ellipsis; white-space: nowrap; }
+.destinationUnlock p { margin: 2px 0 0; color: #4e589a; font-family: var(--sg-small); font-size: 9px; line-height: 1.25; }
 .destinationUnlock button {
   min-height: 38px;
   padding: 5px 14px;
@@ -803,12 +794,12 @@ body,
   top: 105px;
   right: max(8px, env(safe-area-inset-right));
   z-index: 29;
-  width: min(370px, calc(100vw - 24px));
+  width: min(430px, calc(100vw - 24px));
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px 10px;
-  padding: 8px 32px 9px 8px;
+  padding: 10px 34px 11px 9px;
   border: 4px solid var(--sg-rim);
   border-radius: 31px 13px 13px 31px;
   background:
@@ -820,32 +811,32 @@ body,
 }
 .destinationReleaseSeal {
   grid-row: 1 / span 2;
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   display: grid;
   place-items: center;
   border: 3px solid #39357b;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 27%, var(--sg-yellow-hi), var(--sg-yellow) 58%, #b98d00);
   color: #303776;
-  font-size: 23px;
+  font-size: 26px;
   box-shadow: inset 2px 2px rgba(255,255,255,.66), 0 3px 0 #272461;
 }
 .destinationReleaseToast div { min-width: 0; }
-.destinationReleaseToast small { display:block; color:#5963a5; font-family:var(--sg-small); font-size:6px; font-weight:900; letter-spacing:.13em; }
-.destinationReleaseToast b { display:block; overflow:hidden; color:#27358b; font-family:var(--sg-font); font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
-.destinationReleaseToast p { margin:1px 0 0; color:#4e589a; font-family:var(--sg-small); font-size:7px; line-height:1.25; }
+.destinationReleaseToast small { display:block; color:#5963a5; font-family:var(--sg-small); font-size:9px; font-weight:900; line-height:1.1; letter-spacing:.13em; }
+.destinationReleaseToast b { display:block; overflow:hidden; color:#27358b; font-family:var(--sg-font); font-size:17px; line-height:1.1; text-overflow:ellipsis; white-space:nowrap; }
+.destinationReleaseToast p { margin:2px 0 0; color:#4e589a; font-family:var(--sg-small); font-size:10px; line-height:1.25; }
 .destinationReleaseOpen {
   grid-column: 2 / span 2;
   justify-self: start;
-  min-height: 28px;
-  padding: 3px 11px;
+  min-height: 32px;
+  padding: 4px 12px;
   border: 2px solid #2d397f;
   border-radius: 15px;
   background: linear-gradient(180deg, #70e3ca, var(--sg-teal) 58%, #23998b);
   color: #173c6d;
   font-family: var(--sg-font);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 900;
   cursor: pointer;
   box-shadow: inset 1px 1px rgba(235,255,250,.58), 0 2px 0 #202966;
@@ -1171,15 +1162,15 @@ body,
   pointer-events: none;
 }
 .shapeComboState i {
-  width: 10px;
-  height: 8px;
+  width: 12px;
+  height: 10px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255,255,255,.5);
   border-radius: 4px;
   background: rgba(22,39,66,.55);
   color: rgba(255,255,255,.78);
-  font: 900 5px/1 var(--sg-small);
+  font: 900 7px/1 var(--sg-small);
   font-style: normal;
   box-shadow: 0 1px rgba(21,28,74,.52);
 }
@@ -1208,22 +1199,22 @@ body,
   top: -66px;
   z-index: 2;
   width: min(390px, calc(100vw - 440px));
-  min-height: 27px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 8px;
-  border: 2px solid rgba(116,122,180,.76);
-  border-radius: 5px;
-  background: rgba(13,23,37,.82);
+  padding: 6px 10px;
+  border: 3px solid rgba(126,133,196,.9);
+  border-radius: 7px 11px 6px 9px;
+  background: linear-gradient(180deg, rgba(42,50,102,.94), rgba(11,18,53,.94));
   color: #f4f2ff;
   font-family: var(--sg-font);
-  font-size: 8.5px;
-  line-height: 1.15;
-  box-shadow: 0 3px 8px rgba(0,0,0,.28);
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: inset 1px 1px rgba(255,255,255,.2), 0 3px 0 #151b58, 0 8px 14px rgba(0,0,0,.28);
 }
 .playMessage > span:not(.canopyStatus) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.playMessage .canopyStatus { flex: 0 0 auto; min-height: 16px; padding: 1px 4px; border-color: #777eae; background: #d7d6ee; color: #303c82; font-size: 7px; }
+.playMessage .canopyStatus { flex: 0 0 auto; min-height: 20px; padding: 2px 6px; border-color: #777eae; background: #d7d6ee; color: #303c82; font-size: 10px; }
 .playCaddie { color: #fff0a5; }
 .playCaddie strong { color: #fff46c; }
 
@@ -1252,12 +1243,12 @@ body,
   background: transparent;
   color: #fff;
   font-family: var(--sg-font);
-  font-size: 8px;
+  font-size: 11px;
 }
-.playConditions .weatherReadout small { color: #bdc9e5; font-family: var(--sg-small); font-size: 6px; }
+.playConditions .weatherReadout small { color: #bdc9e5; font-family: var(--sg-small); font-size: 8px; }
 .playConditions .weather-drizzle,
 .playConditions .weather-rain { color: #bdeaff; }
-.playConditions .windReadout { display: flex; gap: 4px; padding: 0; color: #d9ddf8; font-family: var(--sg-small); font-size: 7px; }
+.playConditions .windReadout { display: flex; gap: 4px; padding: 0; color: #d9ddf8; font-family: var(--sg-small); font-size: 10px; }
 .playConditions .windArrow { display: inline-block; color: #f6f2ff; }
 
 .playHud .quitBtn {
@@ -1281,7 +1272,7 @@ body,
   box-shadow: inset 2px 2px rgba(255,255,255,.55), 0 4px 0 #3b245d;
 }
 .playHud .quitBtn span { height: 23px; font-family: var(--sg-font); font-size: 23px; line-height: 23px; text-shadow: 1px 1px #6f2740; }
-.playHud .quitBtn small { margin-top: -7px; color: #fff; font-size: 5px; font-weight: 900; text-transform: uppercase; }
+.playHud .quitBtn small { margin-top: -6px; color: #fff; font-size: 8px; font-weight: 900; text-transform: uppercase; }
 .playHud .quitBtn:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
 .playCompetitionHud {
@@ -1306,9 +1297,9 @@ body,
   box-shadow: 0 2px 0 #282c76, 0 4px 8px rgba(0,0,0,.28);
   white-space: nowrap;
 }
-.playCompetitionHud b { flex: 0 0 auto; font-size: 7px; }
-.playCompetitionHud span { min-width: 0; overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
-.playCompetitionHud em { flex: 0 0 auto; font-family: var(--sg-small); font-size: 6px; font-style: normal; }
+.playCompetitionHud b { flex: 0 0 auto; font-size: 9px; }
+.playCompetitionHud span { min-width: 0; overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
+.playCompetitionHud em { flex: 0 0 auto; font-family: var(--sg-small); font-size: 8px; font-style: normal; }
 
 /* --- original in-world dialog layer -------------------------------------- */
 /* SimGolf kept the course live and bright behind compact molded dialogs.    */
@@ -1357,7 +1348,7 @@ body,
 .modal[data-modal-kind] h1 {
   color: #253080;
   font-family: var(--sg-font);
-  font-size: 17px;
+  font-size: 20px;
   line-height: 1.05;
   text-shadow: 1px 1px 0 #fff8bd;
 }
@@ -1366,11 +1357,12 @@ body,
   margin-bottom: 7px;
   color: #555a92;
   font-family: var(--sg-small);
-  font-size: 8px;
+  font-size: 10px;
+  line-height: 12px;
   letter-spacing: .12em;
 }
 
-.modal[data-modal-kind] p,
+.modal[data-modal-kind] p { font-size: 14px; line-height: 18px; }
 .modal[data-modal-kind] .step { line-height: 1.35; }
 
 .modal[data-modal-kind] .step,
@@ -1408,8 +1400,8 @@ body,
   box-shadow: inset 0 1px #ffffcf, 0 3px 0 #22296f;
   color: #293071;
   font-family: var(--sg-font);
-  font-size: 11px;
-  line-height: 1.05;
+  font-size: 13px;
+  line-height: 14px;
   text-shadow: 1px 1px #fff7a0;
 }
 
@@ -1455,12 +1447,15 @@ body,
    repetitive parcel cells instead of shrinking the character art. */
 .modal[data-modal-kind='landOffer'] { padding: 9px 11px 8px; }
 .modal[data-modal-kind='landOffer'] .guestHeading { margin-bottom: 4px; }
-.modal[data-modal-kind='landOffer'] > p { margin: 4px 0; font-size: 10px; line-height: 1.25; }
-.modal[data-modal-kind='landOffer'] .offerMeta { margin: 4px 0; padding: 4px 7px; }
+.modal[data-modal-kind='landOffer'] > p { margin: 4px 0; font-size: 12px; line-height: 15px; }
+.modal[data-modal-kind='landOffer'] .offerMeta { margin: 4px 0; padding: 4px 7px; font-size: 11px; line-height: 14px; }
 .modal[data-modal-kind='landOffer'] .parcelOfferGrid { gap: 3px; padding: 5px; }
 .modal[data-modal-kind='landOffer'] .parcelOfferGrid button { min-height: 32px; }
-.modal[data-modal-kind='landOffer'] .bigbtn { min-height: 28px; margin-top: 5px; padding: 4px 8px; }
+.modal[data-modal-kind='landOffer'] .parcelOfferGrid button b { font-size: 12px; line-height: 12px; }
+.modal[data-modal-kind='landOffer'] .parcelOfferGrid button span { font-size: 8px; line-height: 9px; }
+.modal[data-modal-kind='landOffer'] .bigbtn { min-height: 30px; margin-top: 5px; padding: 4px 8px; }
 .modal[data-modal-kind='landOffer'] .textBtn { margin-top: 4px; padding: 3px 8px; }
+.modal[data-modal-kind] .textBtn { font-size: 12px; line-height: 16px; }
 
 .modal[data-modal-kind] .guestPortrait {
   border: 4px solid #343b8c;
@@ -1673,6 +1668,10 @@ body,
   --sg-fan-height: 166px;
   --sg-controller-visible-height: 166px;
   --sg-control-width: 218px;
+  /* The construction fan is wider than the old 218px play-console inset. Keep
+     its complete molded silhouette in a dedicated bay so the two rightmost
+     medallions can never sit on top of the first terrain/tool column. */
+  --sg-construction-control-width: 280px;
   --sg-fan-width: 280px;
   --sg-controller-scale: 1;
 }
@@ -1829,7 +1828,7 @@ body,
 
 .controllerShell .toolDock {
   position: absolute;
-  left: var(--sg-control-width);
+  left: var(--sg-construction-control-width);
   right: 0;
   bottom: 0;
   z-index: auto;
@@ -1847,6 +1846,7 @@ body,
 }
 
 .controllerShell .playModeDock {
+  left: var(--sg-control-width);
   z-index: 28;
   border: 0;
   background: transparent;
@@ -1855,6 +1855,7 @@ body,
 }
 
 .controllerShell .playModeDock .playModeGroups {
+  left: calc(-1 * var(--sg-control-width));
   pointer-events: none;
 }
 
@@ -1889,7 +1890,7 @@ body,
 .controllerShell .toolGroups {
   position: absolute;
   z-index: 4;
-  left: calc(-1 * var(--sg-control-width));
+  left: calc(-1 * var(--sg-construction-control-width));
   top: -58px;
   width: var(--sg-fan-width);
   height: var(--sg-fan-height);
@@ -1933,7 +1934,7 @@ body,
 .controllerShell .toolTray {
   position: absolute;
   top: 0;
-  left: 28px;
+  left: 4px;
   right: 0;
   bottom: 0;
   z-index: 1;
@@ -1953,7 +1954,11 @@ body,
   grid-auto-flow: row;
   align-content: start;
   justify-content: start;
-  gap: 0;
+  /* At 800px the native 8 × 64px row fits exactly. Wider short screens use
+     their spare slab width as breathing room between tools, never by scaling
+     the controls or shrinking the type. */
+  column-gap: clamp(0px, calc((100vw - 800px) / 7), 28px);
+  row-gap: 0;
   margin-left: 0;
   padding: 0;
   overflow-x: auto;
@@ -2016,7 +2021,7 @@ body,
   background: transparent;
   color: #fff;
 }
-.controllerShell .toolDock[data-group='course'] .tool[data-tool-row='2'] { transform: translateX(32px); }
+.controllerShell .toolDock[data-group='course'] .tool[data-tool-row='2'] { transform: none; }
 .controllerShell .tool:hover { background: rgba(255,255,255,.08); }
 .controllerShell .tool:focus-visible { outline: 2px solid #fff451; outline-offset: -2px; }
 .controllerShell .tool.active { background: radial-gradient(ellipse at center, rgba(255,248,82,.18), transparent 70%); }
@@ -2025,7 +2030,7 @@ body,
   position: absolute;
   z-index: 1;
   left: 50%;
-  top: 6px;
+  top: 4px;
   width: 60px;
   height: 47px;
   transform: translateX(-50%);
@@ -2036,12 +2041,12 @@ body,
 .controllerShell .toolDock[data-group='terrain'] .tool .nm {
   position: absolute;
   z-index: 3;
-  top: -1px;
+  top: 0;
   left: 50%;
   width: 62px;
   max-width: 62px;
-  height: 20px;
-  max-height: 20px;
+  height: 24px;
+  max-height: 24px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -2053,9 +2058,9 @@ body,
   background: linear-gradient(180deg, rgba(41,51,126,.8), rgba(41,51,126,.3) 76%, transparent);
   color: #fff;
   font-family: Verdana, Arial, sans-serif;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 900;
-  line-height: 9px;
+  line-height: 11px;
   letter-spacing: -.02em;
   text-align: center;
   text-wrap: balance;
@@ -2069,7 +2074,8 @@ body,
   left: 50%;
   bottom: 0;
   max-width: 60px;
-  min-height: 9px;
+  min-height: 11px;
+  max-height: 22px;
   padding: 0 3px 1px;
   overflow: hidden;
   transform: translateX(-50%);
@@ -2077,11 +2083,10 @@ body,
   background: rgba(41,51,126,.76);
   color: #fff8b4;
   font-family: Verdana, Arial, sans-serif;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 900;
-  line-height: 9px;
+  line-height: 11px;
   text-align: center;
-  text-overflow: ellipsis;
   text-shadow: 1px 1px 0 #29337e;
   white-space: nowrap;
 }
@@ -2090,7 +2095,7 @@ body,
 
 .dockStatus {
   min-width: min(430px, calc(100vw - 330px));
-  min-height: 68px;
+  min-height: 78px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-content: center;
@@ -2103,9 +2108,9 @@ body,
   color: #28357f;
   box-shadow: inset 2px 2px rgba(255,255,255,.54), 0 4px 0 #252d78;
 }
-.dockStatus b { font-family: var(--sg-font); font-size: 12px; }
-.dockStatus span { overflow: hidden; color: #515c9f; font-family: var(--sg-small); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
-.dockStatus button { grid-column: 2; grid-row: 1 / span 2; min-height: 38px; padding: 4px 12px; border: 2px solid #303a84; border-radius: 20px; background: linear-gradient(180deg, var(--sg-yellow-hi), var(--sg-yellow)); color: #30346e; font-family: var(--sg-font); font-size: 9px; }
+.dockStatus b { font-family: var(--sg-font); font-size: 16px; line-height: 1.1; }
+.dockStatus span { overflow: hidden; color: #515c9f; font-family: var(--sg-small); font-size: 10px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.dockStatus button { grid-column: 2; grid-row: 1 / span 2; min-height: 42px; padding: 5px 13px; border: 2px solid #303a84; border-radius: 22px; background: linear-gradient(180deg, var(--sg-yellow-hi), var(--sg-yellow)); color: #30346e; font-family: var(--sg-font); font-size: 11px; }
 
 .controllerShell .facilitySurfaceOpen .toolTray { opacity: 0; pointer-events: none; }
 
@@ -2452,12 +2457,12 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   z-index: 42;
   top: max(8px, env(safe-area-inset-top));
   left: 50%;
-  width: min(390px, calc(100vw - 24px));
-  min-height: 42px;
+  width: min(460px, calc(100vw - 24px));
+  min-height: 58px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 7px 6px 13px;
+  padding: 8px 8px 8px 14px;
   border: 3px solid #2c368e;
   border-radius: 7px 20px 20px 7px;
   background: linear-gradient(180deg, #d8d5ff, #aaa7e9 72%, #7b79c2);
@@ -2468,10 +2473,10 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
 .buildUpdateNotice span { min-width: 0; flex: 1; }
 .buildUpdateNotice b,
 .buildUpdateNotice small { display: block; }
-.buildUpdateNotice b { color: #263487; font-family: var(--sg-font); font-size: 11px; }
-.buildUpdateNotice small { margin-top: 1px; color: #505a9b; font-family: var(--sg-small); font-size: 7px; font-weight: 800; }
+.buildUpdateNotice b { color: #263487; font-family: var(--sg-font); font-size: 14px; line-height: 1.1; }
+.buildUpdateNotice small { margin-top: 2px; color: #505a9b; font-family: var(--sg-small); font-size: 10px; font-weight: 800; line-height: 1.25; }
 .buildUpdateNotice button {
-  min-height: 28px;
+  min-height: 34px;
   flex: 0 0 auto;
   padding: 4px 11px;
   border: 2px solid #323c81;
@@ -2479,7 +2484,7 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   background: linear-gradient(180deg, #fff58b, #f4df18 62%, #bf9400);
   color: #2d3472;
   font-family: var(--sg-font);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 900;
   box-shadow: inset 1px 1px rgba(255,255,255,.62), 0 2px 0 #1d2461;
   cursor: pointer;
@@ -2622,9 +2627,9 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
 @media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px),
        (min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1) {
   .controllerShell[data-mode='play'] {
-    --sg-bottom: 98px;
-    --sg-controller-visible-height: 140px;
-    height: 140px;
+    --sg-bottom: 114px;
+    --sg-controller-visible-height: 156px;
+    height: 156px;
   }
 
   .controllerShell[data-mode='play'] .fieldControls { display: none; }
@@ -2634,8 +2639,8 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     left: 0;
     right: 0;
     z-index: 27;
-    height: 98px;
-    min-height: 98px;
+    height: 114px;
+    min-height: 114px;
     border-left: 0;
     border-radius: 22px 22px 0 0;
   }
@@ -2696,13 +2701,14 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     right: auto;
     top: -41px;
     width: 210px;
-    min-height: 31px;
-    padding: 4px 7px;
+    min-height: 40px;
+    padding: 6px 8px;
     border-width: 2px;
-    font-size: 9px;
+    font-size: 12px;
+    line-height: 1.2;
   }
   body:has(.playCompetitionHud) .controllerShell[data-mode='play'] .playMessage { display: flex; }
-  .controllerShell[data-mode='play'] .playMessage .canopyStatus { font-size: 8px; }
+  .controllerShell[data-mode='play'] .playMessage .canopyStatus { font-size: 10px; }
 
   /* Competition identity is the thin score strip on the console rim. Keeping
      it inside the slab leaves the authored left advice card, centre shot
@@ -2717,9 +2723,9 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     border-width: 1px;
     box-shadow: 0 1px 0 #282c76;
   }
-  .controllerShell[data-mode='play'] .playCompetitionHud b { font-size: 8.5px; }
-  .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 10px; }
-  .controllerShell[data-mode='play'] .playCompetitionHud em { font-size: 7.5px; }
+  .controllerShell[data-mode='play'] .playCompetitionHud b { font-size: 9px; }
+  .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 11px; }
+  .controllerShell[data-mode='play'] .playCompetitionHud em { font-size: 8px; }
 
   .controllerShell[data-mode='play'] .playConditions {
     right: 6px;
@@ -2727,9 +2733,9 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     min-width: 120px;
     padding: 4px 6px;
   }
-  .controllerShell[data-mode='play'] .playConditions .weatherReadout { font-size: 9.5px; }
-  .controllerShell[data-mode='play'] .playConditions .weatherReadout small { font-size: 7.5px; }
-  .controllerShell[data-mode='play'] .playConditions .windReadout { font-size: 8.5px; }
+  .controllerShell[data-mode='play'] .playConditions .weatherReadout { font-size: 11px; }
+  .controllerShell[data-mode='play'] .playConditions .weatherReadout small { font-size: 8px; }
+  .controllerShell[data-mode='play'] .playConditions .windReadout { font-size: 10px; }
 
   .controllerShell[data-mode='play'] .playStatusPane { padding: 3px 6px 2px; }
   .controllerShell[data-mode='play'] .playPaneTitle { height: 15px; }
@@ -2760,6 +2766,21 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   .controllerShell[data-mode='play'] .playCaddieBook p { font-size: 9px; line-height: 11px; }
 }
 
+/* A genuinely wide course window has room for the original game's full-size
+   caddie plaque. Do not make the 796px Retina composition pay for that room. */
+@media (min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1) {
+  .controllerShell[data-mode='play'] .playMessage {
+    width: 320px;
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .controllerShell[data-mode='play'] .playConditions .weatherReadout { font-size: 12px; }
+  .controllerShell[data-mode='play'] .playConditions .weatherReadout small { font-size: 9px; }
+  .controllerShell[data-mode='play'] .playConditions .windReadout { font-size: 11px; }
+}
+
 @media (max-height: 520px) and (max-width: 650px) {
   .controllerShell[data-mode='play'] .playConsolePanes {
     grid-template-columns: minmax(132px, .85fr) minmax(0, 1.2fr);
@@ -2781,6 +2802,370 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
 
 @media (max-height: 520px) and (max-width: 480px) {
   .controllerShell[data-mode='play'] .caddieBookHead span { display: none; }
+}
+
+/* --- native UI readability ------------------------------------------------
+   The original game drew its interface at one authored size. Modern high-DPI
+   browsers make the old 5-10px web labels look like annotations instead of
+   controls, especially in the construction and caddie trays. These tokens
+   provide the perceptual equivalent of a 125% text zoom without scaling the
+   course canvas, control fan, toolbar cells, or modal frame. */
+:root {
+  --sg-type-micro: 8px;
+  --sg-type-caption: 9px;
+  --sg-type-small: 10px;
+  --sg-type-control: 11px;
+  --sg-type-body: 13px;
+  --sg-type-heading: 15px;
+  --sg-type-title: 19px;
+}
+
+/* Top plaque and detached stat shelves. */
+.pEyebrow { font-size: var(--sg-type-micro); }
+.plaque .pTitle { font-size: 21px; }
+.plaque .pSub { font-size: var(--sg-type-caption); }
+.gLabel { font-size: var(--sg-type-micro); }
+.gVal { font-size: 18px; }
+.gVal.gold { font-size: var(--sg-type-body); }
+.gBtn { font-size: 14px; }
+
+/* Clubhouse menu, route monitor, and shared report desks. */
+.fieldMenuHead span { font-size: var(--sg-type-title); }
+.fieldMenuHead small { font-size: var(--sg-type-caption); }
+.fieldMenuCommand {
+  min-height: 24px;
+  font-size: var(--sg-type-body);
+  line-height: 1.08;
+}
+.routingMap header b { font-size: var(--sg-type-body); }
+.routingMap header span,
+.routingTabs button,
+.routingMap footer { font-size: var(--sg-type-micro); }
+.fieldDeskPanel .bpHead b { font-size: var(--sg-type-heading); }
+.fieldDeskPanel .bpHead > span:not(.deskSeal) { font-size: var(--sg-type-small); }
+.fieldDeskPanel .facilityTabs button,
+.reportTabs button { font-size: var(--sg-type-small); }
+.panelHead h2 { font-size: 20px; }
+.panelHead p { font-size: var(--sg-type-body); }
+.reportSectionHead h3 { font-size: var(--sg-type-heading); }
+
+/* Management copy uses the same molded-desk tiers as the course controls.
+   Scrollable ledgers keep their authored panel geometry while labels leave
+   the 6-9px annotation range. */
+.reportHero span,
+.reportGrid span { font-size: var(--sg-type-control); }
+.reportHero strong { font-size: var(--sg-type-title); }
+.reportGrid strong,
+.financeReconcile b { font-size: var(--sg-type-heading); }
+.reportGrid small,
+.financeReconcile,
+.financeBreakdown > div,
+.financeTable,
+.financeLedger > div,
+.membershipExplainer,
+.membershipRow b { font-size: var(--sg-type-control); }
+.financeTable thead th,
+.financeLedger small,
+.membershipRow small { font-size: var(--sg-type-caption); }
+.reportSectionHead span { font-size: var(--sg-type-body); }
+
+/* Scorecard archive. Scores remain the strongest marks; dates and shot
+   metadata move up one discrete tier without widening the two-pane desk. */
+.scoreHistoryHero span,
+.scorecardList .roundDate,
+.roundBadges i { font-size: var(--sg-type-caption); }
+.scoreHistoryHero small,
+.scorecardToolbar > button,
+.scoreFilters button,
+.scorecardActions button,
+.scorecardActions > span,
+.shotLogHead span,
+.holePicker button,
+.shotRow small { font-size: var(--sg-type-small); }
+.scorecardList b,
+.scorecardList small,
+.shotLogHead b,
+.shotRow strong { font-size: var(--sg-type-control); }
+.scoreHistoryHero b { font-size: var(--sg-type-title); }
+
+/* Staff cards, resident pro, and golfer inspector share the readable control
+   and body tiers while preserving their existing card and portrait sizes. */
+.staffPanel .bpHead b { font-size: var(--sg-type-title); }
+.staffPanel .bpHead > span { font-size: var(--sg-type-body); }
+.staffCard .bpName { font-size: var(--sg-type-heading); }
+.staffCard .bpCost { font-size: var(--sg-type-body); }
+.staffCard .bpBlurb,
+.staffCard .bpBtns button { font-size: var(--sg-type-body); }
+.staffStatus { font-size: var(--sg-type-small); }
+.proTabs button { font-size: var(--sg-type-body); }
+.proTabs span,
+.proIdentityCard label,
+.proPalette b,
+.proCareer span,
+.proSkillsBoard > header span { font-size: var(--sg-type-caption); }
+.proIdentityCard input { font-size: var(--sg-type-heading); }
+.proCareer b,
+.proFileActions button,
+.proSkillsBoard > header p,
+.proSkillGrid article small { font-size: var(--sg-type-small); }
+.proSkillGrid article b { font-size: var(--sg-type-control); }
+.regularLocate { font-size: var(--sg-type-body); }
+
+/* Construction cells retain their authored 64x52 geometry. The label wash is
+   two lines tall so longer names stay legible instead of shrinking to 9px. */
+.controllerShell .tool .nm,
+.controllerShell .toolDock[data-group='terrain'] .tool .nm {
+  top: 0;
+  height: 24px;
+  max-height: 24px;
+  font-size: 11px;
+  line-height: 11px;
+}
+.controllerShell .tool .ct,
+.controllerShell .toolDock[data-group='terrain'] .tool .ct {
+  width: 64px;
+  max-width: 64px;
+  min-height: 11px;
+  box-sizing: border-box;
+  padding-inline: 1px;
+  font-size: var(--sg-type-small);
+  line-height: 11px;
+}
+
+/* Facility tray. The compact cards use a preview-plus-deed composition, so
+   type can grow independently without widening or scaling the tray itself. */
+.controllerShell .catalogMode .bpHead b { font-size: var(--sg-type-body); }
+.controllerShell .catalogMode .facilityTabs button { font-size: var(--sg-type-caption); }
+.controllerShell .catalogMode .catalogFilters button { font-size: var(--sg-type-micro); }
+.controllerShell .catalogMode .bpIdentity b {
+  font-size: var(--sg-type-small);
+  line-height: 1.05;
+}
+.controllerShell .catalogMode .bpIdentity small { font-size: 7px; }
+.controllerShell .catalogMode .bpMeta strong { font-size: var(--sg-type-caption); }
+.controllerShell .catalogMode .bpMeta span { font-size: var(--sg-type-micro); }
+.controllerShell .catalogMode .catalogCard { grid-template-rows: 40px 19px; }
+.controllerShell .catalogMode .bpPreview { height: 38px; }
+.controllerShell .catalogMode .bpIdentity,
+.controllerShell .catalogMode .bpMeta { overflow: hidden; }
+.controllerShell .catalogMode .bpIdentity b,
+.controllerShell .catalogMode .bpIdentity small,
+.controllerShell .catalogMode .bpMeta strong,
+.controllerShell .catalogMode .bpMeta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Manual-play console. These values are 1.2-1.3x the previous authored type;
+   the three molded panes and shot controls keep their original dimensions. */
+.playPaneTitle { height: 17px; }
+.playPaneTitle b { font-size: var(--sg-type-body); }
+.playPaneTitle span { font-size: var(--sg-type-small); }
+.playClubLine,
+.playClubReadout {
+  height: 19px;
+  font-size: var(--sg-type-control);
+}
+.controllerShell .playHud .playClubLine .clubBtn,
+.controllerShell .playHud .playClubLine .clubCurrent {
+  height: 17px;
+  min-height: 17px;
+  font-size: 11px;
+  line-height: 15px;
+}
+.playShotFacts {
+  font-size: 11px;
+  line-height: 13px;
+}
+.playSkillPane {
+  font-size: var(--sg-type-control);
+  line-height: 12.5px;
+}
+.playCaddieBook { grid-template-rows: 17px 1fr 13px; }
+.caddieBookHead b { font-size: 12px; }
+.caddieBookHead span { font-size: 10.5px; }
+.caddieMetrics small { font-size: 10px; }
+.caddieMetrics b { font-size: 14px; }
+.playCaddieBook p {
+  font-size: var(--sg-type-small);
+  line-height: 12px;
+}
+
+/* World office. Keep the fixed 800x600 travel-office composition while making
+   its deed labels and desk copy read like game UI, not map footnotes. */
+.modal[data-modal-kind='newCourse'] .worldQuestion h1 { font-size: 20px; }
+.worldQuestion small { font-size: 8px; }
+.worldProgressRibbon small { font-size: 6.5px; }
+.worldProgressRibbon b { font-size: var(--sg-type-control); }
+.worldStage::after { font-size: var(--sg-type-small); }
+.worldDeed > span {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  grid-template-rows: 14px 8px;
+  column-gap: 4px;
+  align-content: center;
+  overflow: hidden;
+}
+.worldDeed b {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  line-height: 14px;
+}
+.worldDeed small,
+.worldDeed em {
+  min-width: 0;
+  margin-top: 0;
+  font-size: 7px;
+  line-height: 8px;
+}
+.worldPinLegend { font-size: var(--sg-type-micro); }
+.worldSelectedIdentity > span b { font-size: var(--sg-type-heading); }
+.worldSelectedIdentity > span small,
+.worldSelectedStatus { font-size: 7px; }
+.modal[data-modal-kind='newCourse'] .worldSelectedIdentity > p {
+  font-size: var(--sg-type-micro);
+  line-height: 1.2;
+}
+.worldPortfolioRail .portfolioDeed b { font-size: 8px; }
+.worldPortfolioRail .portfolioDeed small { font-size: 6px; }
+.worldDeedDesk > .propertyUnlocks header b { font-size: 8px; }
+.worldDeedDesk > .propertyUnlocks header span { font-size: var(--sg-type-micro); }
+.worldDeedDesk > .propertyUnlocks li { font-size: 7px; }
+.worldDeedDesk .worldDeedFacts > span { min-width: 0; overflow: hidden; }
+.worldDeedDesk .worldDeedFacts > span > b:not(.propertyMeter),
+.worldDeedDesk .worldDeedFacts > span > small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.worldDeedDesk .worldDeedFacts > span > b:not(.propertyMeter) { font-size: var(--sg-type-caption); }
+.worldDeedDesk .worldDeedFacts > span > small { font-size: 6px; }
+.worldCareerAction { font-size: var(--sg-type-small); }
+.worldSandboxAction,
+.worldSetupOptions > summary { font-size: 8px; }
+.worldSetupPopover header b { font-size: 14px; }
+.worldSetupPopover header span { font-size: var(--sg-type-micro); }
+.worldOptionPacks b { font-size: var(--sg-type-caption); }
+.worldOptionPacks small { font-size: 6.25px; }
+.modal[data-modal-kind='newCourse'] .worldSetupPopover > p { font-size: var(--sg-type-micro); }
+.worldOptionDifficulty button,
+.worldOptionCourses button { font-size: var(--sg-type-micro); }
+.worldOptionDifficulty button span { font-size: 6px; }
+
+/* Person inspector and status copy use the same hierarchy as SimFoto cards. */
+.golferInspectorHead small { font-size: var(--sg-type-micro); }
+.golferInspectorHead h2 { font-size: 21px; }
+.golferInspectorHead p { font-size: var(--sg-type-caption); }
+.golferSituation small { font-size: 7px; }
+.golferSituation b { font-size: var(--sg-type-control); }
+.golferAction { font-size: var(--sg-type-small); }
+.golferInspectorMeters h3 { font-size: var(--sg-type-small); }
+.golferMeter > span { font-size: var(--sg-type-micro); }
+.golferMeter > b { font-size: var(--sg-type-caption); }
+.golferInspectorActions button { font-size: var(--sg-type-small); }
+
+/* The shallow desktop/Retina layout uses a 114px slab with 88px panes. Four
+   shot facts share two rows, leaving the larger type real line boxes instead
+   of clipping their descenders. */
+@media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px),
+       (min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1) {
+  .controllerShell[data-mode='play'] .playPaneTitle { height: 18px; }
+  .controllerShell[data-mode='play'] .playPaneTitle b { font-size: 13px; }
+  .controllerShell[data-mode='play'] .playPaneTitle span { font-size: var(--sg-type-control); }
+  .controllerShell[data-mode='play'] .playClubLine,
+  .controllerShell[data-mode='play'] .playClubReadout { height: 18px; font-size: var(--sg-type-control); }
+  .controllerShell[data-mode='play'] .playHud .playClubLine .clubBtn,
+  .controllerShell[data-mode='play'] .playHud .playClubLine .clubCurrent {
+    height: 17px;
+    min-height: 17px;
+    font-size: var(--sg-type-control);
+  }
+  .controllerShell[data-mode='play'] .playShotFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 5px;
+    font-size: var(--sg-type-control);
+    line-height: 14px;
+  }
+  .controllerShell[data-mode='play'] .playShotFacts span:last-child { grid-column: 1 / -1; }
+  .controllerShell[data-mode='play'] .playSkillPane {
+    align-content: center;
+    gap: 0;
+    padding-block: 3px;
+    font-size: 12px;
+    line-height: 15px;
+  }
+  .controllerShell[data-mode='play'] .playSkillPane > span { min-height: 15px; }
+  .controllerShell[data-mode='play'] .playCaddieBook {
+    grid-template-rows: 20px minmax(0, 1fr) 16px;
+    gap: 1px;
+    padding: 2px 6px;
+  }
+  .controllerShell[data-mode='play'] .caddieBookHead { min-height: 0; overflow: hidden; line-height: 16px; }
+  .controllerShell[data-mode='play'] .caddieBookHead b { font-size: 13px; }
+  .controllerShell[data-mode='play'] .caddieBookHead span { font-size: 12px; }
+  .controllerShell[data-mode='play'] .caddieBookHead b,
+  .controllerShell[data-mode='play'] .caddieBookHead span { line-height: 16px; }
+  .controllerShell[data-mode='play'] .caddieMetrics small { font-size: 10px; }
+  .controllerShell[data-mode='play'] .caddieMetrics b { font-size: 15px; }
+  .controllerShell[data-mode='play'] .caddieMetrics small { line-height: 10px; }
+  .controllerShell[data-mode='play'] .caddieMetrics b { line-height: 18px; }
+  .controllerShell[data-mode='play'] .playCaddieBook p {
+    font-size: var(--sg-type-control);
+    line-height: 14px;
+  }
+}
+
+/* The late readability layer is intentionally countered at narrow widths.
+   Mobile keeps its compact composition, but each tier still grows from the
+   previous 5-8px microcopy instead of inheriting desktop-sized labels. */
+@media (max-width: 760px) {
+  .plaque .pTitle { font-size: 16px; }
+  .plaque .pSub { font-size: 8px; }
+  .gVal { font-size: 12px; }
+  .gVal.gold { font-size: 10px; }
+  .fieldMenuHead span { font-size: 17px; }
+  .fieldMenuCommand { min-height: 22px; font-size: 11px; }
+}
+
+@media (max-width: 520px) {
+  .controllerShell[data-mode='play'] .playPaneTitle { height: 12px; }
+  .controllerShell[data-mode='play'] .playPaneTitle b { font-size: 9px; }
+  .controllerShell[data-mode='play'] .playPaneTitle span { display: none; }
+  .controllerShell[data-mode='play'] .playClubLine,
+  .controllerShell[data-mode='play'] .playClubReadout { font-size: 9px; }
+  .controllerShell[data-mode='play'] .playHud .playClubLine .clubBtn,
+  .controllerShell[data-mode='play'] .playHud .playClubLine .clubCurrent { font-size: 8px; }
+  .controllerShell[data-mode='play'] .playShotFacts { font-size: 9px; line-height: 11px; }
+  .controllerShell[data-mode='play'] .playSkillPane { font-size: 9px; line-height: 10px; }
+  .controllerShell[data-mode='play'] .caddieBookHead b { font-size: 10px; }
+  .controllerShell[data-mode='play'] .caddieBookHead span { font-size: 9px; }
+  .controllerShell[data-mode='play'] .caddieMetrics small { font-size: 8px; }
+  .controllerShell[data-mode='play'] .caddieMetrics b { font-size: 12px; }
+  .controllerShell[data-mode='play'] .playCaddieBook p { font-size: 9px; line-height: 11px; }
+  .shapeComboState i { width: 11px; height: 9px; font-size: 6px; }
+}
+
+/* There is no vertical gap between top chrome and the 166px controller at
+   980x240. Keep the newest live message in a compact strip instead of giving
+   the ticker a negative max-height and silently dropping it. */
+@media (max-height: 260px) and (min-width: 761px) {
+  .ticker { left: calc(var(--sg-construction-control-width) + 12px); max-height: 54px; }
+  .simFotoTicker {
+    width: min(430px, calc(100vw - 420px));
+    min-width: 260px;
+    min-height: 54px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 7px 11px;
+    border-radius: 10px;
+  }
+  .simFotoTicker .characterPortrait,
+  .simFotoCopy small { display: none; }
+  .simFotoCopy { gap: 1px; }
+  .simFotoCopy b { font-size: 13px; }
+  .simFotoCopy span { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

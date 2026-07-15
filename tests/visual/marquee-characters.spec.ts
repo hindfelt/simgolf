@@ -11,15 +11,31 @@ const TICKER_SNAPSHOT_CSS = `
     box-shadow: none !important;
   }
   .simFotoCopy {
-    height: 40px !important;
+    height: 49px !important;
     overflow: hidden !important;
     text-shadow: none !important;
   }
 `;
 const MODAL_SNAPSHOT_CSS = `
+  .modal[data-modal-kind] .guestHeading h1,
+  .modal[data-modal-kind] .guestHeading .tag,
+  .modal[data-modal-kind] > p,
+  .modal[data-modal-kind] .offerMeta > *,
+  .modal[data-modal-kind] .parcelOfferGrid button > *,
+  .modal[data-modal-kind] .landmarkGiftArt b,
+  .modal[data-modal-kind] .bigbtn,
+  .modal[data-modal-kind] .textBtn {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    text-decoration-color: transparent !important;
+  }
   .modal[data-modal-kind] .offerMeta,
   .modal[data-modal-kind] .textBtn {
     line-height: 14px !important;
+  }
+  .modal[data-modal-kind] .landmarkGiftArt b {
+    line-height: 13px !important;
   }
 `;
 
@@ -240,6 +256,20 @@ test.describe('marquee character production art', () => {
       await expect(tickerPortrait).toHaveAttribute('data-expression', expected.defaultExpression);
       await expect(tickerPortrait.locator('canvas')).toHaveAttribute('width', '48');
       await expect(tickerPortrait.locator('canvas')).toHaveAttribute('height', '64');
+      const tickerType = await ticker.evaluate((element) => {
+        const size = (selector: string) => Number.parseFloat(getComputedStyle(element.querySelector(selector)!).fontSize);
+        const box = element.getBoundingClientRect();
+        return {
+          width: box.width,
+          height: box.height,
+          name: size('.simFotoCopy b'),
+          title: size('.simFotoCopy small'),
+          message: size('.simFotoCopy span'),
+        };
+      });
+      expect(tickerType).toMatchObject({ name: 16, title: 9, message: 13 });
+      expect(tickerType.width).toBeCloseTo(430, 2);
+      expect(tickerType.height).toBeCloseTo(94, 2);
       await expectNoOverflow(ticker);
       // Rounded gradient card chrome rasterizes differently in macOS and
       // Ubuntu Chromium. Flatten only the snapshot fixture; production chrome,
@@ -268,21 +298,8 @@ test.describe('marquee character production art', () => {
         await expect(modal.locator('.parcelOfferGrid button.locked')).toHaveCount(8);
         await expect(modal.locator('.parcelOfferGrid button.available span')).toHaveText(['$3,500', '$3,500', '$3,500', '$3,500']);
       }
-      const modalText = modal.locator([
-        '.guestHeading > div',
-        ':scope > p',
-        '.offerMeta',
-        '.parcelOfferGrid button b',
-        '.parcelOfferGrid button span',
-        '.landmarkGiftArt b',
-        '.bigbtn',
-        '.textBtn',
-      ].join(', '));
       await page.addStyleTag({ content: MODAL_SNAPSHOT_CSS });
-      await expect(modal).toHaveScreenshot(`${kind}-${modalKind === 'landOffer' ? 'land-offer' : 'landmark-gift'}.png`, {
-        mask: [modalText],
-        maskColor: TEXT_MASK_COLOR,
-      });
+      await expect(modal).toHaveScreenshot(`${kind}-${modalKind === 'landOffer' ? 'land-offer' : 'landmark-gift'}.png`);
     });
   }
 });

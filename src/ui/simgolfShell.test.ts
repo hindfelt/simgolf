@@ -57,7 +57,7 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.fieldControlSkinBody \{[\s\S]*?fill: url\(#simGolfFanFill\);/);
     expect(shell).toMatch(/\.controllerShell \.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?display: none;/);
-    expect(shell).toMatch(/\.controllerShell \.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-control-width\)\);[\s\S]*?top: -58px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-construction-control-width\)\);[\s\S]*?top: -58px;/);
     expect(toolbar).toContain("data-group-id={item.id}");
     expect(toolbar).toContain('className="toolGroupLabel"');
     expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='course'\] \{[^}]*width: 74px;[^}]*height: 74px;/);

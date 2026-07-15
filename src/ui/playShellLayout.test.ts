@@ -72,16 +72,16 @@ describe('original play shell responsive geometry', () => {
     const short = shell.slice(shortStart, shortEnd);
     expect(shortStart).toBeGreaterThan(-1);
     expect(short).toContain('(min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1)');
-    expect(short).toContain('--sg-bottom: 98px;');
-    expect(short).toContain('--sg-controller-visible-height: 140px;');
-    expect(short).toContain('height: 140px;');
+    expect(short).toContain('--sg-bottom: 114px;');
+    expect(short).toContain('--sg-controller-visible-height: 156px;');
+    expect(short).toContain('height: 156px;');
     expect(short).toMatch(/\.fieldControls \{ display: none; \}/);
     expect(short).toMatch(/\.playModeDock \{ display: none; \}/);
-    expect(short).toMatch(/\.playHud\s*\{[^}]*left: 0;[^}]*height: 98px;/s);
+    expect(short).toMatch(/\.playHud\s*\{[^}]*left: 0;[^}]*height: 114px;/s);
     expect(short).toMatch(/\.playConsolePanes\s*\{[^}]*left: 59px;[^}]*right: 6px;[^}]*grid-template-columns: minmax\(200px, \.95fr\) minmax\(150px, \.72fr\) minmax\(275px, 1\.55fr\);/s);
     expect(short).toMatch(/\.playShotPalette\s*\{[^}]*left: 50%;[^}]*top: -41px;/s);
     expect(short).toMatch(/\.shapeBtn,[\s\S]*?flex: 0 0 57px;[\s\S]*?height: 39px;/s);
-    expect(short).toContain('font-size: 9px; line-height: 9.5px;');
+    expect(shell).toMatch(/\.controllerShell\[data-mode='play'\] \.playShotFacts\s*\{[^}]*font-size: var\(--sg-type-control\);/s);
 
     const viewportWidth = 796;
     const consolePanes = { x: 59, width: viewportWidth - 59 - 6 };

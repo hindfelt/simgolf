@@ -33,8 +33,8 @@ import {
 import type { Building, BuildingKind, EmployeeKind, CourseTheme, FacilityBranch } from './types';
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
-import { findPath } from './pathfind';
-import { isWaterBackedTile } from './bridges';
+import { findPath, golferPointWalkable, nearestDryGolferPoint } from './pathfind';
+import { bridgeConnectionsAt, isBridgeTile, isWaterBackedTile } from './bridges';
 import { CLEAR_WEATHER, generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
 import { applyRegularTraining, createRegularTraining, regularTrainingRates, sanitizeRegularTraining } from './regularTraining';
@@ -484,9 +484,25 @@ function removeHoleAt(x: number, y: number): boolean {
   recordFinance(300, 'refunds', 'Retired hole materials');
   updateTopbar();
   floater(h.cup.x, h.cup.y, 'Hole removed · +$300', '#ffd856');
+  const displaced: Golfer[] = [];
   for (const g of S.golfers) {
     if (g.holeIdx > i) g.holeIdx--;
-    else if (g.holeIdx === i) sendToNextHole(g);
+    else if (g.holeIdx === i && g.state !== 'leave') {
+      // Mark every displaced group as waiting before admitting any of them, otherwise
+      // unprocessed golfers on the retired hole look like reservations on its successor.
+      g.state = 'waitTee';
+      g.ball = null;
+      g.tx = g.x;
+      g.ty = g.y;
+      g.path = [];
+      g.pathIdx = 0;
+      displaced.push(g);
+    }
+  }
+  if (displaced.length) {
+    const displacedSet = new Set(displaced);
+    S.balls = S.balls.filter((ball) => ball.owner === 'P' || !displacedSet.has(ball.owner));
+    for (const g of displaced) sendToNextHole(g);
   }
   if (S.player && S.player.holeIdx >= i) quitRound('That hole vanished under the bulldozer.');
   relaxPad(removedTiles);
@@ -596,7 +612,36 @@ export function setHoleFee(holeId: number, fee: number | null) {
 }
 
 /* ---------------- statics cache ---------------- */
+let golferRoutingRevision = 0;
+let golferWalkabilitySignature: number | null = null;
+
+/** Hash only the hard walking graph: raw blockers plus each bridge's authored openings. */
+function currentGolferWalkabilitySignature(): number {
+  let hash = 2166136261;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const tile = S.tiles[idx(x, y)];
+      let code = tile === Tile.WATER ? 1 : tile === Tile.STREAM ? 2 : 0;
+      if (isBridgeTile(tile)) {
+        const connections = bridgeConnectionsAt(S.tiles, x, y);
+        code = (tile === Tile.BRIDGE_WATER ? 3 : 4)
+          | (connections.west ? 8 : 0)
+          | (connections.east ? 16 : 0)
+          | (connections.north ? 32 : 0)
+          | (connections.south ? 64 : 0);
+      }
+      hash ^= code + x * 131 + y * 313;
+      hash = Math.imul(hash, 16777619);
+    }
+  }
+  return hash >>> 0;
+}
 export function rebuildStatics() {
+  const walkabilitySignature = currentGolferWalkabilitySignature();
+  if (walkabilitySignature !== golferWalkabilitySignature) {
+    golferWalkabilitySignature = walkabilitySignature;
+    golferRoutingRevision++;
+  }
   caches.trees = [];
   caches.waterTiles = [];
   caches.wildlife = [];
@@ -1476,12 +1521,80 @@ function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, for
 }
 
 /* ---------------- golfers ---------------- */
-/** Sets a golfer's walk target and pre-computes an A* route around water/trees/steep ground. */
+const GOLFER_ROUTE_RETRY_SECONDS = 1.25;
+const GOLFER_ROUTE_TIMEOUT_SECONDS = 10;
+let golferTeeQueueSeq = 0;
+
+/** Repair only impossible legacy/edit positions; ordinary routes never traverse raw water. */
+function repairGolferWalkPosition(g: Golfer) {
+  if (golferPointWalkable(g)) return;
+  const x = Math.floor(g.x);
+  const y = Math.floor(g.y);
+  if (inb(x, y) && isBridgeTile(tileAt(x, y))) {
+    // Every authored bridge includes its tile centre, even at corners/T-junctions.
+    g.x = x + 0.5;
+    g.y = y + 0.5;
+    return;
+  }
+  const dry = nearestDryGolferPoint(g);
+  if (dry) {
+    g.x = dry.x;
+    g.y = dry.y;
+  }
+}
+
+function refreshGolferPath(g: Golfer, resetBlockedTimer: boolean) {
+  repairGolferWalkPosition(g);
+  g.path = findPath({ x: g.x, y: g.y }, { x: g.tx, y: g.ty });
+  g.pathIdx = 0;
+  g.pathRevision = golferRoutingRevision;
+  if (g.path !== null) {
+    delete g.routeBlockedFor;
+    delete g.routeRetryIn;
+  } else {
+    if (resetBlockedTimer || !Number.isFinite(g.routeBlockedFor)) g.routeBlockedFor = 0;
+    g.routeRetryIn = GOLFER_ROUTE_RETRY_SECONDS;
+  }
+}
+
+/** Sets a new logical target and pre-computes a water-safe A* route. */
 function setGolferTarget(g: Golfer, x: number, y: number) {
   g.tx = x;
   g.ty = y;
-  g.path = findPath({ x: g.x, y: g.y }, { x, y }) ?? undefined;
+  delete g.teeQueueSeq;
+  refreshGolferPath(g, true);
+}
+/** One autonomous golfer actor is one simulated group. The manual player is separate. */
+export function holeGroupCapacity(hole: Pick<Hole, 'par'>): number {
+  return hole.par === 3 ? 1 : 2;
+}
+function golferOccupiesHole(g: Golfer, holeIdx: number): boolean {
+  return g.holeIdx === holeIdx && g.state !== 'waitTee' && g.state !== 'leave';
+}
+function canReserveHole(g: Golfer, holeIdx: number): boolean {
+  const hole = S.holes[holeIdx];
+  if (!hole) return false;
+  let occupied = 0;
+  for (const other of S.golfers) {
+    if (other !== g && golferOccupiesHole(other, holeIdx)) occupied++;
+  }
+  return occupied < holeGroupCapacity(hole);
+}
+function waitForHole(g: Golfer) {
+  g.state = 'waitTee';
+  g.ball = null;
+  g.tx = g.x;
+  g.ty = g.y;
+  g.path = [];
   g.pathIdx = 0;
+  g.pathRevision = golferRoutingRevision;
+  delete g.routeBlockedFor;
+  delete g.routeRetryIn;
+  const savedSequence = Number(g.teeQueueSeq);
+  if (Number.isFinite(savedSequence) && savedSequence > 0) {
+    g.teeQueueSeq = Math.trunc(savedSequence);
+    golferTeeQueueSeq = Math.max(golferTeeQueueSeq, g.teeQueueSeq);
+  } else g.teeQueueSeq = ++golferTeeQueueSeq;
 }
 function golferCap(): number {
   // big courses need a real field of players, not 14 souls on 30 holes
@@ -1538,7 +1651,7 @@ function spawnGolfer() {
   if (S.tournament) g.mood += 1; // tournament crowd energy
   const hole = S.holes[0];
   if (!hole) return;
-  setGolferTarget(g, hole.tee.x + rand(-0.3, 0.3), hole.tee.y + rand(-0.3, 0.3));
+  sendToNextHole(g);
   S.golfers.push(g);
   if (S.tournament) S.tournament.entrants++;
   r.streak = S.time - r.lastVisit < 260 ? r.streak + 1 : 1;
@@ -1594,7 +1707,7 @@ function spawnSpecialGuest(kind: SpecialGuestKind): boolean {
     thirst: 1,
     specialGuest: kind,
   };
-  setGolferTarget(golfer, hole.tee.x, hole.tee.y);
+  sendToNextHole(golfer);
   S.golfers.push(golfer);
   specialGuestTicker(kind, `${guest.title} has arrived for an official round. Make an impression.`, 'money', guest.defaultExpression);
   floater(CH.x, CH.y - 1.2, `${guest.name} visits!`, '#ffd856', 'bub');
@@ -1708,15 +1821,56 @@ function settleMembership(golfer: Golfer) {
   floater(CH.x, CH.y - 1.5, offer.kind === 'lifetime' ? 'LIFETIME MEMBER!' : 'NEW MEMBER!', '#ffe27a', 'bub');
   if (offer.kind !== 'renewal') confetti(CH.x, CH.y);
 }
+
+/** One terminal path for normal and route-timeout departures; settlement cannot double-run. */
+function completeGolferDeparture(g: Golfer, blockedRoute = false) {
+  const index = S.golfers.indexOf(g);
+  if (index < 0) return;
+  if (blockedRoute) {
+    changeMood(g, -1);
+    golferTicker(g, `${g.name} could not find a safe route and abandoned the round.`, 'bad');
+  } else if (g.mood >= 2) golferTicker(g, pick(SAY.leaveHappy), 'money');
+  else if (g.mood <= -2) golferTicker(g, pick(SAY.leaveMad), 'bad');
+  const stars = clamp(2.5 + g.mood * 0.35, 0.3, 5);
+  S.rep = clamp(S.rep + (stars - S.rep) * 0.09, 0.3, 5);
+  finishSpecialGuestVisit(g);
+  settleMembership(g);
+  if (S.selectedGolfer === g) selectGolfer(null);
+  S.golfers.splice(index, 1);
+  updateTopbar();
+}
 function sendToNextHole(g: Golfer) {
   const h = S.holes[g.holeIdx];
   if (!h) {
     g.state = 'leave';
+    g.ball = null;
     setGolferTarget(g, CH.x, CH.y);
     return;
   }
+  if (!canReserveHole(g, g.holeIdx)) {
+    waitForHole(g);
+    return;
+  }
   g.state = 'toTee';
+  g.ball = null;
   setGolferTarget(g, h.tee.x + rand(-0.3, 0.3), h.tee.y + rand(-0.3, 0.3));
+}
+/** FIFO admission pass. Existing over-cap groups are never ejected; queues drain naturally. */
+function admitWaitingGolfers() {
+  const waiting = S.golfers
+    .filter((g) => g.state === 'waitTee')
+    .sort((a, b) => (a.teeQueueSeq ?? Infinity) - (b.teeQueueSeq ?? Infinity));
+  for (const g of waiting) {
+    const h = S.holes[g.holeIdx];
+    if (!h) {
+      g.state = 'leave';
+      setGolferTarget(g, CH.x, CH.y);
+      continue;
+    }
+    if (!canReserveHole(g, g.holeIdx)) continue;
+    g.state = 'toTee';
+    setGolferTarget(g, h.tee.x + rand(-0.3, 0.3), h.tee.y + rand(-0.3, 0.3));
+  }
 }
 function sayText(g: Golfer, txt: string, cls?: string) {
   if (g.chatCd > 0) return;
@@ -1930,15 +2084,30 @@ function finishHole(g: Golfer, pickedUp: boolean) {
   } else sendToNextHole(g);
 }
 function updateGolfers(dt: number) {
+  admitWaitingGolfers();
   for (let i = S.golfers.length - 1; i >= 0; i--) {
     const g = S.golfers[i];
     g.chatCd = Math.max(0, g.chatCd - dt);
     g.phase += dt * 9;
     if (g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave') {
+      // Walkability changes invalidate old waypoints. Legacy saves without route
+      // metadata use the same refresh without resetting an existing blocked timeout.
+      if (g.pathRevision !== golferRoutingRevision || g.path === undefined) refreshGolferPath(g, false);
+      if (g.path == null) {
+        g.routeBlockedFor = (g.routeBlockedFor ?? 0) + dt;
+        g.routeRetryIn = (g.routeRetryIn ?? 0) - dt;
+        if (g.routeBlockedFor >= GOLFER_ROUTE_TIMEOUT_SECONDS) {
+          completeGolferDeparture(g, true);
+          continue;
+        }
+        if (g.routeRetryIn <= 0) refreshGolferPath(g, false);
+        if (g.path == null) continue;
+      }
+      const path = g.path;
       // walk the A* waypoints (if any) before the final leg onto tx,ty itself
-      const atFinalLeg = !g.path || (g.pathIdx ?? 0) >= g.path.length;
-      const wx = atFinalLeg ? g.tx : g.path![g.pathIdx!].x;
-      const wy = atFinalLeg ? g.ty : g.path![g.pathIdx!].y;
+      const atFinalLeg = (g.pathIdx ?? 0) >= path.length;
+      const wx = atFinalLeg ? g.tx : path[g.pathIdx!].x;
+      const wy = atFinalLeg ? g.ty : path[g.pathIdx!].y;
       const d = Math.hypot(wx - g.x, wy - g.y);
       const sp = 3.1 * dt * moveSpeedMul() * empMoveSpeedMul();
       if (d <= sp) {
@@ -1949,15 +2118,7 @@ function updateGolfers(dt: number) {
           continue;
         }
         if (g.state === 'leave') {
-          const stars = clamp(2.5 + g.mood * 0.35, 0.3, 5);
-          S.rep = clamp(S.rep + (stars - S.rep) * 0.09, 0.3, 5);
-          if (g.mood >= 2) golferTicker(g, pick(SAY.leaveHappy), 'money');
-          else if (g.mood <= -2) golferTicker(g, pick(SAY.leaveMad), 'bad');
-          finishSpecialGuestVisit(g);
-          settleMembership(g);
-          if (S.selectedGolfer === g) selectGolfer(null);
-          S.golfers.splice(i, 1);
-          updateTopbar();
+          completeGolferDeparture(g);
           continue;
         }
         if (g.state === 'toTee') {
@@ -3587,11 +3748,19 @@ function applySaveData(d: any): boolean {
   // restore golfers mid-round; balls in flight aren't saved, so coerce
   // anyone who was watching/swinging back into a walking state
   S.golfers = [];
+  golferTeeQueueSeq = Array.isArray(d.golfers)
+    ? (d.golfers as Golfer[]).reduce((max, golfer) => {
+      const sequence = Number(golfer?.teeQueueSeq);
+      return Number.isFinite(sequence) && sequence > 0 ? Math.max(max, Math.trunc(sequence)) : max;
+    }, 0)
+    : 0;
   let officialGuestActive = false;
   if (Array.isArray(d.golfers)) {
     for (const g of d.golfers as Golfer[]) {
       if (typeof g?.x !== 'number' || typeof g?.holeIdx !== 'number') continue;
-      if (g.holeIdx >= S.holes.length) continue; // their hole is gone
+      const validActiveHole = g.holeIdx >= 0 && g.holeIdx < S.holes.length;
+      const validCompletedLeave = g.state === 'leave' && g.holeIdx === S.holes.length;
+      if (!validActiveHole && !validCompletedLeave) continue;
       officialGuestActive = normalizeLoadedSpecialGuest(g, officialGuestActive);
       g.chatCd = 0;
       if (typeof g.hunger !== 'number') g.hunger = 1;
@@ -3599,7 +3768,9 @@ function applySaveData(d: any): boolean {
       if (typeof g.energy !== 'number') g.energy = 1;
       g.view = actorViewWithLegacyFallback(g);
       g.facingAway = g.view === 'rear';
-      if (g.state !== 'leave') {
+      if (g.state === 'waitTee') {
+        waitForHole(g);
+      } else if (g.state !== 'leave') {
         if (g.ball) {
           g.state = 'toBall';
           setGolferTarget(g, g.ball.x, g.ball.y);
@@ -3609,8 +3780,7 @@ function applySaveData(d: any): boolean {
           setGolferTarget(g, h.tee.x, h.tee.y);
         }
       } else {
-        g.path = undefined;
-        g.pathIdx = 0;
+        setGolferTarget(g, CH.x, CH.y);
       }
       S.golfers.push(g);
     }

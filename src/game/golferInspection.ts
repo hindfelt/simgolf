@@ -71,6 +71,7 @@ export function attitudePresentation(mood: number): { label: string; expression:
 function actionLabel(golfer: Golfer): string {
   switch (golfer.state) {
     case 'toTee': return `Walking to the ${golfer.holeIdx + 1}${golfer.holeIdx === 0 ? 'st' : golfer.holeIdx === 1 ? 'nd' : golfer.holeIdx === 2 ? 'rd' : 'th'} tee`;
+    case 'waitTee': return `Waiting for the ${golfer.holeIdx + 1}${golfer.holeIdx === 0 ? 'st' : golfer.holeIdx === 1 ? 'nd' : golfer.holeIdx === 2 ? 'rd' : 'th'} tee`;
     case 'toBall': return 'Walking to the ball';
     case 'leave': return 'Heading back to the clubhouse';
     case 'preshot': return 'Planning the next shot';

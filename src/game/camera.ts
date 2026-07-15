@@ -6,7 +6,7 @@ import type { Vec } from './types';
 /** Clears the full three-gauge desktop stack (ends at y=111) plus breathing room. */
 export const COURSE_SAFE_TOP = 116;
 export const CONTROLLER_VISIBLE_HEIGHT = 166;
-export const COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT = 140;
+export const COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT = 156;
 export const COMPACT_PLAY_MAX_VIEWPORT_HEIGHT = 520;
 export const COMPACT_PLAY_WIDE_MIN_VIEWPORT_WIDTH = 1200;
 export const COMPACT_PLAY_WIDE_MAX_VIEWPORT_HEIGHT = 760;
