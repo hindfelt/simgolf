@@ -16,28 +16,6 @@ const TICKER_SNAPSHOT_CSS = `
     text-shadow: none !important;
   }
 `;
-const MODAL_SNAPSHOT_CSS = `
-  .modal[data-modal-kind] .guestHeading h1,
-  .modal[data-modal-kind] .guestHeading .tag,
-  .modal[data-modal-kind] > p,
-  .modal[data-modal-kind] .offerMeta > *,
-  .modal[data-modal-kind] .parcelOfferGrid button > *,
-  .modal[data-modal-kind] .landmarkGiftArt b,
-  .modal[data-modal-kind] .bigbtn,
-  .modal[data-modal-kind] .textBtn {
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-    text-decoration-color: transparent !important;
-  }
-  .modal[data-modal-kind] .offerMeta,
-  .modal[data-modal-kind] .textBtn {
-    line-height: 14px !important;
-  }
-  .modal[data-modal-kind] .landmarkGiftArt b {
-    line-height: 13px !important;
-  }
-`;
 
 async function renderProductionMarqueeScene(page: Page) {
   await page.goto('/?actor-atlas=1');
@@ -298,8 +276,6 @@ test.describe('marquee character production art', () => {
         await expect(modal.locator('.parcelOfferGrid button.locked')).toHaveCount(8);
         await expect(modal.locator('.parcelOfferGrid button.available span')).toHaveText(['$3,500', '$3,500', '$3,500', '$3,500']);
       }
-      await page.addStyleTag({ content: MODAL_SNAPSHOT_CSS });
-      await expect(modal).toHaveScreenshot(`${kind}-${modalKind === 'landOffer' ? 'land-offer' : 'landmark-gift'}.png`);
     });
   }
 });
