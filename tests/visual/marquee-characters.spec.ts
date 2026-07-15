@@ -11,6 +11,7 @@ const TICKER_SNAPSHOT_CSS = `
     box-shadow: none !important;
   }
   .simFotoCopy {
+    height: 40px !important;
     overflow: hidden !important;
     text-shadow: none !important;
   }
