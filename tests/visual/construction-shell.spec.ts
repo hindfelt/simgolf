@@ -134,7 +134,7 @@ test.describe('screenshot-sized short landscape construction shell', () => {
     const tools = await readToolGeometry(page);
 
     expect(shell).toMatchObject({ x: 0, y: 74, width: 980, height: 166 });
-    expect(dock).toMatchObject({ x: 280, y: 132, width: 700, height: 108 });
+    expect(dock).toMatchObject({ x: 280, y: 74, width: 700, height: 166 });
     expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
     expect(tools).toHaveLength(16);
     expectReadableToolText(tools);
@@ -164,6 +164,66 @@ test.describe('native construction composition', () => {
     expect(tools).toHaveLength(16);
     const outliers = tools.filter((tool) => tool.x < dock.x || right(tool) > 800 || tool.y < dock.y || bottom(tool) > 600.1);
     expect(outliers).toEqual([]);
+    expectReadableToolText(tools);
+    await expectControlBaySeparation(page, tools);
+  });
+});
+
+test.describe('DPR2 supplied-image construction composition', () => {
+  test.use({ viewport: { width: 850, height: 284 }, deviceScaleFactor: 2 });
+
+  test('aligns the CSS-pixel tray with the molded shoulder at 1700x568 device pixels', async ({ page }) => {
+    await enterSandbox(page);
+    await page.locator('.toolGroup[data-group-id="course"]').click();
+
+    const shell = await page.locator('.controllerShell').boundingBox() as Box;
+    const controls = await page.locator('.fieldControls').boundingBox() as Box;
+    const dock = await page.locator('[data-ui="construction-dock"]').boundingBox() as Box;
+    const tray = await page.locator('.toolTray').boundingBox() as Box;
+    const rail = await page.locator('.toolbar').evaluate((toolbar) => ({
+      clientWidth: toolbar.clientWidth,
+      scrollWidth: toolbar.scrollWidth,
+    }));
+    const tools = await readToolGeometry(page);
+
+    expect(shell).toMatchObject({ x: 0, y: 118, width: 850, height: 166 });
+    expect(controls).toMatchObject({ x: 0, y: 118, width: 280, height: 166 });
+    expect(dock).toMatchObject({ x: 280, y: 118, width: 570, height: 166 });
+    expect(dock.y, 'DPR2 construction rail and control shoulder must share a top edge').toBe(controls.y);
+    expect(tray.y).toBe(122);
+    expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
+    expect(tools).toHaveLength(16);
+    expect(tools.every((tool) => tool.x >= tray.x && right(tool) <= 850 && tool.y >= tray.y && bottom(tool) <= 284)).toBe(true);
+    expectReadableToolText(tools);
+    await expectControlBaySeparation(page, tools);
+  });
+});
+
+test.describe('wide-short construction composition', () => {
+  test.use({ viewport: { width: 1700, height: 568 } });
+
+  test('aligns the construction rail with the molded shoulder without shrinking or overlapping tools', async ({ page }) => {
+    await enterSandbox(page);
+    await page.locator('.toolGroup[data-group-id="course"]').click();
+
+    const shell = await page.locator('.controllerShell').boundingBox() as Box;
+    const controls = await page.locator('.fieldControls').boundingBox() as Box;
+    const dock = await page.locator('[data-ui="construction-dock"]').boundingBox() as Box;
+    const tray = await page.locator('.toolTray').boundingBox() as Box;
+    const rail = await page.locator('.toolbar').evaluate((toolbar) => ({
+      clientWidth: toolbar.clientWidth,
+      scrollWidth: toolbar.scrollWidth,
+    }));
+    const tools = await readToolGeometry(page);
+
+    expect(shell).toMatchObject({ x: 0, y: 402, width: 1700, height: 166 });
+    expect(controls).toMatchObject({ x: 0, y: 402, width: 280, height: 166 });
+    expect(dock).toMatchObject({ x: 280, y: 402, width: 1420, height: 166 });
+    expect(dock.y, 'construction rail and control shoulder must share a top edge').toBe(controls.y);
+    expect(tray.y).toBe(dock.y + 4);
+    expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
+    expect(tools).toHaveLength(16);
+    expect(tools.every((tool) => tool.x >= tray.x && right(tool) <= 1700 && tool.y >= tray.y && bottom(tool) <= bottom(dock))).toBe(true);
     expectReadableToolText(tools);
     await expectControlBaySeparation(page, tools);
   });

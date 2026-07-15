@@ -1,8 +1,9 @@
 import { EH } from './constants';
 import type { CourseTheme, TreeCanopyImpact, Vec } from './types';
+import type { DestinationVegetation } from './properties';
 import { hash2 } from './rng';
 
-export type SharedTreeKind = 'round' | 'pine' | 'blossom';
+export type SharedTreeKind = 'round' | 'pine' | 'blossom' | 'cherry' | 'cactus';
 
 export interface TreeCollisionProfile {
   tileX: number;
@@ -19,8 +20,10 @@ export interface TreeCollisionProfile {
   trunkTop: number;
 }
 
-/** Shared species rule matching the current renderer exactly. */
-export function sharedTreeKindFor(theme: CourseTheme, seed: number): SharedTreeKind {
+/** Property art direction wins over the broad terrain family's species mix. */
+export function sharedTreeKindFor(theme: CourseTheme, seed: number, vegetation: DestinationVegetation = 'theme'): SharedTreeKind {
+  if (vegetation === 'cherry') return 'cherry';
+  if (vegetation === 'cactus') return 'cactus';
   if (theme === 'tropical') return seed > 0.5 ? 'blossom' : 'round';
   if (theme === 'links') return seed > 0.75 ? 'blossom' : seed > 0.35 ? 'pine' : 'round';
   if (theme === 'desert') return seed > 0.8 ? 'blossom' : 'round';
@@ -28,11 +31,12 @@ export function sharedTreeKindFor(theme: CourseTheme, seed: number): SharedTreeK
 }
 
 /** Deterministic gameplay cross-section derived from the visible 42x56 sprite. */
-export function treeCollisionProfile(tileX: number, tileY: number, theme: CourseTheme): TreeCollisionProfile {
+export function treeCollisionProfile(tileX: number, tileY: number, theme: CourseTheme, vegetation: DestinationVegetation = 'theme'): TreeCollisionProfile {
   const seed = hash2(tileX, tileY);
-  const kind = sharedTreeKindFor(theme, seed);
+  const kind = sharedTreeKindFor(theme, seed, vegetation);
   const visualScale = (0.78 + seed * 0.38) * 0.92;
   const pine = kind === 'pine';
+  const cactus = kind === 'cactus';
   return {
     tileX,
     tileY,
@@ -41,12 +45,12 @@ export function treeCollisionProfile(tileX: number, tileY: number, theme: Course
     kind,
     visualScale,
     // Slightly inside the visible crown: conservative enough to avoid invisible hits.
-    canopyRadius: (pine ? 0.46 : 0.54) * (0.92 + seed * 0.16),
+    canopyRadius: (cactus ? 0.24 : pine ? 0.46 : 0.54) * (0.92 + seed * 0.16),
     // Sprite foliage begins about 12px (pine) / 17px (round) above its root.
-    canopyBottom: (pine ? 11 : 17) * visualScale,
-    canopyTop: (pine ? 48 : 52) * visualScale,
-    trunkRadius: 0.105 * (0.94 + seed * 0.12),
-    trunkTop: 50 * visualScale,
+    canopyBottom: (cactus ? 12 : pine ? 11 : 17) * visualScale,
+    canopyTop: (cactus ? 42 : pine ? 48 : 52) * visualScale,
+    trunkRadius: (cactus ? 0.13 : 0.105) * (0.94 + seed * 0.12),
+    trunkTop: (cactus ? 46 : 50) * visualScale,
   };
 }
 
@@ -69,6 +73,13 @@ export function treeImpactKind(
   const relativeAltitude = absoluteAltitude - treeGroundAltitude(profile, elevationAt);
   if (relativeAltitude < 0) return null;
   if (radial <= profile.trunkRadius && relativeAltitude <= profile.trunkTop) return 'trunk';
+  // A saguaro's arms are sparse solid obstacles, not a broad invisible crown.
+  // This narrow cylinder is deliberately a little inside the visible pixels.
+  if (profile.kind === 'cactus') {
+    return radial <= profile.canopyRadius && relativeAltitude >= profile.canopyBottom && relativeAltitude <= profile.canopyTop
+      ? 'trunk'
+      : null;
+  }
   if (relativeAltitude < profile.canopyBottom || relativeAltitude > profile.canopyTop) return null;
   const heightProgress = (relativeAltitude - profile.canopyBottom) / Math.max(0.001, profile.canopyTop - profile.canopyBottom);
   const radiusAtAltitude = profile.kind === 'pine'

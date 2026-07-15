@@ -3,11 +3,13 @@ import type { Ball, CourseTheme, ShotShape, TreeCanopyImpact, Vec } from './type
 import { EH, H, W } from './constants';
 import { clamp, hash2, lerp } from './rng';
 import { treeCollisionProfile, treeImpactKind } from './treeGeometry';
+import type { DestinationVegetation } from './properties';
 
 export type FlightPath = Pick<Ball, 'fx' | 'fy' | 'tx' | 'ty' | 'h' | 'shotShape' | 'curvePerpX' | 'curvePerpY' | 'curveDistance' | 'lowFlight'>;
 
 export interface FlightCollisionEnvironment {
   theme: CourseTheme;
+  vegetation?: DestinationVegetation;
   tileAt: (x: number, y: number) => number;
   elevationAt: (x: number, y: number) => number;
 }
@@ -89,7 +91,7 @@ export function firstTreeCanopyImpact(path: FlightPath, environment: FlightColli
   const originX = Math.floor(path.fx);
   const originY = Math.floor(path.fy);
   const originIsTree = environment.tileAt(originX, originY) === Tile.TREE;
-  const originProfile = originIsTree ? treeCollisionProfile(originX, originY, environment.theme) : null;
+  const originProfile = originIsTree ? treeCollisionProfile(originX, originY, environment.theme, environment.vegetation) : null;
   let originCleared = !originIsTree;
 
   for (let step = 1; step < steps; step++) {
@@ -110,7 +112,7 @@ export function firstTreeCanopyImpact(path: FlightPath, environment: FlightColli
       for (let treeX = pointX - 1; treeX <= pointX + 1; treeX++) {
         if (environment.tileAt(treeX, treeY) !== Tile.TREE) continue;
         const isOrigin = originIsTree && treeX === originX && treeY === originY;
-        const profile = isOrigin ? originProfile! : treeCollisionProfile(treeX, treeY, environment.theme);
+        const profile = isOrigin ? originProfile! : treeCollisionProfile(treeX, treeY, environment.theme, environment.vegetation);
         const kind = treeImpactKind(profile, position, altitude, environment.elevationAt);
         if (isOrigin && !originCleared) {
           // Recovery starts are allowed to escape their current collision volume.

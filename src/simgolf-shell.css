@@ -2249,6 +2249,18 @@ body:has(.controllerShell[data-surface='management']) .ticker { opacity: 0; poin
 .controllerShell[data-surface='clubhouse'] .fieldControls > .orb { pointer-events: none; }
 .controllerShell[data-surface='clubhouse'] .fieldMenu { pointer-events: auto; }
 
+/* On wide, short screens the construction rail shares the molded control
+   shoulder instead of leaving the 58px fan-to-tray step exposed. */
+@media (min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1),
+       (min-width: 761px) and (max-height: 520px) and (min-aspect-ratio: 2/1) {
+  .controllerShell[data-mode='build'] .toolDock {
+    height: var(--sg-fan-height);
+    min-height: var(--sg-fan-height);
+  }
+
+  .controllerShell[data-mode='build'] .toolGroups { top: 0; }
+}
+
 @media (max-width: 1000px) {
   .controllerShell .catalogMode .catalogFilters { display: none; }
   .controllerShell .fieldDeskPanel.catalogMode { grid-template-columns: minmax(0, 1fr) 226px; }

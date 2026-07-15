@@ -2,6 +2,19 @@ import type { CareerProgress, CourseTheme, FinanceCategory, FinanceEntry, ProPro
 
 export const PROPERTY_INHERITANCE = 20_000;
 
+export type DestinationVegetation = 'theme' | 'cherry' | 'cactus';
+export type DestinationArchitecture = 'classic' | 'temple' | 'adobe';
+
+export interface DestinationScenery {
+  vegetation: DestinationVegetation;
+  architecture: DestinationArchitecture;
+}
+
+export const DEFAULT_DESTINATION_SCENERY: DestinationScenery = {
+  vegetation: 'theme',
+  architecture: 'classic',
+};
+
 export interface PropertyDefinition {
   id: PropertyId;
   name: string;
@@ -10,6 +23,8 @@ export interface PropertyDefinition {
   price: number;
   ownedParcels: readonly number[];
   terrain: { relief: number; water: number; woodland: number; seed: number };
+  /** Property-level art direction layered over the broader terrain family. */
+  scenery?: Partial<DestinationScenery>;
   description: string;
   unlock?: PropertyUnlock;
 }
@@ -58,7 +73,7 @@ const parcels = (...extra: number[]) => [...base, ...extra];
 /** Manual p.7: four locations in each terrain family, sixteen worldwide properties. */
 export const WORLD_PROPERTIES: readonly PropertyDefinition[] = [
   { id: 'maple-crossing', name: 'Maple Crossing', region: 'Virginia, USA', theme: 'parklands', price: 0, ownedParcels: parcels(), terrain: { relief: .38, water: .32, woodland: .62, seed: 11 }, description: 'A forgiving wooded inheritance with a compact four-parcel deed.' },
-  { id: 'kyoto-gardens', name: 'Kyoto Gardens', region: 'Kyoto, Japan', theme: 'parklands', price: 2_500, ownedParcels: parcels(2), terrain: { relief: .5, water: .55, woodland: .72, seed: 23 }, description: 'Five parcels of rolling garden country with streams and mature trees.' },
+  { id: 'kyoto-gardens', name: 'Kyoto Gardens', region: 'Kyoto, Japan', theme: 'parklands', price: 2_500, ownedParcels: parcels(2), terrain: { relief: .5, water: .55, woodland: .72, seed: 23 }, scenery: { vegetation: 'cherry', architecture: 'temple' }, description: 'Five parcels of rolling garden country with streams and mature trees.' },
   { id: 'bavarian-vale', name: 'Bavarian Vale', region: 'Bavaria, Germany', theme: 'parklands', price: 6_500, ownedParcels: parcels(2, 6), terrain: { relief: .76, water: .35, woodland: .78, seed: 37 }, description: 'Six broad parcels under steep wooded foothills.', unlock: { earnings: 7_500, reputation: 3.5, tournament: true } },
   { id: 'ontario-lakes', name: 'Ontario Lakes', region: 'Ontario, Canada', theme: 'parklands', price: 12_000, ownedParcels: parcels(2, 6, 8), terrain: { relief: .58, water: .9, woodland: .7, seed: 41 }, description: 'Seven valuable parcels wrapped around a chain of lakes.', unlock: { earnings: 40_000, reputation: 4.5, fame: 125 } },
 
@@ -67,10 +82,10 @@ export const WORLD_PROPERTIES: readonly PropertyDefinition[] = [
   { id: 'cape-breton-links', name: 'Cape Breton Links', region: 'Nova Scotia, Canada', theme: 'links', price: 8_500, ownedParcels: parcels(2, 6), terrain: { relief: .64, water: .68, woodland: .28, seed: 79 }, description: 'Six rugged coastal parcels climbing above the surf.', unlock: { earnings: 12_000, reputation: 3.5, fame: 50 } },
   { id: 'hebridean-reach', name: 'Hebridean Reach', region: 'Outer Hebrides, Scotland', theme: 'links', price: 18_000, ownedParcels: parcels(2, 3, 6, 7), terrain: { relief: .52, water: .82, woodland: .12, seed: 83 }, description: 'Eight prestigious seaside parcels built for a championship routing.', unlock: { earnings: 75_000, reputation: 5, fame: 225, sgaTop18: true, championshipPodium: true } },
 
-  { id: 'red-mesa', name: 'Red Mesa', region: 'Arizona, USA', theme: 'desert', price: 1_500, ownedParcels: parcels(), terrain: { relief: .72, water: .08, woodland: .08, seed: 97 }, description: 'Four inexpensive parcels beneath a severe red-rock ridge.' },
-  { id: 'atacama-wash', name: 'Atacama Wash', region: 'Antofagasta, Chile', theme: 'desert', price: 4_500, ownedParcels: parcels(2), terrain: { relief: .46, water: .04, woodland: .03, seed: 101 }, description: 'Five dry, open parcels with almost nowhere to hide a bad shot.', unlock: { earnings: 2_500, reputation: 3 } },
-  { id: 'namib-canyon', name: 'Namib Canyon', region: 'Erongo, Namibia', theme: 'desert', price: 9_000, ownedParcels: parcels(2, 6), terrain: { relief: .95, water: .12, woodland: .05, seed: 113 }, description: 'Six dramatic parcels divided by high ground and sandy waste.', unlock: { earnings: 18_000, reputation: 4, sgaTop100: true } },
-  { id: 'wadi-rum-reserve', name: 'Wadi Rum Reserve', region: 'Aqaba, Jordan', theme: 'desert', price: 16_000, ownedParcels: parcels(2, 3, 6, 7), terrain: { relief: .86, water: .22, woodland: .09, seed: 127 }, description: 'Eight rare parcels around a sheltered oasis and monumental cliffs.', unlock: { earnings: 55_000, reputation: 4.5, fame: 175, sgaTop18: true, championshipStart: true } },
+  { id: 'red-mesa', name: 'Red Mesa', region: 'Arizona, USA', theme: 'desert', price: 1_500, ownedParcels: parcels(), terrain: { relief: .72, water: .08, woodland: .08, seed: 97 }, scenery: { vegetation: 'cactus', architecture: 'adobe' }, description: 'Four inexpensive parcels beneath a severe red-rock ridge.' },
+  { id: 'atacama-wash', name: 'Atacama Wash', region: 'Antofagasta, Chile', theme: 'desert', price: 4_500, ownedParcels: parcels(2), terrain: { relief: .46, water: .04, woodland: .03, seed: 101 }, scenery: { vegetation: 'cactus', architecture: 'adobe' }, description: 'Five dry, open parcels with almost nowhere to hide a bad shot.', unlock: { earnings: 2_500, reputation: 3 } },
+  { id: 'namib-canyon', name: 'Namib Canyon', region: 'Erongo, Namibia', theme: 'desert', price: 9_000, ownedParcels: parcels(2, 6), terrain: { relief: .95, water: .12, woodland: .05, seed: 113 }, scenery: { vegetation: 'cactus', architecture: 'adobe' }, description: 'Six dramatic parcels divided by high ground and sandy waste.', unlock: { earnings: 18_000, reputation: 4, sgaTop100: true } },
+  { id: 'wadi-rum-reserve', name: 'Wadi Rum Reserve', region: 'Aqaba, Jordan', theme: 'desert', price: 16_000, ownedParcels: parcels(2, 3, 6, 7), terrain: { relief: .86, water: .22, woodland: .09, seed: 127 }, scenery: { vegetation: 'cactus', architecture: 'adobe' }, description: 'Eight rare parcels around a sheltered oasis and monumental cliffs.', unlock: { earnings: 55_000, reputation: 4.5, fame: 175, sgaTop18: true, championshipStart: true } },
 
   { id: 'maui-grove', name: 'Maui Grove', region: 'Hawaiʻi, USA', theme: 'tropical', price: 2_000, ownedParcels: parcels(), terrain: { relief: .62, water: .6, woodland: .82, seed: 131 }, description: 'Four lush volcanic parcels with dense palms and bright water.' },
   { id: 'fiji-lagoon', name: 'Fiji Lagoon', region: 'Viti Levu, Fiji', theme: 'tropical', price: 5_500, ownedParcels: parcels(2), terrain: { relief: .34, water: .92, woodland: .72, seed: 149 }, description: 'Five low island parcels curled around a brilliant lagoon.', unlock: { earnings: 4_000, fame: 25 } },
@@ -84,6 +99,10 @@ export function isPropertyId(value: unknown): value is PropertyId {
 
 export function propertyById(id: PropertyId | string | null | undefined): PropertyDefinition {
   return WORLD_PROPERTIES.find((property) => property.id === id) ?? WORLD_PROPERTIES[0];
+}
+
+export function destinationSceneryFor(id: PropertyId | string | null | undefined): DestinationScenery {
+  return { ...DEFAULT_DESTINATION_SCENERY, ...propertyById(id).scenery };
 }
 
 export function starterPropertyForTheme(theme: CourseTheme): PropertyDefinition {

@@ -94,6 +94,12 @@ describe('sampled player tree-canopy flight', () => {
     const span = pine.canopyTop - pine.canopyBottom;
     expect(treeImpactKind(pine, { x: pine.center.x + pine.canopyRadius * 0.45, y: pine.center.y }, pine.canopyBottom + span * 0.5, flat)).toBe('pine');
     expect(treeImpactKind(pine, { x: pine.center.x + pine.canopyRadius * 0.35, y: pine.center.y }, pine.canopyBottom + span * 0.9, flat)).toBeNull();
+
+    const cactus = treeCollisionProfile(5, 5, 'desert', 'cactus');
+    expect(cactus.kind).toBe('cactus');
+    const cactusArm = { x: cactus.center.x + cactus.canopyRadius * 0.8, y: cactus.center.y };
+    expect(treeImpactKind(cactus, cactusArm, (cactus.canopyBottom + cactus.canopyTop) / 2, flat)).toBe('trunk');
+    expect(treeImpactKind(cactus, { x: cactus.center.x + cactus.canopyRadius * 1.1, y: cactus.center.y }, cactus.canopyBottom + 1, flat)).toBeNull();
     expect(firstTreeCanopyImpact(straightPath(8, 5.86, true), environment([[5, 5]]))).toBeNull();
     expect(firstTreeCanopyImpact(straightPath(8, 5.5, true), environment([[5, 5]]))).toMatchObject({ kind: 'trunk' });
   });
