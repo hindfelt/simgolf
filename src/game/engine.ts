@@ -33,8 +33,8 @@ import {
 import type { Building, BuildingKind, EmployeeKind, CourseTheme, FacilityBranch } from './types';
 import { EMP_CATALOG, hireCost, skilledUnlocked, addEmployee, fireOne, empWagesPerSec, empSpawnMood, empMoveSpeedMul, empMoodPerHole } from './employees';
 import { footprintInBounds, greenFootprint, teeFootprint, tileKey } from './course';
-import { findPath } from './pathfind';
-import { isWaterBackedTile } from './bridges';
+import { findPath, golferPointWalkable, nearestDryGolferPoint } from './pathfind';
+import { bridgeConnectionsAt, isBridgeTile, isWaterBackedTile } from './bridges';
 import { CLEAR_WEATHER, generateHoleConditions, weatherCarryMultiplier, weatherDispersionMultiplier, weatherRollMultiplier } from './weather';
 import { clubLieProfile, fallbackClubForLie } from './clubProfiles';
 import { applyRegularTraining, createRegularTraining, regularTrainingRates, sanitizeRegularTraining } from './regularTraining';
@@ -52,7 +52,8 @@ import {
   sanitizeRoundHistory,
 } from './scorecards';
 import { attitudeDelta, isDifficulty } from './difficulty';
-import { adjacentUnownedParcels, SPECIAL_GUESTS, specialGuestEnjoyed } from './specialGuests';
+import { adjacentUnownedParcels, isSpecialGuestKind, SPECIAL_GUESTS, specialGuestEnjoyed, specialGuestPortrait } from './specialGuests';
+import type { PortraitExpression } from './characterVisuals';
 import {
   adjustProSkill,
   applyChampionshipCareer,
@@ -86,6 +87,15 @@ function ticker(name: string, txt: string, cls?: string, character?: TickerChara
   ui.ticker(name, txt, cls, character);
   S.comments.push({ id: ++commentSeq, time: S.time, name, txt, cls });
   if (S.comments.length > 60) S.comments.shift();
+}
+
+function specialGuestTicker(
+  kind: SpecialGuestKind,
+  txt: string,
+  cls?: string,
+  expression: PortraitExpression = cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : SPECIAL_GUESTS[kind].defaultExpression,
+) {
+  ticker(SPECIAL_GUESTS[kind].name, txt, cls, specialGuestPortrait(kind, expression));
 }
 export function updateTopbar() {
   ui.set({ cash: S.cash, rep: S.rep, fee: S.fee, golfers: S.golfers.length, holes: S.holes.length, courseName: S.courseName, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId, difficulty: S.difficulty, sandbox: S.sandbox });
@@ -474,9 +484,25 @@ function removeHoleAt(x: number, y: number): boolean {
   recordFinance(300, 'refunds', 'Retired hole materials');
   updateTopbar();
   floater(h.cup.x, h.cup.y, 'Hole removed · +$300', '#ffd856');
+  const displaced: Golfer[] = [];
   for (const g of S.golfers) {
     if (g.holeIdx > i) g.holeIdx--;
-    else if (g.holeIdx === i) sendToNextHole(g);
+    else if (g.holeIdx === i && g.state !== 'leave') {
+      // Mark every displaced group as waiting before admitting any of them, otherwise
+      // unprocessed golfers on the retired hole look like reservations on its successor.
+      g.state = 'waitTee';
+      g.ball = null;
+      g.tx = g.x;
+      g.ty = g.y;
+      g.path = [];
+      g.pathIdx = 0;
+      displaced.push(g);
+    }
+  }
+  if (displaced.length) {
+    const displacedSet = new Set(displaced);
+    S.balls = S.balls.filter((ball) => ball.owner === 'P' || !displacedSet.has(ball.owner));
+    for (const g of displaced) sendToNextHole(g);
   }
   if (S.player && S.player.holeIdx >= i) quitRound('That hole vanished under the bulldozer.');
   relaxPad(removedTiles);
@@ -586,7 +612,36 @@ export function setHoleFee(holeId: number, fee: number | null) {
 }
 
 /* ---------------- statics cache ---------------- */
+let golferRoutingRevision = 0;
+let golferWalkabilitySignature: number | null = null;
+
+/** Hash only the hard walking graph: raw blockers plus each bridge's authored openings. */
+function currentGolferWalkabilitySignature(): number {
+  let hash = 2166136261;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const tile = S.tiles[idx(x, y)];
+      let code = tile === Tile.WATER ? 1 : tile === Tile.STREAM ? 2 : 0;
+      if (isBridgeTile(tile)) {
+        const connections = bridgeConnectionsAt(S.tiles, x, y);
+        code = (tile === Tile.BRIDGE_WATER ? 3 : 4)
+          | (connections.west ? 8 : 0)
+          | (connections.east ? 16 : 0)
+          | (connections.north ? 32 : 0)
+          | (connections.south ? 64 : 0);
+      }
+      hash ^= code + x * 131 + y * 313;
+      hash = Math.imul(hash, 16777619);
+    }
+  }
+  return hash >>> 0;
+}
 export function rebuildStatics() {
+  const walkabilitySignature = currentGolferWalkabilitySignature();
+  if (walkabilitySignature !== golferWalkabilitySignature) {
+    golferWalkabilitySignature = walkabilitySignature;
+    golferRoutingRevision++;
+  }
   caches.trees = [];
   caches.waterTiles = [];
   caches.wildlife = [];
@@ -655,7 +710,7 @@ export function placeBuilding(kind: BuildingKind, tx: number, ty: number): Build
   rebuildStatics();
   sfx.coin();
   floater(x + def.w / 2, y + def.h / 2, def.name + '!', '#fff');
-  if (giftedLandmark) ticker('Ivana Richman', 'My donated Landmark has found its home. More Landmarks may now be purchased.', 'money');
+  if (giftedLandmark) specialGuestTicker('ivana', 'My donated Landmark has found its home. More Landmarks may now be purchased.', 'money');
   if (!b.open) setHint(def.name + ' built — connect it to the clubhouse with a pathway to open it.');
   else ticker('Pro shop', def.name + ' is open for business.', 'money');
   return b;
@@ -1202,7 +1257,7 @@ export function acceptLandOffer(parcel: number): boolean {
   const px = (parcel % PW) * PARCEL_W + PARCEL_W / 2;
   const py = Math.floor(parcel / PW) * PARCEL_H + PARCEL_H / 2;
   floater(px, py, 'New land!', '#ffd856');
-  ticker('I.M. Picky', 'The county approves your purchase — ' + fmt$(offer.price) + '. Room to grow!', 'money');
+  specialGuestTicker('picky', 'The county approves your purchase — ' + fmt$(offer.price) + '. Room to grow!', 'money', 'pleased');
   setHint('New land acquired. Sculpt it, plant it, build on it.');
   if (!offer.parcelIndices.length) {
     S.specialVisitors.landOffer = null;
@@ -1466,12 +1521,80 @@ function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, for
 }
 
 /* ---------------- golfers ---------------- */
-/** Sets a golfer's walk target and pre-computes an A* route around water/trees/steep ground. */
+const GOLFER_ROUTE_RETRY_SECONDS = 1.25;
+const GOLFER_ROUTE_TIMEOUT_SECONDS = 10;
+let golferTeeQueueSeq = 0;
+
+/** Repair only impossible legacy/edit positions; ordinary routes never traverse raw water. */
+function repairGolferWalkPosition(g: Golfer) {
+  if (golferPointWalkable(g)) return;
+  const x = Math.floor(g.x);
+  const y = Math.floor(g.y);
+  if (inb(x, y) && isBridgeTile(tileAt(x, y))) {
+    // Every authored bridge includes its tile centre, even at corners/T-junctions.
+    g.x = x + 0.5;
+    g.y = y + 0.5;
+    return;
+  }
+  const dry = nearestDryGolferPoint(g);
+  if (dry) {
+    g.x = dry.x;
+    g.y = dry.y;
+  }
+}
+
+function refreshGolferPath(g: Golfer, resetBlockedTimer: boolean) {
+  repairGolferWalkPosition(g);
+  g.path = findPath({ x: g.x, y: g.y }, { x: g.tx, y: g.ty });
+  g.pathIdx = 0;
+  g.pathRevision = golferRoutingRevision;
+  if (g.path !== null) {
+    delete g.routeBlockedFor;
+    delete g.routeRetryIn;
+  } else {
+    if (resetBlockedTimer || !Number.isFinite(g.routeBlockedFor)) g.routeBlockedFor = 0;
+    g.routeRetryIn = GOLFER_ROUTE_RETRY_SECONDS;
+  }
+}
+
+/** Sets a new logical target and pre-computes a water-safe A* route. */
 function setGolferTarget(g: Golfer, x: number, y: number) {
   g.tx = x;
   g.ty = y;
-  g.path = findPath({ x: g.x, y: g.y }, { x, y }) ?? undefined;
+  delete g.teeQueueSeq;
+  refreshGolferPath(g, true);
+}
+/** One autonomous golfer actor is one simulated group. The manual player is separate. */
+export function holeGroupCapacity(hole: Pick<Hole, 'par'>): number {
+  return hole.par === 3 ? 1 : 2;
+}
+function golferOccupiesHole(g: Golfer, holeIdx: number): boolean {
+  return g.holeIdx === holeIdx && g.state !== 'waitTee' && g.state !== 'leave';
+}
+function canReserveHole(g: Golfer, holeIdx: number): boolean {
+  const hole = S.holes[holeIdx];
+  if (!hole) return false;
+  let occupied = 0;
+  for (const other of S.golfers) {
+    if (other !== g && golferOccupiesHole(other, holeIdx)) occupied++;
+  }
+  return occupied < holeGroupCapacity(hole);
+}
+function waitForHole(g: Golfer) {
+  g.state = 'waitTee';
+  g.ball = null;
+  g.tx = g.x;
+  g.ty = g.y;
+  g.path = [];
   g.pathIdx = 0;
+  g.pathRevision = golferRoutingRevision;
+  delete g.routeBlockedFor;
+  delete g.routeRetryIn;
+  const savedSequence = Number(g.teeQueueSeq);
+  if (Number.isFinite(savedSequence) && savedSequence > 0) {
+    g.teeQueueSeq = Math.trunc(savedSequence);
+    golferTeeQueueSeq = Math.max(golferTeeQueueSeq, g.teeQueueSeq);
+  } else g.teeQueueSeq = ++golferTeeQueueSeq;
 }
 function golferCap(): number {
   // big courses need a real field of players, not 14 souls on 30 holes
@@ -1519,7 +1642,7 @@ function spawnGolfer() {
   if (!S.tournament && S.fee > fair * 1.45 && Math.random() < 0.6) {
     S.lost++;
     floater(CH.x, CH.y - 1, pick(SAY.pricey), '#ffb0a6', 'bub');
-    ticker(g.name, pick(SAY.pricey), 'bad', golferTickerCharacter(g, 'bad'));
+    golferTicker(g, pick(SAY.pricey), 'bad');
     return;
   }
   if (S.fee > fair) changeMood(g, -(S.fee - fair) / 12);
@@ -1528,7 +1651,7 @@ function spawnGolfer() {
   if (S.tournament) g.mood += 1; // tournament crowd energy
   const hole = S.holes[0];
   if (!hole) return;
-  setGolferTarget(g, hole.tee.x + rand(-0.3, 0.3), hole.tee.y + rand(-0.3, 0.3));
+  sendToNextHole(g);
   S.golfers.push(g);
   if (S.tournament) S.tournament.entrants++;
   r.streak = S.time - r.lastVisit < 260 ? r.streak + 1 : 1;
@@ -1551,22 +1674,17 @@ function spawnGolfer() {
   updateTopbar();
 }
 
-const SPECIAL_GUEST_STYLE: Record<SpecialGuestKind, { shirt: string; skin: string; cap: string; skill: number }> = {
-  picky: { shirt: '#2f506f', skin: '#e0a878', cap: '#d8d2bd', skill: 0.58 },
-  ivana: { shirt: '#9b3f72', skin: '#f1c6a0', cap: '#f0d36f', skill: 0.74 },
-};
-
 function spawnSpecialGuest(kind: SpecialGuestKind): boolean {
   const hole = S.holes[0];
   if (!hole || S.golfers.some((golfer) => golfer.specialGuest)) return false;
-  const style = SPECIAL_GUEST_STYLE[kind];
   const guest = SPECIAL_GUESTS[kind];
+  const style = guest.visual;
   const golfer: Golfer = {
     name: guest.name,
-    skill: style.skill,
-    length: style.skill,
-    accuracy: style.skill,
-    imagination: style.skill,
+    skill: guest.skill,
+    length: guest.skill,
+    accuracy: guest.skill,
+    imagination: guest.skill,
     shirt: style.shirt,
     skin: style.skin,
     cap: style.cap,
@@ -1589,18 +1707,45 @@ function spawnSpecialGuest(kind: SpecialGuestKind): boolean {
     thirst: 1,
     specialGuest: kind,
   };
-  setGolferTarget(golfer, hole.tee.x, hole.tee.y);
+  sendToNextHole(golfer);
   S.golfers.push(golfer);
-  ticker(guest.name, `${guest.title} has arrived for an official round. Make an impression.`, 'money');
+  specialGuestTicker(kind, `${guest.title} has arrived for an official round. Make an impression.`, 'money', guest.defaultExpression);
   floater(CH.x, CH.y - 1.2, `${guest.name} visits!`, '#ffd856', 'bub');
   updateTopbar();
+  return true;
+}
+
+/**
+ * Saves are user-editable and older builds persisted the guest palette directly.
+ * Keep the first valid official marker, strip malformed/duplicate markers from
+ * later golfers without dropping those golfers, and reapply the authored guest
+ * identity without disturbing round position, needs, mood, or hole progress.
+ */
+function normalizeLoadedSpecialGuest(golfer: Golfer, officialAlreadyActive: boolean): boolean {
+  const rawKind = (golfer as Golfer & { specialGuest?: unknown }).specialGuest;
+  if (rawKind == null) return officialAlreadyActive;
+  if (!isSpecialGuestKind(rawKind) || officialAlreadyActive) {
+    delete golfer.specialGuest;
+    return officialAlreadyActive;
+  }
+
+  const guest = SPECIAL_GUESTS[rawKind];
+  golfer.specialGuest = rawKind;
+  golfer.name = guest.name;
+  golfer.skill = guest.skill;
+  golfer.length = guest.skill;
+  golfer.accuracy = guest.skill;
+  golfer.imagination = guest.skill;
+  golfer.shirt = guest.visual.shirt;
+  golfer.skin = guest.visual.skin;
+  golfer.cap = guest.visual.cap;
   return true;
 }
 
 function createPickyOffer() {
   const candidates = adjacentUnownedParcels(S.owned, PW, PH);
   if (!candidates.length) {
-    ticker('I.M. Picky', 'You already own every adjoining plot. The county has nothing left to offer.', 'money');
+    specialGuestTicker('picky', 'You already own every adjoining plot. The county has nothing left to offer.', 'money', 'neutral');
     return;
   }
   const start = S.specialVisitors.pickyVisits % candidates.length;
@@ -1614,7 +1759,7 @@ function createPickyOffer() {
     price: LAND_COST,
     remaining: 105,
   };
-  ticker('I.M. Picky', `Impressive. The county is offering ${parcelIndices.length} adjoining plot${parcelIndices.length === 1 ? '' : 's'} for expansion.`, 'money');
+  specialGuestTicker('picky', `Impressive. The county is offering ${parcelIndices.length} adjoining plot${parcelIndices.length === 1 ? '' : 's'} for expansion.`, 'money', 'pleased');
   sfx.tada();
   if (!ui.get().modal) ui.set({ modal: { kind: 'landOffer' } });
 }
@@ -1628,18 +1773,18 @@ function finishSpecialGuestVisit(golfer: Golfer) {
     S.specialVisitors.pickyVisits++;
     S.specialVisitors.pickyCooldown = enjoyed ? 80 : 48;
     if (enjoyed) createPickyOffer();
-    else ticker('I.M. Picky', completed ? 'The course did not impress me enough to release more county land.' : 'I left early. No additional land will be offered.', 'bad');
+    else specialGuestTicker('picky', completed ? 'The course did not impress me enough to release more county land.' : 'I left early. No additional land will be offered.', 'bad');
     return;
   }
   S.specialVisitors.ivanaVisits++;
   S.specialVisitors.ivanaCooldown = 58;
   if (!enjoyed) {
-    ticker('Ivana Richman', completed ? 'Lovely potential, but not yet worthy of my collection.' : 'I could not finish the round. Perhaps next time.', 'bad');
+    specialGuestTicker('ivana', completed ? 'Lovely potential, but not yet worthy of my collection.' : 'I could not finish the round. Perhaps next time.', 'bad');
     return;
   }
   S.specialVisitors.landmarkDonated = true;
   S.specialVisitors.landmarkCredits++;
-  ticker('Ivana Richman', 'I adored the course. Please accept a Landmark as my gift to the resort.', 'money');
+  specialGuestTicker('ivana', 'I adored the course. Please accept a Landmark as my gift to the resort.', 'money');
   sfx.tada();
   if (!ui.get().modal) ui.set({ modal: { kind: 'landmarkGift' } });
 }
@@ -1676,24 +1821,69 @@ function settleMembership(golfer: Golfer) {
   floater(CH.x, CH.y - 1.5, offer.kind === 'lifetime' ? 'LIFETIME MEMBER!' : 'NEW MEMBER!', '#ffe27a', 'bub');
   if (offer.kind !== 'renewal') confetti(CH.x, CH.y);
 }
+
+/** One terminal path for normal and route-timeout departures; settlement cannot double-run. */
+function completeGolferDeparture(g: Golfer, blockedRoute = false) {
+  const index = S.golfers.indexOf(g);
+  if (index < 0) return;
+  if (blockedRoute) {
+    changeMood(g, -1);
+    golferTicker(g, `${g.name} could not find a safe route and abandoned the round.`, 'bad');
+  } else if (g.mood >= 2) golferTicker(g, pick(SAY.leaveHappy), 'money');
+  else if (g.mood <= -2) golferTicker(g, pick(SAY.leaveMad), 'bad');
+  const stars = clamp(2.5 + g.mood * 0.35, 0.3, 5);
+  S.rep = clamp(S.rep + (stars - S.rep) * 0.09, 0.3, 5);
+  finishSpecialGuestVisit(g);
+  settleMembership(g);
+  if (S.selectedGolfer === g) selectGolfer(null);
+  S.golfers.splice(index, 1);
+  updateTopbar();
+}
 function sendToNextHole(g: Golfer) {
   const h = S.holes[g.holeIdx];
   if (!h) {
     g.state = 'leave';
+    g.ball = null;
     setGolferTarget(g, CH.x, CH.y);
     return;
   }
+  if (!canReserveHole(g, g.holeIdx)) {
+    waitForHole(g);
+    return;
+  }
   g.state = 'toTee';
+  g.ball = null;
   setGolferTarget(g, h.tee.x + rand(-0.3, 0.3), h.tee.y + rand(-0.3, 0.3));
+}
+/** FIFO admission pass. Existing over-cap groups are never ejected; queues drain naturally. */
+function admitWaitingGolfers() {
+  const waiting = S.golfers
+    .filter((g) => g.state === 'waitTee')
+    .sort((a, b) => (a.teeQueueSeq ?? Infinity) - (b.teeQueueSeq ?? Infinity));
+  for (const g of waiting) {
+    const h = S.holes[g.holeIdx];
+    if (!h) {
+      g.state = 'leave';
+      setGolferTarget(g, CH.x, CH.y);
+      continue;
+    }
+    if (!canReserveHole(g, g.holeIdx)) continue;
+    g.state = 'toTee';
+    setGolferTarget(g, h.tee.x + rand(-0.3, 0.3), h.tee.y + rand(-0.3, 0.3));
+  }
 }
 function sayText(g: Golfer, txt: string, cls?: string) {
   if (g.chatCd > 0) return;
   g.chatCd = 4;
   floater(g.x, g.y - 1.2, txt, '#fff', 'bub');
-  ticker(g.name, txt, cls, golferTickerCharacter(g, cls));
+  golferTicker(g, txt, cls);
 }
 
-function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 'cap'> | Pick<Regular, 'name' | 'shirt' | 'skin' | 'cap'>, cls?: string): TickerCharacter {
+function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 'cap' | 'specialGuest'> | Pick<Regular, 'name' | 'shirt' | 'skin' | 'cap'>, cls?: string): TickerCharacter {
+  if ('specialGuest' in golfer && isSpecialGuestKind(golfer.specialGuest)) {
+    const expression = cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : SPECIAL_GUESTS[golfer.specialGuest].defaultExpression;
+    return specialGuestPortrait(golfer.specialGuest, expression);
+  }
   return {
     identity: golfer.name,
     shirt: golfer.shirt,
@@ -1701,6 +1891,13 @@ function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 
     cap: golfer.cap,
     expression: cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : 'pleased',
   };
+}
+function golferTicker(golfer: Golfer, txt: string, cls?: string) {
+  if (isSpecialGuestKind(golfer.specialGuest)) {
+    specialGuestTicker(golfer.specialGuest, txt, cls);
+    return;
+  }
+  ticker(golfer.name, txt, cls, golferTickerCharacter(golfer, cls));
 }
 function say(g: Golfer, key: string, cls?: string) {
   sayText(g, pick(SAY[key]), cls);
@@ -1827,7 +2024,7 @@ function finishHole(g: Golfer, pickedUp: boolean) {
       say(g, 'birdie');
       celebrateScore(h.cup.x, h.cup.y, diff);
       S.rep = clamp(S.rep + (diff <= -2 ? 0.06 : 0.02), 0.3, 5);
-      if (diff <= -2) ticker(g.name, `${g.name} carded ${diff <= -3 ? 'an albatross' : g.strokes === 1 ? 'a hole-in-one' : 'an eagle'} on hole ${g.holeIdx + 1}!`, 'money');
+      if (diff <= -2) golferTicker(g, `${g.name} carded ${diff <= -3 ? 'an albatross' : g.strokes === 1 ? 'a hole-in-one' : 'an eagle'} on hole ${g.holeIdx + 1}!`, 'money');
     } else if (h.interest < 0.3 && Math.random() < 0.45) {
       sayText(g, `Hole ${g.holeIdx + 1} is ${boringReason(h)}.`, 'bad');
       changeMood(g, -0.4);
@@ -1887,15 +2084,30 @@ function finishHole(g: Golfer, pickedUp: boolean) {
   } else sendToNextHole(g);
 }
 function updateGolfers(dt: number) {
+  admitWaitingGolfers();
   for (let i = S.golfers.length - 1; i >= 0; i--) {
     const g = S.golfers[i];
     g.chatCd = Math.max(0, g.chatCd - dt);
     g.phase += dt * 9;
     if (g.state === 'toTee' || g.state === 'toBall' || g.state === 'leave') {
+      // Walkability changes invalidate old waypoints. Legacy saves without route
+      // metadata use the same refresh without resetting an existing blocked timeout.
+      if (g.pathRevision !== golferRoutingRevision || g.path === undefined) refreshGolferPath(g, false);
+      if (g.path == null) {
+        g.routeBlockedFor = (g.routeBlockedFor ?? 0) + dt;
+        g.routeRetryIn = (g.routeRetryIn ?? 0) - dt;
+        if (g.routeBlockedFor >= GOLFER_ROUTE_TIMEOUT_SECONDS) {
+          completeGolferDeparture(g, true);
+          continue;
+        }
+        if (g.routeRetryIn <= 0) refreshGolferPath(g, false);
+        if (g.path == null) continue;
+      }
+      const path = g.path;
       // walk the A* waypoints (if any) before the final leg onto tx,ty itself
-      const atFinalLeg = !g.path || (g.pathIdx ?? 0) >= g.path.length;
-      const wx = atFinalLeg ? g.tx : g.path![g.pathIdx!].x;
-      const wy = atFinalLeg ? g.ty : g.path![g.pathIdx!].y;
+      const atFinalLeg = (g.pathIdx ?? 0) >= path.length;
+      const wx = atFinalLeg ? g.tx : path[g.pathIdx!].x;
+      const wy = atFinalLeg ? g.ty : path[g.pathIdx!].y;
       const d = Math.hypot(wx - g.x, wy - g.y);
       const sp = 3.1 * dt * moveSpeedMul() * empMoveSpeedMul();
       if (d <= sp) {
@@ -1906,15 +2118,7 @@ function updateGolfers(dt: number) {
           continue;
         }
         if (g.state === 'leave') {
-          const stars = clamp(2.5 + g.mood * 0.35, 0.3, 5);
-          S.rep = clamp(S.rep + (stars - S.rep) * 0.09, 0.3, 5);
-          if (g.mood >= 2) ticker(g.name, pick(SAY.leaveHappy), 'money');
-          else if (g.mood <= -2) ticker(g.name, pick(SAY.leaveMad), 'bad');
-          finishSpecialGuestVisit(g);
-          settleMembership(g);
-          if (S.selectedGolfer === g) selectGolfer(null);
-          S.golfers.splice(i, 1);
-          updateTopbar();
+          completeGolferDeparture(g);
           continue;
         }
         if (g.state === 'toTee') {
@@ -1999,7 +2203,7 @@ function updateSpecialVisitors(dt: number) {
     if (visitors.landOffer.remaining <= 0) {
       visitors.landOffer = null;
       visitors.pickyCooldown = 48;
-      ticker('I.M. Picky', 'The county land offer has expired. I will inspect the course again later.', 'bad');
+      specialGuestTicker('picky', 'The county land offer has expired. I will inspect the course again later.', 'bad');
       if (ui.get().modal?.kind === 'landOffer') ui.set({ modal: null });
     }
   }
@@ -3544,17 +3748,29 @@ function applySaveData(d: any): boolean {
   // restore golfers mid-round; balls in flight aren't saved, so coerce
   // anyone who was watching/swinging back into a walking state
   S.golfers = [];
+  golferTeeQueueSeq = Array.isArray(d.golfers)
+    ? (d.golfers as Golfer[]).reduce((max, golfer) => {
+      const sequence = Number(golfer?.teeQueueSeq);
+      return Number.isFinite(sequence) && sequence > 0 ? Math.max(max, Math.trunc(sequence)) : max;
+    }, 0)
+    : 0;
+  let officialGuestActive = false;
   if (Array.isArray(d.golfers)) {
     for (const g of d.golfers as Golfer[]) {
       if (typeof g?.x !== 'number' || typeof g?.holeIdx !== 'number') continue;
-      if (g.holeIdx >= S.holes.length) continue; // their hole is gone
+      const validActiveHole = g.holeIdx >= 0 && g.holeIdx < S.holes.length;
+      const validCompletedLeave = g.state === 'leave' && g.holeIdx === S.holes.length;
+      if (!validActiveHole && !validCompletedLeave) continue;
+      officialGuestActive = normalizeLoadedSpecialGuest(g, officialGuestActive);
       g.chatCd = 0;
       if (typeof g.hunger !== 'number') g.hunger = 1;
       if (typeof g.thirst !== 'number') g.thirst = 1;
       if (typeof g.energy !== 'number') g.energy = 1;
       g.view = actorViewWithLegacyFallback(g);
       g.facingAway = g.view === 'rear';
-      if (g.state !== 'leave') {
+      if (g.state === 'waitTee') {
+        waitForHole(g);
+      } else if (g.state !== 'leave') {
         if (g.ball) {
           g.state = 'toBall';
           setGolferTarget(g, g.ball.x, g.ball.y);
@@ -3564,8 +3780,7 @@ function applySaveData(d: any): boolean {
           setGolferTarget(g, h.tee.x, h.tee.y);
         }
       } else {
-        g.path = undefined;
-        g.pathIdx = 0;
+        setGolferTarget(g, CH.x, CH.y);
       }
       S.golfers.push(g);
     }

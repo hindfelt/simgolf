@@ -29,16 +29,25 @@ async function expectCompleteWorldStage(page: Page) {
   const deedBoxes = await deeds.evaluateAll((items) => items.map((item) => {
     const box = item.getBoundingClientRect();
     const label = item.querySelector('b');
+    const region = item.querySelector('small');
+    const status = item.querySelector('em');
+    const copy = item.querySelector<HTMLElement>(':scope > span');
+    const leafBoxes = [label, region, status].map((leaf) => leaf?.getBoundingClientRect());
     return {
       x: box.x,
       y: box.y,
       width: box.width,
       height: box.height,
       fontSize: label ? Number.parseFloat(getComputedStyle(label).fontSize) : 0,
+      secondaryFontSizes: [region, status].map((leaf) => leaf ? Number.parseFloat(getComputedStyle(leaf).fontSize) : 0),
+      verticalOverflow: copy ? copy.scrollHeight - copy.clientHeight : 1,
+      copyInside: leafBoxes.every((leaf) => leaf && leaf.top >= box.top - 1 && leaf.bottom <= box.bottom + 1),
     };
   }));
   expect(deedBoxes.every((deed) => deed.x >= stageBox.x && deed.y >= stageBox.y && right(deed) <= right(stageBox) && bottom(deed) <= bottom(stageBox))).toBe(true);
-  expect(deedBoxes.every((deed) => deed.fontSize >= 9)).toBe(true);
+  expect(deedBoxes.every((deed) => deed.fontSize === 12)).toBe(true);
+  expect(deedBoxes.every((deed) => deed.secondaryFontSizes.every((size) => size === 7))).toBe(true);
+  expect(deedBoxes.every((deed) => deed.verticalOverflow <= 0 && deed.copyInside)).toBe(true);
   for (let index = 0; index < deedBoxes.length; index += 1) {
     for (let peer = index + 1; peer < deedBoxes.length; peer += 1) {
       expect(intersects(deedBoxes[index], deedBoxes[peer]), `world deeds ${index} and ${peer} must not overlap`).toBe(false);

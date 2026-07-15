@@ -13,6 +13,8 @@ import { CLEAR_WEATHER } from './weather';
 import { createRegularTraining } from './regularTraining';
 import { operatingEarningsFromLedger } from './properties';
 import type { ResortRecord } from './portfolio';
+import { SPECIAL_GUESTS, specialGuestPortrait } from './specialGuests';
+import { isPointOnBridgeDeck } from './bridges';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -195,6 +197,7 @@ describe('save / load round-trip', () => {
     S.comments = [{ id: 1, time: 12, name: 'Big Earl', txt: 'Frame that scorecard!', cls: 'money' }];
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     delete (globalThis as { localStorage?: Storage }).localStorage;
   });
 
@@ -248,6 +251,164 @@ describe('save / load round-trip', () => {
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
     expect(S.regulars[0].training).toEqual({ progress: { length: 25, accuracy: 50, imagination: 75 }, gained: { length: 2, accuracy: 3, imagination: 4 }, holes: 16 });
+  });
+
+  it('repairs one saved official guest without losing round state and strips unsafe duplicate markers', () => {
+    const savedGolfer = (name: string, x: number, marker: unknown): Golfer => ({
+      name,
+      skill: .12,
+      length: .21,
+      accuracy: .31,
+      imagination: .41,
+      shirt: '#010203',
+      skin: '#040506',
+      cap: '#070809',
+      x,
+      y: 8.75,
+      tx: 9.5,
+      ty: 10.5,
+      phase: 2.5,
+      state: 'leave',
+      t: .4,
+      holeIdx: 0,
+      strokes: 3,
+      mood: 1.25,
+      ball: { x: 12.25, y: 7.5 },
+      lie: 'fair',
+      chatCd: 2,
+      scenicSaid: true,
+      energy: .44,
+      hunger: .55,
+      thirst: .66,
+      specialGuest: marker,
+    } as unknown as Golfer);
+
+    S.golfers = [
+      savedGolfer('Edited official', 11.25, 'picky'),
+      savedGolfer('Duplicate official', 12.25, 'picky'),
+      savedGolfer('Invalid marker golfer', 13.25, 'not-a-guest'),
+    ];
+    saveGame();
+    S.golfers = [];
+
+    expect(loadGame()).toBe(true);
+    expect(S.golfers).toHaveLength(3);
+
+    const [official, duplicate, invalid] = S.golfers;
+    const picky = SPECIAL_GUESTS.picky;
+    expect(official).toMatchObject({
+      specialGuest: 'picky',
+      name: picky.name,
+      skill: picky.skill,
+      length: picky.skill,
+      accuracy: picky.skill,
+      imagination: picky.skill,
+      shirt: picky.visual.shirt,
+      skin: picky.visual.skin,
+      cap: picky.visual.cap,
+      x: 11.25,
+      y: 8.75,
+      holeIdx: 0,
+      strokes: 3,
+      mood: 1.25,
+      ball: { x: 12.25, y: 7.5 },
+      energy: .44,
+      hunger: .55,
+      thirst: .66,
+    });
+    expect(duplicate.name).toBe('Duplicate official');
+    expect(duplicate.specialGuest).toBeUndefined();
+    expect(duplicate.x).toBe(12.25);
+    expect(invalid.name).toBe('Invalid marker golfer');
+    expect(invalid.specialGuest).toBeUndefined();
+    expect(invalid.x).toBe(13.25);
+    expect(S.golfers.filter((golfer) => golfer.specialGuest)).toHaveLength(1);
+  });
+
+  it('preserves queued tee groups on load while grandfathering active over-cap groups', () => {
+    S.holes[0].par = 3;
+    const savedGolfer = (name: string, state: Golfer['state'], ball: Golfer['ball']): Golfer => ({
+      name, skill: .5, shirt: '#fff', skin: '#dba276', cap: '#333',
+      x: 5.5, y: 5.5, tx: 5.5, ty: 5.5, phase: 0, state, t: 10,
+      holeIdx: 0, strokes: 1, mood: 0, ball, lie: ball ? 'tee' : 'rough',
+      chatCd: 0, scenicSaid: false, energy: 1, hunger: 1, thirst: 1,
+    });
+    S.golfers = [
+      savedGolfer('Grandfathered one', 'preshot', { x: 5.5, y: 5.5 }),
+      savedGolfer('Grandfathered two', 'watch', { x: 5.5, y: 5.5 }),
+      savedGolfer('Queued', 'waitTee', null),
+    ];
+
+    saveGame();
+    S.golfers = [];
+    expect(loadGame()).toBe(true);
+
+    expect(S.golfers.slice(0, 2).map((golfer) => golfer.state)).toEqual(['toBall', 'toBall']);
+    expect(S.golfers[2].state).toBe('waitTee');
+    expect(S.golfers[2].ball).toBeNull();
+  });
+
+  it('restores a completed golfer who is still leaving with holeIdx equal to the course length', () => {
+    S.golfers = [{
+      name: 'Ada Member', skill: .7, shirt: '#fff', skin: '#dba276', cap: '#333',
+      x: 12.5, y: 12.5, tx: 2.5, ty: 2.5, phase: 0, state: 'leave', t: 0,
+      holeIdx: S.holes.length, strokes: 0, mood: 3, ball: null, lie: 'rough',
+      chatCd: 0, scenicSaid: false, energy: 1, hunger: 1, thirst: 1,
+    }];
+
+    saveGame();
+    S.golfers = [];
+    expect(loadGame()).toBe(true);
+
+    expect(S.golfers).toHaveLength(1);
+    expect(S.golfers[0]).toMatchObject({ name: 'Ada Member', state: 'leave', holeIdx: S.holes.length });
+  });
+
+  it('spawns an official entirely from the registry and gives the arrival ticker the same identity', () => {
+    S.speed = 1;
+    S.player = null;
+    S.balls = [];
+    S.golfers = [];
+    S.nextGolfer = 999;
+    S.nextStoryCheck = 999;
+    S.owned.fill(1);
+    S.owned[1] = 0;
+    S.specialVisitors = {
+      pickyCooldown: 0,
+      ivanaCooldown: 9999,
+      pickyVisits: 0,
+      ivanaVisits: 0,
+      landmarkDonated: false,
+      landmarkCredits: 0,
+      landPurchased: false,
+      landOffer: null,
+    };
+    ui.set({ tickers: [] });
+    const tickerSpy = vi.spyOn(ui, 'ticker');
+
+    update(.05);
+
+    const guest = SPECIAL_GUESTS.picky;
+    expect(S.golfers).toHaveLength(1);
+    expect(S.golfers[0]).toMatchObject({
+      specialGuest: guest.kind,
+      name: guest.name,
+      skill: guest.skill,
+      length: guest.skill,
+      accuracy: guest.skill,
+      imagination: guest.skill,
+      shirt: guest.visual.shirt,
+      skin: guest.visual.skin,
+      cap: guest.visual.cap,
+    });
+    const arrival = tickerSpy.mock.calls.find(([name]) => name === guest.name);
+    expect(arrival).toEqual([
+      guest.name,
+      `${guest.title} has arrived for an official round. Make an impression.`,
+      'money',
+      specialGuestPortrait('picky'),
+    ]);
+    tickerSpy.mockRestore();
   });
 
   it('preserves a full legacy ledger floor when the next live revenue entry arrives', () => {
@@ -1349,6 +1510,231 @@ describe('golfer state machine', () => {
     expect(g.state).toBe('toBall'); // far from arriving yet
     expect(g.x).toBeGreaterThan(5.5);
     expect(g.x).toBeLessThan(25.5);
+  });
+
+  it('holds instead of falling back to a direct walk across an unreachable water barrier', () => {
+    for (let y = 0; y < H; y++) S.tiles[idx(10, y)] = Tile.WATER;
+    rebuildStatics();
+    const g = makeGolfer({ state: 'toBall', x: 5.5, y: 5.5, tx: 25.5, ty: 5.5, ball: { x: 25.5, y: 5.5 } });
+    S.golfers.push(g);
+
+    update(0.1);
+
+    expect(g.path).toBeNull();
+    expect({ x: g.x, y: g.y }).toEqual({ x: 5.5, y: 5.5 });
+  });
+
+  it('invalidates a live route after terrain changes and resumes when a bridge opens it', () => {
+    const g = makeGolfer({ state: 'toBall', x: 5.5, y: 5.5, tx: 25.5, ty: 5.5, ball: { x: 25.5, y: 5.5 } });
+    S.golfers.push(g);
+    rebuildStatics();
+    update(0.1);
+    expect(g.x).toBeGreaterThan(5.5);
+
+    for (let y = 0; y < H; y++) S.tiles[idx(10, y)] = Tile.WATER;
+    rebuildStatics();
+    const blockedAt = { x: g.x, y: g.y };
+    update(0.1);
+    expect(g.path).toBeNull();
+    expect({ x: g.x, y: g.y }).toEqual(blockedAt);
+
+    S.tiles[idx(10, 5)] = Tile.BRIDGE_WATER;
+    rebuildStatics();
+    update(0.1);
+    expect(g.path).not.toBeNull();
+    expect(g.x).toBeGreaterThan(blockedAt.x);
+  });
+
+  it.each([
+    { water: Tile.WATER, bridge: Tile.BRIDGE_WATER },
+    { water: Tile.STREAM, bridge: Tile.BRIDGE_STREAM },
+  ])('keeps every multi-tick actor position off raw water and on the authored bridge deck ($water)', ({ water, bridge }) => {
+    for (let y = 0; y < H; y++) {
+      S.tiles[idx(10, y)] = water;
+      S.tiles[idx(11, y)] = water;
+    }
+    S.tiles[idx(10, 5)] = bridge;
+    S.tiles[idx(11, 5)] = bridge;
+    rebuildStatics();
+    const g = makeGolfer({ state: 'toBall', x: 5.5, y: 5.5, tx: 15.5, ty: 5.5, ball: { x: 15.5, y: 5.5 } });
+    S.golfers.push(g);
+    let bridgeSamples = 0;
+
+    for (let tick = 0; tick < 160 && g.state === 'toBall'; tick++) {
+      update(0.05);
+      const tile = S.tiles[idx(Math.floor(g.x), Math.floor(g.y))];
+      expect(tile, `raw water at tick ${tick} (${g.x}, ${g.y})`).not.toBe(Tile.WATER);
+      expect(tile, `raw stream at tick ${tick} (${g.x}, ${g.y})`).not.toBe(Tile.STREAM);
+      if (tile === Tile.BRIDGE_WATER || tile === Tile.BRIDGE_STREAM) {
+        bridgeSamples++;
+        expect(isPointOnBridgeDeck(S.tiles, g.x, g.y), `off-deck bridge position at tick ${tick} (${g.x}, ${g.y})`).toBe(true);
+      }
+    }
+
+    expect(bridgeSamples).toBeGreaterThan(0);
+    expect(g.state).toBe('preshot');
+    expect({ x: g.x, y: g.y }).toEqual({ x: 15.5, y: 5.5 });
+  });
+
+  it('times out an unreachable reserved group, releases its par-three slot, and admits the waiter', () => {
+    S.holes[0].par = 3;
+    for (let y = 0; y < H; y++) S.tiles[idx(10, y)] = Tile.WATER;
+    rebuildStatics();
+    const blocked = makeGolfer({
+      name: 'Blocked reservation', state: 'toTee', x: 15.5, y: 5.5, tx: 5.5, ty: 5.5,
+      path: null, routeBlockedFor: 9.9, routeRetryIn: 1,
+    });
+    const waiting = makeGolfer({ name: 'Next in queue', state: 'waitTee', teeQueueSeq: 1 });
+    S.golfers.push(blocked, waiting);
+
+    update(0.2);
+    expect(S.golfers).not.toContain(blocked);
+    expect(waiting.state).toBe('waitTee');
+
+    update(0.1);
+    expect(waiting.state).not.toBe('waitTee');
+    expect(S.golfers.filter((golfer) => golfer.holeIdx === 0 && golfer.state !== 'waitTee' && golfer.state !== 'leave')).toEqual([waiting]);
+  });
+
+  it('times out unreachable leavers and settles special-guest and membership outcomes exactly once', () => {
+    const baseHole = S.holes[0];
+    S.holes = [baseHole, { ...baseHole, id: 2 }, { ...baseHole, id: 3 }];
+    for (let y = 0; y < H; y++) S.tiles[idx(10, y)] = Tile.WATER;
+    rebuildStatics();
+    S.cash = 1_000;
+    S.fee = 20;
+    S.time = 0;
+    S.difficulty = 'moderate';
+    S.financeLedger = [{ id: 1, time: 0, year: 1, amount: 1_000, category: 'capital', detail: 'Opening balance' }];
+    S.regulars = [{
+      name: 'Future Member', shirt: '#fff', skin: '#dba276', cap: '#333',
+      length: .6, accuracy: .6, imagination: .6, visits: 3, streak: 1,
+      lastVisit: 0, holesPlayed: 3, lifetimeSpend: 0,
+    }];
+    S.specialVisitors = {
+      pickyCooldown: 9_999, ivanaCooldown: 9_999, pickyVisits: 0, ivanaVisits: 0,
+      landmarkDonated: false, landmarkCredits: 0, landPurchased: false, landOffer: null,
+    };
+    ui.set({ modal: null, tickers: [] });
+    const official = makeGolfer({
+      name: SPECIAL_GUESTS.picky.name, specialGuest: 'picky', state: 'leave', holeIdx: S.holes.length,
+      mood: 2, x: 15.5, y: 5.5, tx: 3.5, ty: 4.5, path: null, routeBlockedFor: 9.9, routeRetryIn: 1,
+    });
+    const member = makeGolfer({
+      name: 'Future Member', state: 'leave', holeIdx: S.holes.length,
+      mood: 4, x: 15.5, y: 6.5, tx: 3.5, ty: 4.5, path: null, routeBlockedFor: 9.9, routeRetryIn: 1,
+    });
+    S.golfers.push(official, member);
+
+    update(0.2);
+
+    expect(S.golfers).toEqual([]);
+    expect(S.specialVisitors.pickyVisits).toBe(1);
+    expect(S.regulars[0].membership).toMatchObject({ tier: 'annual', paid: 300 });
+    expect(S.regulars[0].lifetimeSpend).toBe(300);
+    expect(S.financeLedger.filter((entry) => entry.category === 'memberships')).toHaveLength(1);
+    expect(S.cash).toBe(1_300);
+
+    update(0.2);
+    expect(S.specialVisitors.pickyVisits).toBe(1);
+    expect(S.regulars[0].membership).toMatchObject({ tier: 'annual', paid: 300 });
+    expect(S.regulars[0].lifetimeSpend).toBe(300);
+    expect(S.financeLedger.filter((entry) => entry.category === 'memberships')).toHaveLength(1);
+    expect(S.cash).toBe(1_300);
+  });
+
+  it.each([
+    { par: 3, admitted: 1 },
+    { par: 4, admitted: 2 },
+    { par: 5, admitted: 2 },
+  ])('reserves at most $admitted AI groups on a par-$par hole', ({ par, admitted }) => {
+    S.holes[0].par = par;
+    const groups = Array.from({ length: 3 }, (_, index) => makeGolfer({ name: `Queue ${index + 1}`, state: 'waitTee' }));
+    S.golfers.push(...groups);
+
+    update(0.1);
+
+    expect(groups.filter((g) => g.state !== 'waitTee')).toHaveLength(admitted);
+    expect(groups.filter((g) => g.state === 'waitTee')).toHaveLength(3 - admitted);
+  });
+
+  it('counts a special guest reservation and admits the FIFO waiter after it releases', () => {
+    S.holes[0].par = 3;
+    const guest = makeGolfer({ name: 'Official', state: 'toTee', t: 999, specialGuest: 'picky' });
+    const waiting = makeGolfer({ name: 'Waiting regular', state: 'waitTee' });
+    S.golfers.push(guest, waiting);
+
+    update(0.1);
+    expect(waiting.state).toBe('waitTee');
+
+    guest.state = 'leave';
+    update(0.1);
+    expect(waiting.state).not.toBe('waitTee');
+  });
+
+  it('admits two or more waiters strictly by persisted tee queue sequence', () => {
+    S.holes[0].par = 3;
+    const active = makeGolfer({ name: 'Current group', state: 'preshot', t: 999, ball: { x: 5.5, y: 5.5 } });
+    const second = makeGolfer({ name: 'Second', state: 'waitTee', teeQueueSeq: 20 });
+    const first = makeGolfer({ name: 'First', state: 'waitTee', teeQueueSeq: 10 });
+    const third = makeGolfer({ name: 'Third', state: 'waitTee', teeQueueSeq: 30 });
+    const waiting = [second, first, third];
+    S.golfers.push(active, ...waiting);
+
+    update(0.1);
+    expect(waiting.every((golfer) => golfer.state === 'waitTee')).toBe(true);
+
+    const admitted: string[] = [];
+    let occupying = active;
+    for (let turn = 0; turn < waiting.length; turn++) {
+      occupying.state = 'leave';
+      occupying.ball = null;
+      occupying.tx = occupying.x;
+      occupying.ty = occupying.y;
+      update(0.1);
+      const next = waiting.find((golfer) => golfer.state !== 'waitTee' && golfer.state !== 'leave');
+      expect(next, `missing admission at queue turn ${turn + 1}`).toBeDefined();
+      admitted.push(next!.name);
+      occupying = next!;
+    }
+
+    expect(admitted).toEqual(['First', 'Second', 'Third']);
+  });
+
+  it('grandfathers an over-cap par change until every excess reservation drains', () => {
+    S.holes[0].par = 3;
+    const first = makeGolfer({ name: 'First active', state: 'preshot', t: 999, ball: { x: 5.5, y: 5.5 } });
+    const second = makeGolfer({ name: 'Second active', state: 'preshot', t: 999, ball: { x: 5.5, y: 5.5 } });
+    const waiting = makeGolfer({ name: 'Waiting', state: 'waitTee' });
+    S.golfers.push(first, second, waiting);
+
+    update(0.1);
+    expect(first.state).toBe('preshot');
+    expect(second.state).toBe('preshot');
+    expect(waiting.state).toBe('waitTee');
+
+    first.state = 'leave';
+    update(0.1);
+    expect(waiting.state).toBe('waitTee');
+
+    second.state = 'leave';
+    update(0.1);
+    expect(waiting.state).not.toBe('waitTee');
+  });
+
+  it('safely releases active and queued groups when their hole is removed', () => {
+    const active = makeGolfer({ name: 'Active', state: 'preshot', t: 999, ball: { x: 5.5, y: 5.5 } });
+    const waiting = makeGolfer({ name: 'Waiting', state: 'waitTee' });
+    const alreadyLeaving = makeGolfer({ name: 'Leaving', state: 'leave' });
+    S.golfers.push(active, waiting, alreadyLeaving);
+    S.tool = 'dozer';
+
+    paintAt(5.5, 5.5);
+
+    expect(S.holes).toHaveLength(0);
+    expect(active.state).toBe('leave');
+    expect(waiting.state).toBe('leave');
+    expect(alreadyLeaving.state).toBe('leave');
   });
 
   it('persists facility training and applies the improved trait to later holes immediately', () => {

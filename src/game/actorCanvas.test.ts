@@ -9,6 +9,7 @@ import {
   type CourseStaffKind,
   type GolferFrame,
 } from './sprites';
+import { SPECIAL_GUESTS } from './specialGuests';
 
 interface PaintedRect { x: number; y: number; width: number; height: number; color: string }
 interface FakeCanvas {
@@ -63,6 +64,31 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('native actor canvases', () => {
+  it('renders authored special-guest cues and includes visual overrides in the sprite cache key', () => {
+    const picky = SPECIAL_GUESTS.picky.visual;
+    const ivana = SPECIAL_GUESTS.ivana.visual;
+    const pickyIndex = canvases.length;
+    const pickySprite = golferSprite(picky.shirt, picky.skin, picky.cap, 'idle', 'front', picky.identity, picky);
+    expectNativePixelsInBounds(canvases[pickyIndex]);
+
+    const ivanaIndex = canvases.length;
+    const ivanaSprite = golferSprite(ivana.shirt, ivana.skin, ivana.cap, 'idle', 'front', ivana.identity, ivana);
+    expectNativePixelsInBounds(canvases[ivanaIndex]);
+    expect(paintSignature(canvases[ivanaIndex])).not.toBe(paintSignature(canvases[pickyIndex]));
+
+    const alternate = golferSprite(
+      picky.shirt,
+      picky.skin,
+      picky.cap,
+      'idle',
+      'front',
+      picky.identity,
+      { ...picky, signature: 'patron' },
+    );
+    expect(alternate).not.toBe(pickySprite);
+    expect(ivanaSprite).not.toBe(pickySprite);
+  });
+
   it('plots every golfer pose and view directly inside a 32×44 canvas', () => {
     const frames: GolferFrame[] = ['idle', 'walkA', 'walkB', 'address', 'back', 'follow', 'putt', 'puttFollow'];
     const views: ActorSpriteView[] = ['front', 'rear', 'side'];

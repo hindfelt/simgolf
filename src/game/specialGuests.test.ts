@@ -1,11 +1,50 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { H, PH, PW, W } from './constants';
 import { acceptLandOffer, placeBuilding } from './engine';
-import { adjacentUnownedParcels, specialGuestEnjoyed } from './specialGuests';
+import {
+  SPECIAL_GUESTS,
+  adjacentUnownedParcels,
+  isSpecialGuestKind,
+  specialGuestEnjoyed,
+  specialGuestPortrait,
+} from './specialGuests';
 import { S } from './state';
 import { Tile } from './types';
 
 describe('manual special visitors', () => {
+  it('keeps both marquee identities explicit, bare-headed, and visually distinct', () => {
+    const picky = SPECIAL_GUESTS.picky;
+    const ivana = SPECIAL_GUESTS.ivana;
+
+    expect(picky).toMatchObject({ name: 'I.M. Picky', skill: 0.58, defaultExpression: 'neutral' });
+    expect(picky.visual).toMatchObject({
+      identity: 'special-guest:picky',
+      skin: '#9a6546',
+      hairTone: '#211916',
+      signature: 'commissioner',
+      appearance: { build: 'broad', headwear: 'none', hair: 'close' },
+    });
+    expect(ivana).toMatchObject({ name: 'Ivana Richman', skill: 0.74, defaultExpression: 'pleased' });
+    expect(ivana.visual).toMatchObject({
+      identity: 'special-guest:ivana',
+      skin: '#d9a47c',
+      hairTone: '#c79b4c',
+      hairHighlight: '#e5c77e',
+      signature: 'patron',
+      appearance: { build: 'classic', headwear: 'none', hair: 'shoulder' },
+    });
+    expect(ivana.visual.identity).not.toBe(picky.visual.identity);
+  });
+
+  it('builds complete portrait profiles and rejects forged persisted guest kinds', () => {
+    expect(specialGuestPortrait('picky')).toEqual({ ...SPECIAL_GUESTS.picky.visual, expression: 'neutral' });
+    expect(specialGuestPortrait('ivana', 'cross')).toEqual({ ...SPECIAL_GUESTS.ivana.visual, expression: 'cross' });
+    expect(isSpecialGuestKind('picky')).toBe(true);
+    expect(isSpecialGuestKind('ivana')).toBe(true);
+    expect(isSpecialGuestKind('commissioner')).toBe(false);
+    expect(isSpecialGuestKind(null)).toBe(false);
+  });
+
   it('offers only edge-adjacent, contiguous expansion parcels', () => {
     const owned = new Uint8Array(PW * PH);
     owned[0] = owned[1] = owned[PW] = owned[PW + 1] = 1;

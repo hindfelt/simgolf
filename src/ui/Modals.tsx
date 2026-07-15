@@ -9,6 +9,9 @@ import Scorecard from './Scorecard';
 import { submitChallengeRound, submitCompetitionRound } from '../online/api';
 import { relativeScoreLabel } from '../game/scorecards';
 import { propertyById } from '../game/properties';
+import { SPECIAL_GUESTS, specialGuestPortrait } from '../game/specialGuests';
+import type { PortraitExpression } from '../game/characterVisuals';
+import type { SpecialGuestKind } from '../game/types';
 import CharacterPortrait from './CharacterPortrait';
 import { PRO_PRACTICE_THRESHOLD, PRO_SKILLS, type ProPracticeResult } from '../game/proCircuit';
 import WorldScreen from './WorldScreen';
@@ -20,6 +23,16 @@ const THEMES = [
   { id: 'desert', label: 'Desert', blurb: 'Red rock, dry scrub and precious ribbons of turf.' },
   { id: 'tropical', label: 'Tropical', blurb: 'Bright water, dense palms and lush fairways.' },
 ] as const;
+
+function SpecialGuestHeading({ kind, heading, expression }: { kind: SpecialGuestKind; heading: string; expression: PortraitExpression }) {
+  const guest = SPECIAL_GUESTS[kind];
+  return (
+    <div className="guestHeading" data-special-guest={kind}>
+      <CharacterPortrait name={guest.name} {...specialGuestPortrait(kind, expression)} variant="simfoto" className="guestPortrait" />
+      <div><h1 id="modal-title">{heading}</h1><div className="tag">{guest.name} · {guest.title}</div></div>
+    </div>
+  );
+}
 
 function DestinationUnlockBanner({ propertyIds, openWorld }: { propertyIds?: readonly PropertyId[]; openWorld: () => void }) {
   if (!propertyIds?.length) return null;
@@ -65,7 +78,7 @@ function LandOfferPanel({ close }: { close: () => void }) {
   const offer = S.specialVisitors.landOffer;
   return (
     <>
-      <div className="guestHeading pickyHeading"><CharacterPortrait name="I.M. Picky" shirt="#71845d" skin="#d9aa7c" cap="#d0ad58" expression="cross" variant="simfoto" className="guestPortrait" /><div><h1 id="modal-title">County land offer</h1><div className="tag">I.M. Picky · County Commissioner</div></div></div>
+      <SpecialGuestHeading kind="picky" heading="County land offer" expression="cross" />
       {offer ? (
         <>
           <p>Your course passed inspection. Choose any adjoining highlighted plot before the offer expires.</p>
@@ -385,11 +398,11 @@ export default function Modals() {
         {modal.kind === 'landOffer' && <LandOfferPanel close={close} />}
         {modal.kind === 'landmarkGift' && (
           <>
-            <div className="guestHeading ivanaHeading"><CharacterPortrait name="Ivana Richman" shirt="#bd6f9f" skin="#e0a878" cap="#f2d688" expression="triumphant" variant="simfoto" className="guestPortrait" /><div><h1 id="modal-title">A patron's gift</h1><div className="tag">Ivana Richman · Heiress</div></div></div>
+            <SpecialGuestHeading kind="ivana" heading="A patron's gift" expression="triumphant" />
             <p>“I adored my round. Please accept this Landmark as a gift to the resort.”</p>
             <div className="landmarkGiftArt" aria-hidden="true"><span>★</span><i /><b>LANDMARK</b></div>
             <p className="fine">The first Landmark is free. After it is placed, additional Landmarks can be purchased from Resort &amp; Facilities.</p>
-            <button className="bigbtn" onClick={() => { close(); selectBuilding('landmark'); }}>Place Ivana's Landmark</button>
+            <button className="bigbtn" onClick={() => { close(); selectBuilding('landmark'); }}>Place {SPECIAL_GUESTS.ivana.name}’s Landmark</button>
             <button className="textBtn" onClick={close}>Place it later</button>
           </>
         )}

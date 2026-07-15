@@ -14,7 +14,7 @@ describe('course camera safe viewport', () => {
 
   it('reserves top chrome and the compact short-landscape controller plus breathing room', () => {
     const safe = courseSafeViewport(688, 368, true);
-    expect(safe).toMatchObject({ left: 10, right: 678, top: COURSE_SAFE_TOP, bottom: 216, centerX: 344, centerY: 166 });
+    expect(safe).toMatchObject({ left: 10, right: 678, top: COURSE_SAFE_TOP, bottom: 200, centerX: 344, centerY: 158 });
     expect(368 - safe.bottom).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT + COURSE_SAFE_GAP);
   });
 
@@ -22,7 +22,10 @@ describe('course camera safe viewport', () => {
     expect(controllerVisibleHeightForViewport(520, true)).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT);
     expect(controllerVisibleHeightForViewport(521, true)).toBe(CONTROLLER_VISIBLE_HEIGHT);
     expect(controllerVisibleHeightForViewport(368, false)).toBe(CONTROLLER_VISIBLE_HEIGHT);
+    expect(controllerVisibleHeightForViewport(716, true, 1592)).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT);
+    expect(controllerVisibleHeightForViewport(768, true, 1366)).toBe(CONTROLLER_VISIBLE_HEIGHT);
     expect(courseSafeViewport(1592, 716).bottom).toBe(716 - CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP);
+    expect(courseSafeViewport(1592, 716, true).bottom).toBe(716 - COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP);
   });
 
   it('centres world targets in the unobscured course rectangle', () => {

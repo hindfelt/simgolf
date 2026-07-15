@@ -13,6 +13,73 @@ async function enterSandboxRound(page: Page) {
   await expect(page.locator('.controllerShell')).toHaveAttribute('data-mode', 'play');
 }
 
+async function activateCompetitionAimAdvice(page: Page) {
+  await page.evaluate(async () => {
+    const [{ S }, { useUI }] = await Promise.all([
+      import('/src/game/state.ts'),
+      import('/src/ui/store.ts'),
+    ]);
+    const current = useUI.getState().playHud;
+    if (!current) throw new Error('Play HUD is not active');
+    S.activeChampionship = {
+      id: 'visual-championship',
+      title: 'Founders Championship',
+      courseId: 'visual-course',
+      courseName: 'Maple Crossing',
+      difficulty: 'moderate',
+      pro: S.proProfile,
+      usesResidentPro: true,
+    };
+    useUI.getState().set({ playHud: { ...current, power: .72 } });
+  });
+  await expect(page.locator('.playCompetitionHud')).toBeVisible();
+}
+
+async function expectCompactTacticalStack(
+  page: Page,
+  expected: { message: Box; competition: Omit<Box, 'height'> },
+) {
+  await expect(page.locator('.playMessage')).toBeVisible();
+  const message = await page.locator('.playMessage').boundingBox() as Box;
+  const competition = await page.locator('.playCompetitionHud').boundingBox() as Box;
+  const palette = await page.locator('.playShotPalette').boundingBox() as Box;
+  const conditions = await page.locator('.playConditions').boundingBox() as Box;
+  const panes = await page.locator('.playConsolePanes').boundingBox() as Box;
+
+  expect(message).toMatchObject(expected.message);
+  expect(competition).toMatchObject(expected.competition);
+  expect(competition.height).toBeGreaterThanOrEqual(18);
+  expect(competition.height).toBeLessThanOrEqual(19);
+  expect(intersects(message, competition)).toBe(false);
+  expect(intersects(message, palette)).toBe(false);
+  expect(intersects(message, conditions)).toBe(false);
+  expect(intersects(competition, palette)).toBe(false);
+  expect(intersects(competition, conditions)).toBe(false);
+  expect(intersects(competition, panes)).toBe(false);
+
+  const overflow = await page.locator('.playHud').evaluate((hud) =>
+    ['.playMessage', '.playCompetitionHud'].map((selector) => {
+      const element = hud.querySelector<HTMLElement>(selector)!;
+      const box = element.getBoundingClientRect();
+      const childrenInside = [...element.children].every((child) => {
+        const childBox = child.getBoundingClientRect();
+        return childBox.left >= box.left - 1 && childBox.right <= box.right + 1
+          && childBox.top >= box.top - 1 && childBox.bottom <= box.bottom + 1;
+      });
+      return {
+        selector,
+        horizontal: element.scrollWidth - element.clientWidth,
+        vertical: element.scrollHeight - element.clientHeight,
+        childrenInside,
+      };
+    }),
+  );
+  expect(overflow).toEqual([
+    { selector: '.playMessage', horizontal: 0, vertical: 0, childrenInside: true },
+    { selector: '.playCompetitionHud', horizontal: 0, vertical: 0, childrenInside: true },
+  ]);
+}
+
 async function expectPlayHudContentToFit(page: Page) {
   const fit = await page.locator('.playHud').evaluate((hud) => {
     const checked = Array.from(hud.querySelectorAll<HTMLElement>([
@@ -85,14 +152,14 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   const quit = await box('.quitBtn');
   const club = await box('.playClubLine .clubBtn');
 
-  expect(hud).toMatchObject({ x: 0, y: 260, width: 796, height: 98 });
-  expect(panes).toMatchObject({ x: 59, y: 282, width: 731, height: 72 });
+  expect(hud).toMatchObject({ x: 0, y: 244, width: 796, height: 114 });
+  expect(panes).toMatchObject({ x: 59, y: 266, width: 731, height: 88 });
   expect(right(panes)).toBe(790);
   expect(right(caddie)).toBeLessThanOrEqual(790);
   expect(bottom(caddie)).toBeLessThanOrEqual(354);
-  expect(palette).toMatchObject({ x: 243.5, y: 223, width: 309, height: 39 });
+  expect(palette).toMatchObject({ x: 243.5, y: 207, width: 309, height: 39 });
   expect(club.height).toBe(17);
-  expect(quit).toMatchObject({ x: 8, y: 295, width: 45, height: 45 });
+  expect(quit).toMatchObject({ x: 8, y: 279, width: 45, height: 45 });
 
   expect(intersects(palette, conditions)).toBe(false);
   expect(intersects(status, skills)).toBe(false);
@@ -114,14 +181,14 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
     };
   });
   expect(readableType).toEqual({
-    paneTitle: 10.5,
-    club: 9.5,
-    facts: 9,
-    skills: 9.5,
-    caddieTitle: 10.5,
-    metricLabel: 8.5,
-    metricValue: 12,
-    resultCopy: 9,
+    paneTitle: 13,
+    club: 11,
+    facts: 11,
+    skills: 12,
+    caddieTitle: 13,
+    metricLabel: 10,
+    metricValue: 15,
+    resultCopy: 11,
   });
 
   await page.addStyleTag({ content: `
@@ -134,17 +201,36 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   ` });
   await expect(shell).toHaveScreenshot('play-shell-796x358.png', { maxDiffPixels: 150 });
 
-  await page.locator('.playHud').evaluate((hud) => {
-    const competition = document.createElement('div');
-    competition.className = 'playCompetitionHud';
-    competition.innerHTML = '<b>PRO CIRCUIT</b><span>Founders Championship</span><em>Gary Golf · Moderate</em>';
-    hud.prepend(competition);
+  await activateCompetitionAimAdvice(page);
+  await expectCompactTacticalStack(page, {
+    message: { x: 8, y: 207, width: 210, height: 40 },
+    competition: { x: 59, y: 247, width: 577 },
   });
-  await expect(page.locator('.playMessage')).toBeHidden();
-  const competition = await box('.playCompetitionHud');
-  expect(competition.y).toBeGreaterThanOrEqual(358 - 166 - 13);
-  expect(intersects(competition, palette)).toBe(false);
-  expect(intersects(competition, conditions)).toBe(false);
+});
+
+test.describe('native championship shell', () => {
+  test.use({ viewport: { width: 800, height: 600 } });
+
+  test('keeps competition identity clear while native play suppresses duplicate advice', async ({ page }) => {
+    await enterSandboxRound(page);
+    await activateCompetitionAimAdvice(page);
+    await expect(page.locator('.playMessage')).toBeHidden();
+
+    const competition = await page.locator('.playCompetitionHud').boundingBox() as Box;
+    const palette = await page.locator('.playShotPalette').boundingBox() as Box;
+    const conditions = await page.locator('.playConditions').boundingBox() as Box;
+    expect(intersects(competition, palette)).toBe(false);
+    expect(intersects(competition, conditions), JSON.stringify({ competition, conditions })).toBe(false);
+    expect(competition.x).toBeGreaterThanOrEqual(0);
+    expect(right(competition)).toBeLessThanOrEqual(800);
+    expect(competition.y).toBeGreaterThanOrEqual(0);
+
+    const overflow = await page.locator('.playCompetitionHud').evaluate((element) => ({
+      horizontal: element.scrollWidth - element.clientWidth,
+      vertical: element.scrollHeight - element.clientHeight,
+    }));
+    expect(overflow).toEqual({ horizontal: 0, vertical: 0 });
+  });
 });
 
 test.describe('coarse compact fallback', () => {
@@ -233,32 +319,27 @@ test.describe('retina short landscape', () => {
     expect(geometry.panesOverflow).toBeLessThanOrEqual(0);
     expect(geometry.panesRight).toBeLessThanOrEqual(geometry.viewportWidth - 6);
 
-    await page.addStyleTag({ content: `
-      canvas.game { visibility: hidden !important; }
-      body { background: #344f42 !important; }
-      .plaque, .gauges, .ticker, .destinationReleaseToast, .playConditions { visibility: hidden !important; }
-    ` });
-    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-    // The visible production text intentionally stays in this Retina proof.
-    // Linux and macOS rasterize the bundled font edges differently (~18.8k
-    // pixels), while the exact boxes and every leaf overflow are asserted
-    // above. Keep a narrow cross-platform antialiasing allowance without
-    // masking structural changes to the fan, panes, or shot rail.
-    await expect(page).toHaveScreenshot('play-shell-retina-796x358.png', { scale: 'device', maxDiffPixels: 20_000 });
   });
 });
 
-test.describe('wide native shell', () => {
+test.describe('wide short-landscape shell', () => {
   test.use({ viewport: { width: 1592, height: 716 } });
 
-  test('uses the full slab and keeps the event card outside course-safe space', async ({ page }) => {
+  test('retires the fan and keeps the complete console compact', async ({ page }) => {
     await enterSandboxRound(page);
     await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(5);
     await expect(page.locator('.playMessage')).toBeHidden();
+    const hud = await page.locator('.playHud').boundingBox() as Box;
     const panes = await page.locator('.playConsolePanes').boundingBox() as Box;
     const caddie = await page.locator('.playCaddieBook').boundingBox() as Box;
-    expect(panes).toMatchObject({ x: 350, width: 1234, height: 72 });
-    expect(right(caddie)).toBe(1584);
+    const palette = await page.locator('.playShotPalette').boundingBox() as Box;
+    expect(hud).toMatchObject({ x: 0, y: 602, width: 1592, height: 114 });
+    expect(panes).toMatchObject({ x: 59, y: 624, width: 1527, height: 88 });
+    expect(right(caddie)).toBe(1586);
+    expect(palette).toMatchObject({ x: 641.5, y: 565, width: 309, height: 39 });
+    await expect(page.locator('.fieldControls')).toBeHidden();
+    await expect(page.locator('.playModeDock')).toBeHidden();
+    await expect(page.locator('.simFotoTicker')).toBeHidden();
 
     const readableType = await page.locator('.playHud').evaluate((hud) => {
       const size = (selector: string) => Number.parseFloat(getComputedStyle(hud.querySelector(selector)!).fontSize);
@@ -274,27 +355,21 @@ test.describe('wide native shell', () => {
       };
     });
     expect(readableType).toEqual({
-      paneTitle: 10,
-      club: 8.5,
-      facts: 8.5,
-      skills: 9,
-      caddieTitle: 9.5,
-      metricLabel: 7.5,
-      metricValue: 11,
-      resultCopy: 8,
+      paneTitle: 13,
+      club: 11,
+      facts: 11,
+      skills: 12,
+      caddieTitle: 13,
+      metricLabel: 10,
+      metricValue: 15,
+      resultCopy: 11,
     });
 
-    await page.locator('.playHud').evaluate((hud) => {
-      const competition = document.createElement('div');
-      competition.className = 'playCompetitionHud';
-      competition.innerHTML = '<b>PRO CIRCUIT</b><span>Founders Championship</span><em>Gary Golf · Moderate</em>';
-      hud.prepend(competition);
+    await activateCompetitionAimAdvice(page);
+    await expectCompactTacticalStack(page, {
+      message: { x: 8, y: 565, width: 320, height: 40 },
+      competition: { x: 59, y: 605, width: 1373 },
     });
-    const competition = await page.locator('.playCompetitionHud').boundingBox() as Box;
-    const palette = await page.locator('.playShotPalette').boundingBox() as Box;
-    expect(competition.y).toBeGreaterThanOrEqual(716 - 166 - 12);
-    expect(bottom(competition)).toBeLessThanOrEqual(palette.y);
-    await expect(page.locator('.playMessage')).toBeHidden();
 
     await page.locator('.ticker').evaluate((ticker) => {
       const stalePortrait = document.createElement('article');

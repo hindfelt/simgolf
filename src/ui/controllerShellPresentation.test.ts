@@ -36,9 +36,11 @@ describe('rebuilt original controller presentation', () => {
     expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?grid-template-columns: repeat\(8, 64px\);[\s\S]*?grid-template-rows: repeat\(2, 52px\);/);
     expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar\s*\{[^}]*grid-template-columns: repeat\(2, 64px\);[^}]*grid-template-rows: repeat\(2, 52px\);/s);
     expect(shell).toMatch(/\.controllerShell \.toolGraphic,[\s\S]*?width: 60px;[\s\S]*?height: 47px;/);
-    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?width: 62px;[\s\S]*?height: 20px;[\s\S]*?font-size: 9px;[\s\S]*?white-space: normal;/);
+    expect(shell).toContain('--sg-construction-control-width: 280px;');
+    expect(shell).toMatch(/\.controllerShell \.toolDock\s*\{[^}]*left: var\(--sg-construction-control-width\);/s);
+    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?width: 62px;[\s\S]*?height: 24px;[\s\S]*?font-size: 11px;[\s\S]*?white-space: normal;/);
     expect(toolbar).toContain('<span className="ct" aria-hidden="true">{item.ct}</span>');
-    expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 8px;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 10px;/);
   });
 
   it('keeps every mode and native-size tool text visible in short viewports', () => {
