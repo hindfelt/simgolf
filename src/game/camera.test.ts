@@ -22,7 +22,10 @@ describe('course camera safe viewport', () => {
     expect(controllerVisibleHeightForViewport(520, true)).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT);
     expect(controllerVisibleHeightForViewport(521, true)).toBe(CONTROLLER_VISIBLE_HEIGHT);
     expect(controllerVisibleHeightForViewport(368, false)).toBe(CONTROLLER_VISIBLE_HEIGHT);
+    expect(controllerVisibleHeightForViewport(716, true, 1592)).toBe(COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT);
+    expect(controllerVisibleHeightForViewport(768, true, 1366)).toBe(CONTROLLER_VISIBLE_HEIGHT);
     expect(courseSafeViewport(1592, 716).bottom).toBe(716 - CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP);
+    expect(courseSafeViewport(1592, 716, true).bottom).toBe(716 - COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP);
   });
 
   it('centres world targets in the unobscured course rectangle', () => {

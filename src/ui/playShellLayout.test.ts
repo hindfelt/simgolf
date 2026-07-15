@@ -65,12 +65,13 @@ describe('original play shell responsive geometry', () => {
     expect(shell).toMatch(/\.controllerShell \.playHud \.playClubLine \.clubBtn::after\s*\{[^}]*inset: -7px 0;/s);
   });
 
-  it('uses a full-width readable console at the native Retina landscape width', () => {
+  it('uses a full-width readable console for both Retina and wide short-landscape viewports', () => {
     const shortMarker = shell.indexOf('/* A Retina capture of a 796px-wide browser');
     const shortStart = shell.indexOf('@media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px)', shortMarker);
     const shortEnd = shell.indexOf('@media (max-height: 520px) and (max-width: 650px)', shortStart);
     const short = shell.slice(shortStart, shortEnd);
     expect(shortStart).toBeGreaterThan(-1);
+    expect(short).toContain('(min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1)');
     expect(short).toContain('--sg-bottom: 98px;');
     expect(short).toContain('--sg-controller-visible-height: 140px;');
     expect(short).toContain('height: 140px;');
@@ -92,5 +93,10 @@ describe('original play shell responsive geometry', () => {
     expect(intersects(message, palette)).toBe(false);
     expect(intersects(palette, conditions)).toBe(false);
     expect(right(conditions)).toBe(viewportWidth - 6);
+
+    const wideViewport = { width: 1592, height: 716 };
+    expect(wideViewport.width / wideViewport.height).toBeGreaterThan(2);
+    const wideConsolePanes = { x: 59, width: wideViewport.width - 59 - 6 };
+    expect(right(wideConsolePanes)).toBe(wideViewport.width - 6);
   });
 });

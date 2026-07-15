@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { GOLFER_PORTRAIT_SIZE, golferPortraitSprite, type PortraitExpression } from '../game/portraits';
+import { useEffect, useRef, type CSSProperties } from 'react';
+import type { CharacterVisualOverrides, PortraitExpression } from '../game/characterVisuals';
+import { GOLFER_PORTRAIT_SIZE, golferPortraitSprite } from '../game/portraits';
 
-interface CharacterPortraitProps {
+interface CharacterPortraitProps extends CharacterVisualOverrides {
   name: string;
   identity?: string;
   shirt: string;
@@ -11,6 +12,13 @@ interface CharacterPortraitProps {
   variant?: 'card' | 'profile' | 'simfoto';
   className?: string;
 }
+
+type CharacterPortraitStyle = CSSProperties & {
+  '--character-shirt': string;
+  '--character-cap': string;
+  '--character-trim': string;
+  '--character-accent': string;
+};
 
 /**
  * Original-style SimFoto art: a dedicated three-quarter bust authored at UI
@@ -26,6 +34,14 @@ export default function CharacterPortrait({
   expression = 'neutral',
   variant = 'card',
   className = '',
+  appearance,
+  signature,
+  hairTone,
+  hairHighlight,
+  trim,
+  pants,
+  accent,
+  bag,
 }: CharacterPortraitProps) {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -36,13 +52,32 @@ export default function CharacterPortrait({
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(golferPortraitSprite(identity, shirt, skin, cap, expression), 0, 0);
-  }, [cap, expression, identity, shirt, skin]);
+    ctx.drawImage(golferPortraitSprite(identity, shirt, skin, cap, expression, {
+      appearance,
+      signature,
+      hairTone,
+      hairHighlight,
+      trim,
+      pants,
+      accent,
+      bag,
+    }), 0, 0);
+  }, [accent, appearance, bag, cap, expression, hairHighlight, hairTone, identity, pants, shirt, signature, skin, trim]);
+
+  const portraitStyle: CharacterPortraitStyle = {
+    '--character-shirt': shirt,
+    '--character-cap': cap,
+    '--character-trim': trim ?? cap,
+    '--character-accent': accent ?? cap,
+  };
 
   return (
     <span
       className={`characterPortrait portrait-${variant} expression-${expression} ${className}`.trim()}
+      data-character-id={identity}
+      data-character-signature={signature}
       data-expression={expression}
+      style={portraitStyle}
       title={name}
       role="img"
       aria-label={`${name} portrait, ${expression}`}

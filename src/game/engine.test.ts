@@ -13,6 +13,7 @@ import { CLEAR_WEATHER } from './weather';
 import { createRegularTraining } from './regularTraining';
 import { operatingEarningsFromLedger } from './properties';
 import type { ResortRecord } from './portfolio';
+import { SPECIAL_GUESTS, specialGuestPortrait } from './specialGuests';
 
 describe('new-hole placement', () => {
   beforeEach(() => {
@@ -195,6 +196,7 @@ describe('save / load round-trip', () => {
     S.comments = [{ id: 1, time: 12, name: 'Big Earl', txt: 'Frame that scorecard!', cls: 'money' }];
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     delete (globalThis as { localStorage?: Storage }).localStorage;
   });
 
@@ -248,6 +250,125 @@ describe('save / load round-trip', () => {
     expect(S.regulars[0].membership).toMatchObject({ tier: 'lifetime', paid: 2400 });
     expect(S.regulars[0].lifetimeSpend).toBe(4200);
     expect(S.regulars[0].training).toEqual({ progress: { length: 25, accuracy: 50, imagination: 75 }, gained: { length: 2, accuracy: 3, imagination: 4 }, holes: 16 });
+  });
+
+  it('repairs one saved official guest without losing round state and strips unsafe duplicate markers', () => {
+    const savedGolfer = (name: string, x: number, marker: unknown): Golfer => ({
+      name,
+      skill: .12,
+      length: .21,
+      accuracy: .31,
+      imagination: .41,
+      shirt: '#010203',
+      skin: '#040506',
+      cap: '#070809',
+      x,
+      y: 8.75,
+      tx: 9.5,
+      ty: 10.5,
+      phase: 2.5,
+      state: 'leave',
+      t: .4,
+      holeIdx: 0,
+      strokes: 3,
+      mood: 1.25,
+      ball: { x: 12.25, y: 7.5 },
+      lie: 'fair',
+      chatCd: 2,
+      scenicSaid: true,
+      energy: .44,
+      hunger: .55,
+      thirst: .66,
+      specialGuest: marker,
+    } as unknown as Golfer);
+
+    S.golfers = [
+      savedGolfer('Edited official', 11.25, 'picky'),
+      savedGolfer('Duplicate official', 12.25, 'picky'),
+      savedGolfer('Invalid marker golfer', 13.25, 'not-a-guest'),
+    ];
+    saveGame();
+    S.golfers = [];
+
+    expect(loadGame()).toBe(true);
+    expect(S.golfers).toHaveLength(3);
+
+    const [official, duplicate, invalid] = S.golfers;
+    const picky = SPECIAL_GUESTS.picky;
+    expect(official).toMatchObject({
+      specialGuest: 'picky',
+      name: picky.name,
+      skill: picky.skill,
+      length: picky.skill,
+      accuracy: picky.skill,
+      imagination: picky.skill,
+      shirt: picky.visual.shirt,
+      skin: picky.visual.skin,
+      cap: picky.visual.cap,
+      x: 11.25,
+      y: 8.75,
+      holeIdx: 0,
+      strokes: 3,
+      mood: 1.25,
+      ball: { x: 12.25, y: 7.5 },
+      energy: .44,
+      hunger: .55,
+      thirst: .66,
+    });
+    expect(duplicate.name).toBe('Duplicate official');
+    expect(duplicate.specialGuest).toBeUndefined();
+    expect(duplicate.x).toBe(12.25);
+    expect(invalid.name).toBe('Invalid marker golfer');
+    expect(invalid.specialGuest).toBeUndefined();
+    expect(invalid.x).toBe(13.25);
+    expect(S.golfers.filter((golfer) => golfer.specialGuest)).toHaveLength(1);
+  });
+
+  it('spawns an official entirely from the registry and gives the arrival ticker the same identity', () => {
+    S.speed = 1;
+    S.player = null;
+    S.balls = [];
+    S.golfers = [];
+    S.nextGolfer = 999;
+    S.nextStoryCheck = 999;
+    S.owned.fill(1);
+    S.owned[1] = 0;
+    S.specialVisitors = {
+      pickyCooldown: 0,
+      ivanaCooldown: 9999,
+      pickyVisits: 0,
+      ivanaVisits: 0,
+      landmarkDonated: false,
+      landmarkCredits: 0,
+      landPurchased: false,
+      landOffer: null,
+    };
+    ui.set({ tickers: [] });
+    const tickerSpy = vi.spyOn(ui, 'ticker');
+
+    update(.05);
+
+    const guest = SPECIAL_GUESTS.picky;
+    expect(S.golfers).toHaveLength(1);
+    expect(S.golfers[0]).toMatchObject({
+      specialGuest: guest.kind,
+      name: guest.name,
+      skill: guest.skill,
+      length: guest.skill,
+      accuracy: guest.skill,
+      imagination: guest.skill,
+      shirt: guest.visual.shirt,
+      skin: guest.visual.skin,
+      cap: guest.visual.cap,
+    });
+    const arrival = tickerSpy.mock.calls.find(([name]) => name === guest.name);
+    expect(arrival).toEqual([
+      guest.name,
+      `${guest.title} has arrived for an official round. Make an impression.`,
+      'money',
+      specialGuestPortrait('picky'),
+    ]);
+    tickerSpy.mockRestore();
   });
 
   it('preserves a full legacy ledger floor when the next live revenue entry arrives', () => {

@@ -52,7 +52,8 @@ import {
   sanitizeRoundHistory,
 } from './scorecards';
 import { attitudeDelta, isDifficulty } from './difficulty';
-import { adjacentUnownedParcels, SPECIAL_GUESTS, specialGuestEnjoyed } from './specialGuests';
+import { adjacentUnownedParcels, isSpecialGuestKind, SPECIAL_GUESTS, specialGuestEnjoyed, specialGuestPortrait } from './specialGuests';
+import type { PortraitExpression } from './characterVisuals';
 import {
   adjustProSkill,
   applyChampionshipCareer,
@@ -86,6 +87,15 @@ function ticker(name: string, txt: string, cls?: string, character?: TickerChara
   ui.ticker(name, txt, cls, character);
   S.comments.push({ id: ++commentSeq, time: S.time, name, txt, cls });
   if (S.comments.length > 60) S.comments.shift();
+}
+
+function specialGuestTicker(
+  kind: SpecialGuestKind,
+  txt: string,
+  cls?: string,
+  expression: PortraitExpression = cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : SPECIAL_GUESTS[kind].defaultExpression,
+) {
+  ticker(SPECIAL_GUESTS[kind].name, txt, cls, specialGuestPortrait(kind, expression));
 }
 export function updateTopbar() {
   ui.set({ cash: S.cash, rep: S.rep, fee: S.fee, golfers: S.golfers.length, holes: S.holes.length, courseName: S.courseName, courseTheme: S.theme, propertyId: S.propertyId, themePackId: S.themePackId, difficulty: S.difficulty, sandbox: S.sandbox });
@@ -655,7 +665,7 @@ export function placeBuilding(kind: BuildingKind, tx: number, ty: number): Build
   rebuildStatics();
   sfx.coin();
   floater(x + def.w / 2, y + def.h / 2, def.name + '!', '#fff');
-  if (giftedLandmark) ticker('Ivana Richman', 'My donated Landmark has found its home. More Landmarks may now be purchased.', 'money');
+  if (giftedLandmark) specialGuestTicker('ivana', 'My donated Landmark has found its home. More Landmarks may now be purchased.', 'money');
   if (!b.open) setHint(def.name + ' built — connect it to the clubhouse with a pathway to open it.');
   else ticker('Pro shop', def.name + ' is open for business.', 'money');
   return b;
@@ -1202,7 +1212,7 @@ export function acceptLandOffer(parcel: number): boolean {
   const px = (parcel % PW) * PARCEL_W + PARCEL_W / 2;
   const py = Math.floor(parcel / PW) * PARCEL_H + PARCEL_H / 2;
   floater(px, py, 'New land!', '#ffd856');
-  ticker('I.M. Picky', 'The county approves your purchase — ' + fmt$(offer.price) + '. Room to grow!', 'money');
+  specialGuestTicker('picky', 'The county approves your purchase — ' + fmt$(offer.price) + '. Room to grow!', 'money', 'pleased');
   setHint('New land acquired. Sculpt it, plant it, build on it.');
   if (!offer.parcelIndices.length) {
     S.specialVisitors.landOffer = null;
@@ -1519,7 +1529,7 @@ function spawnGolfer() {
   if (!S.tournament && S.fee > fair * 1.45 && Math.random() < 0.6) {
     S.lost++;
     floater(CH.x, CH.y - 1, pick(SAY.pricey), '#ffb0a6', 'bub');
-    ticker(g.name, pick(SAY.pricey), 'bad', golferTickerCharacter(g, 'bad'));
+    golferTicker(g, pick(SAY.pricey), 'bad');
     return;
   }
   if (S.fee > fair) changeMood(g, -(S.fee - fair) / 12);
@@ -1551,22 +1561,17 @@ function spawnGolfer() {
   updateTopbar();
 }
 
-const SPECIAL_GUEST_STYLE: Record<SpecialGuestKind, { shirt: string; skin: string; cap: string; skill: number }> = {
-  picky: { shirt: '#2f506f', skin: '#e0a878', cap: '#d8d2bd', skill: 0.58 },
-  ivana: { shirt: '#9b3f72', skin: '#f1c6a0', cap: '#f0d36f', skill: 0.74 },
-};
-
 function spawnSpecialGuest(kind: SpecialGuestKind): boolean {
   const hole = S.holes[0];
   if (!hole || S.golfers.some((golfer) => golfer.specialGuest)) return false;
-  const style = SPECIAL_GUEST_STYLE[kind];
   const guest = SPECIAL_GUESTS[kind];
+  const style = guest.visual;
   const golfer: Golfer = {
     name: guest.name,
-    skill: style.skill,
-    length: style.skill,
-    accuracy: style.skill,
-    imagination: style.skill,
+    skill: guest.skill,
+    length: guest.skill,
+    accuracy: guest.skill,
+    imagination: guest.skill,
     shirt: style.shirt,
     skin: style.skin,
     cap: style.cap,
@@ -1591,16 +1596,43 @@ function spawnSpecialGuest(kind: SpecialGuestKind): boolean {
   };
   setGolferTarget(golfer, hole.tee.x, hole.tee.y);
   S.golfers.push(golfer);
-  ticker(guest.name, `${guest.title} has arrived for an official round. Make an impression.`, 'money');
+  specialGuestTicker(kind, `${guest.title} has arrived for an official round. Make an impression.`, 'money', guest.defaultExpression);
   floater(CH.x, CH.y - 1.2, `${guest.name} visits!`, '#ffd856', 'bub');
   updateTopbar();
+  return true;
+}
+
+/**
+ * Saves are user-editable and older builds persisted the guest palette directly.
+ * Keep the first valid official marker, strip malformed/duplicate markers from
+ * later golfers without dropping those golfers, and reapply the authored guest
+ * identity without disturbing round position, needs, mood, or hole progress.
+ */
+function normalizeLoadedSpecialGuest(golfer: Golfer, officialAlreadyActive: boolean): boolean {
+  const rawKind = (golfer as Golfer & { specialGuest?: unknown }).specialGuest;
+  if (rawKind == null) return officialAlreadyActive;
+  if (!isSpecialGuestKind(rawKind) || officialAlreadyActive) {
+    delete golfer.specialGuest;
+    return officialAlreadyActive;
+  }
+
+  const guest = SPECIAL_GUESTS[rawKind];
+  golfer.specialGuest = rawKind;
+  golfer.name = guest.name;
+  golfer.skill = guest.skill;
+  golfer.length = guest.skill;
+  golfer.accuracy = guest.skill;
+  golfer.imagination = guest.skill;
+  golfer.shirt = guest.visual.shirt;
+  golfer.skin = guest.visual.skin;
+  golfer.cap = guest.visual.cap;
   return true;
 }
 
 function createPickyOffer() {
   const candidates = adjacentUnownedParcels(S.owned, PW, PH);
   if (!candidates.length) {
-    ticker('I.M. Picky', 'You already own every adjoining plot. The county has nothing left to offer.', 'money');
+    specialGuestTicker('picky', 'You already own every adjoining plot. The county has nothing left to offer.', 'money', 'neutral');
     return;
   }
   const start = S.specialVisitors.pickyVisits % candidates.length;
@@ -1614,7 +1646,7 @@ function createPickyOffer() {
     price: LAND_COST,
     remaining: 105,
   };
-  ticker('I.M. Picky', `Impressive. The county is offering ${parcelIndices.length} adjoining plot${parcelIndices.length === 1 ? '' : 's'} for expansion.`, 'money');
+  specialGuestTicker('picky', `Impressive. The county is offering ${parcelIndices.length} adjoining plot${parcelIndices.length === 1 ? '' : 's'} for expansion.`, 'money', 'pleased');
   sfx.tada();
   if (!ui.get().modal) ui.set({ modal: { kind: 'landOffer' } });
 }
@@ -1628,18 +1660,18 @@ function finishSpecialGuestVisit(golfer: Golfer) {
     S.specialVisitors.pickyVisits++;
     S.specialVisitors.pickyCooldown = enjoyed ? 80 : 48;
     if (enjoyed) createPickyOffer();
-    else ticker('I.M. Picky', completed ? 'The course did not impress me enough to release more county land.' : 'I left early. No additional land will be offered.', 'bad');
+    else specialGuestTicker('picky', completed ? 'The course did not impress me enough to release more county land.' : 'I left early. No additional land will be offered.', 'bad');
     return;
   }
   S.specialVisitors.ivanaVisits++;
   S.specialVisitors.ivanaCooldown = 58;
   if (!enjoyed) {
-    ticker('Ivana Richman', completed ? 'Lovely potential, but not yet worthy of my collection.' : 'I could not finish the round. Perhaps next time.', 'bad');
+    specialGuestTicker('ivana', completed ? 'Lovely potential, but not yet worthy of my collection.' : 'I could not finish the round. Perhaps next time.', 'bad');
     return;
   }
   S.specialVisitors.landmarkDonated = true;
   S.specialVisitors.landmarkCredits++;
-  ticker('Ivana Richman', 'I adored the course. Please accept a Landmark as my gift to the resort.', 'money');
+  specialGuestTicker('ivana', 'I adored the course. Please accept a Landmark as my gift to the resort.', 'money');
   sfx.tada();
   if (!ui.get().modal) ui.set({ modal: { kind: 'landmarkGift' } });
 }
@@ -1690,10 +1722,14 @@ function sayText(g: Golfer, txt: string, cls?: string) {
   if (g.chatCd > 0) return;
   g.chatCd = 4;
   floater(g.x, g.y - 1.2, txt, '#fff', 'bub');
-  ticker(g.name, txt, cls, golferTickerCharacter(g, cls));
+  golferTicker(g, txt, cls);
 }
 
-function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 'cap'> | Pick<Regular, 'name' | 'shirt' | 'skin' | 'cap'>, cls?: string): TickerCharacter {
+function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 'cap' | 'specialGuest'> | Pick<Regular, 'name' | 'shirt' | 'skin' | 'cap'>, cls?: string): TickerCharacter {
+  if ('specialGuest' in golfer && isSpecialGuestKind(golfer.specialGuest)) {
+    const expression = cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : SPECIAL_GUESTS[golfer.specialGuest].defaultExpression;
+    return specialGuestPortrait(golfer.specialGuest, expression);
+  }
   return {
     identity: golfer.name,
     shirt: golfer.shirt,
@@ -1701,6 +1737,13 @@ function golferTickerCharacter(golfer: Pick<Golfer, 'name' | 'shirt' | 'skin' | 
     cap: golfer.cap,
     expression: cls === 'bad' ? 'cross' : cls === 'money' ? 'triumphant' : 'pleased',
   };
+}
+function golferTicker(golfer: Golfer, txt: string, cls?: string) {
+  if (isSpecialGuestKind(golfer.specialGuest)) {
+    specialGuestTicker(golfer.specialGuest, txt, cls);
+    return;
+  }
+  ticker(golfer.name, txt, cls, golferTickerCharacter(golfer, cls));
 }
 function say(g: Golfer, key: string, cls?: string) {
   sayText(g, pick(SAY[key]), cls);
@@ -1827,7 +1870,7 @@ function finishHole(g: Golfer, pickedUp: boolean) {
       say(g, 'birdie');
       celebrateScore(h.cup.x, h.cup.y, diff);
       S.rep = clamp(S.rep + (diff <= -2 ? 0.06 : 0.02), 0.3, 5);
-      if (diff <= -2) ticker(g.name, `${g.name} carded ${diff <= -3 ? 'an albatross' : g.strokes === 1 ? 'a hole-in-one' : 'an eagle'} on hole ${g.holeIdx + 1}!`, 'money');
+      if (diff <= -2) golferTicker(g, `${g.name} carded ${diff <= -3 ? 'an albatross' : g.strokes === 1 ? 'a hole-in-one' : 'an eagle'} on hole ${g.holeIdx + 1}!`, 'money');
     } else if (h.interest < 0.3 && Math.random() < 0.45) {
       sayText(g, `Hole ${g.holeIdx + 1} is ${boringReason(h)}.`, 'bad');
       changeMood(g, -0.4);
@@ -1908,8 +1951,8 @@ function updateGolfers(dt: number) {
         if (g.state === 'leave') {
           const stars = clamp(2.5 + g.mood * 0.35, 0.3, 5);
           S.rep = clamp(S.rep + (stars - S.rep) * 0.09, 0.3, 5);
-          if (g.mood >= 2) ticker(g.name, pick(SAY.leaveHappy), 'money');
-          else if (g.mood <= -2) ticker(g.name, pick(SAY.leaveMad), 'bad');
+          if (g.mood >= 2) golferTicker(g, pick(SAY.leaveHappy), 'money');
+          else if (g.mood <= -2) golferTicker(g, pick(SAY.leaveMad), 'bad');
           finishSpecialGuestVisit(g);
           settleMembership(g);
           if (S.selectedGolfer === g) selectGolfer(null);
@@ -1999,7 +2042,7 @@ function updateSpecialVisitors(dt: number) {
     if (visitors.landOffer.remaining <= 0) {
       visitors.landOffer = null;
       visitors.pickyCooldown = 48;
-      ticker('I.M. Picky', 'The county land offer has expired. I will inspect the course again later.', 'bad');
+      specialGuestTicker('picky', 'The county land offer has expired. I will inspect the course again later.', 'bad');
       if (ui.get().modal?.kind === 'landOffer') ui.set({ modal: null });
     }
   }
@@ -3544,10 +3587,12 @@ function applySaveData(d: any): boolean {
   // restore golfers mid-round; balls in flight aren't saved, so coerce
   // anyone who was watching/swinging back into a walking state
   S.golfers = [];
+  let officialGuestActive = false;
   if (Array.isArray(d.golfers)) {
     for (const g of d.golfers as Golfer[]) {
       if (typeof g?.x !== 'number' || typeof g?.holeIdx !== 'number') continue;
       if (g.holeIdx >= S.holes.length) continue; // their hole is gone
+      officialGuestActive = normalizeLoadedSpecialGuest(g, officialGuestActive);
       g.chatCd = 0;
       if (typeof g.hunger !== 'number') g.hunger = 1;
       if (typeof g.thirst !== 'number') g.thirst = 1;

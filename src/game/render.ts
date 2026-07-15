@@ -10,6 +10,8 @@ import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
 import type { CourseStaffFrame, CourseStaffKind } from './sprites';
 import type { GolferFrame, BSprite } from './sprites';
+import type { CharacterVisualOverrides } from './characterVisuals';
+import { isSpecialGuestKind, SPECIAL_GUESTS } from './specialGuests';
 import { facilityActivityPose } from './facilityActivity';
 import type { FacilityActivityPose } from './facilityActivity';
 import { countEmp, employeeDisplayName, employeeWorkZone } from './employees';
@@ -1846,6 +1848,7 @@ function drawGolferSprite(
   view: ActorView = 'side',
   identity = '',
   mirrorAllViews = false,
+  visualOverrides?: CharacterVisualOverrides,
 ) {
   const geometry = golferVisualGeometry({ x, y }, u, bob);
   const k = geometry.scale;
@@ -1862,7 +1865,7 @@ function drawGolferSprite(
     Math.PI * 2,
   );
   ctx.fill();
-  const spr = golferSprite(shirt, skin, cap, frame, view, identity);
+  const spr = golferSprite(shirt, skin, cap, frame, view, identity, visualOverrides);
   const plan = actorDrawPlan({ x, y }, GOLFER_METRICS, k, view, face, actorCanvasDpr(ctx), bob, mirrorAllViews);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -1933,6 +1936,7 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
   const bob = actorWalkingBob(g.phase, walking, u);
   const geometry = golferVisualGeometry(p, u, bob);
   const view = actorViewWithLegacyFallback(g);
+  const guestVisual = isSpecialGuestKind(g.specialGuest) ? SPECIAL_GUESTS[g.specialGuest].visual : undefined;
   const selected = S.selectedGolfer === g;
   if (selected) {
     const pulse = 1 + Math.sin(S.time * 6) * .08;
@@ -1957,7 +1961,21 @@ function drawGolfer(ctx: CanvasRenderingContext2D, g: Golfer, u: number) {
     ctx.stroke();
     ctx.restore();
   }
-  drawGolferSprite(ctx, p.x, p.y, u, g.shirt, g.skin, g.cap, resolveGolferFrame(g), g.face ?? 1, bob, view, g.name);
+  drawGolferSprite(ctx,
+    p.x,
+    p.y,
+    u,
+    guestVisual?.shirt ?? g.shirt,
+    guestVisual?.skin ?? g.skin,
+    guestVisual?.cap ?? g.cap,
+    resolveGolferFrame(g),
+    g.face ?? 1,
+    bob,
+    view,
+    guestVisual?.identity ?? g.name,
+    false,
+    guestVisual,
+  );
   const hovered = !!S.hover && Math.floor(g.x) === S.hover.x && Math.floor(g.y) === S.hover.y;
   if (shouldShowActorName({ actor: 'golfer', zoom: S.cam.z, hovered, selected, special: !!g.specialGuest })) {
     drawActorName(ctx, g.name, p.x, geometry.labelY, Math.max(geometry.scale * 0.9, 0.72), selected || !!g.specialGuest);

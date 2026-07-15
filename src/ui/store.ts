@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import type { ToolId, GameMode, ClubId, ShotShape, CourseTheme, Difficulty, RoundRecord, ChampionshipResult, ProChallengeResult, ThemePackId, PropertyId, WeatherCondition, PlayerShotFeedback } from '../game/types';
-import type { PortraitExpression } from '../game/portraits';
+import type { CharacterVisualOverrides, PortraitExpression } from '../game/characterVisuals';
 import type { ProPracticeResult } from '../game/proCircuit';
 
-export interface TickerCharacter {
+export interface TickerCharacter extends CharacterVisualOverrides {
   shirt: string;
   skin: string;
   cap: string;

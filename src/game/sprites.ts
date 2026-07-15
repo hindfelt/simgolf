@@ -3,7 +3,18 @@
 // smoothing off so the cast reads as chunky toy figurines, never vector blobs.
 
 import type { EmployeeKind } from './types';
+import type { CharacterVisualOverrides, GolferAppearance, GolferBuild } from './characterVisuals';
 import { COURSE_STAFF_SPRITE_SIZE, GOLFER_SPRITE_SIZE } from './actorGeometry';
+
+export type {
+  CharacterSignature,
+  CharacterVisualOverrides,
+  CharacterVisualProfile,
+  GolferAppearance,
+  GolferBuild,
+  GolferHair,
+  GolferHeadwear,
+} from './characterVisuals';
 
 export {
   ACTOR_SCALE_MAX,
@@ -86,26 +97,6 @@ function shade(hex: string, f: number): string {
 export type GolferFrame = 'idle' | 'walkA' | 'walkB' | 'address' | 'back' | 'follow' | 'putt' | 'puttFollow';
 export type ActorSpriteView = 'front' | 'rear' | 'side';
 
-export type GolferBuild = 'compact' | 'classic' | 'broad';
-export type GolferHeadwear = 'cap' | 'visor' | 'flat-cap' | 'bucket-hat';
-export type GolferHair = 'close' | 'side-locks' | 'curls' | 'tail';
-
-/**
- * Stable visual identity derived from a golfer's name. Keeping this pure makes
- * the cast recognizable when their palette, animation frame, or camera view
- * changes, and lets the tiny world sprites share an identity with UI portraits.
- */
-export interface GolferAppearance {
-  build: GolferBuild;
-  headwear: GolferHeadwear;
-  hair: GolferHair;
-  outfit: number;
-  face: number;
-  pants: number;
-  bag: number;
-  socks: number;
-}
-
 const PANTS = ['#3b4252', '#6b4f35', '#75787f', '#4a5d3a', '#7d4444', '#e8e4d8'];
 const HAIR = ['#34251f', '#6e3f28', '#b96f3e', '#d7c8aa', '#272a31'];
 const BAGS = ['#8a5a30', '#315f83', '#8b3640', '#4f7042', '#d19a2e'];
@@ -113,6 +104,31 @@ const SOCKS = ['#e8e4d8', '#f4c94b', '#94c7d0', '#be6a72'];
 const BUILDS = ['compact', 'classic', 'broad'] as const;
 const HEADWEAR = ['cap', 'visor', 'flat-cap', 'bucket-hat'] as const;
 const HAIRSTYLES = ['close', 'side-locks', 'curls', 'tail'] as const;
+
+const appearanceKey = (appearance: GolferAppearance) => [
+  appearance.build,
+  appearance.headwear,
+  appearance.hair,
+  appearance.outfit,
+  appearance.face,
+  appearance.pants,
+  appearance.bag,
+  appearance.socks,
+].join(',');
+
+function visualOverrideKey(overrides?: CharacterVisualOverrides): string {
+  if (!overrides) return '';
+  return [
+    overrides.appearance ? appearanceKey(overrides.appearance) : '',
+    overrides.signature ?? '',
+    overrides.hairTone ?? '',
+    overrides.hairHighlight ?? '',
+    overrides.trim ?? '',
+    overrides.pants ?? '',
+    overrides.accent ?? '',
+    overrides.bag ?? '',
+  ].join('|');
+}
 
 function hashStr(s: string): number {
   let h = 2166136261;
@@ -165,19 +181,31 @@ const BUILD_GEOMETRY: Record<GolferBuild, {
  * or second bitmap bake. The three views share identity cues while changing the
  * actual body silhouette, face direction, bag placement and hat profile.
  */
-export function golferSprite(shirt: string, skin: string, cap: string, frame: GolferFrame, view: ActorSpriteView = 'front', identity = ''): HTMLCanvasElement {
-  const key = 'g4|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity;
+export function golferSprite(
+  shirt: string,
+  skin: string,
+  cap: string,
+  frame: GolferFrame,
+  view: ActorSpriteView = 'front',
+  identity = '',
+  overrides?: CharacterVisualOverrides,
+): HTMLCanvasElement {
+  const key = 'g5|' + shirt + '|' + skin + '|' + cap + '|' + frame + '|' + view + '|' + identity + '|' + visualOverrideKey(overrides);
   const hit = cache.get(key);
   if (hit) return hit;
 
   const [art, , p] = makeCanvas(GOLFER_SPRITE_SIZE.width, GOLFER_SPRITE_SIZE.height);
   const identitySeed = identity || shirt + skin + cap;
   const normalizedIdentity = identitySeed.trim().toLowerCase() || 'anonymous golfer';
-  const appearance = golferAppearance(normalizedIdentity);
+  const appearance = overrides?.appearance ?? golferAppearance(normalizedIdentity);
   const geometry = BUILD_GEOMETRY[appearance.build];
-  const pants = PANTS[appearance.pants];
-  const hair = HAIR[appearanceIndex(normalizedIdentity, 'hair-tone', HAIR.length)];
-  const bag = BAGS[appearance.bag];
+  const pants = overrides?.pants ?? PANTS[appearance.pants];
+  const hair = overrides?.hairTone ?? HAIR[appearanceIndex(normalizedIdentity, 'hair-tone', HAIR.length)];
+  const hairHighlight = overrides?.hairHighlight ?? shade(hair, 1.18);
+  const bag = overrides?.bag ?? BAGS[appearance.bag];
+  const trim = overrides?.trim ?? '#f2f0e8';
+  const accent = overrides?.accent ?? shade(cap, 1.08);
+  const signature = overrides?.signature;
   const socks = SOCKS[appearance.socks];
   const shirtDk = shade(shirt, 0.78);
   const capDk = shade(cap, 0.75);
@@ -213,6 +241,10 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(bagX, 7, 3, 2, '#c9ced4');
     p(bagX + 5, 6, 3, 2, '#8f959c');
     pixelLine(p, bagX + 6, bagY + 2, bagX + 9, bagY + 10, shade(bag, 1.22));
+    if (signature === 'patron') {
+      p(bagX + 2, bagY + 2, 3, 2, accent);
+      p(bagX + 4, bagY + 8, 2, 2, accent);
+    }
   }
 
   // Whole-body posing starts at the feet. Address and putting use a visibly
@@ -289,7 +321,7 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(chestCenter, torsoY + 8, 3, 3, shirtDk);
   }
 
-  if (!rear) p(chestCenter - 2, torsoY - 1, 4, 2, '#f2f0e8');
+  if (!rear) p(chestCenter - 2, torsoY - 1, 4, 2, trim);
 
   const headCentre = centre + (side ? 1 : 0) + (crouched ? 1 : 0);
   const headW = side ? Math.max(6, geometry.headW - 1) : geometry.headW;
@@ -305,10 +337,18 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(headX - 2, headY + 1, 3, 3, hair);
     p(headX - 2, headY + 5, 3, 3, hair);
     p(headX, headY + 8, 3, 2, hair);
-  } else {
+  } else if (appearance.hair === 'tail') {
     p(headX - 1, headY + 2, 2, 7, hair);
     p(headX - 4, headY + 7, 4, 3, hair);
     p(headX - 4, headY + 10, 2, 2, hair);
+  } else {
+    // Shoulder-length hair frames both cheeks and remains visible in rear/side views.
+    p(headX - 3, headY + 1, 4, 10, hair);
+    p(headRight - 1, headY + 1, 4, 10, hair);
+    p(headX - 4, headY + 8, 4, 8, hair);
+    p(headRight, headY + 8, 4, 8, hair);
+    p(headX - 2, headY + 2, 2, 6, hairHighlight);
+    if (rear) p(headX, headY, headW, 3, hairHighlight);
   }
   p(headX + 1, headY, headW - 2, 1, skin);
   p(headX, headY + 1, headW, 6, skin);
@@ -343,14 +383,32 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     p(headX - 1, headY - 1, headW + 2, 3, cap);
     p(headX - 1, headY - 1, 2, 3, capDk);
     if (!rear) p(headRight - 1, headY + 1, side ? 5 : 3, 1, capDk);
-  } else {
+  } else if (appearance.headwear === 'bucket-hat') {
     p(headX + 1, headY - 3, headW - 2, 3, cap);
     p(headX + 1, headY - 3, 2, 3, capDk);
     p(headX - 3, headY, headW + 6, 2, capDk);
   }
 
   if (!rear && !side) {
-    if (appearance.face === 0) {
+    if (signature === 'commissioner') {
+      // Inward brows, a square lower face, and a compressed asymmetrical mouth.
+      p(headX + 1, headY + 2, 3, 1, hair);
+      p(headRight - 4, headY + 3, 3, 1, hair);
+      p(headX + 2, headY + 4, 1, 1, '#201b19');
+      p(headRight - 3, headY + 4, 1, 1, '#201b19');
+      p(headCentre - 2, headY + 7, 4, 1, '#5f382d');
+      p(headCentre + 1, headY + 8, 2, 1, '#5f382d');
+      p(headX + 1, headY + 8, 2, 1, skinDk);
+      p(headRight - 3, headY + 8, 2, 1, skinDk);
+    } else if (signature === 'patron') {
+      // Raised brows and a broad tooth-row smile stay readable at course scale.
+      p(headX + 1, headY + 2, 3, 1, hair);
+      p(headRight - 4, headY + 2, 3, 1, hair);
+      p(headCentre - 4, headY + 6, 8, 3, '#743b3e');
+      p(headCentre - 3, headY + 6, 6, 1, '#fff7dc');
+      p(headX + 1, headY + 6, 1, 1, '#bd6f70');
+      p(headRight - 2, headY + 6, 1, 1, '#bd6f70');
+    } else if (appearance.face === 0) {
       p(headX + 1, headY + 4, headW - 2, 1, '#3b3028');
       p(headX + 2, headY + 4, 1, 1, '#d8e6df');
     } else if (appearance.face === 1) p(headCentre - 1, headY + 7, 3, 1, '#6a3f27');
@@ -402,6 +460,21 @@ export function golferSprite(shirt: string, skin: string, cap: string, frame: Go
     pixelLine(p, shouldersX + 1, torsoY + 6, shouldersX + 1 - phase, torsoY + 11, skin, 2);
     p(shouldersX + shouldersW - 3, torsoY + 2, 3, 5, shirt);
     pixelLine(p, shouldersX + shouldersW - 2, torsoY + 6, shouldersX + shouldersW - 2 + phase, torsoY + 11, skin, 2);
+  }
+
+  // Marquee accessories are deliberately tiny: silhouette and face lead.
+  if (!rear && signature === 'commissioner') {
+    p(chestCenter + 2, torsoY + 5, 2, 2, accent); // county badge
+    if (frame === 'idle') {
+      const cardX = side ? shouldersX + shouldersW : shouldersX - 3;
+      p(cardX, torsoY + 8, 3, 4, trim);
+      p(cardX + 1, torsoY + 9, 2, 1, shade(trim, 0.72));
+    }
+  } else if (!rear && signature === 'patron') {
+    p(chestCenter - 3, torsoY + 1, 2, 1, accent);
+    p(chestCenter, torsoY + 2, 2, 1, accent);
+    p(chestCenter + 3, torsoY + 1, 2, 1, accent);
+    p(chestCenter + 2, torsoY + 5, 2, 2, trim); // gold brooch
   }
 
   const done = outlined(art, '#20242b');

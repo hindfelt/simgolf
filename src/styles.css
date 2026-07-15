@@ -1352,21 +1352,6 @@ canvas.game.playerAimActive { cursor: grabbing; }
 .guestHeading { display: flex; align-items: center; gap: 11px; margin-bottom: 10px; }
 .guestHeading h1 { margin: 0; }
 .guestHeading .tag { margin: 2px 0 0; }
-.guestPortrait {
-  flex: 0 0 48px;
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  border: 2px solid #30345d;
-  border-radius: 8px 8px 16px 16px;
-  background: linear-gradient(135deg,#d9d3b8,#8b9c81);
-  box-shadow: 0 3px 0 #30345d;
-  color: #27334a;
-  font-size: 15px;
-  font-weight: 900;
-}
-.ivanaHeading .guestPortrait { background: linear-gradient(135deg,#f2d688,#bd6f9f); color: #5a2142; }
 .offerMeta { display: flex; justify-content: space-between; gap: 8px; margin: 8px 0; padding: 7px 9px; border-radius: 8px; background: #e4dfc6; color: #4f4b59; font-size: 10px; }
 .parcelOfferGrid { display: grid; gap: 5px; padding: 9px; border: 2px solid #35395f; border-radius: 10px; background: #222744; }
 .parcelOfferGrid button {
@@ -5308,6 +5293,10 @@ canvas.game:focus-visible {
 .characterPortrait.portrait-simfoto { box-shadow:0 0 0 2px #fff04e,0 4px 0 #20275f,0 8px 16px rgba(0,0,0,.32),inset 2px 2px rgba(255,255,255,.7); }
 .characterPortrait.expression-triumphant { border-color:#78591c; }
 .characterPortrait.expression-cross { border-color:#733e56; box-shadow:0 0 0 2px #f4b65b,0 4px 0 #43225f,0 7px 12px rgba(0,0,0,.26),inset 2px 2px rgba(255,255,255,.65); }
+.characterPortrait[data-character-signature] {
+  border-color: var(--character-trim, #30366f);
+  background: radial-gradient(circle at 45% 25%,#fff9df 0 22%,var(--character-accent, #e9dfb7) 23% 52%,var(--character-cap, #91a874) 53% 73%,var(--character-shirt, #526b52) 74% 100%);
+}
 .characterPortrait.onCourse { border-color: #4c9b66; box-shadow: 0 0 0 2px #f4e95d, 0 4px 0 #2c6742, 0 0 0 5px rgba(91,185,118,.18); }
 .characterPortrait.onCourse i { position: absolute; z-index: 2; top: 4px; right: 4px; width: 7px; height: 7px; border: 1px solid #efffe8; border-radius: 50%; background: #52bb70; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
 .regularCard { display: grid; grid-template-columns: 60px minmax(0, 1fr); align-items: center; gap: 12px; }
@@ -5397,7 +5386,7 @@ canvas.game:focus-visible {
   font-size: 0;
 }
 .characterPortrait.guestPortrait canvas { width: 53px; height: 70px; }
-.ivanaHeading .characterPortrait.guestPortrait { background: radial-gradient(circle at 46% 25%,#fff8dd 0 26%,#f2d688 27% 58%,#bd6f9f 59% 83%,#754467 84%); }
+.characterPortrait.guestPortrait[data-character-signature] { border-color: var(--character-trim, #30345d); }
 
 @media (forced-colors: active) {
   .fieldControls,

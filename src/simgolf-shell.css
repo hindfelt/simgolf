@@ -326,6 +326,7 @@ body,
 .simFotoTicker .characterPortrait canvas { width: 50px; height: 66px; }
 .simFotoCopy { min-width: 0; display: grid; gap: 2px; font-family: var(--sg-font); text-shadow: 1px 2px #273279; }
 .simFotoCopy b { overflow: hidden; color: #fff36e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.simFotoCopy small { overflow: hidden; color: #e9e7ff; font: 900 6px var(--sg-small); letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .simFotoCopy span { color: #fff; font-size: 10px; font-weight: 900; line-height: 1.2; }
 .simFotoTicker.money .simFotoCopy span { color: #79f293; }
 .simFotoTicker.bad .simFotoCopy span { color: #ffd0d7; }
@@ -1449,11 +1450,24 @@ body,
   max-width: 510px;
 }
 
+/* The county's 4×4 deed matrix must fit above the original 166px controller
+   at 800×600. Keep Picky's SimFoto prominent and reclaim height from the
+   repetitive parcel cells instead of shrinking the character art. */
+.modal[data-modal-kind='landOffer'] { padding: 9px 11px 8px; }
+.modal[data-modal-kind='landOffer'] .guestHeading { margin-bottom: 4px; }
+.modal[data-modal-kind='landOffer'] > p { margin: 4px 0; font-size: 10px; line-height: 1.25; }
+.modal[data-modal-kind='landOffer'] .offerMeta { margin: 4px 0; padding: 4px 7px; }
+.modal[data-modal-kind='landOffer'] .parcelOfferGrid { gap: 3px; padding: 5px; }
+.modal[data-modal-kind='landOffer'] .parcelOfferGrid button { min-height: 32px; }
+.modal[data-modal-kind='landOffer'] .bigbtn { min-height: 28px; margin-top: 5px; padding: 4px 8px; }
+.modal[data-modal-kind='landOffer'] .textBtn { margin-top: 4px; padding: 3px 8px; }
+
 .modal[data-modal-kind] .guestPortrait {
   border: 4px solid #343b8c;
   border-radius: 50%;
   box-shadow: inset 0 2px rgba(255,255,255,.45), 0 3px 0 #20265e;
 }
+.modal[data-modal-kind] .guestPortrait[data-character-signature] { border-color: var(--character-trim, #343b8c); }
 
 .overlay[data-modal-kind='saves'] {
   justify-content: flex-start;
@@ -2323,7 +2337,8 @@ body:has(.controllerShell[data-mode='play']) .routingMap {
     transform: none;
   }
 
-  .controllerShell[data-mode='play'] .playMessage {
+  .controllerShell[data-mode='play'] .playMessage,
+  .controllerShell[data-mode='play'] .playCompetitionHud {
     left: 115px;
     right: 124px;
     width: auto;
@@ -2422,7 +2437,9 @@ body:has(.controllerShell[data-mode='play']) .routingMap {
 }
 
 /* Manual play owns the course focus. Build-mode inspection and a second event
-   ticker only duplicate the player/competition cards and used to cover them. */
+   ticker only duplicate the player/competition cards and used to cover them.
+   Live caddie advice remains independent of the event strip: compact layouts
+   reserve a separate molded row for each. */
 body:has(.controllerShell[data-mode='play']) .golferInspector,
 body:has(.playCompetitionHud) .ticker { display: none; }
 body:has(.playCompetitionHud) .playMessage { display: none; }
@@ -2596,12 +2613,14 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 8px; }
 }
 
-/* A Retina capture of a 796px-wide browser is only 353-358 CSS pixels tall.
-   The full 800x600 fan is proportionally enormous there and steals the left
-   third of the shot console. Keep the native toy-like controls and type, but
-   use the compact full-width play slab so the course and caddie book remain
-   readable without any decorative shell covering them. */
-@media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px) {
+/* A Retina capture of a 796px-wide browser is only 353-358 CSS pixels tall,
+   while a wide 2:1 game window can be similarly shallow at desktop CSS sizes.
+   The full 800x600 fan is proportionally enormous in either case and steals
+   the left third of the shot console. Keep the native toy-like controls and
+   type, but use the compact full-width play slab so the course and caddie book
+   remain readable without any decorative shell covering them. */
+@media (min-width: 781px) and (max-width: 862px) and (min-height: 340px) and (max-height: 520px),
+       (min-width: 1200px) and (min-height: 521px) and (max-height: 760px) and (min-aspect-ratio: 2/1) {
   .controllerShell[data-mode='play'] {
     --sg-bottom: 98px;
     --sg-controller-visible-height: 140px;
@@ -2672,8 +2691,7 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     font-size: 6px;
   }
 
-  .controllerShell[data-mode='play'] .playMessage,
-  .controllerShell[data-mode='play'] .playCompetitionHud {
+  .controllerShell[data-mode='play'] .playMessage {
     left: 8px;
     right: auto;
     top: -41px;
@@ -2683,7 +2701,22 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
     border-width: 2px;
     font-size: 9px;
   }
+  body:has(.playCompetitionHud) .controllerShell[data-mode='play'] .playMessage { display: flex; }
   .controllerShell[data-mode='play'] .playMessage .canopyStatus { font-size: 8px; }
+
+  /* Competition identity is the thin score strip on the console rim. Keeping
+     it inside the slab leaves the authored left advice card, centre shot
+     ovals, and right conditions card independently readable during a swing. */
+  .controllerShell[data-mode='play'] .playCompetitionHud {
+    left: 59px;
+    right: 160px;
+    top: -1px;
+    width: auto;
+    min-height: 18px;
+    padding: 1px 6px;
+    border-width: 1px;
+    box-shadow: 0 1px 0 #282c76;
+  }
   .controllerShell[data-mode='play'] .playCompetitionHud b { font-size: 8.5px; }
   .controllerShell[data-mode='play'] .playCompetitionHud span { font-size: 10px; }
   .controllerShell[data-mode='play'] .playCompetitionHud em { font-size: 7.5px; }

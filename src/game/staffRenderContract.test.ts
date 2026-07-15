@@ -31,7 +31,9 @@ describe('staff world-actor render contract', () => {
     expect(renderSource).toContain('golferVisualGeometry({ x, y }, u, bob)');
     expect(renderSource).toContain('actorDrawPlan({ x, y }, GOLFER_METRICS');
     expect(renderSource).toContain('ctx.scale(plan.mirrorX ? -1 : 1, 1)');
-    expect(renderSource).toContain('golferSprite(shirt, skin, cap, frame, view, identity)');
+    expect(renderSource).toContain('golferSprite(shirt, skin, cap, frame, view, identity, visualOverrides)');
+    expect(renderSource).toContain('guestVisual?.identity ?? g.name');
+    expect(renderSource).toContain('guestVisual,');
     expect(renderSource).toContain('manualGolferFacing(screenX, screenY, px, bp.x)');
     expect(renderSource).not.toContain('clamp(u, 0.65, 1.7) * 0.96');
   });

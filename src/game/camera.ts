@@ -8,6 +8,9 @@ export const COURSE_SAFE_TOP = 116;
 export const CONTROLLER_VISIBLE_HEIGHT = 166;
 export const COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT = 140;
 export const COMPACT_PLAY_MAX_VIEWPORT_HEIGHT = 520;
+export const COMPACT_PLAY_WIDE_MIN_VIEWPORT_WIDTH = 1200;
+export const COMPACT_PLAY_WIDE_MAX_VIEWPORT_HEIGHT = 760;
+export const COMPACT_PLAY_WIDE_MIN_ASPECT_RATIO = 2;
 export const COURSE_SAFE_GAP = 12;
 const COURSE_SAFE_SIDE = 10;
 
@@ -23,9 +26,13 @@ export interface CourseSafeViewport {
 }
 
 /** Mirrors the short-landscape play shell without asking render code to read CSS. */
-export function controllerVisibleHeightForViewport(viewportHeight: number, manualPlay = Boolean(S.player)): number {
+export function controllerVisibleHeightForViewport(viewportHeight: number, manualPlay = Boolean(S.player), viewportWidth?: number): number {
   const height = Number.isFinite(viewportHeight) ? viewportHeight : 1;
-  return manualPlay && height <= COMPACT_PLAY_MAX_VIEWPORT_HEIGHT
+  const width = viewportWidth !== undefined && Number.isFinite(viewportWidth) ? viewportWidth : 0;
+  const wideShortLandscape = width >= COMPACT_PLAY_WIDE_MIN_VIEWPORT_WIDTH
+    && height <= COMPACT_PLAY_WIDE_MAX_VIEWPORT_HEIGHT
+    && width / Math.max(1, height) >= COMPACT_PLAY_WIDE_MIN_ASPECT_RATIO;
+  return manualPlay && (height <= COMPACT_PLAY_MAX_VIEWPORT_HEIGHT || wideShortLandscape)
     ? COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT
     : CONTROLLER_VISIBLE_HEIGHT;
 }
@@ -36,7 +43,7 @@ export function courseSafeViewport(cw: number, ch: number, manualPlay = Boolean(
   const height = Math.max(1, Number.isFinite(ch) ? ch : 1);
   const left = Math.min(COURSE_SAFE_SIDE, Math.max(0, width - 1));
   const right = Math.max(left + 1, width - COURSE_SAFE_SIDE);
-  const desiredBottom = height - controllerVisibleHeightForViewport(height, manualPlay) - COURSE_SAFE_GAP;
+  const desiredBottom = height - controllerVisibleHeightForViewport(height, manualPlay, width) - COURSE_SAFE_GAP;
   const top = Math.min(COURSE_SAFE_TOP, Math.max(0, desiredBottom - 1));
   const bottom = Math.max(top + 1, desiredBottom);
   return {
