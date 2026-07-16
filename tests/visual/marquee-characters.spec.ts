@@ -113,7 +113,9 @@ async function renderProductionMarqueeScene(page: Page) {
     caches.orthoDirty = true;
     caches.groundDirty = true;
     S.cam.z = 1;
-    const camera = cameraPositionForWorldPoint(16, 16, 800, 600);
+    // This isolated fixture validates actor rendering, not the live build-mode
+    // course composition. Keep its established unobscured staging stable.
+    const camera = cameraPositionForWorldPoint(16, 16, 800, 600, true);
     S.cam = { ...camera, z: 1 };
 
     draw(ctx, 800, 600);

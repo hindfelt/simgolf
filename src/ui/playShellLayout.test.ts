@@ -20,7 +20,9 @@ describe('original play shell responsive geometry', () => {
     expect(compact).toContain('left: 152px;');
     expect(compact).toContain('width: 58px;');
     expect(compact).toContain('gap: 7px;');
-    expect(compact).toContain('right: 124px;');
+    expect(compact).toContain('right: 160px;');
+    expect(compact).toContain('width: 144px;');
+    expect(compact).toContain('min-width: 144px;');
 
     for (const viewportWidth of [862, 800, 796, 781]) {
       const fan = { x: 0, width: 280 };
@@ -28,8 +30,8 @@ describe('original play shell responsive geometry', () => {
       const quit = { x: hudPaddingX + 67, width: 45 };
       const palette = { x: hudPaddingX + 152, width: (58 * 5) + (7 * 4) };
       const panes = { x: hudPaddingX + 115, width: viewportWidth - (hudPaddingX + 115) - 8 };
-      const message = { x: hudPaddingX + 115, width: viewportWidth - 124 - (hudPaddingX + 115) };
-      const conditions = { x: viewportWidth - 8 - 104, width: 104 };
+      const message = { x: hudPaddingX + 115, width: viewportWidth - 160 - (hudPaddingX + 115) };
+      const conditions = { x: viewportWidth - 8 - 144, width: 144 };
 
       expect(intersects(fan, panes)).toBe(false);
       expect(intersects(quit, palette)).toBe(false);
