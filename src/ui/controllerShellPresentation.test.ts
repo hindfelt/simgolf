@@ -38,6 +38,8 @@ describe('rebuilt original controller presentation', () => {
     expect(shell).toMatch(/\.controllerShell \.toolGraphic,[\s\S]*?width: 60px;[\s\S]*?height: 47px;/);
     expect(shell).toContain('--sg-construction-control-width: 280px;');
     expect(shell).toMatch(/\.controllerShell \.toolDock\s*\{[^}]*left: var\(--sg-construction-control-width\);/s);
+    expect(shell).toMatch(/\.controllerShell\[data-mode='build'\] \.toolDock\s*\{[^}]*height: var\(--sg-fan-height\);[^}]*min-height: var\(--sg-fan-height\);/s);
+    expect(shell).toMatch(/\.controllerShell\[data-mode='build'\] \.toolGroups\s*\{\s*top: 0;/s);
     expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?width: 62px;[\s\S]*?height: 24px;[\s\S]*?font-size: 11px;[\s\S]*?white-space: normal;/);
     expect(toolbar).toContain('<span className="ct" aria-hidden="true">{item.ct}</span>');
     expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 10px;/);
