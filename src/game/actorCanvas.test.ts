@@ -105,6 +105,16 @@ describe('native actor canvases', () => {
     expect(signatures).toHaveLength(frames.length * views.length);
   });
 
+  it('authors an eye and protruding nose on the golfer side profile', () => {
+    const canvasIndex = canvases.length;
+    golferSprite('#3f7fd0', '#e0a878', '#efefef', 'idle', 'side', 'Doris');
+
+    expect(canvases[canvasIndex].rects).toEqual(expect.arrayContaining([
+      { x: 20, y: 9, width: 1, height: 1, color: '#26221e' },
+      { x: 20, y: 10, width: 2, height: 3, color: '#e0a878' },
+    ]));
+  });
+
   it('keeps every profession tool and animation frame inside its broader canvas', () => {
     const kinds: CourseStaffKind[] = ['clubpro', 'ranger', 'groundskeeper', 'sodavendor', 'celebrity', 'marshall', 'turftech', 'refreshment'];
     const frames: CourseStaffFrame[] = ['walkA', 'walkB', 'workA', 'workB'];

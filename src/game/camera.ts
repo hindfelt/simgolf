@@ -5,6 +5,8 @@ import type { Vec } from './types';
 
 /** Clears the full three-gauge desktop stack (ends at y=111) plus breathing room. */
 export const COURSE_SAFE_TOP = 116;
+/** Build mode lets the course continue behind the detached top chrome, like the authored 800x600 composition. */
+export const COURSE_BUILD_FIT_TOP = 8;
 export const CONTROLLER_VISIBLE_HEIGHT = 166;
 export const COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT = 156;
 export const COMPACT_PLAY_MAX_VIEWPORT_HEIGHT = 520;
@@ -37,14 +39,13 @@ export function controllerVisibleHeightForViewport(viewportHeight: number, manua
     : CONTROLLER_VISIBLE_HEIGHT;
 }
 
-/** Unobscured course rectangle shared by fitting, follow, rotation, and glide. */
-export function courseSafeViewport(cw: number, ch: number, manualPlay = Boolean(S.player)): CourseSafeViewport {
+function courseViewport(cw: number, ch: number, manualPlay: boolean, topInset: number): CourseSafeViewport {
   const width = Math.max(1, Number.isFinite(cw) ? cw : 1);
   const height = Math.max(1, Number.isFinite(ch) ? ch : 1);
   const left = Math.min(COURSE_SAFE_SIDE, Math.max(0, width - 1));
   const right = Math.max(left + 1, width - COURSE_SAFE_SIDE);
   const desiredBottom = height - controllerVisibleHeightForViewport(height, manualPlay, width) - COURSE_SAFE_GAP;
-  const top = Math.min(COURSE_SAFE_TOP, Math.max(0, desiredBottom - 1));
+  const top = Math.min(topInset, Math.max(0, desiredBottom - 1));
   const bottom = Math.max(top + 1, desiredBottom);
   return {
     left,
@@ -58,8 +59,18 @@ export function courseSafeViewport(cw: number, ch: number, manualPlay = Boolean(
   };
 }
 
-export function cameraPositionForWorldPoint(wx: number, wy: number, cw = S.view.w, ch = S.view.h): Vec {
-  const safe = courseSafeViewport(cw, ch);
+/** Unobscured rectangle used to keep play-follow targets and actor labels clear of permanent chrome. */
+export function courseSafeViewport(cw: number, ch: number, manualPlay = Boolean(S.player)): CourseSafeViewport {
+  return courseViewport(cw, ch, manualPlay, COURSE_SAFE_TOP);
+}
+
+/** Camera composition rectangle: build terrain runs behind top plaques, while manual play remains unobscured. */
+export function courseFitViewport(cw: number, ch: number, manualPlay = Boolean(S.player)): CourseSafeViewport {
+  return courseViewport(cw, ch, manualPlay, manualPlay ? COURSE_SAFE_TOP : COURSE_BUILD_FIT_TOP);
+}
+
+export function cameraPositionForWorldPoint(wx: number, wy: number, cw = S.view.w, ch = S.view.h, manualPlay = Boolean(S.player)): Vec {
+  const safe = courseFitViewport(cw, ch, manualPlay);
   const iso = isoOf(wx, wy);
   return {
     x: safe.centerX - iso.ix * S.cam.z,
@@ -105,7 +116,7 @@ export function isoOf(wx: number, wy: number) {
 
 /** Rotate the view a quarter turn, keeping the screen-centre point centred. */
 export function rotateView(dir: 1 | -1) {
-  const safe = courseSafeViewport(S.view.w, S.view.h);
+  const safe = courseFitViewport(S.view.w, S.view.h);
   const c = screenToWorld(safe.centerX, safe.centerY);
   S.rot = (S.rot + dir + 4) & 3;
   caches.groundDirty = true;
@@ -160,7 +171,7 @@ export function zoomAt(px: number, py: number, f: number) {
   S.cam.z = z2;
 }
 
-export function fitCamera(cw: number, ch: number) {
+export function fitCamera(cw: number, ch: number, manualPlay = Boolean(S.player)) {
   // fit the owned parcels (plus a margin), not the whole for-sale map
   let x0 = W, y0 = H, x1 = 0, y1 = 0;
   for (let py = 0; py < PH; py++)
@@ -186,7 +197,7 @@ export function fitCamera(cw: number, ch: number) {
   const ix1 = Math.max(...corners.map((c) => c.ix));
   const iy0 = Math.min(...corners.map((c) => c.iy));
   const iy1 = Math.max(...corners.map((c) => c.iy));
-  const safe = courseSafeViewport(cw, ch);
+  const safe = courseFitViewport(cw, ch, manualPlay);
   const availW = safe.width;
   const availH = safe.height;
   const z = clamp(Math.min(availW / (ix1 - ix0), availH / (iy1 - iy0)), 0.4, 2);

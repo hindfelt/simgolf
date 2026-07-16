@@ -2357,12 +2357,14 @@ body:has(.controllerShell[data-mode='play']) .routingMap {
   .controllerShell[data-mode='play'] .playMessage,
   .controllerShell[data-mode='play'] .playCompetitionHud {
     left: 115px;
-    right: 124px;
+    right: 160px;
     width: auto;
   }
 
   .controllerShell[data-mode='play'] .playConditions {
     right: 8px;
+    width: 144px;
+    min-width: 144px;
   }
 }
 
@@ -2742,7 +2744,8 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   .controllerShell[data-mode='play'] .playConditions {
     right: 6px;
     top: -41px;
-    min-width: 120px;
+    width: 144px;
+    min-width: 144px;
     padding: 4px 6px;
   }
   .controllerShell[data-mode='play'] .playConditions .weatherReadout { font-size: 11px; }

@@ -30,7 +30,18 @@ async function activateCompetitionAimAdvice(page: Page) {
       pro: S.proProfile,
       usesResidentPro: true,
     };
-    useUI.getState().set({ playHud: { ...current, power: .72 } });
+    useUI.getState().set({
+      playHud: {
+        ...current,
+        power: .72,
+        weatherCondition: 'rain',
+        weatherIntensity: 1,
+        weatherWetness: 1,
+        windDx: 1,
+        windDy: 1,
+        windSpeed: .92,
+      },
+    });
   });
   await expect(page.locator('.playCompetitionHud')).toBeVisible();
 }
@@ -221,15 +232,25 @@ test.describe('native championship shell', () => {
     const conditions = await page.locator('.playConditions').boundingBox() as Box;
     expect(intersects(competition, palette)).toBe(false);
     expect(intersects(competition, conditions), JSON.stringify({ competition, conditions })).toBe(false);
+    expect(conditions.x - right(competition), JSON.stringify({ competition, conditions })).toBeGreaterThanOrEqual(6);
     expect(competition.x).toBeGreaterThanOrEqual(0);
     expect(right(competition)).toBeLessThanOrEqual(800);
     expect(competition.y).toBeGreaterThanOrEqual(0);
 
-    const overflow = await page.locator('.playCompetitionHud').evaluate((element) => ({
-      horizontal: element.scrollWidth - element.clientWidth,
-      vertical: element.scrollHeight - element.clientHeight,
-    }));
-    expect(overflow).toEqual({ horizontal: 0, vertical: 0 });
+    const overflow = await page.locator('.playHud').evaluate((hud) =>
+      ['.playCompetitionHud', '.playConditions'].map((selector) => {
+        const element = hud.querySelector<HTMLElement>(selector)!;
+        return {
+          selector,
+          horizontal: element.scrollWidth - element.clientWidth,
+          vertical: element.scrollHeight - element.clientHeight,
+        };
+      }),
+    );
+    expect(overflow).toEqual([
+      { selector: '.playCompetitionHud', horizontal: 0, vertical: 0 },
+      { selector: '.playConditions', horizontal: 0, vertical: 0 },
+    ]);
   });
 });
 

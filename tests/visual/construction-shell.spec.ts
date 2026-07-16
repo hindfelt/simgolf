@@ -157,6 +157,20 @@ test.describe('native construction composition', () => {
       scrollWidth: toolbar.scrollWidth,
     }));
     const tools = await readToolGeometry(page);
+    const courseComposition = await page.evaluate(async () => {
+      const sim = (window as unknown as { __sim: {
+        S: { cam: { x: number; y: number; z: number } };
+        P: (x: number, y: number) => { x: number; y: number };
+      } }).__sim;
+      const { COURSE_BUILD_FIT_TOP, courseFitViewport, courseSafeViewport } = await import('/src/game/camera.ts');
+      return {
+        buildFit: courseFitViewport(800, 600, false),
+        playSafe: courseSafeViewport(800, 600, true),
+        worldOrigin: sim.P(0, 0),
+        camera: { ...sim.S.cam },
+        expectedBuildTop: COURSE_BUILD_FIT_TOP,
+      };
+    });
 
     expect(shell).toMatchObject({ x: 0, y: 434, width: 800, height: 166 });
     expect(dock).toMatchObject({ x: 280, y: 492, width: 520, height: 108 });
@@ -166,6 +180,11 @@ test.describe('native construction composition', () => {
     expect(outliers).toEqual([]);
     expectReadableToolText(tools);
     await expectControlBaySeparation(page, tools);
+    expect(courseComposition.buildFit).toMatchObject({ top: 8, bottom: 422, height: 414 });
+    expect(courseComposition.playSafe).toMatchObject({ top: 116, bottom: 422, height: 306 });
+    expect(courseComposition.buildFit.top).toBe(courseComposition.expectedBuildTop);
+    expect(courseComposition.worldOrigin.y, 'terrain must project behind the top plaques in build mode').toBeLessThan(courseComposition.playSafe.top);
+    expect(courseComposition.camera.z, 'build fit must retain readable course scale').toBeGreaterThan(0.55);
   });
 });
 

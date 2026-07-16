@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT, CONTROLLER_VISIBLE_HEIGHT, COURSE_SAFE_GAP, COURSE_SAFE_TOP, cameraPositionForWorldPoint, controllerVisibleHeightForViewport, coursePointNeedsCameraFollow, courseSafeViewport } from './camera';
+import { COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT, CONTROLLER_VISIBLE_HEIGHT, COURSE_BUILD_FIT_TOP, COURSE_SAFE_GAP, COURSE_SAFE_TOP, cameraPositionForWorldPoint, controllerVisibleHeightForViewport, courseFitViewport, coursePointNeedsCameraFollow, courseSafeViewport } from './camera';
 import { H, W } from './constants';
 import { S } from './state';
 
@@ -28,15 +28,37 @@ describe('course camera safe viewport', () => {
     expect(courseSafeViewport(1592, 716, true).bottom).toBe(716 - COMPACT_PLAY_CONTROLLER_VISIBLE_HEIGHT - COURSE_SAFE_GAP);
   });
 
-  it('centres world targets in the unobscured course rectangle', () => {
+  it('fits build terrain behind top plaques while keeping manual play below them', () => {
+    expect(courseFitViewport(800, 600, false)).toMatchObject({
+      top: COURSE_BUILD_FIT_TOP,
+      bottom: 422,
+      height: 414,
+      centerY: 215,
+    });
+    expect(courseFitViewport(800, 600, true)).toMatchObject({
+      top: COURSE_SAFE_TOP,
+      bottom: 422,
+      height: 306,
+      centerY: 269,
+    });
+    expect(courseSafeViewport(800, 600, false).top).toBe(COURSE_SAFE_TOP);
+  });
+
+  it('centres build world targets in the expanded composition rectangle', () => {
     const target = cameraPositionForWorldPoint(10, 10);
     S.cam.x = target.x;
     S.cam.y = target.y;
-    const safe = courseSafeViewport(S.view.w, S.view.h);
+    const safe = courseFitViewport(S.view.w, S.view.h, false);
     const isoX = ((10 - 10) * 36) / 2;
     const isoY = ((10 + 10) * 18) / 2;
     expect(S.cam.x + isoX).toBe(safe.centerX);
     expect(S.cam.y + isoY).toBe(safe.centerY);
+  });
+
+  it('retains the unobscured play centre for manual camera targets', () => {
+    const target = cameraPositionForWorldPoint(10, 10, 800, 600, true);
+    const isoY = ((10 + 10) * 18) / 2;
+    expect(target.y + isoY).toBe(courseSafeViewport(800, 600, true).centerY);
   });
 
   it('requests follow before a point can pass beneath the shell', () => {
