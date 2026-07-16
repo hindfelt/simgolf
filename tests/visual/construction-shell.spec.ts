@@ -173,7 +173,7 @@ test.describe('native construction composition', () => {
     });
 
     expect(shell).toMatchObject({ x: 0, y: 434, width: 800, height: 166 });
-    expect(dock).toMatchObject({ x: 280, y: 492, width: 520, height: 108 });
+    expect(dock).toMatchObject({ x: 280, y: 434, width: 520, height: 166 });
     expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
     expect(tools).toHaveLength(16);
     const outliers = tools.filter((tool) => tool.x < dock.x || right(tool) > 800 || tool.y < dock.y || bottom(tool) > 600.1);
@@ -185,6 +185,26 @@ test.describe('native construction composition', () => {
     expect(courseComposition.buildFit.top).toBe(courseComposition.expectedBuildTop);
     expect(courseComposition.worldOrigin.y, 'terrain must project behind the top plaques in build mode').toBeLessThan(courseComposition.playSafe.top);
     expect(courseComposition.camera.z, 'build fit must retain readable course scale').toBeGreaterThan(0.55);
+  });
+});
+
+test.describe('reported medium-aspect construction composition', () => {
+  test.use({ viewport: { width: 704, height: 538 } });
+
+  test('keeps the construction panel flush with the molded fan outside wide-landscape breakpoints', async ({ page }) => {
+    await enterSandbox(page);
+    await page.locator('.toolGroup[data-group-id="course"]').click();
+
+    const shell = await page.locator('.controllerShell').boundingBox() as Box;
+    const controls = await page.locator('.fieldControls').boundingBox() as Box;
+    const dock = await page.locator('[data-ui="construction-dock"]').boundingBox() as Box;
+    const tray = await page.locator('.toolTray').boundingBox() as Box;
+
+    expect(shell).toMatchObject({ x: 0, y: 372, width: 704, height: 166 });
+    expect(controls).toMatchObject({ x: 0, y: 372, width: 280, height: 166 });
+    expect(dock).toMatchObject({ x: 280, y: 372, width: 424, height: 166 });
+    expect(dock.y, 'construction rail and fan must never form a vertical stair-step').toBe(controls.y);
+    expect(tray.y).toBe(dock.y + 4);
   });
 });
 
