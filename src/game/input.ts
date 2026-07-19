@@ -162,6 +162,13 @@ export function bindInput(cv: HTMLCanvasElement): () => void {
       return;
     }
     if (S.tool === 'pan') {
+      // a tap that lands on a golfer opens their profile; empty ground pans
+      const golfer = pickGolferAtScreen(p.x, p.y, e.pointerType === 'touch');
+      if (golfer) {
+        selectGolfer(golfer);
+        S.camTarget = null;
+        return;
+      }
       S.camTarget = null;
       panDrag = { sx: p.x, sy: p.y, cx: S.cam.x, cy: S.cam.y };
       return;

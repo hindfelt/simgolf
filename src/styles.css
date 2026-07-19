@@ -5333,7 +5333,7 @@ canvas.game:focus-visible {
 .golferInspectorHead h2 { margin: 1px 0; overflow: hidden; color: #26358a; font: 900 17px var(--sg-font, 'Trebuchet MS'); text-overflow: ellipsis; white-space: nowrap; }
 .golferInspectorHead p { margin: 0; color: #535b98; font: 800 7px var(--sg-small, Verdana); }
 .golferInspectorClose { width: 29px; height: 29px; padding: 0; border: 2px solid #414991; border-radius: 50%; background: radial-gradient(circle at 35% 26%,#fff,#c8c7ef 55%,#8386c5); color: #29357d; }
-.golferSituation { display: grid; grid-template-columns: 1.3fr .65fr .8fr 1fr; gap: 2px; border: 2px solid #4a5196; border-radius: 6px; overflow: hidden; background: #555da0; }
+.golferSituation { display: grid; grid-template-columns: 1.3fr .65fr .8fr 1fr .7fr .8fr; gap: 2px; border: 2px solid #4a5196; border-radius: 6px; overflow: hidden; background: #555da0; }
 .golferSituation span { min-width: 0; padding: 4px 5px; background: linear-gradient(180deg,#eff0ff,#bebfea); }
 .golferSituation small,.golferSituation b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .golferSituation small { color: #666ca4; font: 900 5.5px var(--sg-small, Verdana); letter-spacing: .08em; text-transform: uppercase; }
@@ -5348,9 +5348,15 @@ canvas.game:focus-visible {
 .golferMeter i { display: block; height: 100%; background: linear-gradient(90deg,#46c49a,#8ef064); box-shadow: inset 0 1px rgba(255,255,255,.5); }
 .golferMeter.meter-skill i { background: linear-gradient(90deg,#e0b316,#fff154); }
 .golferMeter > b { color: #30397e; font: 900 7px var(--sg-small, Verdana); text-align: right; }
-.golferLatestComment { margin: 0; padding: 8px 10px; border: 2px solid #343c88; border-radius: 6px; background: linear-gradient(180deg,#202856,#101632); box-shadow: inset 0 1px rgba(255,255,255,.15); }
+.golferLatestComment { margin: 0; padding: 8px 10px; border: 2px solid #343c88; border-radius: 6px; background: linear-gradient(180deg,#202856,#101632); box-shadow: inset 0 1px rgba(255,255,255,.15); max-height: 92px; overflow-y: auto; }
 .golferLatestComment small { color: #fff154; font: 900 8px var(--sg-small, Verdana); letter-spacing: .13em; }
-.golferLatestComment p { margin: 3px 0 0; color: #fff; font: 900 12px/1.25 var(--sg-font, 'Trebuchet MS'); text-shadow: 1px 1px #273078; }
+.golferLatestComment p { margin: 3px 0 0; color: #fff; font: 900 11px/1.25 var(--sg-font, 'Trebuchet MS'); text-shadow: 1px 1px #273078; }
+.golferLatestComment p + p { color: #c3c8f4; font-size: 9.5px; }
+.golferWishes { margin: 0; padding: 6px 10px; border: 2px solid #6c70b0; border-radius: 6px; background: rgba(246,246,255,.34); box-shadow: inset 0 1px rgba(255,255,255,.65); }
+.golferWishes small { color: #303a88; font: 900 8px var(--sg-small, Verdana); letter-spacing: .13em; }
+.golferWishes p { margin: 3px 0 0; color: #3f4787; font: 800 9px var(--sg-small, Verdana); }
+.golferWishes ul { margin: 3px 0 0; padding-left: 14px; }
+.golferWishes li { margin: 1px 0; color: #3f4787; font: 800 9px/1.35 var(--sg-small, Verdana); }
 .golferInspectorActions { display: grid; grid-template-columns: 1.5fr .7fr; gap: 5px; }
 .golferInspectorActions button { min-height: 30px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 2px solid #3c448e; border-radius: 7px; background: linear-gradient(180deg,#f0efff,#aaaadc 72%,#8587c2); color: #28337b; font: 900 8px var(--sg-font, 'Trebuchet MS'); box-shadow: inset 0 1px #fff,0 2px 0 #282e75; cursor: pointer; }
 .golferInspectorActions button:first-child { background: linear-gradient(180deg,#fff77b,#e9d218 72%,#b68e08); }

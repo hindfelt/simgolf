@@ -1,0 +1,16 @@
+{
+  "name": "Fairway Mogul",
+  "short_name": "Fairway",
+  "description": "A SimGolf-style course tycoon: design holes, keep golfers happy, and tee off on your own course.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#4a4d9b",
+  "theme_color": "#2c368e",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

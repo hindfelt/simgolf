@@ -180,7 +180,11 @@ export default function BuildPanel() {
                   <div className="bpIdentity"><b>{d.name}</b><small>{CATEGORIES.find((item) => item.id === CATEGORY_FOR[k])!.label}</small></div>
                 </div>
                 <div className="bpBlurb" id={`catalog-description-${k}`}>{landmarkLocked ? 'Ivana Richman must enjoy the course and donate the first Landmark.' : d.blurb}</div>
-                <div className="bpMeta"><strong>{price}</strong><span aria-label={`${d.w} by ${d.h} tile footprint`}>{d.w}×{d.h} tiles</span></div>
+                <div className="bpMeta">
+                  <strong>{price}</strong>
+                  <span aria-label={`${d.w} by ${d.h} tile footprint`}>{d.w}×{d.h} tiles</span>
+                  {d.upkeepPerMin > 0 && <span className="bpUpkeep" aria-label={`Running cost ${fmt$(d.upkeepPerMin)} per minute`}>{fmt$(d.upkeepPerMin)}/min to run</span>}
+                </div>
                 <div className={'bpAvailability' + (afford ? ' ready' : ' unavailable')}>{availability}</div>
               </button>
             );
@@ -212,6 +216,7 @@ export default function BuildPanel() {
                   </div>
                   <em className={building.open ? 'online' : 'offline'}>{work ? 'BUILDING' : building.open ? 'OPEN' : 'NO PATH'}</em>
                 </header>
+                <div className="facilityRunningCost">Running cost <b>{fmt$(Math.round(facilityMaintenanceFor(building) * 60))}/min</b></div>
 
                 {work ? (
                   <div className="upgradeProgress">
@@ -223,7 +228,7 @@ export default function BuildPanel() {
                   <div className="upgradeComplete">
                     <b>Maximum level reached</b>
                     <span>{building.branch === 'service' ? 'Service operations fully developed.' : 'Prestige experience fully developed.'}</span>
-                    <small>Maintenance ${facilityMaintenanceFor(building).toFixed(2)}/s</small>
+                    <small>Running cost {fmt$(Math.round(facilityMaintenanceFor(building) * 60))}/min</small>
                   </div>
                 ) : (
                   <div className="upgradeChoices">

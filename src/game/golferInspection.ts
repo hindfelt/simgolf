@@ -24,9 +24,18 @@ export interface GolferInspectionModel {
   hole: number;
   strokes: number;
   lie: string;
+  /** Round score across finished holes, e.g. "+3" or "E"; null before any hole is finished. */
+  scoreToPar: string | null;
+  /** Total strokes over the finished holes counted in `scoreToPar`. */
+  roundStrokes: number;
+  /** Green fees paid so far this visit, in dollars. */
+  spent: number;
   needs: { energy: number; hunger: number; thirst: number };
   skills: { length: number; accuracy: number; imagination: number };
-  latestComment: string | null;
+  /** Most recent chatter first, up to three entries. */
+  feedback: string[];
+  /** What this golfer wants from the course right now. */
+  wishes: string[];
   visits: number | null;
 }
 
@@ -80,14 +89,33 @@ function actionLabel(golfer: Golfer): string {
   }
 }
 
+/** Live wishes derived from unmet needs and mood — what the golfer wants right now. */
+export function golferWishes(golfer: Golfer, greenFee: number): string[] {
+  const wishes: string[] = [];
+  if (golfer.hunger < 0.35) wishes.push('Wants a Snack Bar within reach');
+  if (golfer.thirst < 0.35) wishes.push('Wants something to drink');
+  if (golfer.energy < 0.3) wishes.push('Wants a Bench or Hotel to rest at');
+  if (golfer.mood <= -1.5) wishes.push('Thinks the course needs serious work');
+  else if (golfer.mood < 0) wishes.push('Wants more interesting holes');
+  if (golfer.mood < 0 && greenFee >= 40) wishes.push('Finds the green fee steep');
+  return wishes;
+}
+
 export function golferInspectionModel(
   golfer: Golfer,
   regular: Regular | undefined,
   comments: readonly CommentEntry[],
+  greenFee = 0,
 ): GolferInspectionModel {
   const attitude = attitudePresentation(golfer.mood);
-  const latestComment = [...comments].reverse().find((comment) => comment.name === golfer.name)?.txt ?? null;
+  const feedback: string[] = [];
+  for (let index = comments.length - 1; index >= 0 && feedback.length < 3; index--) {
+    if (comments[index].name === golfer.name) feedback.push(comments[index].txt);
+  }
   const fallback = clamp01(golfer.skill);
+  const roundStrokes = Math.max(0, Math.trunc(golfer.roundStrokes ?? 0));
+  const roundPar = Math.max(0, Math.trunc(golfer.roundPar ?? 0));
+  const diff = roundStrokes - roundPar;
   return {
     attitude: attitude.label,
     expression: attitude.expression,
@@ -95,13 +123,17 @@ export function golferInspectionModel(
     hole: golfer.holeIdx + 1,
     strokes: Math.max(0, Math.trunc(golfer.strokes)),
     lie: LIE_LABELS[golfer.lie],
+    scoreToPar: roundPar > 0 ? (diff === 0 ? 'E' : diff > 0 ? `+${diff}` : `${diff}`) : null,
+    roundStrokes,
+    spent: Math.max(0, Math.round(golfer.spent ?? 0)),
     needs: { energy: percent(golfer.energy), hunger: percent(golfer.hunger), thirst: percent(golfer.thirst) },
     skills: {
       length: percent(golfer.length ?? regular?.length ?? fallback),
       accuracy: percent(golfer.accuracy ?? regular?.accuracy ?? fallback),
       imagination: percent(golfer.imagination ?? regular?.imagination ?? fallback),
     },
-    latestComment,
+    feedback,
+    wishes: golferWishes(golfer, greenFee),
     visits: regular ? Math.max(0, Math.trunc(regular.visits)) : null,
   };
 }

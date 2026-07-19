@@ -1152,33 +1152,15 @@ body,
 }
 .flightGlyph { width: 46px; height: 24px; overflow: visible; fill: #fff8ff; stroke: #fff8ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px #465489); }
 .flightGlyph path { fill: none; }
-.drawHookControl .flightGlyph { transform: translateY(-2px) scale(.92); }
-.shapeComboState {
-  position: absolute;
-  right: 5px;
-  bottom: 2px;
-  display: flex;
-  gap: 2px;
+.playShotPalette .shapeBtn { grid-template-rows: auto auto; row-gap: 0; }
+.playShotPalette .flightGlyph { width: 38px; height: 17px; }
+.playShotPalette .shapeShort {
+  font: 800 7px/1 var(--sg-small);
+  letter-spacing: .02em;
+  color: rgba(255,255,255,.92);
+  text-shadow: 0 1px rgba(21,28,74,.6);
   pointer-events: none;
-}
-.shapeComboState i {
-  width: 12px;
-  height: 10px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255,255,255,.5);
-  border-radius: 4px;
-  background: rgba(22,39,66,.55);
-  color: rgba(255,255,255,.78);
-  font: 900 7px/1 var(--sg-small);
-  font-style: normal;
-  box-shadow: 0 1px rgba(21,28,74,.52);
-}
-.shapeBtn.on .shapeComboState i.current {
-  border-color: #5f4d00;
-  background: #fff35b;
-  color: #263476;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.72);
+  white-space: nowrap;
 }
 .playVisuallyHidden {
   position: absolute;
@@ -1729,8 +1711,8 @@ body,
 .controllerShell .fieldControls .fieldMenu {
   position: absolute;
   z-index: 8;
-  left: 14px;
-  top: 108px;
+  left: 16px;
+  top: 68px;
   pointer-events: auto;
 }
 
@@ -1817,9 +1799,9 @@ body,
   box-shadow: inset 2px 2px rgba(255,255,255,.72), inset -3px -4px rgba(37,45,126,.18), 0 3px 0 #151c61;
   pointer-events: auto;
 }
-.controllerShell .fieldControls > .orb:nth-of-type(1) { left: 58px; top: 126px; }
-.controllerShell .fieldControls > .orb:nth-of-type(2) { left: 116px; top: 128px; }
-.controllerShell .fieldControls > .orb:nth-of-type(3) { left: 174px; top: 130px; }
+.controllerShell .fieldControls > .orb:nth-of-type(1) { left: 68px; top: 74px; }
+.controllerShell .fieldControls > .orb:nth-of-type(2) { left: 110px; top: 78px; }
+.controllerShell .fieldControls > .orb:nth-of-type(3) { left: 152px; top: 82px; }
 .controllerShell .fieldControls > .orb.on {
   border-color: #3e3b79;
   background: radial-gradient(circle at 33% 24%, var(--sg-yellow-hi), var(--sg-yellow) 52%, #c59e05 82%);
@@ -1845,17 +1827,13 @@ body,
   box-shadow: inset 0 -8px 0 rgba(43,48,137,.22), inset 3px 3px rgba(255,255,255,.28), 0 -4px 0 var(--sg-rim), 0 -10px 22px rgba(0,0,0,.23);
 }
 
+/* The play HUD owns the whole lower shell during a round; the decorative
+   mode-medallion strip only ever collided with its status panes. */
 .controllerShell .playModeDock {
-  left: var(--sg-control-width);
-  z-index: 28;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  pointer-events: none;
+  display: none;
 }
 
 .controllerShell .playModeDock .playModeGroups {
-  left: calc(-1 * var(--sg-control-width));
   pointer-events: none;
 }
 
@@ -1863,39 +1841,23 @@ body,
   pointer-events: none;
 }
 
-.controllerShell .playModeDock .toolGroup[data-group-id='course'] {
-  left: 18px;
-  top: 13px;
-}
-
-.controllerShell .playModeDock .toolGroup[data-group-id='resort'] {
-  left: 101px;
-  top: 42px;
-}
-
-.controllerShell .playModeDock .toolGroup[data-group-id='play'] {
-  left: 229px;
-  top: 78px;
-  width: 58px;
-  height: 58px;
-  min-width: 58px;
-  min-height: 58px;
-  border-width: 4px;
-}
-
 .controllerShell .toolDock::before {
   display: none;
 }
 
+/* The five mode tabs sit in one aligned, labelled strip along the top edge of the
+   construction dock instead of the old scattered medallion cluster. */
 .controllerShell .toolGroups {
   position: absolute;
   z-index: 4;
-  left: calc(-1 * var(--sg-construction-control-width));
-  top: -58px;
-  width: var(--sg-fan-width);
-  height: var(--sg-fan-height);
+  left: 12px;
+  right: 40px;
+  top: 7px;
+  height: 36px;
   min-height: 0;
-  display: block;
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
   padding: 0;
   border: 0;
   pointer-events: none;
@@ -1909,31 +1871,43 @@ body,
   min-height: var(--sg-fan-height);
 }
 
-.controllerShell[data-mode='build'] .toolGroups { top: 0; }
-
 .controllerShell .toolGroup,
 .controllerShell .toolGroup[data-group-id] {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  padding: 2px;
+  position: relative;
+  left: auto;
+  top: auto;
+  flex: 0 0 auto;
+  width: auto;
+  height: 36px;
+  min-width: 76px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 13px;
   border: 3px solid var(--sg-rim);
-  border-radius: 50%;
+  border-radius: 18px;
   background: radial-gradient(circle at 34% 24%, #f7f6ff, #c6c3ef 39%, #898bcc 72%, #6367b2);
   color: #27347f;
   box-shadow: inset 2px 2px rgba(255,255,255,.7), 0 3px 0 #1f276f;
   pointer-events: auto;
 }
-.controllerShell .toolGroup[data-group-id='course'] { left: 7px; top: 4px; width: 74px; height: 74px; min-width: 74px; min-height: 74px; border-width: 4px; }
-.controllerShell .toolGroup[data-group-id='resort'] { left: 87px; top: 34px; width: 66px; height: 66px; min-width: 66px; min-height: 66px; }
-.controllerShell .toolGroup[data-group-id='people'] { left: 157px; top: 49px; width: 60px; height: 60px; min-width: 60px; min-height: 60px; }
-.controllerShell .toolGroup[data-group-id='play'] { left: 230px; top: 79px; width: 50px; height: 50px; min-width: 50px; min-height: 50px; }
-.controllerShell .toolGroup[data-group-id='terrain'] { left: 230px; top: 19px; width: 46px; height: 46px; min-width: 46px; min-height: 46px; }
-.controllerShell .toolGroup[data-group-id='course'] .gameIcon { width: 36px; height: 36px; }
-.controllerShell .toolGroup[data-group-id='resort'] .gameIcon { width: 31px; height: 31px; }
-.controllerShell .toolGroup[data-group-id='people'] .gameIcon { width: 28px; height: 28px; }
-.controllerShell .toolGroup[data-group-id='play'] .gameIcon { width: 25px; height: 25px; }
-.controllerShell .toolGroup[data-group-id='terrain'] .gameIcon { width: 22px; height: 22px; }
+.controllerShell .toolGroup .gameIcon { width: 18px; height: 18px; }
+.controllerShell .toolGroupLabel {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: nowrap;
+  font: 900 9px var(--sg-small);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
 .controllerShell .toolGroup.active,
 .controllerShell .toolGroup.familyActive {
   border-color: #474077;
@@ -1941,9 +1915,21 @@ body,
   box-shadow: 0 0 0 3px #fff446, 0 4px 0 #34316e, inset 2px 2px rgba(255,255,255,.72);
 }
 
+/* Narrow screens keep every mode tab reachable: drop the text labels back to
+   icons and let the strip scroll instead of pushing tabs off screen. */
+@media (max-width: 640px) {
+  /* The strip claims the empty shoulder above the fan orbs so all five tabs
+     stay reachable even when the dock itself is narrow. */
+  .controllerShell .toolGroups { left: calc(12px - var(--sg-construction-control-width)); gap: 5px; overflow-x: auto; scrollbar-width: none; pointer-events: auto; }
+  .controllerShell .toolGroups::-webkit-scrollbar { display: none; }
+  .controllerShell .toolGroup,
+  .controllerShell .toolGroup[data-group-id] { min-width: 46px; padding: 2px 8px; }
+  .controllerShell .toolGroupLabel { display: none; }
+}
+
 .controllerShell .toolTray {
   position: absolute;
-  top: 0;
+  top: 46px;
   left: 4px;
   right: 0;
   bottom: 0;
@@ -1960,7 +1946,7 @@ body,
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(8, 64px);
-  grid-template-rows: repeat(2, 52px);
+  grid-template-rows: repeat(2, 56px);
   grid-auto-flow: row;
   align-content: start;
   justify-content: start;
@@ -1983,7 +1969,7 @@ body,
 .controllerShell .toolbar::-webkit-scrollbar { display: none; }
 .controllerShell .toolDock[data-group='terrain'] .toolbar {
   grid-template-columns: repeat(2, 64px);
-  grid-template-rows: repeat(2, 52px);
+  grid-template-rows: repeat(2, 56px);
 }
 .controllerShell .toolDock[data-group='resort'] .toolbar {
   display: flex;
@@ -2016,15 +2002,21 @@ body,
   scroll-snap-align: start;
 }
 
+/* Each tool cell stacks scene, name, and price without overlap: no more label
+   plates floating over the artwork. */
 .controllerShell .toolDock[data-group='terrain'] .tool,
 .controllerShell .tool {
   position: relative;
   width: 64px;
   min-width: 64px;
-  height: 52px;
-  min-height: 52px;
-  display: block;
-  padding: 0;
+  height: 56px;
+  min-height: 56px;
+  display: grid;
+  grid-template-rows: 28px 17px 9px;
+  gap: 0;
+  align-items: center;
+  justify-items: center;
+  padding: 1px 0 0;
   overflow: visible;
   border: 0;
   border-radius: 8px;
@@ -2037,40 +2029,37 @@ body,
 .controllerShell .tool.active { background: radial-gradient(ellipse at center, rgba(255,248,82,.18), transparent 70%); }
 .controllerShell .toolGraphic,
 .controllerShell .toolDock[data-group='terrain'] .toolGraphic {
-  position: absolute;
+  position: static;
   z-index: 1;
-  left: 50%;
-  top: 4px;
-  width: 60px;
-  height: 47px;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 3px 2px rgba(19,24,80,.42));
+  width: 36px;
+  height: 28px;
+  align-self: end;
+  transform: none;
+  filter: drop-shadow(0 2px 2px rgba(19,24,80,.42));
 }
-.controllerShell .tool:hover .toolGraphic { transform: translateX(-50%) translateY(-1px) scale(1.04); }
+.controllerShell .tool:hover .toolGraphic { transform: translateY(-1px) scale(1.06); }
 .controllerShell .tool .nm,
 .controllerShell .toolDock[data-group='terrain'] .tool .nm {
-  position: absolute;
+  position: static;
   z-index: 3;
-  top: 0;
-  left: 50%;
   width: 62px;
   max-width: 62px;
-  height: 24px;
-  max-height: 24px;
+  height: auto;
+  max-height: 17px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding: 1px;
+  padding: 0 1px;
   overflow: hidden;
-  transform: translateX(-50%);
+  transform: none;
   border-radius: 3px;
-  background: linear-gradient(180deg, rgba(41,51,126,.8), rgba(41,51,126,.3) 76%, transparent);
+  background: transparent;
   color: #fff;
   font-family: Verdana, Arial, sans-serif;
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 900;
-  line-height: 11px;
+  line-height: 8.5px;
   letter-spacing: -.02em;
   text-align: center;
   text-wrap: balance;
@@ -2079,29 +2068,27 @@ body,
 }
 .controllerShell .tool .ct,
 .controllerShell .toolDock[data-group='terrain'] .tool .ct {
-  position: absolute;
+  position: static;
   z-index: 3;
-  left: 50%;
-  bottom: 0;
-  max-width: 60px;
-  min-height: 11px;
-  max-height: 22px;
-  padding: 0 3px 1px;
+  max-width: 62px;
+  min-height: 9px;
+  max-height: 9px;
+  padding: 0 2px;
   overflow: hidden;
-  transform: translateX(-50%);
+  transform: none;
   border-radius: 4px;
-  background: rgba(41,51,126,.76);
-  color: #fff8b4;
+  background: transparent;
+  color: #ffe98f;
   font-family: Verdana, Arial, sans-serif;
-  font-size: 10px;
+  font-size: 7px;
   font-weight: 900;
-  line-height: 11px;
+  line-height: 9px;
   text-align: center;
   text-shadow: 1px 1px 0 #29337e;
   white-space: nowrap;
 }
 .controllerShell .tool.active .nm { color: #fff945; }
-.controllerShell .tool.active .ct { background: rgba(60,55,108,.88); color: #fff945; }
+.controllerShell .tool.active .ct { color: #fff945; }
 
 .dockStatus {
   min-width: min(430px, calc(100vw - 330px));
@@ -2686,27 +2673,23 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
   }
   .controllerShell[data-mode='play'] .playShotPaletteRail {
     width: auto;
-    gap: 6px;
+    gap: 5px;
     padding: 0;
     overflow: visible;
   }
+  /* Six per-stroke shapes at 54px stay clear of the 210px tactical message. */
   .controllerShell[data-mode='play'] .playShotPalette .shapeBtn,
   .controllerShell[data-mode='play'] .playShotPalette .shapeBtn:nth-child(even) {
-    flex: 0 0 57px;
-    width: 57px;
-    min-width: 57px;
+    flex: 0 0 54px;
+    width: 54px;
+    min-width: 54px;
     height: 39px;
     min-height: 39px;
     padding: 1px 4px;
     border-width: 3px;
     transform: none;
   }
-  .controllerShell[data-mode='play'] .flightGlyph { width: 47px; height: 25px; }
-  .controllerShell[data-mode='play'] .shapeComboState i {
-    width: 12px;
-    height: 9px;
-    font-size: 6px;
-  }
+  .controllerShell[data-mode='play'] .flightGlyph { width: 38px; height: 17px; }
 
   .controllerShell[data-mode='play'] .playMessage {
     left: 8px;
@@ -2924,25 +2907,18 @@ body:has(.controllerShell[data-mode='play']) .simFotoTicker { display: none !imp
 .proSkillGrid article b { font-size: var(--sg-type-control); }
 .regularLocate { font-size: var(--sg-type-body); }
 
-/* Construction cells retain their authored 64x52 geometry. The label wash is
-   two lines tall so longer names stay legible instead of shrinking to 9px. */
+/* Construction cells stack scene, two-line name, and price inside 64x56
+   without overlap; the fonts stay at their authored compact sizes. */
 .controllerShell .tool .nm,
 .controllerShell .toolDock[data-group='terrain'] .tool .nm {
-  top: 0;
-  height: 24px;
-  max-height: 24px;
-  font-size: 11px;
-  line-height: 11px;
+  font-size: 8px;
+  line-height: 8.5px;
 }
 .controllerShell .tool .ct,
 .controllerShell .toolDock[data-group='terrain'] .tool .ct {
-  width: 64px;
-  max-width: 64px;
-  min-height: 11px;
   box-sizing: border-box;
-  padding-inline: 1px;
-  font-size: var(--sg-type-small);
-  line-height: 11px;
+  font-size: 7px;
+  line-height: 9px;
 }
 
 /* Facility tray. The compact cards use a preview-plus-deed composition, so

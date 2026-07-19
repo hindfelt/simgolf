@@ -19,8 +19,17 @@ describe('original People inspector presentation', () => {
     expect(inspector).toContain('role="dialog" aria-modal="false"');
     expect(inspector).toContain('useFloatingPanelFocus(!!golfer');
     expect(inspector).toContain('role="meter"');
-    expect(inspector).toContain('LATEST COMMENT');
+    expect(inspector).toContain('FEEDBACK');
+    expect(inspector).toContain('WISHES');
+    expect(inspector).toContain('<small>Score</small>');
+    expect(inspector).toContain('<small>Spent</small>');
     expect(inspector).toContain('centerOnGolfer(golfer)');
+  });
+
+  it('opens a golfer profile from a pan-tool tap before falling back to camera drag', () => {
+    const panBranch = input.slice(input.indexOf("if (S.tool === 'pan')"), input.indexOf("if (S.tool === 'hole')"));
+    expect(panBranch).toContain('pickGolferAtScreen(p.x, p.y');
+    expect(panBranch.indexOf('selectGolfer(golfer)')).toBeLessThan(panBranch.indexOf('panDrag = {'));
   });
 
   it('provides a visible People category and roster-to-world focus path', () => {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { H, LIE, MAXE, PW, PH, SHOT_SHAPES, W } from './constants';
-import { acceptProChallenge, ballFlightPosition, beginPaintStroke, cachedPlayerShotForecast, exportSaveText, flightApexHeight, holeToolTap, loadFromSlot, loadGame, migrateLegacyCareerRevenue, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotForecast, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud, usesLegacyEndpointTreeDeflection } from './engine';
+import { acceptProChallenge, ballFlightPosition, beginPaintStroke, cachedPlayerShotForecast, exportSaveText, flightApexHeight, holeCorridorRadius, holeToolTap, isOutOfBounds, loadFromSlot, loadGame, migrateLegacyCareerRevenue, newCourse, paintAt, playerAimIntent, playerEstimatedRoll, playerFire, playerIntendedDistance, playerShotDispersion, playerShotForecast, playerShotPlan, playerShotPlanPosition, playerShotSkill, quitRound, rebuildStatics, retireCourseForChampionship, saveGame, saveToSlot, setClub, setShape, shapeCurveOffset, startChallengeRound, startChampionshipRound, startCompetitionRound, startRound, update, updatePlayHud, usesLegacyEndpointTreeDeflection } from './engine';
 import { clubLieProfile, fallbackClubForLie, SEVERE_RECOVERY_LIES } from './clubProfiles';
 import { createProChallengeOffer, createResidentPro } from './proCircuit';
 import { P } from './camera';
@@ -834,7 +834,7 @@ describe('save / load round-trip', () => {
     S.rot = 0;
     S.cam = { x: 100, y: 80, z: 1 };
     const screenStart = P(start.x, start.y);
-    const screenDrag = P(start.x - 9, start.y);
+    const screenDrag = P(start.x + 9, start.y);
     S.player!.aim = { on: true, sx: screenStart.x, sy: screenStart.y, cx: screenDrag.x, cy: screenDrag.y, kind: 'pointer' };
     updatePlayHud();
     expect(ui.get().playHud!.canopyLabel).toBe(keyboardHud.canopyLabel);
@@ -880,7 +880,7 @@ describe('save / load round-trip', () => {
     S.cam = { x: 100, y: 80, z: 1 };
     const from = { x: 5.5, y: 5.5 };
     const screenStart = P(from.x, from.y);
-    const screenDrag = P(from.x - 4.5, from.y);
+    const screenDrag = P(from.x + 4.5, from.y);
     const pointer = playerAimIntent({ on: true, sx: screenStart.x, sy: screenStart.y, cx: screenDrag.x, cy: screenDrag.y, kind: 'pointer' }, 'tee')!;
     const keyboard = playerAimIntent({ on: true, sx: 0, sy: 0, cx: 0, cy: 0, kind: 'keyboard', worldDirX: 1, worldDirY: 0, worldPower: 0.5 }, 'tee')!;
     expect(pointer).toEqual(keyboard);
@@ -1377,6 +1377,40 @@ describe('save / load round-trip', () => {
     update(.1);
     expect(S.proChallengeOffer).toBeNull();
     expect(S.proChallengeCooldown).toBe(75);
+  });
+});
+
+describe('out of bounds', () => {
+  const hole = { tee: { x: 10.5, y: 20.5 }, cup: { x: 34.5, y: 20.5 } };
+
+  beforeEach(() => {
+    newCourse(true);
+    S.tiles.fill(Tile.ROUGH);
+  });
+
+  it('widens the corridor with hole length inside hard caps', () => {
+    expect(holeCorridorRadius(hole)).toBeCloseTo(24 * 0.33, 6);
+    expect(holeCorridorRadius({ tee: { x: 0, y: 0 }, cup: { x: 4, y: 0 } })).toBe(5);
+    expect(holeCorridorRadius({ tee: { x: 0, y: 0 }, cup: { x: 90, y: 0 } })).toBe(11);
+  });
+
+  it('keeps the corridor playable and rules distant rough out of bounds', () => {
+    expect(isOutOfBounds({ x: 20, y: 20.5 }, hole)).toBe(false); // on the ideal line
+    expect(isOutOfBounds({ x: 20, y: 27 }, hole)).toBe(false); // rough inside the corridor
+    expect(isOutOfBounds({ x: 20.5, y: 32.5 }, hole)).toBe(true); // rough beyond the corridor
+    expect(isOutOfBounds({ x: 20.5, y: 60.5 }, hole)).toBe(true); // another part of the course entirely
+  });
+
+  it('lets built golf surfaces stretch the corridor for doglegs, but only so far', () => {
+    S.tiles[idx(20, 32)] = Tile.FAIR;
+    expect(isOutOfBounds({ x: 20.5, y: 32.5 }, hole)).toBe(false); // painted dogleg fairway stays in
+    S.tiles[idx(20, 40)] = Tile.FAIR;
+    expect(isOutOfBounds({ x: 20.5, y: 40.5 }, hole)).toBe(true); // fairway across the map is still OB
+  });
+
+  it('never doubles a water penalty with an OB penalty', () => {
+    S.tiles[idx(20, 32)] = Tile.WATER;
+    expect(isOutOfBounds({ x: 20.5, y: 32.5 }, hole)).toBe(false);
   });
 });
 

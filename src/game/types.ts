@@ -118,6 +118,12 @@ export interface Golfer {
   lie: LieKey;
   chatCd: number;
   scenicSaid: boolean;
+  /** Round tally across finished holes (absent on saves written before the inspector scorecard). */
+  roundStrokes?: number;
+  /** Total par of the holes counted in `roundStrokes`. */
+  roundPar?: number;
+  /** Green fees paid this visit, in dollars. */
+  spent?: number;
   face?: number; // 1 = facing screen-right, -1 = left
   /** Explicit screen-facing art; absent on saves written before actor views. */
   view?: ActorView;

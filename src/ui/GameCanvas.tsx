@@ -20,7 +20,9 @@ export default function GameCanvas() {
     let cssH = window.innerHeight;
 
     function resize() {
-      const dpr = window.devicePixelRatio || 1;
+      // Cap the backing store at 2x: on 3x phones (iPhone) this renders 2.25x
+      // fewer pixels per frame with no visible loss on a moving isometric scene.
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       cssW = window.innerWidth;
       cssH = window.innerHeight;
       cv.width = Math.round(cssW * dpr);
@@ -33,18 +35,29 @@ export default function GameCanvas() {
     resize();
 
     const unbind = bindInput(cv);
+    // iOS Safari suspends home-screen apps without a reliable pagehide; save on hide too.
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') saveGame();
+    };
     window.addEventListener('resize', resize);
     window.addEventListener('pagehide', saveGame);
+    document.addEventListener('visibilitychange', onVisibility);
 
     let cancelled = false;
     let raf = 0;
     let lastTs = 0;
+    let lastFrameTs = 0;
+    // 60fps is plenty for the sim; without a cap, 120Hz displays (ProMotion
+    // iPads/iPhones) run the whole update+draw twice as often for no benefit.
+    const FRAME_INTERVAL = 1000 / 61;
     function tick(ts: number) {
+      raf = requestAnimationFrame(tick);
+      if (ts - lastFrameTs < FRAME_INTERVAL) return;
+      lastFrameTs = ts;
       const dt = Math.min(Math.max((ts - lastTs) / 1000, 0), 0.05) || 0.016;
       lastTs = ts;
       update(dt);
       draw(ctx, cssW, cssH);
-      raf = requestAnimationFrame(tick);
     }
 
     if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__sim = { S, P, PE, screenToWorld };
@@ -69,6 +82,7 @@ export default function GameCanvas() {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('pagehide', saveGame);
+      document.removeEventListener('visibilitychange', onVisibility);
       unbind();
     };
   }, [setUI, pushTicker]);
@@ -79,7 +93,7 @@ export default function GameCanvas() {
       className="game"
       tabIndex={0}
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
-      aria-label="Interactive isometric golf course. Use pointer or touch controls. While playing, drag back from the gold ball marker and release to swing; or focus the course, use left and right arrows to aim, up and down arrows for power, and Enter to swing."
+      aria-label="Interactive isometric golf course. Use pointer or touch controls. While playing, drag from the gold ball marker toward your target and release to swing; or focus the course, use left and right arrows to aim, up and down arrows for power, and Enter to swing."
     />
   );
 }
