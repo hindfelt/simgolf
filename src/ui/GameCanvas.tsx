@@ -47,18 +47,34 @@ export default function GameCanvas() {
     let raf = 0;
     let lastTs = 0;
     let lastFrameTs = 0;
-    // 60fps is plenty for the sim; without a cap, 120Hz displays (ProMotion
-    // iPads/iPhones) run the whole update+draw twice as often for no benefit.
-    const FRAME_INTERVAL = 1000 / 61;
+    let lastInputTs = 0;
+    const noteInput = () => { lastInputTs = performance.now(); };
+    // Adaptive frame pacing. 60fps is the ceiling — without it, 120Hz displays
+    // (ProMotion iPads/iPhones) run the whole update+draw twice for no benefit.
+    // The ambient build-mode simulation (golfers strolling, no input) renders at
+    // 30fps, halving CPU/GPU/battery cost; anything the player is actively
+    // watching or steering — a round, a ball in flight, aiming, camera moves,
+    // recent pointer/key input — promotes back to 60fps.
+    const FRAME_INTERVAL_ACTIVE = 1000 / 61;
+    const FRAME_INTERVAL_AMBIENT = 1000 / 31;
+    function frameInterval(now: number) {
+      if (S.mode === 'play' || S.balls.length > 0 || S.camTarget) return FRAME_INTERVAL_ACTIVE;
+      if (now - lastInputTs < 1500) return FRAME_INTERVAL_ACTIVE;
+      return FRAME_INTERVAL_AMBIENT;
+    }
     function tick(ts: number) {
       raf = requestAnimationFrame(tick);
-      if (ts - lastFrameTs < FRAME_INTERVAL) return;
+      if (ts - lastFrameTs < frameInterval(ts)) return;
       lastFrameTs = ts;
       const dt = Math.min(Math.max((ts - lastTs) / 1000, 0), 0.05) || 0.016;
       lastTs = ts;
       update(dt);
       draw(ctx, cssW, cssH);
     }
+    cv.addEventListener('pointerdown', noteInput);
+    cv.addEventListener('pointermove', noteInput, { passive: true });
+    cv.addEventListener('wheel', noteInput, { passive: true });
+    window.addEventListener('keydown', noteInput);
 
     if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__sim = { S, P, PE, screenToWorld };
     if (!bootPromise) {
@@ -83,6 +99,10 @@ export default function GameCanvas() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pagehide', saveGame);
       document.removeEventListener('visibilitychange', onVisibility);
+      cv.removeEventListener('pointerdown', noteInput);
+      cv.removeEventListener('pointermove', noteInput);
+      cv.removeEventListener('wheel', noteInput);
+      window.removeEventListener('keydown', noteInput);
       unbind();
     };
   }, [setUI, pushTicker]);

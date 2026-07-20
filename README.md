@@ -27,6 +27,10 @@ npm run test:api   # Worker + isolated D1 integration suite
 The online layer is optional for local play. To enable Google sign-in, cloud saves,
 published courses and competitions, follow [ONLINE_SETUP.md](ONLINE_SETUP.md).
 
+For the native iPad/iPhone app (Capacitor wrapper in `ios/`, built with Xcode) —
+or the no-Mac alternative of installing the PWA from Safari — see
+[NATIVE_IOS.md](NATIVE_IOS.md).
+
 ## Architecture
 
 ```
