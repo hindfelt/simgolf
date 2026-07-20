@@ -270,7 +270,7 @@ export default function Modals() {
             <div className="step">
               <div className="n">4</div>
               <div>
-                <b>⛳ Tee off</b> to play your own course: drag back from the ball, release to swing. Birdies are free marketing.
+                <b>⛳ Tee off</b> to play your own course: drag from the ball toward your target, release to swing. Birdies are free marketing.
               </div>
             </div>
             <p style={{ fontSize: 11, color: '#7a8a70' }}>

@@ -55,14 +55,14 @@ describe('original SimGolf shell contract', () => {
     expect(shell).toMatch(/\.controllerShell \{[\s\S]*?position: fixed;[\s\S]*?height: var\(--sg-fan-height\);/);
     expect(shell).toMatch(/\.controllerShell \.fieldControls \{[\s\S]*?width: var\(--sg-fan-width\);[\s\S]*?height: var\(--sg-fan-height\);/);
     expect(shell).toMatch(/\.fieldControlSkinBody \{[\s\S]*?fill: url\(#simGolfFanFill\);/);
-    expect(shell).toMatch(/\.controllerShell \.toolDock \{[\s\S]*?left: var\(--sg-control-width\);[\s\S]*?bottom: 0;/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock \{[\s\S]*?left: var\(--sg-construction-control-width\);[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/\.toolDock::after \{[\s\S]*?display: none;/);
-    expect(shell).toMatch(/\.controllerShell \.toolGroups \{[\s\S]*?left: calc\(-1 \* var\(--sg-construction-control-width\)\);[\s\S]*?top: -58px;/);
+    // The five mode tabs live in one aligned, labelled strip on the dock itself.
+    expect(shell).toMatch(/\.controllerShell \.toolGroups \{[\s\S]*?display: flex;/);
     expect(toolbar).toContain("data-group-id={item.id}");
     expect(toolbar).toContain('className="toolGroupLabel"');
-    expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='course'\] \{[^}]*width: 74px;[^}]*height: 74px;/);
-    expect(shell).toMatch(/\.controllerShell \.toolGroup\[data-group-id='people'\] \{[^}]*display: grid;|\.controllerShell \.toolGroup,[\s\S]*?display: grid;/);
-    expect(shell).toMatch(/\.controllerShell \.toolTray \{[\s\S]*?position: absolute;[\s\S]*?left: 28px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGroupLabel \{[\s\S]*?position: static;[\s\S]*?text-transform: uppercase;/);
+    expect(shell).toMatch(/\.controllerShell \.toolTray \{[\s\S]*?position: absolute;[\s\S]*?top: 46px;/);
     expect(shell).toMatch(/@media \(max-height: 520px\) \{[\s\S]*?--sg-controller-scale: 1;/);
     expect(shell).toMatch(/\.playHud \{[\s\S]*?top: auto;[\s\S]*?bottom: 0;/);
     expect(shell).toMatch(/\.controllerShell \.playHud \{\s*position: absolute;/);
@@ -93,7 +93,7 @@ describe('original SimGolf shell contract', () => {
     expect(toolbar).toContain('data-group={group}');
     expect(shell).toMatch(/\.toolbar \{[\s\S]*?position: relative;[\s\S]*?left: auto;/);
     expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?display: grid;[\s\S]*?grid-template-columns: repeat\(8, 64px\);/);
-    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.tool,[\s\S]*?width: 64px;[\s\S]*?height: 52px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.tool,[\s\S]*?width: 64px;[\s\S]*?height: 56px;/);
     expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?font-size: 8px;/);
     expect(shell).not.toContain('.toolGraphicIcon');
   });

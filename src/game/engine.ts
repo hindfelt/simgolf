@@ -212,14 +212,14 @@ export function updatePlayHud() {
       holeLabel: 'Hole ' + (p.holeIdx + 1) + ' of ' + S.holes.length + ' · Par ' + h.par,
       strokeLabel:
         'Stroke ' + (p.strokes + 1) + ' · ' +
-        (p.lie === 'green' ? 'on the green · drag to putt' : 'lie: ' + p.lie + ' · drag back to swing'),
+        (p.lie === 'green' ? 'on the green · drag to putt' : 'lie: ' + p.lie + ' · drag toward the target'),
       coach: p.state === 'wait'
         ? 'Track the ball, then plan the next lie.'
         : p.aim?.kind === 'keyboard' && aim
           ? `Keyboard aim ${Math.round((((Math.atan2(aim.dirY, aim.dirX) * 180) / Math.PI) + 360) % 360)}° · ${Math.round(aim.power * 100)}% power · Enter to swing${keyboardRisk}.`
         : p.lie === 'green'
-          ? 'Drag against the putting line, then release.'
-          : 'Choose club and flight, grab the gold ball ring, drag back, then release.',
+          ? 'Drag along the putting line toward the cup, then release.'
+          : 'Choose club and flight, grab the gold ball ring, drag toward your target, then release.',
       onGreen: p.lie === 'green',
       lie: p.lie,
       pinDistance: dist(p.ball ?? h.tee, h.cup),
@@ -1399,6 +1399,42 @@ function elevGrad(x: number, y: number): Vec {
 }
 const isUnrecoverableLie = (lie: LieKey): lie is 'water' | 'stream' => lie === 'water' || lie === 'stream';
 
+/* ---------------- out of bounds ---------------- */
+/** Lateral half-width of a hole's playable corridor, in tiles: longer holes get wider corridors. */
+export function holeCorridorRadius(h: Pick<Hole, 'tee' | 'cup'>): number {
+  return clamp(dist(h.tee, h.cup) * 0.33, 5, 11);
+}
+
+function distanceToHoleLine(pos: Vec, h: Pick<Hole, 'tee' | 'cup'>): number {
+  const vx = h.cup.x - h.tee.x;
+  const vy = h.cup.y - h.tee.y;
+  const len2 = vx * vx + vy * vy;
+  const t = len2 === 0 ? 0 : clamp(((pos.x - h.tee.x) * vx + (pos.y - h.tee.y) * vy) / len2, 0, 1);
+  return Math.hypot(pos.x - (h.tee.x + vx * t), pos.y - (h.tee.y + vy * t));
+}
+
+const GOLF_SURFACE_LIES: ReadonlySet<LieKey> = new Set(['tee', 'green', 'fair', 'firmfair', 'sand', 'waste', 'pot', 'deeprough', 'bridge']);
+
+/**
+ * Out of bounds gives every hole real dimensions: play happens in a corridor around
+ * the tee-to-cup line. Built golf surfaces stretch the corridor (so doglegs stay
+ * playable), but a ball far outside it — another fairway across the map, raw rough
+ * behind the clubhouse — is OB, not just a bad lie.
+ */
+export function isOutOfBounds(pos: Vec, h: Pick<Hole, 'tee' | 'cup'>): boolean {
+  const lie = lieOf(pos.x, pos.y);
+  if (isUnrecoverableLie(lie)) return false; // water and streams carry their own penalty
+  const lateral = distanceToHoleLine(pos, h);
+  const radius = holeCorridorRadius(h);
+  if (lateral <= radius) return false;
+  return !(GOLF_SURFACE_LIES.has(lie) && lateral <= radius * 1.6);
+}
+
+function holeForBallOwner(b: Ball): Hole | null {
+  if (b.owner === 'P') return S.player ? S.holes[S.player.holeIdx] ?? null : null;
+  return S.holes[b.owner.holeIdx] ?? null;
+}
+
 function lostBallImpact(lie: 'water' | 'stream', pos: Vec) {
   if (lie === 'water' || S.theme !== 'desert') {
     splash(pos.x, pos.y);
@@ -1507,6 +1543,24 @@ export function usesLegacyEndpointTreeDeflection(ball: Pick<Ball, 'owner' | 'low
 
 function settleShot(b: Ball, pos: Vec, events: string[], holedFlag: boolean, forcedLie?: LieKey) {
   let holed = holedFlag;
+  if (!holed && b.kind !== 'putt') {
+    const hole = holeForBallOwner(b);
+    if (hole && isOutOfBounds(pos, hole)) {
+      events.push('ob');
+      const from = { x: b.fx, y: b.fy };
+      let drop = from;
+      for (let s = 0.95; s >= 0; s -= 0.05) {
+        const px = lerp(from.x, pos.x, s);
+        const py = lerp(from.y, pos.y, s);
+        if (!isUnrecoverableLie(lieOf(px, py)) && !isOutOfBounds({ x: px, y: py }, hole)) {
+          drop = { x: px, y: py };
+          break;
+        }
+      }
+      pos = drop;
+      forcedLie = undefined; // the ball now rests at the drop, not the OB landing
+    }
+  }
   const resultLie = forcedLie ?? lieOf(pos.x, pos.y);
   if (!holed && b.cup && resultLie === 'green' && dist(pos, b.cup) < 0.45) {
     holed = true;
@@ -1972,6 +2026,12 @@ function onGolferLand(g: Golfer, pos: Vec, events: string[], holed: boolean) {
       say(g, e, 'bad');
       floater(pos.x, pos.y - 0.8, '+1 penalty', '#ff9d94');
     }
+    if (e === 'ob') {
+      g.strokes++;
+      changeMood(g, -0.8);
+      sayText(g, 'That one sailed out of bounds!', 'bad');
+      floater(pos.x, pos.y - 0.8, 'Out of bounds · +1 penalty', '#ff9d94');
+    }
     if (e === 'tree') {
       changeMood(g, -0.4);
       say(g, 'tree', 'bad');
@@ -2055,7 +2115,13 @@ function finishHole(g: Golfer, pickedUp: boolean) {
   const memberMult = membershipActive(regular?.membership, financialYearAt(S.time)) ? MEMBER_GREEN_FEE_MULTIPLIER : 1;
   const holeFee = h?.fee ?? S.fee; // a signature hole can carry its own premium fee
   const pay = Math.round(holeFee * mult * parPrem * funMult * celebMult * memberMult * feeMultiplier() * (h ? sgaFeeMultiplier(h) : 1) * (pickedUp ? 0.4 : 1));
+  if (h && !pickedUp) {
+    // inspector scorecard: the running round tally survives the per-hole stroke reset
+    g.roundStrokes = (g.roundStrokes ?? 0) + g.strokes;
+    g.roundPar = (g.roundPar ?? 0) + h.par;
+  }
   if (h) {
+    g.spent = (g.spent ?? 0) + pay;
     earn(pay, h.cup.x, h.cup.y, 'greenFees', `Hole ${g.holeIdx + 1} green fees`);
     if (regular) {
       regular.holesPlayed = (regular.holesPlayed ?? 0) + 1;
@@ -2479,8 +2545,10 @@ export function playerAimIntent(aim: Aim, lie: LieKey): { dirX: number; dirY: nu
   }
   const start = screenToWorld(aim.sx, aim.sy);
   const current = screenToWorld(aim.cx, aim.cy);
-  let dirX = start.x - current.x;
-  let dirY = start.y - current.y;
+  // Drag from the ball toward the target: the ball flies where the drag points,
+  // and drag length sets the power.
+  let dirX = current.x - start.x;
+  let dirY = current.y - start.y;
   const drag = Math.hypot(dirX, dirY);
   if (drag < 0.001) return null;
   dirX /= drag;
@@ -2753,7 +2821,7 @@ export function startRound(options?: { source: RoundSource; competitionId?: stri
   };
   ui.set({ mode: 'play', buildPanel: false, staffPanel: false, reportsPanel: false, regularsPanel: false, scorecardsPanel: false, onlinePanel: false, proPanel: false });
   setupPlayerHole(0);
-  setHint(`${activePlayingPro().name} is on the tee. Pick a club, drag back from the ball, release to swing.`);
+  setHint(`${activePlayingPro().name} is on the tee. Pick a club, drag from the ball toward your target, release to swing.`);
 }
 
 /** Load a published layout for an isolated online round. The home course is restored
@@ -2845,6 +2913,7 @@ function setupPlayerHole(i: number) {
   p.lie = 'tee';
   p.state = 'aim';
   p.aim = null;
+  p.shape = 'straight';
   p.ball = { x: h.tee.x, y: h.tee.y };
   const conditions = generateHoleConditions(S.theme);
   S.wind = conditions.wind;
@@ -2948,6 +3017,11 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLi
       penalties++;
       floater(pos.x, pos.y - 0.8, (e === 'stream' && S.theme === 'desert' ? 'Lost ball' : 'Splash') + ' · +1 penalty', '#ff9d94');
     }
+    if (e === 'ob') {
+      p.strokes++;
+      penalties++;
+      floater(pos.x, pos.y - 0.8, 'Out of bounds · +1 penalty', '#ff9d94');
+    }
     if (e === 'tree') floater(pos.x, pos.y - 0.8, 'Off the timber!', '#ffd2a6');
     if (e === 'rock') floater(pos.x, pos.y - 0.8, 'Wild ricochet!', '#ffd2a6');
     if (e === 'chip') confetti(pos.x, pos.y);
@@ -3017,6 +3091,9 @@ function onPlayerLand(pos: Vec, events: string[], holed: boolean, forcedResultLi
     p.state = 'between';
     return;
   }
+  // Shot shape is a deliberate per-stroke choice: a hook or slice chosen for one
+  // swing must never silently carry into the next one.
+  p.shape = 'straight';
   p.state = 'aim';
   updatePlayHud();
 }

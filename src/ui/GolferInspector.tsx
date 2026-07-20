@@ -45,7 +45,7 @@ export default function GolferInspector() {
   if (!golfer || mode === 'play') return null;
 
   const regular = S.regulars.find((candidate) => candidate.name === golfer.name);
-  const model = golferInspectionModel(golfer, regular, S.comments);
+  const model = golferInspectionModel(golfer, regular, S.comments, S.fee);
   const specialGuest = golfer.specialGuest ? SPECIAL_GUESTS[golfer.specialGuest] : null;
   const displayName = specialGuest?.name ?? golfer.name;
   const portrait = golfer.specialGuest
@@ -77,6 +77,8 @@ export default function GolferInspector() {
         <span><small>Hole</small><b>{model.hole}</b></span>
         <span><small>Strokes</small><b>{model.strokes}</b></span>
         <span><small>Lie</small><b>{model.lie}</b></span>
+        <span><small>Score</small><b>{model.scoreToPar ?? '—'}</b></span>
+        <span><small>Spent</small><b>${model.spent}</b></span>
       </div>
       <p className="golferAction">{model.action}</p>
 
@@ -91,9 +93,18 @@ export default function GolferInspector() {
         </section>
       </div>
 
+      <div className="golferWishes" aria-label={`${displayName} wishes`}>
+        <small>WISHES</small>
+        {model.wishes.length === 0
+          ? <p>No requests — enjoying the round.</p>
+          : <ul>{model.wishes.map((wish) => <li key={wish}>{wish}</li>)}</ul>}
+      </div>
+
       <blockquote className="golferLatestComment">
-        <small>LATEST COMMENT</small>
-        <p>{model.latestComment ? `“${model.latestComment}”` : `${displayName} is concentrating on the round.`}</p>
+        <small>FEEDBACK</small>
+        {model.feedback.length === 0
+          ? <p>{displayName} is concentrating on the round.</p>
+          : model.feedback.map((entry, index) => <p key={index}>“{entry}”</p>)}
       </blockquote>
 
       <div className="golferInspectorActions">

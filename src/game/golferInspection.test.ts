@@ -43,7 +43,7 @@ describe('on-course golfer inspection', () => {
     expect(attitudePresentation(6)).toEqual({ label: 'Ecstatic', expression: 'triumphant' });
   });
 
-  it('builds clamped live needs, skills, action, and latest matching comment', () => {
+  it('builds clamped live needs, skills, action, and newest-first matching feedback', () => {
     const regular = { name: 'Tex', visits: 7, length: .6, accuracy: .7, imagination: .8 } as Regular;
     const comments: CommentEntry[] = [
       { id: 1, time: 1, name: 'Tex', txt: 'Old thought.' },
@@ -54,7 +54,24 @@ describe('on-course golfer inspection', () => {
       attitude: 'Delighted', expression: 'pleased', action: 'Planning the next shot', hole: 2, strokes: 3, lie: 'Fairway',
       needs: { energy: 72, hunger: 45, thirst: 100 },
       skills: { length: 60, accuracy: 91, imagination: 80 },
-      latestComment: 'Simply lovely out here.', visits: 7,
+      feedback: ['Simply lovely out here.', 'Old thought.'], visits: 7,
     });
+  });
+
+  it('reports round score, visit spend, and live wishes', () => {
+    const model = golferInspectionModel(golfer({ roundStrokes: 13, roundPar: 10, spent: 87.4, hunger: .2, mood: -0.5 }), undefined, [], 45);
+    expect(model.scoreToPar).toBe('+3');
+    expect(model.roundStrokes).toBe(13);
+    expect(model.spent).toBe(87);
+    expect(model.wishes).toEqual([
+      'Wants a Snack Bar within reach',
+      'Wants more interesting holes',
+      'Finds the green fee steep',
+    ]);
+    const fresh = golferInspectionModel(golfer(), undefined, []);
+    expect(fresh.scoreToPar).toBeNull();
+    expect(fresh.spent).toBe(0);
+    expect(fresh.wishes).toEqual([]);
+    expect(golferInspectionModel(golfer({ roundStrokes: 10, roundPar: 10 }), undefined, []).scoreToPar).toBe('E');
   });
 });

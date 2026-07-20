@@ -33,16 +33,17 @@ describe('rebuilt original controller presentation', () => {
     expect(toolbar).toContain("tools: ['hole', 'green', 'sand', 'deeprough', 'pot', 'stream', 'water', 'tree', 'pan', 'fair', 'firmfair', 'waste', 'brush', 'rocks', 'flower', 'path']");
     expect(toolbar).toContain("tools: ['raise', 'lower', 'dozer', 'land']");
     expect(toolbar).not.toContain('dockPrompt');
-    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?grid-template-columns: repeat\(8, 64px\);[\s\S]*?grid-template-rows: repeat\(2, 52px\);/);
-    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar\s*\{[^}]*grid-template-columns: repeat\(2, 64px\);[^}]*grid-template-rows: repeat\(2, 52px\);/s);
-    expect(shell).toMatch(/\.controllerShell \.toolGraphic,[\s\S]*?width: 60px;[\s\S]*?height: 47px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolbar,[\s\S]*?grid-template-columns: repeat\(8, 64px\);[\s\S]*?grid-template-rows: repeat\(2, 56px\);/);
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.toolbar\s*\{[^}]*grid-template-columns: repeat\(2, 64px\);[^}]*grid-template-rows: repeat\(2, 56px\);/s);
+    // Scene, name, and price stack inside each cell without overlapping plates.
+    expect(shell).toMatch(/\.controllerShell \.toolDock\[data-group='terrain'\] \.tool,[\s\S]*?display: grid;[\s\S]*?grid-template-rows: 28px 17px 9px;/);
+    expect(shell).toMatch(/\.controllerShell \.toolGraphic,[\s\S]*?position: static;[\s\S]*?width: 36px;[\s\S]*?height: 28px;/);
     expect(shell).toContain('--sg-construction-control-width: 280px;');
     expect(shell).toMatch(/\.controllerShell \.toolDock\s*\{[^}]*left: var\(--sg-construction-control-width\);/s);
     expect(shell).toMatch(/\.controllerShell\[data-mode='build'\] \.toolDock\s*\{[^}]*height: var\(--sg-fan-height\);[^}]*min-height: var\(--sg-fan-height\);/s);
-    expect(shell).toMatch(/\.controllerShell\[data-mode='build'\] \.toolGroups\s*\{\s*top: 0;/s);
-    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?width: 62px;[\s\S]*?height: 24px;[\s\S]*?font-size: 11px;[\s\S]*?white-space: normal;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.nm,[\s\S]*?width: 62px;[\s\S]*?font-size: 8px;[\s\S]*?white-space: normal;/);
     expect(toolbar).toContain('<span className="ct" aria-hidden="true">{item.ct}</span>');
-    expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 10px;/);
+    expect(shell).toMatch(/\.controllerShell \.tool \.ct,[\s\S]*?font-size: 7px;/);
   });
 
   it('keeps every mode and native-size tool text visible in short viewports', () => {

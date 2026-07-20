@@ -14,24 +14,26 @@ describe('play controls accessibility and shot-shape presentation', () => {
   const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   const shell = readFileSync(new URL('../simgolf-shell.css', import.meta.url), 'utf8');
 
-  it('matches the original five-oval order while making Draw and Hook independently selectable', () => {
-    expect(hud).toContain("{ id: 'fade', key: 5 }");
-    expect(hud).toContain("{ id: 'draw', key: 6, alternateKey: 0 }");
+  it('gives every shot shape its own labelled per-stroke selector', () => {
     expect(hud).toContain("{ id: 'straight', key: 7 }");
+    expect(hud).toContain("{ id: 'fade', key: 5 }");
+    expect(hud).toContain("{ id: 'draw', key: 6 }");
+    expect(hud).toContain("{ id: 'hook', key: 0 }");
     expect(hud).toContain("{ id: 'backspin', key: 8 }");
     expect(hud).toContain("{ id: 'punch', key: 9 }");
-    expect(hud).toContain("draw: { label: 'Draw / Hook Shot (R to L)'");
-    expect(hud).not.toContain("{ id: 'hook', key:");
-    expect(hud).toContain("playHud.shape === 'draw' ? 'hook' : id");
-    expect(hud).toContain('Keyboard ${key} selects Draw; Keyboard ${alternateKey} selects Hook');
-    expect(hud).toContain('className="shapeComboState"');
+    expect(hud).toContain('className="shapeShort"');
+    expect(hud).toContain('applies to this stroke only');
+    expect(hud).not.toContain('drawHookControl');
+    expect(hud).not.toContain('shapeComboState');
+    // A chosen shape must never silently carry into the next stroke.
+    expect(engineSource).toContain("p.shape = 'straight';\n  p.state = 'aim';");
   });
 
   it('matches the original molded play console instead of a card workbench', () => {
     expect(hud).toContain('className="playShotPalette"');
     expect(hud).toContain('className="playConsolePanes"');
-    expect(hud).toContain("label: 'Fade Shot (L to R)'");
-    expect(hud).toContain("label: 'Draw / Hook Shot (R to L)'");
+    expect(hud).toContain("label: 'Fade Shot (curves right)'");
+    expect(hud).toContain("label: 'Draw Shot (curves left)'");
     expect(hud).toContain("label: 'High Backspin Shot'");
     expect(hud).toContain("['powerHitter', 'Power Hitter']");
     expect(hud).toContain("'CADDIE BOOK'");
@@ -77,7 +79,7 @@ describe('play controls accessibility and shot-shape presentation', () => {
     expect(hud).toContain('role="region" aria-label="Player round controls"');
     expect(hud).toContain('role="group" aria-label="Shot setup"');
     expect(hud).toContain('role="group" aria-label={`Club selection from ${lieLabel(playHud.lie)}`}');
-    expect(hud).toContain('role="group" aria-label="Shot technique selection"');
+    expect(hud).toContain('role="group" aria-label="Shot technique selection, resets to straight after every stroke"');
     expect(hud).toContain('CLUB_IDS.filter((id) => playHud.clubOptions[id].available)');
     expect(hud).toContain('Previous club, currently ${CLUBS[currentClub].label}');
     expect(hud).toContain('Next club, currently ${CLUBS[currentClub].label}');

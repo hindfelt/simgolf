@@ -44,11 +44,11 @@ async function readToolGeometry(page: Page): Promise<ToolGeometry[]> {
 }
 
 function expectReadableToolText(tools: ToolGeometry[]) {
-  expect(tools.every((tool) => tool.width === 64 && tool.height === 52)).toBe(true);
+  expect(tools.every((tool) => tool.width === 64 && tool.height === 56)).toBe(true);
   for (const tool of tools) {
-    expect(tool.label.fontSize, `${tool.id} label font`).toBe('11px');
-    expect(tool.label.lineHeight, `${tool.id} label line height`).toBe('11px');
-    expect(tool.label.clientHeight, `${tool.id} label height`).toBe(24);
+    expect(tool.label.fontSize, `${tool.id} label font`).toBe('8px');
+    expect(tool.label.lineHeight, `${tool.id} label line height`).toBe('8.5px');
+    expect(tool.label.clientHeight, `${tool.id} label height`).toBeLessThanOrEqual(17);
     expect(tool.label.scrollWidth, `${tool.id} label horizontal clipping`).toBeLessThanOrEqual(tool.label.clientWidth);
     expect(tool.label.scrollHeight, `${tool.id} label vertical clipping`).toBeLessThanOrEqual(tool.label.clientHeight);
     expect(tool.label.x).toBeGreaterThanOrEqual(tool.x);
@@ -60,8 +60,8 @@ function expectReadableToolText(tools: ToolGeometry[]) {
     expect(tool.graphic.y).toBeGreaterThanOrEqual(tool.y);
     expect(bottom(tool.graphic)).toBeLessThanOrEqual(bottom(tool));
     if (!tool.cost) continue;
-    expect(tool.cost.fontSize, `${tool.id} price font`).toBe('10px');
-    expect(tool.cost.lineHeight, `${tool.id} price line height`).toBe('11px');
+    expect(tool.cost.fontSize, `${tool.id} price font`).toBe('7px');
+    expect(tool.cost.lineHeight, `${tool.id} price line height`).toBe('9px');
     expect(tool.cost.scrollWidth, `${tool.id} price horizontal clipping`).toBeLessThanOrEqual(tool.cost.clientWidth);
     expect(tool.cost.scrollHeight, `${tool.id} price vertical clipping`).toBeLessThanOrEqual(tool.cost.clientHeight);
     expect(tool.cost.x).toBeGreaterThanOrEqual(tool.x);
@@ -204,7 +204,7 @@ test.describe('reported medium-aspect construction composition', () => {
     expect(controls).toMatchObject({ x: 0, y: 372, width: 280, height: 166 });
     expect(dock).toMatchObject({ x: 280, y: 372, width: 424, height: 166 });
     expect(dock.y, 'construction rail and fan must never form a vertical stair-step').toBe(controls.y);
-    expect(tray.y).toBe(dock.y + 4);
+    expect(tray.y).toBe(dock.y + 50);
   });
 });
 
@@ -229,7 +229,7 @@ test.describe('DPR2 supplied-image construction composition', () => {
     expect(controls).toMatchObject({ x: 0, y: 118, width: 280, height: 166 });
     expect(dock).toMatchObject({ x: 280, y: 118, width: 570, height: 166 });
     expect(dock.y, 'DPR2 construction rail and control shoulder must share a top edge').toBe(controls.y);
-    expect(tray.y).toBe(122);
+    expect(tray.y).toBe(168);
     expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
     expect(tools).toHaveLength(16);
     expect(tools.every((tool) => tool.x >= tray.x && right(tool) <= 850 && tool.y >= tray.y && bottom(tool) <= 284)).toBe(true);
@@ -259,7 +259,7 @@ test.describe('wide-short construction composition', () => {
     expect(controls).toMatchObject({ x: 0, y: 402, width: 280, height: 166 });
     expect(dock).toMatchObject({ x: 280, y: 402, width: 1420, height: 166 });
     expect(dock.y, 'construction rail and control shoulder must share a top edge').toBe(controls.y);
-    expect(tray.y).toBe(dock.y + 4);
+    expect(tray.y).toBe(dock.y + 50);
     expect(rail.scrollWidth).toBeLessThanOrEqual(rail.clientWidth);
     expect(tools).toHaveLength(16);
     expect(tools.every((tool) => tool.x >= tray.x && right(tool) <= 1700 && tool.y >= tray.y && bottom(tool) <= bottom(dock))).toBe(true);

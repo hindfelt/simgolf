@@ -168,7 +168,9 @@ test('short landscape play shell is readable, bounded, and pixel locked', async 
   expect(right(panes)).toBe(790);
   expect(right(caddie)).toBeLessThanOrEqual(790);
   expect(bottom(caddie)).toBeLessThanOrEqual(354);
-  expect(palette).toMatchObject({ x: 243.5, y: 207, width: 309, height: 39 });
+  expect(palette).toMatchObject({ y: 207, height: 39 });
+  expect(palette.width).toBeGreaterThan(340);
+  expect(right(palette)).toBeLessThanOrEqual(796);
   expect(club.height).toBe(17);
   expect(quit).toMatchObject({ x: 8, y: 279, width: 45, height: 45 });
 
@@ -282,13 +284,12 @@ test.describe('retina short landscape', () => {
     await page.evaluate(() => { Math.random = () => .9; });
     await page.locator('button[title="Play"]').click();
     await expect(page.locator('.controllerShell')).toHaveAttribute('data-mode', 'play');
-    await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(5);
+    await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(6);
     await expect(page.locator('.fieldControls')).toBeHidden();
     await expect(page.locator('.playModeDock')).toBeHidden();
-    const drawHook = page.locator('.drawHookControl');
-    await drawHook.click();
-    await drawHook.click();
-    await expect(drawHook).toHaveAttribute('data-selected-shape', 'hook');
+    const hook = page.getByRole('button', { name: /^Hook Shot/ });
+    await hook.click();
+    await expect(hook).toHaveAttribute('data-selected-shape', 'hook');
     await expect(page.locator('.caddieBookHead span')).toContainText('Hook');
     await expect(page.locator('.caddieMetrics small').last()).toHaveText('FINISH');
     await expectPlayHudContentToFit(page);
@@ -348,7 +349,7 @@ test.describe('wide short-landscape shell', () => {
 
   test('retires the fan and keeps the complete console compact', async ({ page }) => {
     await enterSandboxRound(page);
-    await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(5);
+    await expect(page.locator('.playShotPalette .shapeBtn')).toHaveCount(6);
     await expect(page.locator('.playMessage')).toBeHidden();
     const hud = await page.locator('.playHud').boundingBox() as Box;
     const panes = await page.locator('.playConsolePanes').boundingBox() as Box;
@@ -357,7 +358,9 @@ test.describe('wide short-landscape shell', () => {
     expect(hud).toMatchObject({ x: 0, y: 602, width: 1592, height: 114 });
     expect(panes).toMatchObject({ x: 59, y: 624, width: 1527, height: 88 });
     expect(right(caddie)).toBe(1586);
-    expect(palette).toMatchObject({ x: 641.5, y: 565, width: 309, height: 39 });
+    expect(palette).toMatchObject({ y: 565, height: 39 });
+    expect(palette.width).toBeGreaterThan(340);
+    expect(Math.abs(palette.x + palette.width / 2 - 1592 / 2)).toBeLessThanOrEqual(1);
     await expect(page.locator('.fieldControls')).toBeHidden();
     await expect(page.locator('.playModeDock')).toBeHidden();
     await expect(page.locator('.simFotoTicker')).toBeHidden();

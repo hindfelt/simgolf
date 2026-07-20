@@ -82,13 +82,13 @@ describe('original play shell responsive geometry', () => {
     expect(short).toMatch(/\.playHud\s*\{[^}]*left: 0;[^}]*height: 114px;/s);
     expect(short).toMatch(/\.playConsolePanes\s*\{[^}]*left: 59px;[^}]*right: 6px;[^}]*grid-template-columns: minmax\(200px, \.95fr\) minmax\(150px, \.72fr\) minmax\(275px, 1\.55fr\);/s);
     expect(short).toMatch(/\.playShotPalette\s*\{[^}]*left: 50%;[^}]*top: -41px;/s);
-    expect(short).toMatch(/\.shapeBtn,[\s\S]*?flex: 0 0 57px;[\s\S]*?height: 39px;/s);
+    expect(short).toMatch(/\.shapeBtn,[\s\S]*?flex: 0 0 54px;[\s\S]*?height: 39px;/s);
     expect(shell).toMatch(/\.controllerShell\[data-mode='play'\] \.playShotFacts\s*\{[^}]*font-size: var\(--sg-type-control\);/s);
 
     const viewportWidth = 796;
     const consolePanes = { x: 59, width: viewportWidth - 59 - 6 };
     const message = { x: 8, width: 210 };
-    const palette = { x: (viewportWidth - ((57 * 5) + (6 * 4))) / 2, width: (57 * 5) + (6 * 4) };
+    const palette = { x: (viewportWidth - ((54 * 6) + (5 * 5))) / 2, width: (54 * 6) + (5 * 5) };
     const conditions = { x: viewportWidth - 6 - 120, width: 120 };
     expect(right(consolePanes)).toBe(viewportWidth - 6);
     expect(intersects(message, conditions)).toBe(false);

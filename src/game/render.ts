@@ -4,7 +4,7 @@ import type { ActorView, Ball, Building, Employee, Golfer, Hole, Vec } from './t
 import { S, caches } from './state';
 import { clamp, hash2, inb, elevAt, idx, cornerH, ownedAt, fmt$, lieOf } from './rng';
 import { P, PE, courseSafeViewport, viewDepth, viewXY } from './camera';
-import { activePlayingPro, currentPlayerShotForecast, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
+import { activePlayingPro, currentPlayerShotForecast, isOutOfBounds, parFor, playerAimIntent, playerEstimatedRoll, playerShotDispersion } from './engine';
 import { CATALOG, themedDef, facilityDisplayName, facilityLevel, canPlace, occupiedTiles } from './buildings';
 import { lockedTilesForRender } from './engine';
 import { golferSprite, treeSprite, buildingSprite, propSprite, facilityPlaneSprite, facilityBoatSprite, wildlifeSprite, courseStaffAnimationFrame, courseStaffSprite } from './sprites';
@@ -2236,14 +2236,22 @@ function drawAim(ctx: CanvasRenderingContext2D, u: number) {
   const landX = plan.target.x;
   const landY = plan.target.y;
   const land = PE(landX, landY);
+  const hole = S.holes[p.holeIdx];
+  const landingOB = !!hole && isOutOfBounds({ x: landX, y: landY }, hole);
   const spread = playerShotDispersion(p.lie, p.club, p.shape, plan.targetDistance).previewRadius;
   ctx.save();
   ctx.setLineDash(canopyImpact ? [2.5 * u, 4 * u] : []);
-  ctx.strokeStyle = canopyImpact ? 'rgba(255,220,145,.3)' : 'rgba(255,255,255,.85)';
+  ctx.strokeStyle = landingOB ? 'rgba(255,110,96,.9)' : canopyImpact ? 'rgba(255,220,145,.3)' : 'rgba(255,255,255,.85)';
   ctx.lineWidth = (canopyImpact ? 1.2 : 1.6) * u;
   ctx.beginPath();
   ctx.ellipse(land.x, land.y, spread * 22 * u, spread * 11 * u, 0, 0, 7);
   ctx.stroke();
+  if (landingOB) {
+    ctx.fillStyle = 'rgba(255,110,96,.95)';
+    ctx.font = `800 ${Math.round(10 * u)}px Verdana, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('OUT OF BOUNDS', land.x, land.y - spread * 13 * u);
+  }
   ctx.restore();
 
   if (!canopyImpact) {

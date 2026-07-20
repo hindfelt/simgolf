@@ -24,7 +24,9 @@ export default defineConfig({
     colorScheme: 'light',
     locale: 'en-US',
     timezoneId: 'UTC',
-    launchOptions: { args: ['--disable-gpu'] },
+    // PW_EXECUTABLE_PATH lets sandboxes with a pre-installed Chromium run the
+    // suite without downloading the exact pinned browser build. CI leaves it unset.
+    launchOptions: { args: ['--disable-gpu'], executablePath: process.env.PW_EXECUTABLE_PATH || undefined },
   },
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1 --port 4173',

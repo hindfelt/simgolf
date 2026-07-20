@@ -8,6 +8,8 @@ import { homeValueAt } from './routing';
 export interface BuildingDef {
   name: string;
   cost: number;
+  /** Recurring operating cost in $/minute — staffing, cleaning, power. Scenery runs free. */
+  upkeepPerMin: number;
   w: number;
   h: number;
   wall: string;
@@ -18,21 +20,21 @@ export interface BuildingDef {
 
 /** Catalog. Footprints are in tiles. Effects are applied in engine + here. */
 export const CATALOG: Record<BuildingKind, BuildingDef> = {
-  proshop: { name: 'Pro Shop', cost: 1800, w: 3, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Trains regulars’ Accuracy after every hole.' },
-  drivingrange: { name: 'Driving Range', cost: 2800, w: 6, h: 3, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Trains regulars’ Length after every hole.' },
-  puttinggreen: { name: 'Putting Green', cost: 1600, w: 3, h: 3, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Trains regulars’ Imagination after every hole.' },
-  snackbar: { name: 'Snack Bar', cost: 1000, w: 2, h: 2, wall: '#efc9a0', roof: '#c25a3a', short: '🌭', blurb: 'Feeds hungry golfers. Keeps moods up.' },
-  cartgarage: { name: 'Cart Garage', cost: 1800, w: 3, h: 2, wall: '#c9c2b4', roof: '#5d6d7e', short: '🛺', blurb: 'Golfers move faster around the course.' },
-  hotel: { name: 'Resort Hotel', cost: 4800, w: 4, h: 3, wall: '#e7dcc0', roof: '#9a3f5c', short: '🏨', blurb: 'Well-rested golfers stay happy longer.' },
-  tennis: { name: 'Tennis Court', cost: 1900, w: 3, h: 2, wall: '#7fae5b', roof: '#2f6f3c', short: '🎾', blurb: 'Golfers arrive in a good mood.' },
-  marina: { name: 'Marina', cost: 3800, w: 5, h: 3, wall: '#bcd7e8', roof: '#3679b8', short: '⛵', blurb: 'Boosts building-lot income + green fees.' },
-  airstrip: { name: 'Airstrip', cost: 6800, w: 8, h: 3, wall: '#c7ccd2', roof: '#7a5233', short: '✈️', blurb: 'Private runway. Raises every green fee.' },
-  bench: { name: 'Bench', cost: 120, w: 1, h: 1, wall: '#a9825a', roof: '#7a5233', short: '🪑', blurb: 'A rest stop. Small mood lift nearby.' },
-  flowerbed: { name: 'Flower Bed', cost: 200, w: 1, h: 1, wall: '#f2a7c3', roof: '#e78ad1', short: '🌷', blurb: 'Pure beauty. Lifts spirits.' },
-  landmark: { name: 'Landmark', cost: 650, w: 1, h: 1, wall: '#c9ced4', roof: '#8f959c', short: '🗿', blurb: 'A grand stone monument. The course centrepiece.' },
-  ballwasher: { name: 'Ball Washer', cost: 90, w: 1, h: 1, wall: '#8a8f96', roof: '#5d6166', short: '🧽', blurb: 'A tee-side courtesy stand. Tiny mood lift nearby.' },
-  scenicbridge: { name: 'Scenic Bridge', cost: 380, w: 1, h: 1, wall: '#8a5a30', roof: '#6e4523', short: '🌉', blurb: 'A picturesque footbridge overlook. Golfers love the view.' },
-  buildinglot: { name: 'Building Lot', cost: 900, w: 2, h: 2, wall: '#d9d2c2', roof: '#8a7f68', short: '🏡', blurb: 'Home income follows Routing Map value: water, trees and fun holes pay.' },
+  proshop: { name: 'Pro Shop', cost: 1800, upkeepPerMin: 6, w: 3, h: 2, wall: '#d8cdb0', roof: '#3f6f9c', short: '🛍️', blurb: 'Trains regulars’ Accuracy after every hole.' },
+  drivingrange: { name: 'Driving Range', cost: 2800, upkeepPerMin: 9, w: 6, h: 3, wall: '#cfe0a8', roof: '#6a8f3c', short: '🏌️', blurb: 'Trains regulars’ Length after every hole.' },
+  puttinggreen: { name: 'Putting Green', cost: 1600, upkeepPerMin: 5, w: 3, h: 3, wall: '#8fe0a2', roof: '#4aa564', short: '🥏', blurb: 'Trains regulars’ Imagination after every hole.' },
+  snackbar: { name: 'Snack Bar', cost: 1000, upkeepPerMin: 4, w: 2, h: 2, wall: '#efc9a0', roof: '#c25a3a', short: '🌭', blurb: 'Feeds hungry golfers. Keeps moods up.' },
+  cartgarage: { name: 'Cart Garage', cost: 1800, upkeepPerMin: 6, w: 3, h: 2, wall: '#c9c2b4', roof: '#5d6d7e', short: '🛺', blurb: 'Golfers move faster around the course.' },
+  hotel: { name: 'Resort Hotel', cost: 4800, upkeepPerMin: 16, w: 4, h: 3, wall: '#e7dcc0', roof: '#9a3f5c', short: '🏨', blurb: 'Well-rested golfers stay happy longer.' },
+  tennis: { name: 'Tennis Court', cost: 1900, upkeepPerMin: 6, w: 3, h: 2, wall: '#7fae5b', roof: '#2f6f3c', short: '🎾', blurb: 'Golfers arrive in a good mood.' },
+  marina: { name: 'Marina', cost: 3800, upkeepPerMin: 12, w: 5, h: 3, wall: '#bcd7e8', roof: '#3679b8', short: '⛵', blurb: 'Boosts building-lot income + green fees.' },
+  airstrip: { name: 'Airstrip', cost: 6800, upkeepPerMin: 20, w: 8, h: 3, wall: '#c7ccd2', roof: '#7a5233', short: '✈️', blurb: 'Private runway. Raises every green fee.' },
+  bench: { name: 'Bench', cost: 120, upkeepPerMin: 0, w: 1, h: 1, wall: '#a9825a', roof: '#7a5233', short: '🪑', blurb: 'A rest stop. Small mood lift nearby.' },
+  flowerbed: { name: 'Flower Bed', cost: 200, upkeepPerMin: 0, w: 1, h: 1, wall: '#f2a7c3', roof: '#e78ad1', short: '🌷', blurb: 'Pure beauty. Lifts spirits.' },
+  landmark: { name: 'Landmark', cost: 650, upkeepPerMin: 0, w: 1, h: 1, wall: '#c9ced4', roof: '#8f959c', short: '🗿', blurb: 'A grand stone monument. The course centrepiece.' },
+  ballwasher: { name: 'Ball Washer', cost: 90, upkeepPerMin: 0, w: 1, h: 1, wall: '#8a8f96', roof: '#5d6166', short: '🧽', blurb: 'A tee-side courtesy stand. Tiny mood lift nearby.' },
+  scenicbridge: { name: 'Scenic Bridge', cost: 380, upkeepPerMin: 0, w: 1, h: 1, wall: '#8a5a30', roof: '#6e4523', short: '🌉', blurb: 'A picturesque footbridge overlook. Golfers love the view.' },
+  buildinglot: { name: 'Building Lot', cost: 900, upkeepPerMin: 2, w: 2, h: 2, wall: '#d9d2c2', roof: '#8a7f68', short: '🏡', blurb: 'Home income follows Routing Map value: water, trees and fun holes pay.' },
 };
 
 /**
@@ -175,8 +177,10 @@ export function facilityUpgradeOptions(b: Building, holeCount = S.holes.length, 
   });
 }
 
-/** Ongoing operating cost for completed upgrades. Disconnected facilities still cost
- * money to own; active construction is charged through its up-front project cost. */
+/** Ongoing operating cost: every functional facility has a base running cost (its
+ * catalog `upkeepPerMin`), and completed upgrades add a surcharge on top. Disconnected
+ * facilities still cost money to own; active construction is charged through its
+ * up-front project cost. */
 export function facilityMaintenancePerSec(): number {
   let total = 0;
   for (const b of S.buildings) total += facilityMaintenanceFor(b);
@@ -184,10 +188,11 @@ export function facilityMaintenancePerSec(): number {
 }
 
 export function facilityMaintenanceFor(b: Building): number {
+  const base = (CATALOG[b.kind].upkeepPerMin ?? 0) / 60;
   const level = facilityLevel(b);
-  if (!isUpgradeableFacility(b.kind) || level <= 1) return 0;
+  if (!isUpgradeableFacility(b.kind) || level <= 1) return base;
   const branchMul = b.branch === 'prestige' ? 1.22 : 1;
-  return (CATALOG[b.kind].cost / 9000) * (level - 1) * branchMul;
+  return base + (CATALOG[b.kind].cost / 9000) * (level - 1) * branchMul;
 }
 
 export function upgradedFacilityCount(): number {

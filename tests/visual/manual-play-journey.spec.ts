@@ -4,8 +4,8 @@ type Point = { x: number; y: number };
 
 const journeys = [
   { club: 'Driver', shapeButton: /^Fade Shot/, resultShape: 'Fade', activations: 1 },
-  { club: '3 Wood', shapeButton: /^Draw \/ Hook Shot/, resultShape: 'Draw', activations: 1 },
-  { club: '5 Wood', shapeButton: /^Draw \/ Hook Shot/, resultShape: 'Hook', activations: 2 },
+  { club: '3 Wood', shapeButton: /^Draw Shot/, resultShape: 'Draw', activations: 1 },
+  { club: '5 Wood', shapeButton: /^Hook Shot/, resultShape: 'Hook', activations: 1 },
   { club: 'Lob Wedge', shapeButton: /^Low Punch Shot/, resultShape: 'Punch', activations: 1 },
 ] as const;
 
@@ -41,7 +41,7 @@ async function playerBallDrag(page: Page): Promise<{ start: Point; end: Point }>
     const forward = sim.PE(ball.x + nx * 5, ball.y + ny * 5);
     return {
       start,
-      end: { x: start.x - (forward.x - start.x), y: start.y - (forward.y - start.y) },
+      end: { x: forward.x, y: forward.y },
     };
   });
 }
@@ -53,12 +53,13 @@ for (const journey of journeys) {
     await enterRainyRound(page);
 
     const shapeButtons = page.locator('.playShotPalette .shapeBtn');
-    await expect(shapeButtons).toHaveCount(5);
+    await expect(shapeButtons).toHaveCount(6);
     const shapeLabels = await shapeButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') ?? ''));
     expect(shapeLabels).toEqual([
-      expect.stringMatching(/^Fade Shot/),
-      expect.stringMatching(/^Draw \/ Hook Shot/),
       expect.stringMatching(/^Straight Shot/),
+      expect.stringMatching(/^Fade Shot/),
+      expect.stringMatching(/^Draw Shot/),
+      expect.stringMatching(/^Hook Shot/),
       expect.stringMatching(/^High Backspin Shot/),
       expect.stringMatching(/^Low Punch Shot/),
     ]);
