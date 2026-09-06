@@ -519,6 +519,7 @@ export function buildCourseView(scene) {
     scene.remove(group);
   }
   return {
+    pickTree(raycaster) { return trees.pick(raycaster); },
     previewFacility(f, valid = true) {
       if (!f) {
         if (preview) preview.visible = false;

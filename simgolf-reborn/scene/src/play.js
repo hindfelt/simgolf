@@ -1798,7 +1798,10 @@ function groundAt(e) {
     ),
     camera,
   );
-  if (mode === "build" && tool === "demolish") { const tree = flora.pick(raycaster); if(tree) return tree; }
+  if (mode === "build" && ["demolish", "raise", "lower"].includes(tool)) {
+    const hits = [flora.pick(raycaster), view.pickTree(raycaster)].filter(Boolean).sort((a,b)=>a.distance-b.distance);
+    if(hits.length) return hits[0];
+  }
   return raycaster.intersectObject(landscape.terrain)[0]?.point;
 }
 let lastCell = "",
@@ -2081,8 +2084,8 @@ window.__gameTest = Object.freeze({
   getCompetition: () => competition?.snapshot() ?? null,
   getVisibleActors: () => view.visibleActors(),
   getStaffCoverage: () => coverage.snapshot(),
-  project: (x, z) => {
-    const v = new THREE.Vector3(x, height(x, z), z).project(camera);
+  project: (x, z, aboveGround = 0) => {
+    const v = new THREE.Vector3(x, height(x, z) + aboveGround, z).project(camera);
     return {
       x: ((v.x + 1) * innerWidth) / 2,
       y: ((1 - v.y) * innerHeight) / 2,

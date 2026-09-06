@@ -322,7 +322,7 @@ export function buildFlora(
       const hit = raycaster.intersectObjects(treeMeshes, false)[0];
       if (!hit) return null;
       const t = hit.object.userData.transforms[hit.instanceId]?.tree;
-      return t ? { x: t.x, z: t.z, y: height(t.x, t.z) } : null;
+      return t ? { x: t.x, z: t.z, y: height(t.x, t.z), distance: hit.distance } : null;
     },
     update(g) {
       if (revision === g.revision) return;

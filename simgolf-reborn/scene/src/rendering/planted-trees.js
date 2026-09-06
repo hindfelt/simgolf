@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GRID, center } from "../simulation/world.js";
-import { height } from "../landscape.js";
+import { height, courseHeight } from "../landscape.js";
 import { foliageTexture } from "../flora.js";
 export function plantedTrees(scene) {
   const capacity = GRID.width * GRID.height;
@@ -26,18 +26,27 @@ export function plantedTrees(scene) {
   }
   const dummy = new THREE.Object3D();
   let revision = -1;
+  const positions = [];
   return {
+    pick(raycaster) {
+      const hit = raycaster.intersectObjects([trunks,leaves],false)[0];
+      if(!hit) return null;
+      const p = positions[Math.floor(hit.instanceId / (hit.object === trunks ? 7 : 64))];
+      return p ? {...p, distance:hit.distance} : null;
+    },
     update(g) {
       if (g.revision === revision) return;
       revision = g.revision;
       let count = 0;
+      positions.length = 0;
       for (const [k, t] of Object.entries(g.tiles)) {
         if (t.type !== "tree") continue;
         const p = center(
             Number(k) % GRID.width,
             Math.floor(Number(k) / GRID.width),
           ),
-          ground = height(p.x, p.z);
+          ground = courseHeight(g, p.x, p.z);
+        positions.push({...p,y:ground});
         dummy.position.set(p.x, ground + 2.25, p.z);
         dummy.rotation.set(0, 0, 0);
         dummy.scale.set(1, 1, 1);

@@ -97,3 +97,18 @@ test("scenery trunk rendering follows raised ground without changing its locatio
   expect(delta.result.ok).toBe(true);
   expect(delta.delta).toBeCloseTo(0.5, 4);
 });
+
+test('raise and lower target the land under visible scenery and planted trees',async({page})=>{
+ const g=createGame();expect(build(g,'tree',20,15).ok).toBe(true);
+ await page.addInitScript(s=>localStorage.setItem('simgolf-reborn.course.v1',s),serialize(g));
+ await page.goto('/');await page.locator('#loading').waitFor({state:'hidden'});await page.locator('#pause').click();
+ for(const tree of [{x:-11,z:-31,c:16,r:1},{x:-3,z:-3,c:20,r:15}]){
+  await page.locator('[data-tool="raise"]').click();
+  const point=await page.evaluate(t=>window.__gameTest.project(t.x,t.z,3),tree);await page.mouse.click(point.x,point.y);
+  expect(await page.evaluate(k=>window.__gameTest.getState().elevation?.[k],key(tree.c,tree.r))).toBe(.5);
+  await page.locator('[data-tool="lower"]').click();
+  const lowered=await page.evaluate(t=>window.__gameTest.project(t.x,t.z,3),tree);await page.mouse.click(lowered.x,lowered.y);
+  expect(await page.evaluate(k=>window.__gameTest.getState().elevation?.[k]||0,key(tree.c,tree.r))).toBe(0);
+ }
+ expect(await page.evaluate(()=>window.__gameTest.getState().removedTrees||{})).toEqual({});
+});
