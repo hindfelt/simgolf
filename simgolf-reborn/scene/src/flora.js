@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import {
   height,
+  courseHeight,
   riverZ,
   riverDistance as distanceToRiver,
   isOnPath,
@@ -331,7 +332,7 @@ export function buildFlora(
           const tree = t.tree;
           dummy.position.set(
             t.p[0],
-            t.p[1] + height(tree.x, tree.z) - tree.ground,
+            t.p[1] + courseHeight(g, tree.x, tree.z) - tree.ground,
             t.p[2],
           );
           dummy.rotation.set(...(t.r || [0, 0, 0]));

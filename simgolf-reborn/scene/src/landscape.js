@@ -95,6 +95,9 @@ function tracePath(ctx, points, scale) {
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
   });
 }
+export function courseHeight(g, x, z) {
+  return elevationAt(g,x,z) + 0.14 + 0.17 * Math.sin(x*0.064) * Math.cos(z*0.074);
+}
 export function height(x, z) {
   const d = riverDistance(x, z);
   return (

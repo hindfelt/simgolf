@@ -57,16 +57,43 @@ test("browser removes a scenery tree by clicking its visible trunk and retains r
   await page.screenshot({ path: "/tmp/simgolf-tree-removed.png" });
 });
 
-test('scenery trunk rendering follows raised ground without changing its location',async({page})=>{
- await page.goto('/');await page.locator('#loading').waitFor({state:'hidden'});
- const delta=await page.evaluate(async()=>{
-  const THREE=await import('/node_modules/three/build/three.module.js');
-  const {buildFlora}=await import('/src/flora.js');
-  const {setLandscapeState}=await import('/src/landscape.js');
-  const {createGame,build}=await import('/src/simulation/game.js');
-  const g=createGame();setLandscapeState(g);const scene=new THREE.Scene(),flora=buildFlora(scene,{editableWater:true});flora.update(g);
-  const mesh=scene.children.find(m=>m.geometry?.type==='CylinderGeometry'&&m.userData.transforms?.some(t=>t.tree?.x===-11));
-  const i=mesh.userData.transforms.findIndex(t=>t.tree?.x===-11&&t.tree?.z===-31),matrix=new THREE.Matrix4();mesh.getMatrixAt(i,matrix);const before=matrix.elements[13];
-  build(g,'raise',16,1);flora.update(g);mesh.getMatrixAt(i,matrix);return matrix.elements[13]-before;
- });expect(delta).toBeCloseTo(.5,4);
+test("scenery trunk rendering follows raised ground without changing its location", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#loading").waitFor({ state: "hidden" });
+  const delta = await page.evaluate(async () => {
+    const THREE = await import("/node_modules/three/build/three.module.js");
+    const { buildFlora } = await import("/src/flora.js");
+    const { setLandscapeState } = await import("/src/landscape.js");
+    const { createGame, build } = await import("/src/simulation/game.js");
+    const g = createGame();
+    setLandscapeState(g);
+    const scene = new THREE.Scene(),
+      flora = buildFlora(scene, { editableWater: true });
+    flora.update(g);
+    const mesh = scene.children.find(
+      (m) =>
+        m.geometry?.type === "CylinderGeometry" &&
+        m.userData.transforms?.some((t) => t.tree?.x === -11),
+    );
+    const i = mesh.userData.transforms.findIndex(
+        (t) => t.tree?.x === -11 && t.tree?.z === -31,
+      ),
+      matrix = new THREE.Matrix4();
+    mesh.getMatrixAt(i, matrix);
+    const before = matrix.elements[13];
+    const result = build(g, "raise", 16, 1);
+    flora.update(g);
+    mesh.getMatrixAt(i, matrix);
+    return {
+      delta: matrix.elements[13] - before,
+      result,
+      elevation: g.elevation,
+      revision: g.revision,
+      tree: mesh.userData.transforms[i].tree,
+    };
+  });
+  expect(delta.result.ok).toBe(true);
+  expect(delta.delta).toBeCloseTo(0.5, 4);
 });
