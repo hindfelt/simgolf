@@ -1,0 +1,425 @@
+[
+  {
+    "id": "CMMxxMxxMaleBonding",
+    "pairingCode": "CMMxxMxx",
+    "title": "The Guy Show",
+    "credits": [
+      "by Bing Gordon"
+    ],
+    "stages": [
+      {
+        "prompt": "It's great to be a guy, isn't it?",
+        "replies": [
+          "We're male bonding now, PARTNER.",
+          "But they make us hit from the longer tees.",
+          "Unless you have scrawny biceps like mine."
+        ]
+      },
+      {
+        "prompt": "A guy can wear flannel undershirts, wool kilts, and boxer shorts.",
+        "replies": [
+          "We get to scratch ourselves in public, PARTNER.",
+          "Is that your idea of being a scratch golfer?",
+          "I'm trying to scratch out a par here, PARTNER."
+        ]
+      },
+      {
+        "prompt": "A guy can drink beer and watch all the sports he wants.",
+        "replies": [
+          "We get to burp and pass gas, too!",
+          "I need to find a facility!",
+          "I thought that was the marshlands I smelled.",
+          "No wonder you can't find the fairway."
+        ]
+      },
+      {
+        "prompt": "The beauty of male bonding brings tears to a guy's eyes, PARTNER.",
+        "replies": [
+          "Oh, PARTNER, I'm wearing ladies underwear, too!",
+          "That last shot brings tears to my eyes.",
+          "What about mail bombs?"
+        ]
+      }
+    ],
+    "sourceSha256": "91453284c35ad95ab2f8075f66cdbab6fb408ce61dde194aa2174e1430a12f1b"
+  },
+  {
+    "id": "CSxGxxxGSpies",
+    "pairingCode": "CSxGxxxG",
+    "title": "Spies",
+    "credits": [
+      "- Bing Gordon"
+    ],
+    "stages": [
+      {
+        "prompt": "PARTNER, the sun is like a shiny new ruble this morning.",
+        "replies": [
+          "Ten mornings like this would buy a pair of blue jeans.",
+          "You really think it's going to rain?",
+          "No, let's play for a dollar a hole.",
+          "Just because I read literature doesn't mean I'm an Idiot."
+        ]
+      },
+      {
+        "prompt": "PARTNER, the snows are deep in Stalingrad.",
+        "replies": [
+          "The ploughs run deep in St. Petersburg.",
+          "Don't you lose a lot of golf balls?",
+          "I tried snowboarding once, and it really hurt my putting.",
+          "Do you put skis on your golf carts?"
+        ]
+      },
+      {
+        "prompt": "PARTNER, you are ordered to return at once to the motherland.",
+        "replies": [
+          "It is my duty, Comrade PARTNER.",
+          "You mean, walk off the course now?",
+          "I'd love to go visit the old courses in Scotland."
+        ]
+      },
+      {
+        "prompt": "I have hidden the blueprints for this new weapon inside your golfing bag.",
+        "replies": [
+          "Comrade PARTNER, we shall call this new driver the Big Babushka.",
+          "Wait!  The fairway has ears!",
+          "I must consult my superior after this shot.",
+          "Hey, buy your own golf balls!"
+        ]
+      }
+    ],
+    "sourceSha256": "1134743baa718ad54a1283d2317bc664e712124b594b3c08ee928128abf2a96c"
+  },
+  {
+    "id": "GxxTxxxMBadChemistry",
+    "pairingCode": "GxxTxxxM",
+    "title": "Bad Chemistry",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "You know, PARTNER, I used to think you were a bad person.",
+        "replies": [
+          "A round of golf can be healing, can't it?",
+          "So you just joined a 12-step program or something?",
+          "Call me bad, but just don't call me back again."
+        ]
+      },
+      {
+        "prompt": "Don't you think that opposites sometimes attract?",
+        "replies": [
+          "Yes, a slice and a hook make two perfect drives.",
+          "You're positive about me and I'm negative about you?",
+          "Last hole, yes.  This hole, no."
+        ]
+      },
+      {
+        "prompt": "Hey, PARTNER, I'll even give you strokes next time.",
+        "replies": [
+          "PARTNER, my ego is getting stroked just hanging with you.",
+          "Wait a minute, PARTNER.  My cell phone is vibrating."
+        ]
+      },
+      {
+        "prompt": "Wednesday is my usual golf day, how about you, PARTNER?",
+        "replies": [
+          "I could make Wednesdays!  It's a date, PARTNER.",
+          "I um er usually get a flat tire that day.",
+          "Sorry, that's leftover casserole day at home.",
+          "You're right about opposites attracting!  I prefer Saturdays!"
+        ]
+      }
+    ],
+    "sourceSha256": "ccb0fee359cebee081a056831d1ef9785158d2d481a4a6fc88f2d0e787227ad9"
+  },
+  {
+    "id": "GxxxxxxxOpeningDay",
+    "pairingCode": "Gxxxxxxx",
+    "title": "Opening Day",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "PARTNER, our friendship is the first story on this new course!",
+        "replies": [
+          "Yes, PARTNER, we're making some golf magic.",
+          "Yeah, but it's 5 a.m."
+        ]
+      },
+      {
+        "prompt": "I'm just so enthusiastic about these new fairways, these greens!",
+        "replies": [
+          "Joe Cool should name a landmark after you.",
+          "And I'm so enthusiastic about this rough, these hazards.",
+          "And I'm so enthusiastic about the lack of facilities.",
+          "And I'm so enthusiastic about carrying my own golf bag.",
+          "And I'm so enthusiastic about these slices, these hooks."
+        ]
+      },
+      {
+        "prompt": "I'm the first person in golf history to make that shot on this course.",
+        "replies": [
+          "And I'll always remember that shot and this beautiful day.",
+          "PARTNER, our relationship will be history if you don't stop talking.",
+          "Does it always have to be about you, PARTNER?",
+          "And I'm about to be the first person to walk off this course."
+        ]
+      },
+      {
+        "prompt": "PARTNER, let's join this course, and be the first members.",
+        "replies": [
+          "PARTNER, here's my checkbook, and here's my hearty handshake.",
+          "PARTNER, give me another hole to think it over.",
+          "PARTNER, are you sure you'll respect this course in the morning?",
+          "PARTNER, this course doesn't have enough holes for me.",
+          "Oh PARTNER, I'm afraid of commitment.",
+          "Oh PARTNER, you must be kidding."
+        ]
+      }
+    ],
+    "sourceSha256": "9f0449f10963c533ee9bfbd01dba722e18a10e5161fb5e735fc5f39dad8391f9"
+  },
+  {
+    "id": "LxSxYxxxInternet",
+    "pairingCode": "LxSxYxxx",
+    "title": "Brains, Luck, the Internet",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "I've been thinking of starting an Internet company.",
+        "replies": [
+          "Really, that sounds interesting.",
+          "Yeah, you and million other nitwits."
+        ]
+      },
+      {
+        "prompt": "Yeah, It'll be called www.MYNAMEisCool.sim!",
+        "replies": [
+          "I like the sound of that, can I help?",
+          "Are you sure about that?",
+          "That is a really dumb name."
+        ]
+      },
+      {
+        "prompt": "Well, I need some help with marketing and financing.",
+        "replies": [
+          "No problem, I can do that stuff.",
+          "Are you kidding or are you serious?",
+          "You really are an idiot, aren't you?"
+        ]
+      },
+      {
+        "prompt": "OK, www.MYNAMEisCool.sim, we'll be rich in no time.",
+        "replies": [
+          "With my brains and a little luck we're good as gold!",
+          "I'm sure you've got a business plan, don't you?",
+          "Boy have you got a lot to learn."
+        ]
+      }
+    ],
+    "sourceSha256": "e59c20ca481d23e267bd787f4e80c74e51700a048ada5032190c2939ce005159"
+  },
+  {
+    "id": "PSxOSSxxGoldfish",
+    "pairingCode": "PSxOSSxx",
+    "title": "The Goldfish Story",
+    "credits": [
+      "by Sid Meier"
+    ],
+    "stages": [
+      {
+        "prompt": "What's the matter, PARTNER? You look sad.",
+        "replies": [
+          "My goldfish is sick, he's not gonna make it.",
+          "I'd rather not talk about it."
+        ]
+      },
+      {
+        "prompt": "That's a shame, what do you feed him?",
+        "replies": [
+          "Goldfish food, he LOVES goldfish food.",
+          "I just don't think he likes me.",
+          "It's not your problem, PARTNER."
+        ]
+      },
+      {
+        "prompt": "Really, how often do you feed him?",
+        "replies": [
+          "Ummm, eight or nine times a day.",
+          "Does that really make a difference?",
+          "What? I just don't think he likes me."
+        ]
+      },
+      {
+        "prompt": "That's way too much PARTNER, twice a day is plenty!",
+        "replies": [
+          "PARTNER, you just saved my goldfish's life!",
+          "I shouldn't feed him nine times a day?",
+          "You're crazy, he LOVES food."
+        ]
+      }
+    ],
+    "sourceSha256": "2beb9bf87adf1b93ff5de3efcc6c957cfd6fdd91e8b473a75aef26ac37b53cde"
+  },
+  {
+    "id": "RFxNxFxNNice",
+    "pairingCode": "RFxNxFxN",
+    "title": "Nice Girls",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "Isn't this a nice day for nice people like us to be nice to each other?",
+        "replies": [
+          "Yes, PARTNER, maybe we could hold hands while we walk.",
+          "Don't you ever get tired of being nice?",
+          "I don't feel that nice right now.",
+          "Nice people make nice shots, but my last shot stunk."
+        ]
+      },
+      {
+        "prompt": "Isn't Gary Golf just the nicest golf pro you ever met?",
+        "replies": [
+          "How nice of you to remind me.",
+          "For $100 an hour, he should act nice.",
+          "Hey, PARTNER, nice is for home, work and the Sims game.  Not golf!",
+          "Did you ever see that movie where the girl's head swiveled backwards?"
+        ]
+      },
+      {
+        "prompt": "I'm thinking nice thoughts about my next golf lesson right now.",
+        "replies": [
+          "He's so sexy when he says \"Take the club head back s-l-o-w.\"",
+          "Too bad you don't hit the ball on the course like you do on the range.",
+          "I thought you were smiling because you like me."
+        ]
+      },
+      {
+        "prompt": "Does Gary Golf use his nice hands to teach you to move your hips into the ball?",
+        "replies": [
+          "Of course! That's why I'm so nice all the time!",
+          "Oh, PARTNER, you mean he is nice to you too?",
+          "PARTNER, it's not nice to talk about things like that on the course.",
+          "Don't talk while I'm concentrating.  You're making my legs weak."
+        ]
+      }
+    ],
+    "sourceSha256": "d00cd7b5995a70008eb755bba488b1f94165b39b39c628147e60c8af67f42495"
+  },
+  {
+    "id": "ROSxSOSxLoveontheLinks",
+    "pairingCode": "ROSxSOSx",
+    "title": "Love on the Links?",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "My you have a lovely golf swing PARTNER.",
+        "replies": [
+          "I like your swing too PARTNER.",
+          "Oh, Thanks."
+        ]
+      },
+      {
+        "prompt": "I hope we can golf together again soon.",
+        "replies": [
+          "I'd like that.",
+          "Hmmm, it's possible.",
+          "I'm usually pretty busy."
+        ]
+      },
+      {
+        "prompt": "PARTNER, how 'bout a kiss?",
+        "replies": [
+          "Oh PARTNER, you read my mind!",
+          "Oh PARTNER, I think you're swell.",
+          "Oh PARTNER, we're on a golf course!",
+          "Oh PARTNER, cool your jets baby."
+        ]
+      },
+      {
+        "prompt": "PARTNER, I love you. Will you marry me?",
+        "replies": [
+          "Oh PARTNER, Yes, I will, I will!",
+          "Oh PARTNER, I must think it over.",
+          "Oh PARTNER, this is all so sudden.",
+          "Oh PARTNER, I'm afraid of commitment.",
+          "Oh PARTNER, you must be kidding."
+        ]
+      }
+    ],
+    "sourceSha256": "b6dd90f67fb87587880d15c92fb7f95ff004b5064508c28d7c06f7aa06abe052"
+  },
+  {
+    "id": "RomxsomxPitter-Patter",
+    "pairingCode": "Romxsomx",
+    "title": "Pitter-Patter",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "Haven't you felt there's something missing in our life?",
+        "replies": [
+          "Well yes, now that you mention it.",
+          "Well no, not really."
+        ]
+      },
+      {
+        "prompt": "I'd love to hear the pitter-patter of tiny feet.",
+        "replies": [
+          "I know just what you're talking about.",
+          "I see, let me think about it.",
+          "That's not what I was thinking."
+        ]
+      },
+      {
+        "prompt": "We could turn the extra bedroom into a nursery.",
+        "replies": [
+          "Sure, and we'd put a swing set in the yard.",
+          "Then where would my mother stay?",
+          "That sounds like a lot of work."
+        ]
+      },
+      {
+        "prompt": "Let's have a baby, when should we start!",
+        "replies": [
+          "Tonight sure sounds good to me!",
+          "How does that work again?",
+          "Well, maybe we should wait a while."
+        ]
+      }
+    ],
+    "sourceSha256": "79f340d1f48c59638f91ef3464bf742788a3e74542bd203e9e0b91279642739f"
+  },
+  {
+    "id": "SxxLxxxxAlienated",
+    "pairingCode": "SxxLxxxx",
+    "title": "Alienated",
+    "credits": [],
+    "stages": [
+      {
+        "prompt": "I saw UFO last night, PARTNER, right where we stand.",
+        "replies": [
+          "You do seem strangely changed today, PARTNER.",
+          "Watch me hit this Unidentified Flying Golf Ball!"
+        ]
+      },
+      {
+        "prompt": "Little green men emerged from the craft, without any apparent door!",
+        "replies": [
+          "I just can't put my finger on how you've changed, PARTNER.",
+          "I can ignore you without any apparent effort."
+        ]
+      },
+      {
+        "prompt": "At first I thought their weapons were pointed right at me, PARTNER!",
+        "replies": [
+          "That would have changed anyone, PARTNER!",
+          "Save it for the Golf Inquirer, you fabulist."
+        ]
+      },
+      {
+        "prompt": "But they were inviting me to try one of their new super long putters!",
+        "replies": [
+          "That's what it is!  You're putting has improved!",
+          "You're saying that I should have practiced more today?"
+        ]
+      }
+    ],
+    "sourceSha256": "bebeddc84f1845e2a519c6b3f6b5b3a66f7038d0e78a061aaf841c03fb31247e"
+  }
+]

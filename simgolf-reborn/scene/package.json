@@ -1,0 +1,19 @@
+{
+  "name": "simgolf-reborn",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4176 --strictPort",
+    "build": "vite build --base=./",
+    "preview": "vite preview --host 0.0.0.0 --port 4176 --strictPort",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "vite": "7.3.6"
+  }
+}

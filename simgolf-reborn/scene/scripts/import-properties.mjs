@@ -1,0 +1,13 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {parsePropertyRecords,PROPERTY_RECORD_BYTES} from '../src/simulation/property-catalog.js';
+const source=new URL("../../../resources/sim%20golf/Sid%20Meier's%20SimGolf/golf.exe",import.meta.url);
+const bytes=await readFile(source);
+const sha256=createHash('sha256').update(bytes).digest('hex');
+if(sha256!=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf')throw Error('Unrecognized executable: table offsets must be verified for this version.');
+const tableOffset=790152;
+const result={source:"supplied golf.exe",sha256,tableOffset,recordBytes:PROPERTY_RECORD_BYTES,properties:parsePropertyRecords(bytes,tableOffset)};
+const output=new URL('../src/content/original-properties.json',import.meta.url);
+await writeFile(output,JSON.stringify(result,null,2)+'\n');
+console.log(`Imported ${result.properties.length} original properties into ${fileURLToPath(output)}`);
