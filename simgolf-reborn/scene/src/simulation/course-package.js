@@ -47,6 +47,7 @@ export async function courseDigest(content) {
 function designGame(content, seed = 2002) {
   if (
     !exact(content, [
+      "removedTrees",
       "landscapeStyle",
       "environment",
       "landParcels",
@@ -78,6 +79,7 @@ function designGame(content, seed = 2002) {
   )
     fail();
   const g = createGame(seed);
+  g.removedTrees = structuredClone(content.removedTrees);
   g.landscapeStyle = content.landscapeStyle;
   g.environment = content.environment;
   g.landParcels = content.landParcels;
@@ -134,7 +136,7 @@ function designGame(content, seed = 2002) {
     if (
       String(n) !== k ||
       !inBounds(c, r) ||
-      blocked(c, r) ||
+      blocked(c, r, g) ||
       (!g.starterBridgeRemoved && onBridge(p.x, p.z) && t.type !== "path")
     )
       fail();
@@ -147,7 +149,7 @@ function designGame(content, seed = 2002) {
         world = center(p.c, p.r);
       if (
         !inBounds(p.c, p.r) ||
-        blocked(p.c, p.r) ||
+        blocked(p.c, p.r, g) ||
         (g.tiles[k]?.type === "water") !==
           (f.type === "marina" && marinaWaterCell(f, p.c, p.r)) ||
         (!g.starterBridgeRemoved && onBridge(world.x, world.z)) ||
@@ -186,6 +188,7 @@ function designGame(content, seed = 2002) {
 }
 export async function exportCourse(g, title = "Willow Brook") {
   const content = {
+    removedTrees: {...g.removedTrees},
     landscapeStyle: g.landscapeStyle ?? "classic",
     environment: g.environment ?? null,
     landParcels: g.landParcels || 0,

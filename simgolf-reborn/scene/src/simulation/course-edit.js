@@ -1,3 +1,5 @@
+import { sceneryTreeAt } from "./scenery-trees.js";
+import { ownsLand } from "./land-purchase.js";
 import { FACILITIES } from "./facilities.js";
 import { footprint, newHole, event } from "./game.js";
 import {
@@ -66,7 +68,7 @@ export function removeHole(g, id) {
   };
 }
 export function demolitionCheck(g, c, r) {
-  if (!inBounds(c, r) || blocked(c, r))
+  if (!ownsLand(g, c, r) || blocked(c, r, g))
     return {
       ok: false,
       message: "This building or scenery is fixed on the current property.",
@@ -116,9 +118,11 @@ export function demolitionCheck(g, c, r) {
       message: `Remove this ${FACILITIES[f.type].name}?`,
     };
   }
+  const naturalTree = sceneryTreeAt(g, c, r);
   const t = g.tiles[key(c, r)];
-  if (!t) return { ok: false, message: "There is nothing to remove here." };
-  if (t.holeId) {
+  if (!t && !naturalTree)
+    return { ok: false, message: "There is nothing to remove here." };
+  if (t?.holeId) {
     const check = removalCheck(g, t.holeId);
     return { ...check, kind: "hole", id: t.holeId };
   }
@@ -132,6 +136,13 @@ export function demolitionCheck(g, c, r) {
     return {
       ok: false,
       message: "Wait for people and balls to clear this tile.",
+    };
+  if (naturalTree)
+    return {
+      ok: true,
+      kind: "scenery-tree",
+      id: key(c, r),
+      message: "Remove this tree?",
     };
   if (g.bridges?.[key(c, r)]) {
     if (
@@ -163,7 +174,9 @@ export function demolish(g, c, r) {
   const check = demolitionCheck(g, c, r);
   if (!check.ok) return check;
   if (check.kind === "hole") return removeHole(g, check.id);
-  if (check.kind === "starting-bridge") {
+  if (check.kind === "scenery-tree") {
+    (g.removedTrees ??= {})[check.id] = true;
+  } else if (check.kind === "starting-bridge") {
     g.starterBridgeRemoved = true;
     for (let r = 0; r < GRID.height; r++)
       for (let c = 0; c < GRID.width; c++) {

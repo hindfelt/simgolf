@@ -43,6 +43,7 @@ test("export excludes money, people, career and receipts; design snapshot remain
     "landscapeStyle",
     "outOfBounds",
     "property",
+    "removedTrees",
     "ruleset",
     "starterBridgeRemoved",
     "tiles",

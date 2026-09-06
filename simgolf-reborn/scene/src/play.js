@@ -310,7 +310,7 @@ setLandscapeState(game);
 const landscape = buildLandscape(scene, () => {});
 buildClubhouse(scene).scale.setScalar(0.65);
 const startingBridge = buildBridge(scene);
-buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast" });
+const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast" });
 const ocean = buildOcean(scene);
 ocean.update(game);
 const view = buildCourseView(scene);
@@ -1798,6 +1798,7 @@ function groundAt(e) {
     ),
     camera,
   );
+  if (mode === "build" && tool === "demolish") { const tree = flora.pick(raycaster); if(tree) return tree; }
   return raycaster.intersectObject(landscape.terrain)[0]?.point;
 }
 let lastCell = "",
@@ -2129,6 +2130,7 @@ function frame(now) {
   if (landscapeRevision !== game.revision) {
     setLandscapeState(game);
     landscape.reshape();
+    flora.update(game);
     ocean.update(game);
     boundary.geometry.dispose();
     boundary.geometry = new THREE.BufferGeometry().setFromPoints(

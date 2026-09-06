@@ -1,3 +1,4 @@
+import { sceneryTreeAt } from "./scenery-trees.js";
 import {
   facilityExtents,
   facilityContains,
@@ -230,13 +231,13 @@ export function createGame(
   return g;
 }
 export function tile(g, c, r) {
-  if (!ownsLand(g, c, r) || blocked(c, r)) return "blocked";
+  if (!ownsLand(g, c, r) || blocked(c, r, g)) return "blocked";
   const p = center(c, r);
   if (g.facilities.some((f) => facilityContains(f, c, r))) return "blocked";
   if (g.bridges?.[key(c, r)]) return "path";
 
   if (!g.starterBridgeRemoved && onBridge(p.x, p.z)) return "path";
-  return g.tiles[key(c, r)]?.type || "rough";
+  return g.tiles[key(c, r)]?.type || (sceneryTreeAt(g,c,r) ? "tree" : "rough");
 }
 export function lie(g, p) {
   const c = cellAt(p.x, p.z);
@@ -304,12 +305,13 @@ export function canBuild(
   for (const cell of cells) {
     const p = center(cell.c, cell.r),
       kind = tile(g, cell.c, cell.r);
-    if (!ownsLand(g, cell.c, cell.r) || blocked(cell.c, cell.r))
+    if (!ownsLand(g, cell.c, cell.r) || blocked(cell.c, cell.r, g))
       return {
         ok: false,
         message:
           "Keep construction inside the property and clear of buildings and trees.",
       };
+    if (sceneryTreeAt(g,cell.c,cell.r)) return {ok:false,message:"Remove the existing tree before building here."};
     if (isFacility(tool)) {
       const wetRequired =
         tool === "marina" &&

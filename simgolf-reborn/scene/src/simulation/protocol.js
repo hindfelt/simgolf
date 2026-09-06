@@ -1,5 +1,5 @@
-export const PROTOCOL_VERSION = 65;
-export const RULESET_VERSION = "prototype-links-church-2026-09-06";
+export const PROTOCOL_VERSION = 66;
+export const RULESET_VERSION = "prototype-editable-scenery-trees-2026-09-06";
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +65,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 65 && p.ruleset === "prototype-links-church-2026-09-06") ||
     (p?.version === 64 && p.ruleset === "prototype-coastal-presentation-2026-09-06") ||
     (p?.version === 63 && p.ruleset === "prototype-coastal-terrain-2026-09-06") ||
     (p?.version === 62 && p.ruleset === "prototype-home-sales-2026-09-06") ||

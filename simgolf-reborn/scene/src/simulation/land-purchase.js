@@ -85,7 +85,7 @@ export function validateOwnership(g) {
     (!Number.isInteger(g.landSeed) || g.landSeed < 0 || g.landSeed > 0xffffffff)
   )
     throw Error("Invalid landscape seed.");
-  for (const name of ["tiles", "elevation", "bridges", "outOfBounds"]) {
+  for (const name of ["tiles", "elevation", "bridges", "outOfBounds", "removedTrees"]) {
     for (const k of Object.keys(g[name] || {}))
       if (Number(k) >= ownedRows(g) * GRID.width)
         throw Error("Landscape outside owned land.");

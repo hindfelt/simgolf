@@ -62,7 +62,7 @@ export function landCheck(g, tool, c, r, brush, hole) {
         t = g.tiles[k]?.type;
       if (
         !ownsLand(g, a, b) ||
-        blocked(a, b) ||
+        blocked(a, b, g) ||
         (!g.starterBridgeRemoved && onBridge(p.x, p.z)) ||
         g.facilities.some((f) => facilityContains(f, a, b, 1))
       )
@@ -142,7 +142,7 @@ export function validateLand(g) {
     typeof g.starterBridgeRemoved !== "boolean"
   )
     throw Error("Invalid starting bridge state.");
-  for (const name of ["elevation", "bridges", "outOfBounds"]) {
+  for (const name of ["elevation", "bridges", "outOfBounds", "removedTrees"]) {
     const map = g[name] === undefined ? {} : g[name];
     if (!map || typeof map !== "object" || Array.isArray(map))
       throw Error("Invalid landscape data.");

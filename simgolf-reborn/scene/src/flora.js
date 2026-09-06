@@ -1,3 +1,4 @@
+import { key, GRID, inBounds } from "./simulation/world.js";
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import {
@@ -28,6 +29,7 @@ function batch(scene, geometry, material, transforms, shadows = true) {
   }
   mesh.castShadow = shadows;
   mesh.receiveShadow = true;
+  mesh.userData.transforms = transforms;
   scene.add(mesh);
   return mesh;
 }
@@ -77,7 +79,10 @@ export function foliageTexture(pink = false) {
   return t;
 }
 
-export function buildFlora(scene, { editableWater = false, coastal = false } = {}) {
+export function buildFlora(
+  scene,
+  { editableWater = false, coastal = false } = {},
+) {
   const rng = randomSource(117);
   const leaves = [],
     pinkLeaves = [],
@@ -87,6 +92,8 @@ export function buildFlora(scene, { editableWater = false, coastal = false } = {
     grass = [];
   function tree(x, z, size = 1, pink = false) {
     if (coastal && x >= 46) return;
+    const arrays = [trunks, branches, leaves, pinkLeaves],
+      starts = arrays.map((a) => a.length);
     const ground = height(x, z),
       h = (5 + rng() * 2) * size;
     trunks.push({
@@ -138,6 +145,18 @@ export function buildFlora(scene, { editableWater = false, coastal = false } = {
         ),
       });
     }
+    arrays.forEach((a, index) => {
+      for (let i = starts[index]; i < a.length; i++)
+        a[i].tree = {
+          x,
+          z,
+          ground,
+          k: key(
+            Math.floor((x - GRID.minX) / 2),
+            Math.floor((z - GRID.minZ) / 2),
+          ),
+        };
+    });
   }
   let count = 0;
   for (let attempts = 0; attempts < 1200 && count < 155; attempts++) {
@@ -183,8 +202,13 @@ export function buildFlora(scene, { editableWater = false, coastal = false } = {
     side: THREE.DoubleSide,
     roughness: 1,
   });
-  batch(scene, new THREE.PlaneGeometry(2.4, 2.4), leafMaterial, leaves);
-  batch(scene, new THREE.PlaneGeometry(2.4, 2.4), pinkMaterial, pinkLeaves);
+  const treeMeshes = [];
+  treeMeshes.push(
+    batch(scene, new THREE.PlaneGeometry(2.4, 2.4), leafMaterial, leaves),
+  );
+  treeMeshes.push(
+    batch(scene, new THREE.PlaneGeometry(2.4, 2.4), pinkMaterial, pinkLeaves),
+  );
   const barkTex = makeTexture("bark");
   barkTex.repeat.set(1, 3);
   const bark = new THREE.MeshStandardMaterial({
@@ -192,8 +216,12 @@ export function buildFlora(scene, { editableWater = false, coastal = false } = {
     roughness: 1,
     color: 0xaaa18b,
   });
-  batch(scene, new THREE.CylinderGeometry(0.2, 0.38, 1, 8), bark, trunks);
-  batch(scene, new THREE.CylinderGeometry(0.13, 0.3, 1, 6), bark, branches);
+  treeMeshes.push(
+    batch(scene, new THREE.CylinderGeometry(0.2, 0.38, 1, 8), bark, trunks),
+  );
+  treeMeshes.push(
+    batch(scene, new THREE.CylinderGeometry(0.13, 0.3, 1, 6), bark, branches),
+  );
   // Irregular river stones sit partly submerged, rather than forming an identical border.
   for (let x = -84; x < 84; x += 0.88) {
     for (const sign of [-1, 1]) {
@@ -285,7 +313,45 @@ export function buildFlora(scene, { editableWater = false, coastal = false } = {
     grass,
     false,
   );
-  return { treeCount: count + 10 };
+  let revision = -1;
+  const dummy = new THREE.Object3D();
+  return {
+    treeCount: count + 10,
+    pick(raycaster) {
+      const hit = raycaster.intersectObjects(treeMeshes, false)[0];
+      if (!hit) return null;
+      const t = hit.object.userData.transforms[hit.instanceId]?.tree;
+      return t ? { x: t.x, z: t.z, y: height(t.x, t.z) } : null;
+    },
+    update(g) {
+      if (revision === g.revision) return;
+      revision = g.revision;
+      for (const mesh of treeMeshes) {
+        mesh.userData.transforms.forEach((t, i) => {
+          const tree = t.tree;
+          dummy.position.set(
+            t.p[0],
+            t.p[1] + height(tree.x, tree.z) - tree.ground,
+            t.p[2],
+          );
+          dummy.rotation.set(...(t.r || [0, 0, 0]));
+          dummy.scale.set(
+            ...(g.removedTrees?.[tree.k] &&
+            inBounds(
+              Math.floor((tree.x - GRID.minX) / 2),
+              Math.floor((tree.z - GRID.minZ) / 2),
+            )
+              ? [0, 0, 0]
+              : t.s || [1, 1, 1]),
+          );
+          dummy.updateMatrix();
+          mesh.setMatrixAt(i, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.computeBoundingSphere();
+      }
+    },
+  };
 }
 
 export function buildFlowers(scene) {

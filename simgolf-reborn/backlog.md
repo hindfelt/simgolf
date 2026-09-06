@@ -361,3 +361,9 @@ Playable property integration prerequisite confirmed in source: simulation/world
 
 - Major standalone browser rebuild packaged as a playable preview. Full release test run: 417/417 passed; production build passed. Source and review documentation are committed under simgolf-reborn; original local game binaries and dependencies are excluded.
 - Production cutover from the repository-root application remains separate. Full fidelity, cloud saves and multiplayer networking remain unfinished.
+
+### Editable scenery trees — protocol 66
+
+- Removed the fixed-scenery restriction from terrain editing on owned land, retaining the clubhouse footprint. Both original scenery trees and planted trees can be removed; scenery-tree clearing is stored in saves and course packages. Click a visible scenery tree with Remove to select its trunk cell.
+- Original scenery instances now update height when the terrain changes and hide when cleared. Their established visual shapes and seed are retained. New construction requires clearing a scenery tree first. Land outside ownership remains unavailable.
+- Tests cover every owned original tree, raising/lowering, clearing, save/export persistence, browser selection/removal/reload and rendered trunk height. Related editing, landforming, shared course and session checks plus production build pass.

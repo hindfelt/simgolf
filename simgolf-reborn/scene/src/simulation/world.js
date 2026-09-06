@@ -52,8 +52,9 @@ export function inBounds(c, r) {
     r < GRID.height
   );
 }
-export function blocked(c, r) {
+export function blocked(c, r, g = null) {
   const { x, z } = center(c, r);
+  if (g) return x > -39 && x < -19 && z > -32 && z < -15;
   return (
     (x > -39 && x < -19 && z > -32 && z < -15) ||
     [
