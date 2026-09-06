@@ -2,6 +2,8 @@
 
 The approved dimensional art direction and subsequent tile-based course/path refinements now support the **playable course with up to 18 holes**. This is an independent browser game in the new subfolder, not a completed 1:1 recreation. The full target remains in [whattobuild.md](whattobuild.md).
 
+- [Player guide](PLAYER_GUIDE.md): what the game is about and how to build, manage and play.
+- [Development guide](DEVELOPMENT.md): setup, tests and project structure.
 - [Build backlog](backlog.md): full-game completion and the requested future multiplayer features.
 - [Architecture](architecture.md): command authority, deterministic simulation and multiplayer boundaries.
 - [First playable milestone](playable.md): implemented behavior, controls, provisional rules and remaining work.
