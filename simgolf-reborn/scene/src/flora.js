@@ -86,6 +86,7 @@ export function buildFlora(
 ) {
   const rng = randomSource(117);
   const leaves = [],
+    needles = [],
     pinkLeaves = [],
     trunks = [],
     branches = [],
@@ -93,7 +94,7 @@ export function buildFlora(
     grass = [];
   function tree(x, z, size = 1, pink = false) {
     if (coastal && x >= 46) return;
-    const arrays = [trunks, branches, leaves, pinkLeaves],
+    const arrays = [trunks, branches, leaves, pinkLeaves, needles],
       starts = arrays.map((a) => a.length);
     const ground = height(x, z),
       h = (5 + rng() * 2) * size;
@@ -145,6 +146,30 @@ export function buildFlora(
           0.82 + rng() * 0.18,
         ),
       });
+    }
+    if (coastal && !pink) {
+      // Keep the original RNG consumption so scenery positions, ownership and
+      // removal keys remain identical. Only replace this tree's visual crown.
+      branches.length = starts[1];
+      leaves.length = starts[2];
+      for (let tier = 0; tier < 8; tier++) {
+        const fraction = tier / 8;
+        const radius = size * (2 - fraction * 1.85);
+        for (let branch = 0; branch < 8; branch++) {
+          const angle = (branch * Math.PI) / 4 + tier * 0.6;
+          const spread = size * (1.25 - fraction * 0.85);
+          needles.push({
+            p: [
+              x + Math.cos(angle) * radius * 0.65,
+              ground + h * (0.38 + fraction * 0.85),
+              z + Math.sin(angle) * radius * 0.65,
+            ],
+            s: [spread, spread * 0.65, spread],
+            r: [-0.65, angle, 0.3 * Math.sin(angle)],
+            c: new THREE.Color(0xc6d8ca),
+          });
+        }
+      }
     }
     arrays.forEach((a, index) => {
       for (let i = starts[index]; i < a.length; i++)
@@ -204,6 +229,24 @@ export function buildFlora(
     roughness: 1,
   });
   const treeMeshes = [];
+  if (coastal) {
+    const crown = batch(
+      scene,
+      new THREE.PlaneGeometry(2.4, 2.4),
+      new THREE.MeshStandardMaterial({
+        map: foliageTexture(),
+        alphaTest: 0.4,
+        side: THREE.DoubleSide,
+        color: 0xd0ddc7,
+        emissive: 0x29402b,
+        emissiveIntensity: 0.35,
+        roughness: 1,
+      }),
+      needles,
+    );
+    crown.name = "coastal-conifers";
+    treeMeshes.push(crown);
+  }
   treeMeshes.push(
     batch(scene, new THREE.PlaneGeometry(2.4, 2.4), leafMaterial, leaves),
   );
@@ -322,7 +365,9 @@ export function buildFlora(
       const hit = raycaster.intersectObjects(treeMeshes, false)[0];
       if (!hit) return null;
       const t = hit.object.userData.transforms[hit.instanceId]?.tree;
-      return t ? { x: t.x, z: t.z, y: height(t.x, t.z), distance: hit.distance } : null;
+      return t
+        ? { x: t.x, z: t.z, y: height(t.x, t.z), distance: hit.distance }
+        : null;
     },
     update(g) {
       if (revision === g.revision) return;
