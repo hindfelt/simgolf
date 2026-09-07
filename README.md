@@ -15,7 +15,7 @@ The new **1.0.0 major rebuild** uses Three.js for a dimensional, isometric view 
 - [Release notes and limitations](simgolf-reborn/RELEASE_NOTES.md)
 - [Technical documentation](simgolf-reborn/DEVELOPMENT.md)
 
-There is no public deployment of this rebuild yet. The release ZIP is a static website to host over HTTP(S); it is not a Windows executable.
+**[Play the browser preview at simgolfer.0x4d.in](https://simgolfer.0x4d.in/)**. Saves belong to each browser and hostname; export your local course and import it on the hosted site to continue. The release ZIP is also available for static hosting; it is not a Windows executable.
 
 ## What you do
 

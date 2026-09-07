@@ -28,7 +28,17 @@ Playwright uses Google Chrome, one worker and a Vite server. Outside CI it can r
 
 The 1.0.0 release passed 417 local tests. Some fidelity tests compare against locally supplied original game files in the repository-root `resources/` directory. Those inputs are excluded from GitHub and release downloads. A clean checkout can build the browser game without them, but cannot run every original-source comparison without supplying the referenced files. Check the relevant test's input path when running a source-fidelity test.
 
-`npm run build` writes `scene/dist/` with relative asset URLs. A static host should serve the contents of that directory. The release ZIP contains those same production files. The current root deployment workflow does not deploy this output; production cutover remains separate work.
+`npm run build` writes `scene/dist/` with relative asset URLs. The rebuild is hosted at https://simgolfer.0x4d.in/ by the separate Cloudflare static-assets Worker `simgolfer`. Its configuration is `scene/wrangler.jsonc`. The repository-root deployment workflow and `simgolf.0x4d.in` still serve the earlier application.
+
+The rebuild's source branch is `codex/simgolf-reborn-v1`; no merge into `main` is required to publish it. Deploy explicitly from the repository root after testing:
+
+```sh
+npm run build --prefix simgolf-reborn/scene
+npx wrangler deploy --config simgolf-reborn/scene/wrangler.jsonc --dry-run
+npx wrangler deploy --config simgolf-reborn/scene/wrangler.jsonc
+```
+
+Only the built `dist` assets are published. No local course saves, original game resources, credentials, or source research are uploaded. Browser saves are origin-specific: use export/import when moving from localhost or another hostname. The initial hosted build remains a playable preview; the approved coastal concept is not yet implemented.
 
 ## Where to work
 

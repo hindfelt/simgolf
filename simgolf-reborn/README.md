@@ -28,7 +28,7 @@ Open `http://127.0.0.1:4176/`. Place a tee and green, paint the fairway, then **
 
 Choose **Inspect / pan** to drag the view. In construction mode, right-drag pans; two fingers pan/zoom on touch. Scroll/pinch zooms. Space pauses. Construction tools paint a square grid and reject overlaps with tees, greens, buildings and protected course features. Water and player-built bridges can be edited. The old art study remains at `http://127.0.0.1:4176/?mode=art` with its own review controls.
 
-The server listens on the local network for phone review on the same Wi-Fi. Use the computer's LAN address and port 4176, not `127.0.0.1` on the phone. **A public remote URL has not been deployed.** Saves live in each browser; export/import transfers a course between devices.
+**Play remotely at https://simgolfer.0x4d.in/**, including on your phone. The local server also listens on the same Wi-Fi at the computer's LAN address and port 4176. Saves live in each browser and hostname; export/import transfers a course from localhost to the public site or between devices.
 
 ## Validate and build
 

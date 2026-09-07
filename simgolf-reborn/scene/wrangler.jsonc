@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "simgolfer",
+  "compatibility_date": "2026-09-07",
+  "workers_dev": true,
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "simgolfer.0x4d.in", "custom_domain": true }]
+}
