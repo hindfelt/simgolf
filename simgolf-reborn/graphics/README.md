@@ -1,5 +1,11 @@
 # Graphics approval
 
+## Coastal direction — approved 7 September 2026
+
+The owner approved [coastal concept V2](samples/coastal-concept-v2.png) with “looks wonderful!”. Its target is dark slate-blue sea, compact rocky islands and headlands, conifers, a striped lighthouse, connected timber bridges, and rounded course tiles with green borders. It follows the [Vancouver course reference](https://www.reddit.com/r/SimGolf/comments/1n37jjv/this_is_a_picture_of_the_second_hole_of_the/). The Reddit author notes that their original-game terrain tiles were modified.
+
+The first implementation pass adds matching inland/offshore blue water and editable stone banks, with gaps at bridge crossings. This is partial: island generation, cliff faces, conifers, lighthouse assets and the full composition still need implementation. Concept approval does not imply the playable render has reached that target.
+
 | Sample | Direction | Owner approval |
 |---|---|---|
 | [A](samples/a-faithful-concept.png) | Detailed original-style isometric scene with lavender interface | Not selected |

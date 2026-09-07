@@ -1,4 +1,5 @@
 import { housing } from "./housing.js";
+import { COAST_WATER } from "./coastal-style.js";
 import { transportFacility } from "./transport-facilities.js";
 import { regionalRecreation } from "./regional-recreation.js";
 import { swimClub } from "./swim-club.js";
@@ -270,7 +271,11 @@ export function buildCourseView(scene) {
           r = Math.floor(Number(k) / GRID.width),
           p = center(c, r);
         const muddy = kind === "path" && !connectedPaths.has(Number(k));
-        ctx.fillStyle = muddy ? "#776847" : colors[t.type];
+        ctx.fillStyle = muddy
+          ? "#776847"
+          : kind === "water" && g.landscapeStyle === "coast"
+            ? COAST_WATER
+            : colors[t.type];
         ctx.fillRect(c * px, r * px, px, px);
         if (["fairway", "firm", "green", "tee"].includes(t.type)) {
           ctx.fillStyle = c % 2 ? "#b9c37e28" : "#2d5a1c0b";
@@ -519,7 +524,9 @@ export function buildCourseView(scene) {
     scene.remove(group);
   }
   return {
-    pickTree(raycaster) { return trees.pick(raycaster); },
+    pickTree(raycaster) {
+      return trees.pick(raycaster);
+    },
     previewFacility(f, valid = true) {
       if (!f) {
         if (preview) preview.visible = false;
