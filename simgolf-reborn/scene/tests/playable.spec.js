@@ -270,3 +270,21 @@ test("choosing Tee on an open hole starts the next hole without moving the first
   holes = await page.evaluate(() => window.__gameTest.getState().holes);
   expect(holes[1].open).toBe(true);
 });
+
+
+test("holding Space pans without building or pausing, then restores the tool", async ({ page }) => {
+  await ready(page);
+  await page.locator('[data-tool="fairway"]').click();
+  const before = await page.evaluate(() => ({ target: window.__gameTest.getCameraTarget(), game: window.__gameTest.getState() }));
+  await page.keyboard.down("Space");
+  await page.mouse.move(600, 250);
+  await page.mouse.down();
+  await page.mouse.move(750, 300, { steps: 10 });
+  await page.mouse.up();
+  await page.keyboard.up("Space");
+  const after = await page.evaluate(() => ({ target: window.__gameTest.getCameraTarget(), game: window.__gameTest.getState() }));
+  expect(after.target).not.toEqual(before.target);
+  expect(after.game.tiles).toEqual(before.game.tiles);
+  await expect(page.locator("#pause")).toHaveAttribute("aria-label", "Pause simulation");
+  await expect(page.locator('[data-tool="fairway"]')).toHaveClass(/active/);
+});

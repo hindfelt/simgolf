@@ -483,6 +483,7 @@ function setMode(next) {
   syncControls();
   renderPanel();
 }
+let spacePanning = false;
 function syncControls() {
   staffRangePreview = null;
   $("#panel").classList.toggle(
@@ -494,9 +495,9 @@ function syncControls() {
     (mode === "build" && tool !== "inspect") ||
     mode === "play" ||
     (mode === "staff" && movingStaff);
-  controls.mouseButtons.LEFT = placing ? null : THREE.MOUSE.PAN;
+  controls.mouseButtons.LEFT = placing && !spacePanning ? null : THREE.MOUSE.PAN;
   controls.touches.ONE = placing ? null : THREE.TOUCH.PAN;
-  renderer.domElement.style.cursor = placing ? "crosshair" : "grab";
+  renderer.domElement.style.cursor = placing && !spacePanning ? "crosshair" : "grab";
   boundary.visible = mode === "build";
 }
 let pendingRemoval = null;
@@ -1198,7 +1199,7 @@ function refresh() {
       bridge:
         "Bridge · Place over water. Join the deck to paths on both banks.",
       "out-of-bounds":
-        "White stakes · Paint the area that is out of bounds. Balls finishing here cost a stroke and must be replayed.",
+        "White stake · One pole per marked tile. Balls finishing on marked land cost one penalty stroke and drop just inside playable land.",
       "clear-boundary": "Clear stakes · Brush to return marked land to play.",
     }[tool];
   if (mode === "build" && tool === "path")
@@ -1832,11 +1833,14 @@ addEventListener("keydown", (e) => {
     hover(lastHover);
     return;
   }
-  if (e.target.matches("button")) return;
   if (e.code === "Space") {
     e.preventDefault();
-    $("#pause").click();
+    spacePanning = true;
+    stroke = false;
+    syncControls();
+    return;
   }
+  if (e.target.matches("button")) return;
   if (e.key.toLowerCase() === "h" && mode === "build" && !coursePackage)
     $("#open-hole").click();
   if (e.key === "Escape") {
@@ -1981,6 +1985,7 @@ function hover(e) {
   }
 }
 function act(e) {
+  if (spacePanning) return;
   const p = groundAt(e);
   if (!p) return;
   if (pickingAnalysis) {
@@ -2085,6 +2090,18 @@ function act(e) {
     }
   }
 }
+addEventListener("keyup", (e) => {
+  if (e.code === "Space") {
+    spacePanning = false;
+    moved = true;
+    syncControls();
+  }
+});
+addEventListener("blur", () => {
+  spacePanning = false;
+  stroke = false;
+  syncControls();
+});
 renderer.domElement.addEventListener("pointerdown", (e) => {
   pointers.add(e.pointerId);
   if (pointers.size > 1) {
@@ -2097,7 +2114,7 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
   moved = false;
   lastCell = "";
   stroke =
-    e.button === 0 &&
+    !spacePanning && e.button === 0 &&
     e.pointerType !== "touch" &&
     mode === "build" &&
     ([
@@ -2143,6 +2160,7 @@ renderer.domElement.addEventListener("pointerleave", () => {
   stroke = false;
 });
 window.__gameTest = Object.freeze({
+  getCameraTarget: () => controls.target.toArray(),
   getState: () => JSON.parse(serialize(game)),
   getPropertyBoundary: () => ({
     visible: boundary.visible,

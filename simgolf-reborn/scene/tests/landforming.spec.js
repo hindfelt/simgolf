@@ -12,7 +12,7 @@ import {
   update,
 } from "../src/simulation/game.js";
 import { key, center } from "../src/simulation/world.js";
-import { elevationAt } from "../src/simulation/landforming.js";
+import { elevationAt, isOut } from "../src/simulation/landforming.js";
 import {
   exportCourse,
   importCourse,
@@ -71,8 +71,11 @@ test("original stream can be filled, extended, and crossed with a walkable bridg
   expect(build(g, "rough", c, r).ok).toBe(true);
   expect(g.bridges[key(c, r)]).toBeUndefined();
 });
-test("out of bounds costs a penalty and replays from previous spot", () => {
+test("out of bounds costs one penalty and drops near the boundary", () => {
   const g = course();
+  expect(build(g, "out-of-bounds", 13, 20, 5).ok).toBe(true);
+  expect(build(g, "clear-boundary", 13, 20, 5).ok).toBe(true);
+  expect(Object.keys(g.outOfBounds)).toHaveLength(0);
   expect(build(g, "out-of-bounds", 13, 20, 5).ok).toBe(true);
   startPractice(g);
   const v = g.pro,
@@ -80,10 +83,11 @@ test("out of bounds costs a penalty and replays from previous spot", () => {
   takeShot(g, v, center(13, 20));
   for (let i = 0; i < 200 && v.shot; i++) update(g, 0.05);
   expect(v.strokes).toBe(2);
-  expect(v.ball).toEqual(from);
+  expect(v.ball).not.toEqual(from);
+  expect(isOut(g, v.ball)).toBe(false);
+  expect(v.ball.x).toBeGreaterThan(from.x);
   expect(v.comment).toContain("Out of bounds");
-  expect(build(g, "clear-boundary", 13, 20, 5).ok).toBe(true);
-  expect(Object.keys(g.outOfBounds)).toHaveLength(0);
+  expect(restore(serialize(g)).pro.ball).toEqual(v.ball);
 });
 test("browser shows illustrated tools and editable landscape", async ({
   page,

@@ -1187,11 +1187,25 @@ function stepShot(g, v, dt) {
   ) {
     v.strokes++;
     const out = isOut(g, v.ball);
+    const landing = { ...v.ball };
     v.ball = { ...s.from };
+    if (out) {
+      // Walk back along the shot toward playable land, stopping just inside it.
+      const steps = Math.ceil(distance(landing, s.from) / 0.25);
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const drop = { x: landing.x + (s.from.x - landing.x) * t,
+          z: landing.z + (s.from.z - landing.z) * t };
+        if (!isOut(g, drop) && !["water", "blocked"].includes(lie(g, drop)) && route(g, v.pos, drop)) {
+          v.ball = drop;
+          break;
+        }
+      }
+    }
     complain(g, v, `penalty:${v.holeId}:${v.strokes}`);
     v.mood = Math.max(0, v.mood - 10);
     v.comment = out
-      ? "Out of bounds. One penalty stroke; replay from the previous spot."
+      ? "Out of bounds. One penalty stroke; dropped just inside playable land."
       : "Into trouble. Taking a penalty drop.";
     event(g, `${v.name}: penalty after an unplayable landing.`);
   } else {

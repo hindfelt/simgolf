@@ -29,7 +29,7 @@ export function constructionIcon(type) {
     rocks:
       '<path d="m18 31 5-14 14-2 10 11-5 11Z" fill="#9c9c86" stroke="#666f5b"/><path d="m37 31 7-11 10 3 7 12-13 4Z" fill="#c1b9a2" stroke="#767962"/>',
     "out-of-bounds":
-      '<path d="m15 35 39-23" stroke="#d6d9a2" stroke-dasharray="3 3"/><path d="M18 34V15m17 10V6m17 10V1" stroke="#fbf8e7" stroke-width="4"/>',
+      '<path d="m15 35 39-23" stroke="#d6d9a2" stroke-dasharray="3 3"/><path d="M35 28V6" stroke="#fbf8e7" stroke-width="4"/>',
     raise:
       '<path d="m17 32 19-25 21 25-21 10Z" fill="#789641" stroke="#486333"/><path d="M36 27V6m-7 8 7-8 7 8" fill="none" stroke="#f0e6a1" stroke-width="3"/>',
     lower:

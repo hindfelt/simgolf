@@ -217,32 +217,12 @@ export function buildCourseView(scene) {
           deck,
         );
     }
-    const stakes = new Set();
     for (const k of Object.keys(g.outOfBounds || {})) {
       const c = Number(k) % GRID.width,
-        r = Math.floor(Number(k) / GRID.width);
-      for (const [dc, dr] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ]) {
-        if (g.outOfBounds[key(c + dc, r + dr)]) continue;
-        const p = center(c, r),
-          x = p.x + dc,
-          z = p.z + dr,
-          id = `${x},${z}`;
-        if (stakes.has(id)) continue;
-        stakes.add(id);
-        add(
-          new THREE.BoxGeometry(0.13, 1.2, 0.13),
-          0xf5f1df,
-          x,
-          height(x, z) + 0.6,
-          z,
-          construction,
-        );
-      }
+        r = Math.floor(Number(k) / GRID.width),
+        p = center(c, r);
+      add(new THREE.BoxGeometry(0.13, 1.2, 0.13), 0xf5f1df,
+        p.x, height(p.x, p.z) + 0.6, p.z, construction);
     }
     const connectedPaths = connectedPathCells(g);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
