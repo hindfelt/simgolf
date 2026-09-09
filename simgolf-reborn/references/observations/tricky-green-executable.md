@@ -75,3 +75,16 @@ The value previously described as `angularOffset` is therefore persistent curvat
 This branch is distinct from the apparently unreachable ±15-degree variant branch discussed above. It applies on ordinary greens too; tricky greens affect its initial value through the earlier putting calculation. Non-putter shots skip neither all curvature nor all other heading adjustments: the launch branch at `0x4245d9` explicitly skips a separate clamped heading adjustment for club 13, and airborne movement at `0x42bfc7` also uses half-curvature. Do not turn the recovered putting result into a one-off rotated target.
 
 Sixteen focused tests pass, including source instructions, signed odd-number rounding, heading wraparound, reversal ordering, zero-curvature draw consumption, leaving green terrain and resumption across multiple updates with preserved phase and RNG. Full movement remains open: position stepping precedes this branch at `0x42bddd`, friction/slope calculations precede it at `0x42c13a`, and later collision/cup handling must be integrated. These are static-source checks, not execution of the original game.
+
+## Ground resistance and stopping
+
+`original-ground-motion.js` now connects the recovered curvature step to the preceding ground-response arithmetic at `0x42c13a–0x42c275`. Inputs still use original units and explicit slope outputs; no browser terrain gradient is substituted.
+
+- `0x576dc1 + terrainCode*48` is signed terrain metadata byte 33 (raw metadata index 1). The startup table is copied from `0x4c0a38` to `0x576da0` at `0x40f2d3`. `originalTerrainMetadata` now exposes this as `rollCoefficient`, while preserving all other metadata. Runtime table changes remain possible.
+- Resistance is `clamp(rollCoefficient - forwardSlope, 0, 99)`, raised to 2 when below 2 and the boundary flags are nonzero.
+- The origin coordinates `0x577fcc/0x577fd0` are then checked. If that terrain is green (1), resistance is reset to the unadjusted terrain coefficient and cross-slope is zeroed. This differs from the later **current** cell check used by curvature. It does not justify applying arbitrary browser downhill drift to a putt.
+- Cross-slope contributes the negated truncated half of its 32-bit value shifted left 26, added to heading with wraparound.
+- Below resistance 5, speed becomes `speed - trunc((speed >> resistance)/2)`. At resistance 5 or above, it becomes `speed + trunc((64 - (speed >> 5))/2)`. The latter can accelerate a slow ball; do not replace it with uniform drag.
+- After other collision/bounce processing, `0x42ca6c–0x42ca97` stops the ball only if speed is **below** 64 and both height `0x577fe4` and vertical speed `0x577ff0` equal zero. This predicate is exported separately, since evaluating it prematurely would skip bounce handling.
+
+Six new tests plus the sixteen putting and two metadata tests pass (24 total). They check startup bytes, arithmetic boundaries, ordering, current/origin terrain distinctions, gradual flat-green slowdown and deterministic resumption. These do not constitute a full moving-ball simulation: position/trigonometric stepping, actual directional-slope sampling (`0x40c140`, calling `0x40bfe0`/`0x40c090`), bounce, hazards, cup detection and original tick timing remain to be connected before changing live play.

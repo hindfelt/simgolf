@@ -17,6 +17,7 @@ export function originalTerrainMetadata(code) {
     clearanceCost,
     flags,
     shape: rawMetadata[7],
+    rollCoefficient: (rawMetadata[1] << 24) >> 24,
     connectionSpread: (rawMetadata[2] << 24) >> 24,
   };
 }

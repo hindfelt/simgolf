@@ -417,3 +417,7 @@ Recovered the upstream putting window with integer rounding and eligibility mask
 ### Original green curvature update
 
 Traced the putting error field into ground movement: the original adds half its signed value to heading each eligible green update, and conditionally reverses it after an RNG draw gated by the shared phase byte. It applies on ordinary greens as well as tricky ones; it must not become a one-off aiming rotation. Added a deterministic recovered step with 32-bit wrapping and saved-state continuation checks. Sixteen focused tests pass. Original movement timing, friction, slope, cup detection and live construction/course-package/physics integration remain unfinished. No production rules or deployment changed.
+
+### Original ground resistance and stop state
+
+Recovered ground resistance/slope response and connected it to the isolated green-curvature update. Identified the startup terrain roll coefficient and the separate origin-green override. Added the exact low-speed/zero-height/zero-vertical-speed stopping predicate for use after bounce handling. Twenty-four focused checks pass, including multi-update decay and saved-state continuation. Still not live: original position stepping, terrain slope sampling, bounce/cup handling and timing remain required before replacing browser physics.
