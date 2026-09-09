@@ -17,6 +17,25 @@ export function originalAttitudeLabel(attitude) {
     "pumped", "invincible", "invincible"][Math.max(-4, Math.min(4, attitude)) + 4];
 }
 
+// Upstream ECX calculation at 0x424071–0x4240db. These are raw executable
+// fields, not browser difficulty or happiness. Supported adjustment levels
+// are 0..3; wider original runtime values have not been established.
+export function originalPuttingWindow({
+  stateFlags, adjustmentLevel, golferFlags, golferType, skillFlags, puttingSkill,
+}) {
+  const byte = n => Number.isInteger(n) && n >= 0 && n <= 255;
+  if (!Number.isInteger(stateFlags) || stateFlags < -0x80000000 || stateFlags > 0xffffffff ||
+      !Number.isInteger(adjustmentLevel) || adjustmentLevel < 0 || adjustmentLevel > 3 ||
+      ![golferFlags, golferType, skillFlags, puttingSkill].every(byte))
+    throw Error("Unsupported original putting window fields.");
+  let window = stateFlags & 1 ? 10 : 20;
+  if ((golferFlags & 4) && adjustmentLevel && (golferType & 0xe0) !== 0x20)
+    window += Math.trunc(window / (4 - adjustmentLevel));
+  if (skillFlags & 0x10)
+    window += Math.trunc(window * puttingSkill / 8);
+  return window;
+}
+
 // 0x4240fe–0x42414a and the putter branch 0x42429e–0x42438c.
 // Inputs deliberately expose original fields. Mapping current browser golfer
 // profiles and tournament flags to these values is not established yet.
@@ -29,7 +48,7 @@ export function originalPuttingAim({
   seed,
 }) {
   if (!Number.isInteger(distanceYards) || distanceYards < 0 || distanceYards > 10000 ||
-      !Number.isInteger(windowBeforeGreen) || windowBeforeGreen < 10 || windowBeforeGreen > 1024 ||
+      !Number.isInteger(windowBeforeGreen) || windowBeforeGreen < 10 || windowBeforeGreen > 1315 ||
       !Number.isInteger(greenVariant) || greenVariant < 0 || greenVariant > 255 ||
       !Number.isInteger(attitude) || attitude < -128 || attitude > 127 ||
       typeof doubleDistanceFlag !== "boolean")

@@ -409,3 +409,7 @@ This is source recovery, not a playable tricky-green feature. Upstream golfer/di
 ### Original putting attitude correction
 
 Confirmed the raw putting byte is Attitude, using the original UI's signed jump table and labels. Corrected the isolated helper's misleading `ability` name to `attitude`; determined (1) still receives the reduction, pumped (2) does not. Seven focused tests cover the recovered slice, including all attitude labels checked against the executable. The upstream window arithmetic is recorded with unresolved flags explicitly identified. Live tricky greens, original attitude transitions, skill activation and browser integration remain open; no live rules or deployment changed.
+
+### Original putting facility and skill inputs
+
+Recovered the upstream putting window with integer rounding and eligibility masks. Identified the adjustment table entry as the Putting Green facility (type 6), rather than game difficulty, and the fifth golfer skill byte as Accurate Putter through the original skill UI. Twelve focused tests cover the calculation, flags, ordering and executable labels. Remaining: original facility activation/upgrade limits, attitude transitions, heading application and an integrated tricky-green editor/save/replay/physics change. The helper remains isolated; no playable feature or fidelity completion is claimed.

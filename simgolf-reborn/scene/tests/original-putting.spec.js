@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
-import {originalAttitudeLabel,originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
+import {originalPuttingWindow,originalAttitudeLabel,originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
 import {originalRandom} from '../src/simulation/original-rng.js';
 const input={distanceYards:12,windowBeforeGreen:20,attitude:2,seed:1234};
 test('green selection, tolerance penalty, putter test and miss constants match the supplied executable',()=>{
@@ -64,4 +64,58 @@ test('pumped attitude is the putting threshold, not determined or an accuracy sk
  for(const attitude of [2,3,4]) expect(result(attitude)).toEqual(result(2));
  expect(result(2).toleranceYards).toBeGreaterThan(result(1).toleranceYards);
  expect(()=>originalPuttingAim({...input,attitude:undefined,ability:2})).toThrow();
+});
+
+const rawWindow={stateFlags:0,adjustmentLevel:0,golferFlags:0,golferType:0,skillFlags:0,puttingSkill:0};
+test('upstream putting reads the documented original raw fields and masks',()=>{
+ const b=readFileSync(new URL("../../../resources/sim golf/Sid Meier's SimGolf/golf.exe",import.meta.url));
+ const bytes=(va,length)=>b.subarray(va-0x400000,va-0x400000+length).toString('hex');
+ expect(bytes(0x424071,6)).toBe('8b0d28325a00');
+ expect(bytes(0x42407a,3)).toBe('80e101');
+ expect(bytes(0x424093,2)).toBe('a804');
+ expect(bytes(0x424097,5)).toBe('a1c82b5400');
+ expect(bytes(0x4240a6,6)).toBe('80e2e080fa20');
+ expect(bytes(0x4240bc,7)).toBe('f6861e7f570010');
+ expect(bytes(0x4240c7,6)).toBe('8a86fc7f5700');
+});
+test('state low bit alone selects the initial putting window including lifecycle sentinels',()=>{
+ for(const stateFlags of [0,2,-2,0xfffffffe])
+  expect(originalPuttingWindow({...rawWindow,stateFlags})).toBe(20);
+ for(const stateFlags of [1,3,-1,0xffffffff])
+  expect(originalPuttingWindow({...rawWindow,stateFlags})).toBe(10);
+});
+test('putting adjustment uses truncating division and all three eligibility conditions',()=>{
+ const adjusted={...rawWindow,golferFlags:4};
+ expect([0,1,2,3].map(adjustmentLevel=>originalPuttingWindow({...adjusted,adjustmentLevel}))).toEqual([20,26,30,40]);
+ expect([0,1,2,3].map(adjustmentLevel=>originalPuttingWindow({...adjusted,stateFlags:1,adjustmentLevel}))).toEqual([10,13,15,20]);
+ expect(originalPuttingWindow({...adjusted,adjustmentLevel:3,golferFlags:2})).toBe(20);
+ for(let golferType=0x20;golferType<0x40;golferType++)
+  expect(originalPuttingWindow({...adjusted,adjustmentLevel:3,golferType})).toBe(20);
+ for(const golferType of [0,0x1f,0x40,0xff])
+  expect(originalPuttingWindow({...adjusted,adjustmentLevel:3,golferType})).toBe(40);
+});
+test('putting skill is gated and applied after the adjustment, before tricky-green subtraction',()=>{
+ expect(originalPuttingWindow({...rawWindow,puttingSkill:8})).toBe(20);
+ const raw={...rawWindow,golferFlags:4,adjustmentLevel:1,skillFlags:0x10,puttingSkill:3};
+ expect(originalPuttingWindow(raw)).toBe(35); // 20 + trunc(20/3) + trunc(26*3/8)
+ const windowBeforeGreen=originalPuttingWindow(raw);
+ const normal=originalPuttingAim({...input,windowBeforeGreen});
+ const tricky=originalPuttingAim({...input,windowBeforeGreen,greenVariant:255});
+ expect(normal.toleranceYards).toBeGreaterThan(tricky.toleranceYards);
+ const maximum=originalPuttingWindow({...raw,golferFlags:4,adjustmentLevel:3,puttingSkill:255});
+ expect(maximum).toBe(1315);
+ expect(()=>originalPuttingAim({...input,windowBeforeGreen:maximum})).not.toThrow();
+ for(const field of ['golferFlags','golferType','skillFlags','puttingSkill'])
+  expect(()=>originalPuttingWindow({...raw,[field]:256})).toThrow();
+ expect(()=>originalPuttingWindow({...raw,adjustmentLevel:4})).toThrow();
+});
+
+test('putting skill slot and facility table index match the executable labels',()=>{
+ const b=readFileSync(new URL("../../../resources/sim golf/Sid Meier's SimGolf/golf.exe",import.meta.url));
+ const stringAt=offset=>b.subarray(offset).toString('latin1').split('\0')[0];
+ // Skill UI iterates pointers at 0x4c1c34 and bytes at 0x577ff8 in parallel.
+ expect(stringAt(b.readUInt32LE(0xc1c34+4*4)-0x400000)).toBe('Accurate Putter');
+ // Global 0x542bc8 is index six of the facility-level table at 0x542bb0.
+ expect((0x542bc8-0x542bb0)/4).toBe(6);
+ expect(stringAt(0xc16a8+6*20)).toBe('Putting Green');
 });

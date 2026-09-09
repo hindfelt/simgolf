@@ -18,7 +18,7 @@ A browser green variant should therefore remain a green tile with additional var
 - `0x42429e–0x42438c` is the club-code-13 putter branch. It clears the angular-offset field, optionally doubles the distance under global flag `0x200000`, and compares distance to the tolerance. Above tolerance it draws a side and a magnitude of 150–299, shifted left 18 bits. Distance at most 5 clears the resulting offset **after those draws**. Distances above 15, 25 and 35 each halve the offset.
 - `0x45bab0` calls the RNG before applying the unsigned 16-bit bound. Bound zero therefore still advances the RNG, yielding zero.
 
-`scene/src/simulation/original-putting.js` reconstructs this confirmed slice. Its seed is the RNG state immediately before the tolerance draw, not the beginning of the complete shot. `windowBeforeGreen`, `attitude` and `doubleDistanceFlag` are explicit original-field inputs. The earlier skill/difficulty adjustments and the meaning of the global flag have not been bound to browser fields. The helper is not connected to the playable shot engine yet.
+`scene/src/simulation/original-putting.js` reconstructs this confirmed slice. Its seed is the RNG state immediately before the tolerance draw, not the beginning of the complete shot. `windowBeforeGreen`, `attitude` and `doubleDistanceFlag` are explicit original-field inputs. The earlier skill/facility adjustments and the meaning of the global flag have not been bound to browser fields. The helper is not connected to the playable shot engine yet.
 
 ## A branch that must not be generalized into live behavior
 
@@ -42,3 +42,22 @@ The preceding window calculation is now traced arithmetically:
 4. Apply the target green penalty and attitude reduction already reconstructed.
 
 Seven focused tests now pass, including matching all nine attitude UI jump-table entries and strings against the supplied binary and checking the determined/pumped threshold. The browser's continuous happiness scale is not an established mapping to this signed attitude state. These findings remain isolated from live physics until that mapping and the remaining shot pipeline are recovered.
+
+## Upstream window reconstruction and identified inputs
+
+`originalPuttingWindow` now reconstructs `0x424071–0x4240db` without assigning browser state to unresolved flags. Field correspondence:
+
+| Helper input | Original source |
+| --- | --- |
+| `stateFlags` | global `0x5a3228`, low bit only |
+| `adjustmentLevel` | global `0x542bc8`, Putting Green facility table entry |
+| `golferFlags` | unsigned byte `0x577f21` |
+| `golferType` | unsigned byte `0x577f20` |
+| `skillFlags` | unsigned byte `0x577f1e` |
+| `puttingSkill` | unsigned byte `0x577ffc`, Accurate Putter |
+
+The facility identity is established by `0x40f916–0x40f920`, which clears twenty entries at `0x542bb0`, and `0x40f940–0x40f997`, which accumulates building records from `0x58a708` at a 16-byte stride. The signed type indexes that table; byte 7 bit `0x40` gates this accumulation, and field 8 plus one supplies its value. `0x542bc8` is index 6. The original 20-byte building catalog at `0x4c16a8` identifies type 6 as **Putting Green**. This is not the menu difficulty at `0x820344`. Meaning of the activation flag and valid upgrade range still require verification.
+
+The skill UI at `0x438652–0x4387bb` iterates ten name pointers from `0x4c1c34` alongside consecutive golfer bytes from `0x577ff8`. Name pointer index 4 resolves to **Accurate Putter**, establishing the identity of `0x577ffc`. Its bit-`0x10` activation flag and point allocation remain separate concerns.
+
+The helper supports adjustment levels 0–3 only, explicitly rejecting other values rather than pretending to establish the complete original facility range. Within that supported domain the largest unsigned-byte skill window is 1315, so the downstream helper's former arbitrary limit of 1024 was corrected. Tests cover each eligibility condition, signed lifecycle sentinel flags, integer rounding and operation ordering, plus direct source-label checks. Twelve focused tests pass. No live physics or course format changes yet; editor, rendering, persistence and replay integration must ship together with the remaining shot mapping.
