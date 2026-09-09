@@ -1202,7 +1202,7 @@ function refresh() {
       bridge:
         "Bridge · Place over water. Join the deck to paths on both banks.",
       "out-of-bounds":
-        "White stake · One pole per marked tile. Balls finishing on marked land cost one penalty stroke and drop just inside playable land.",
+        "White stakes · Drag to mark a continuous out-of-bounds area. White edges show its limits. One penalty stroke and a drop just outside the marked area.",
       "clear-boundary": "Clear stakes · Brush to return marked land to play.",
     }[tool];
   if (mode === "build" && tool === "path")
@@ -2119,6 +2119,8 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
       "path",
       "rough",
       "trim-green",
+      "out-of-bounds",
+      "clear-boundary",
       ...EXTRA_TERRAIN,
     ].includes(tool) ||
       (tool === "green" && !!selectedHole().green));

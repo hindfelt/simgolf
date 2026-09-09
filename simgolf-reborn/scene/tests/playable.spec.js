@@ -308,3 +308,23 @@ test("right-click removes an object in Build without changing the selected tool"
   await page.mouse.click(point.x, point.y, { button: 'right' });
   await expect(page.locator("#remove-dialog")).not.toBeVisible();
 });
+
+
+test("dragging boundary stakes fills pointer gaps and can be cleared", async ({ page }) => {
+  await ready(page);
+  await page.locator("#pause").click();
+  await page.locator('[data-tool="out-of-bounds"]').click();
+  const points = await page.evaluate(() => [window.__gameTest.project(3,-7), window.__gameTest.project(17,-7)]);
+  await page.mouse.move(points[0].x, points[0].y);
+  await page.mouse.down();
+  await page.mouse.move(points[1].x, points[1].y);
+  await page.mouse.up();
+  const count = await page.evaluate(() => Object.keys(window.__gameTest.getState().outOfBounds || {}).length);
+  expect(count).toBeGreaterThanOrEqual(7);
+  await page.locator('[data-tool="clear-boundary"]').click();
+  await page.mouse.move(points[0].x, points[0].y);
+  await page.mouse.down();
+  await page.mouse.move(points[1].x, points[1].y);
+  await page.mouse.up();
+  expect(await page.evaluate(() => Object.keys(window.__gameTest.getState().outOfBounds || {}).length)).toBe(0);
+});

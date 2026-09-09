@@ -437,3 +437,9 @@ Recovered post-integration gravity and the ground rebound calculation, including
 ### Original putt strength and composed flat-green test
 
 Recovered the original rolling-range estimator, halving strength search, two-yard allowance and late random variation. Straight 2/5/10/20-yard tests now combine planned launch, movement, slowdown and cup capture. All 43 focused checks pass. Shared original cache state, full shot RNG ordering, timing and browser terrain/collision/scoring integration remain open. Updated stale F05/F07/F08/F09/F11 summary rows to reflect already implemented staff, housing, environments, events and public hosting. No production gameplay or deployment change in this step.
+
+### Live-review construction follow-through — 9 September 2026
+
+Play hides hole management; Build retains land purchases and hole controls. Land purchases highlight the new parcel and frame it in the camera; unaffordable purchases display the shortfall without pausing behind a modal. Selecting Tee on an open hole starts/selects the next unfinished hole. Hold Space and drag to pan; right-click in Build invokes existing object-removal confirmation. Shot previews now use a copied simulation for shaped flight, tree interception and ground release without mutating live RNG.
+
+Out-of-bounds has one stake per marked tile and the requested one-stroke nearby playable drop. Dragging marks/clears continuous strips, and exposed tile edges show exactly which area is excluded. This remains area painting: independently placed sparse poles do not define a polygon or the entire far side of a boundary. Polygon/side selection remains unfinished. Core golf slope fidelity, routing and long-session testing remain the next single-player priorities; optional Google/cloud saves and full career progression follow.

@@ -1,3 +1,4 @@
+import { boundaryEdges } from "./boundary-outline.js";
 import { housing } from "./housing.js";
 import { COAST_WATER } from "./coastal-style.js";
 import { transportFacility } from "./transport-facilities.js";
@@ -224,6 +225,12 @@ export function buildCourseView(scene) {
       add(new THREE.BoxGeometry(0.13, 1.2, 0.13), 0xf5f1df,
         p.x, height(p.x, p.z) + 0.6, p.z, construction);
     }
+    const boundaryLine = new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(boundaryEdges(g.outOfBounds).flatMap(edge =>
+        edge.map(([x, z]) => new THREE.Vector3(x, height(x, z) + 0.14, z)))),
+      new THREE.LineBasicMaterial({ color: 0xf5f1df, transparent: true, opacity: 0.75, depthWrite: false }),
+    );
+    construction.add(boundaryLine);
     const connectedPaths = connectedPathCells(g);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const kind of Object.keys(colors)) {
