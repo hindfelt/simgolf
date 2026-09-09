@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
-import {originalPuttingWindow,originalAttitudeLabel,originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
+import {originalGreenTurnStep,originalPuttingWindow,originalAttitudeLabel,originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
 import {originalRandom} from '../src/simulation/original-rng.js';
 const input={distanceYards:12,windowBeforeGreen:20,attitude:2,seed:1234};
 test('green selection, tolerance penalty, putter test and miss constants match the supplied executable',()=>{
@@ -118,4 +118,46 @@ test('putting skill slot and facility table index match the executable labels',(
  // Global 0x542bc8 is index six of the facility-level table at 0x542bb0.
  expect((0x542bc8-0x542bb0)/4).toBe(6);
  expect(stringAt(0xc16a8+6*20)).toBe('Putting Green');
+});
+
+test('green curvature update instructions and random reversal gate match original code',()=>{
+ const b=readFileSync(new URL("../../../resources/sim golf/Sid Meier's SimGolf/golf.exe",import.meta.url));
+ const bytes=(va,n)=>b.subarray(va-0x400000,va-0x400000+n).toString('hex');
+ expect(bytes(0x42c230,8)).toBe('80bc3e380d570001');
+ expect(bytes(0x42c246,7)).toBe('992bc2d1f803c8');
+ expect(bytes(0x42c24d,7)).toBe('a028188300a807');
+ expect(bytes(0x42c25c,2)).toBe('6a08');
+ expect(bytes(0x42c268,5)).toBe('6685c0750e');
+ expect(bytes(0x42c273,2)).toBe('f7d8');
+});
+const turn={heading:0,angularOffset:21,terrainCode:1,phaseCounter:1,seed:0};
+test('green turn applies signed truncation and wraps the full-circle heading',()=>{
+ expect(originalGreenTurnStep(turn)).toEqual({heading:10,angularOffset:21,rngState:0,draws:0});
+ expect(originalGreenTurnStep({...turn,angularOffset:-21}).heading).toBe(0xfffffff6);
+ expect(originalGreenTurnStep({...turn,heading:0xfffffffe}).heading).toBe(8);
+ expect(originalGreenTurnStep({...turn,angularOffset:-1}).heading).toBe(0);
+});
+test('periodic reversal happens after turning and consumes RNG even at zero curvature',()=>{
+ const reversed=originalGreenTurnStep({...turn,phaseCounter:8});
+ expect(reversed).toEqual({heading:10,angularOffset:-21,rngState:12345,draws:1});
+ expect(originalGreenTurnStep({...turn,phaseCounter:8,seed:1}).angularOffset).toBe(21);
+ expect(originalGreenTurnStep({...turn,phaseCounter:8,angularOffset:0})).toEqual({heading:0,angularOffset:0,rngState:12345,draws:1});
+ expect(originalGreenTurnStep({...turn,phaseCounter:8,angularOffset:-0x80000000}).angularOffset).toBe(-0x80000000);
+ for(const terrainCode of [0,2,3,17])
+  expect(originalGreenTurnStep({...turn,terrainCode,phaseCounter:8})).toEqual({heading:0,angularOffset:21,rngState:0,draws:0});
+});
+test('green curvature resumes with the same shared phase and RNG across multiple updates',()=>{
+ const advance=(state,start,end)=>{
+  for(let phaseCounter=start;phaseCounter<end;phaseCounter++) {
+   const result=originalGreenTurnStep({...state,terrainCode:1,phaseCounter});
+   state={heading:result.heading,angularOffset:result.angularOffset,seed:result.rngState};
+  }
+  return state;
+ };
+ const initial={heading:0,angularOffset:20,seed:0};
+ const continuous=advance(initial,0,9);
+ const saved=JSON.parse(JSON.stringify(advance(initial,0,4)));
+ expect(advance(saved,4,9)).toEqual(continuous);
+ expect(continuous.heading).toBe(0xffffffba); // +10, then eight -10 steps
+ expect(continuous.angularOffset).toBe(-20);
 });

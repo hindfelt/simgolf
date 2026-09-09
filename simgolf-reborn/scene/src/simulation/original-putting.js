@@ -72,3 +72,24 @@ export function originalPuttingAim({
   }
   return { toleranceYards, angularOffset, deviates, rngState: rng.state, draws: rng.draws };
 }
+
+// Ground-motion branch 0x42c230–0x42c275, after movement/friction/slope.
+// This is one original update, not a browser frame or a complete putt.
+// The putting calculation's angularOffset is persistent curvature state:
+// it is added in halves each green update, not once at shot launch.
+export function originalGreenTurnStep({ heading, angularOffset, terrainCode, phaseCounter, seed }) {
+  const uint32 = n => Number.isInteger(n) && n >= 0 && n <= 0xffffffff;
+  if (!uint32(heading) || !uint32(phaseCounter) ||
+      !Number.isInteger(angularOffset) || angularOffset < -0x80000000 || angularOffset > 0x7fffffff ||
+      !Number.isInteger(terrainCode) || terrainCode < -128 || terrainCode > 127)
+    throw Error("Invalid original green turn state.");
+  const rng = originalRandom(seed);
+  if (terrainCode === 1) {
+    heading = (heading + Math.trunc(angularOffset / 2)) >>> 0;
+    // Draw even when curvature is zero. The global phase is shared, so it
+    // must not reset to zero separately for each golfer or saved shot.
+    if ((phaseCounter & 7) === 0 && rng.next(8) === 0)
+      angularOffset = -angularOffset | 0;
+  }
+  return { heading, angularOffset, rngState: rng.state, draws: rng.draws };
+}

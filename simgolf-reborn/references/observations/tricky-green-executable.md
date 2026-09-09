@@ -61,3 +61,17 @@ The facility identity is established by `0x40f916–0x40f920`, which clears twen
 The skill UI at `0x438652–0x4387bb` iterates ten name pointers from `0x4c1c34` alongside consecutive golfer bytes from `0x577ff8`. Name pointer index 4 resolves to **Accurate Putter**, establishing the identity of `0x577ffc`. Its bit-`0x10` activation flag and point allocation remain separate concerns.
 
 The helper supports adjustment levels 0–3 only, explicitly rejecting other values rather than pretending to establish the complete original facility range. Within that supported domain the largest unsigned-byte skill window is 1315, so the downstream helper's former arbitrary limit of 1024 was corrected. Tests cover each eligibility condition, signed lifecycle sentinel flags, integer rounding and operation ordering, plus direct source-label checks. Twelve focused tests pass. No live physics or course format changes yet; editor, rendering, persistence and replay integration must ship together with the remaining shot mapping.
+
+## Curvature application during ground motion
+
+`0x42c230–0x42c275` is a reachable green branch in the ground-motion path entered from `0x42bf82–0x42bf8b` when field `0x577fe4` is at most 1. It checks the current terrain code for green (1), **not** the tricky-variant bit. It then:
+
+1. Adds `trunc(golfer[0x577ff4] / 2)` to heading `0x577fe8`, with 32-bit wraparound.
+2. Tests the low three bits of global phase byte `0x831828`.
+3. When those bits are zero, consumes one `random(8)` draw. On zero, negates `0x577ff4` with 32-bit semantics. This occurs after the current turn; the reversed value affects later updates. A zero curvature value still consumes the draw.
+
+The value previously described as `angularOffset` is therefore persistent curvature state, not a one-time launch angle. The public helper name remains unchanged to keep its correspondence with earlier recovered slices; its new comment explicitly identifies this meaning. `originalGreenTurnStep` reconstructs this specific ground branch with the original phase and RNG supplied by the caller. It does not imply that one call equals a browser frame or establish original update timing.
+
+This branch is distinct from the apparently unreachable ±15-degree variant branch discussed above. It applies on ordinary greens too; tricky greens affect its initial value through the earlier putting calculation. Non-putter shots skip neither all curvature nor all other heading adjustments: the launch branch at `0x4245d9` explicitly skips a separate clamped heading adjustment for club 13, and airborne movement at `0x42bfc7` also uses half-curvature. Do not turn the recovered putting result into a one-off rotated target.
+
+Sixteen focused tests pass, including source instructions, signed odd-number rounding, heading wraparound, reversal ordering, zero-curvature draw consumption, leaving green terrain and resumption across multiple updates with preserved phase and RNG. Full movement remains open: position stepping precedes this branch at `0x42bddd`, friction/slope calculations precede it at `0x42c13a`, and later collision/cup handling must be integrated. These are static-source checks, not execution of the original game.

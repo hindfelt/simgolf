@@ -413,3 +413,7 @@ Confirmed the raw putting byte is Attitude, using the original UI's signed jump 
 ### Original putting facility and skill inputs
 
 Recovered the upstream putting window with integer rounding and eligibility masks. Identified the adjustment table entry as the Putting Green facility (type 6), rather than game difficulty, and the fifth golfer skill byte as Accurate Putter through the original skill UI. Twelve focused tests cover the calculation, flags, ordering and executable labels. Remaining: original facility activation/upgrade limits, attitude transitions, heading application and an integrated tricky-green editor/save/replay/physics change. The helper remains isolated; no playable feature or fidelity completion is claimed.
+
+### Original green curvature update
+
+Traced the putting error field into ground movement: the original adds half its signed value to heading each eligible green update, and conditionally reverses it after an RNG draw gated by the shared phase byte. It applies on ordinary greens as well as tricky ones; it must not become a one-off aiming rotation. Added a deterministic recovered step with 32-bit wrapping and saved-state continuation checks. Sixteen focused tests pass. Original movement timing, friction, slope, cup detection and live construction/course-package/physics integration remain unfinished. No production rules or deployment changed.
