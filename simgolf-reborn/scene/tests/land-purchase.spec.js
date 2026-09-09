@@ -75,7 +75,11 @@ test("browser buys a parcel through the visible dialog", async ({ page }) => {
     await expect(page.locator(id)).toBeVisible();
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).toContainText("450 tiles");
+  const beforeBoundary = await page.evaluate(() => window.__gameTest.getPropertyBoundary().points);
   await page.locator("#confirm-land").click();
+  await expect.poll(() => page.evaluate(() => window.__gameTest.getPropertyBoundary().highlighted)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__gameTest.getPropertyBoundary().points)).not.toEqual(beforeBoundary);
+  await expect(page.locator("#toast")).toContainText("new parcel outlined in green");
   await expect(page.locator("#land-purchase")).not.toBeVisible();
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).toContainText("1 of 3");

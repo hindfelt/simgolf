@@ -355,31 +355,42 @@ aimTargetLine.renderOrder = 10;
 aimTargetLine.visible = false;
 scene.add(aimTargetLine);
 const shotOverlay = analysisOverlay(scene, height);
-function propertyBoundaryPoints() {
+function propertyBoundaryPoints(startRow = 0) {
   const boundaryPoints = [];
   for (let x = GRID.minX; x <= GRID.minX + GRID.width * 2; x += 2)
-    for (const z of [GRID.minZ, GRID.minZ + ownedRows(game) * 2])
+    for (const z of [GRID.minZ + startRow * GRID.size, GRID.minZ + ownedRows(game) * 2])
       boundaryPoints.push(
         new THREE.Vector3(x, height(x, z) + 0.1, z),
-        new THREE.Vector3(x + 0.4, height(x, z) + 0.1, z),
+        new THREE.Vector3(x + 1.2, height(x, z) + 0.1, z),
       );
-  for (let z = GRID.minZ; z <= GRID.minZ + ownedRows(game) * 2; z += 2)
+  for (let z = GRID.minZ + startRow * GRID.size; z <= GRID.minZ + ownedRows(game) * 2; z += 2)
     for (const x of [GRID.minX, GRID.minX + GRID.width * 2])
       boundaryPoints.push(
         new THREE.Vector3(x, height(x, z) + 0.1, z),
-        new THREE.Vector3(x, height(x, z) + 0.1, z + 0.4),
+        new THREE.Vector3(x, height(x, z) + 0.1, z + 1.2),
       );
   return boundaryPoints;
 }
 const boundary = new THREE.LineSegments(
   new THREE.BufferGeometry().setFromPoints(propertyBoundaryPoints()),
   new THREE.LineBasicMaterial({
-    color: 0xe4d595,
+    color: 0xffed9b,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.9,
+    depthTest: false,
+    depthWrite: false,
   }),
 );
+boundary.renderOrder = 7;
 scene.add(boundary);
+const purchasedBoundary = new THREE.LineSegments(
+  new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({ color: 0x73ff8b, depthTest: false, depthWrite: false }),
+);
+purchasedBoundary.renderOrder = 8;
+purchasedBoundary.visible = false;
+scene.add(purchasedBoundary);
+let purchaseHighlightUntil = 0;
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   const width = innerWidth < 650 ? 67 : 118;
@@ -1301,7 +1312,7 @@ $("#zoom-in").onclick = () => {
   camera.updateProjectionMatrix();
 };
 $("#zoom-out").onclick = () => {
-  camera.zoom = Math.max(0.7, camera.zoom / 1.25);
+  camera.zoom = Math.max(controls.minZoom, camera.zoom / 1.25);
   camera.updateProjectionMatrix();
 };
 $("#menu-button").onclick = () => $("#menu").showModal();
@@ -1323,8 +1334,24 @@ function showLandPurchase() {
         0,
         GRID.minZ + (start + 5) * GRID.size,
       );
-      camera.position.add(destination.clone().sub(controls.target));
-      controls.target.copy(destination);
+      focus(destination, 1);
+      camera.updateMatrixWorld();
+      let extent = 1;
+      for (const x of [GRID.minX, GRID.minX + GRID.width * GRID.size]) {
+        for (const z of [GRID.minZ + start * GRID.size, GRID.minZ + ownedRows(game) * GRID.size]) {
+          const corner = new THREE.Vector3(x, height(x, z), z).project(camera);
+          extent = Math.max(extent, Math.abs(corner.x), Math.abs(corner.y));
+        }
+      }
+      camera.zoom = 0.65 / extent;
+      controls.minZoom = Math.min(controls.minZoom, camera.zoom);
+      camera.updateProjectionMatrix();
+      purchasedBoundary.geometry.dispose();
+      purchasedBoundary.geometry = new THREE.BufferGeometry().setFromPoints(propertyBoundaryPoints(start));
+      purchaseHighlightUntil = performance.now() + 15000;
+      purchasedBoundary.visible = true;
+      toast("450 tiles purchased — new parcel outlined in green. Gold marks your property boundary.");
+      toastUntil = purchaseHighlightUntil;
       save();
       landDialog.close();
     }
@@ -2100,6 +2127,11 @@ renderer.domElement.addEventListener("pointerleave", () => {
 });
 window.__gameTest = Object.freeze({
   getState: () => JSON.parse(serialize(game)),
+  getPropertyBoundary: () => ({
+    visible: boundary.visible,
+    highlighted: purchasedBoundary.visible,
+    points: Array.from(boundary.geometry.attributes.position.array),
+  }),
   getCompetition: () => competition?.snapshot() ?? null,
   getVisibleActors: () => view.visibleActors(),
   getStaffCoverage: () => coverage.snapshot(),
@@ -2150,6 +2182,7 @@ function frame(now) {
     }
   }
   controls.update();
+  purchasedBoundary.visible = mode === "build" && now < purchaseHighlightUntil;
   if (landscapeRevision !== game.revision) {
     setLandscapeState(game);
     landscape.reshape();
