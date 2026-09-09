@@ -989,7 +989,7 @@ export function takeShot(g, v, target, technique = "straight") {
   endpoint.z -= sz * (putt ? 2 : behavior.roll);
   const rollFrom = putt ? from : landing;
   const ground = groundRoll(rollFrom, endpoint, (p) => lie(g, p),
-    treeGroundBlocker(g, rollFrom, endpoint));
+    treeGroundBlocker(g, rollFrom, endpoint), p => isOut(g, p));
   endpoint.x = ground.end.x;
   endpoint.z = ground.end.z;
   const waterLanding = ground.water;

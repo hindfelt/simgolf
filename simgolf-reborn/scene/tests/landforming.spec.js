@@ -2,6 +2,7 @@ import { createSession } from "../src/simulation/session.js";
 import { test, expect } from "@playwright/test";
 import {
   createGame,
+  addHole,
   build,
   tile,
   route,
@@ -210,4 +211,35 @@ test("elevation is free at zero funds and in debt, with transactional protection
   expect(serialize(g)).toBe(protectedState);
   expect(build(g, "bridge", 26, 29).ok).toBe(false);
   expect(serialize(g)).toBe(protectedState);
+});
+
+
+test("out-of-bounds on the second hole applies its penalty and preserves hole one", () => {
+  const g = createGame();
+  build(g, "tee", 25, 8);
+  build(g, "green", 36, 5);
+  const first = structuredClone(g.holes[0]);
+  const second = addHole(g).holeId;
+  expect(build(g, "tee", 7, 20, 1, second).ok).toBe(true);
+  expect(build(g, "green", 20, 20, 1, second).ok).toBe(true);
+  expect(build(g, "out-of-bounds", 13, 20, 5, second).ok).toBe(true);
+  startPractice(g, second);
+  takeShot(g, g.pro, center(13, 20));
+  for (let i = 0; i < 200 && g.pro.shot; i++) update(g, 0.05);
+  expect(g.pro.holeId).toBe(second);
+  expect(g.pro.strokes).toBe(2);
+  expect(isOut(g, g.pro.ball)).toBe(false);
+  expect(g.pro.comment).toContain("Out of bounds");
+  expect(g.holes[0]).toEqual(first);
+});
+
+
+test("a ball cannot roll through a narrow out-of-bounds strip back into play", async () => {
+  const { groundRoll } = await import("../src/simulation/ground-roll.js");
+  const out = p => p.x >= 2 && p.x < 3;
+  const crossing = groundRoll({x:0,z:0}, {x:6,z:0}, () => "fairway", () => false, out);
+  expect(crossing.end.x).toBeGreaterThanOrEqual(2);
+  expect(crossing.end.x).toBeLessThan(2.06);
+  const landing = groundRoll({x:2.5,z:0}, {x:6,z:0}, () => "fairway", () => false, out);
+  expect(landing.end).toEqual({x:2.5,z:0});
 });
