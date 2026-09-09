@@ -8,6 +8,15 @@ export function originalGreenVariant(selection) {
   return selection & 1 ? 0xff : 0;
 }
 
+// UI at 0x41ae5f–0x41aee5 labels golfer byte 0x577f3e as attitude.
+// The upper two jump-table entries both select "invincible".
+export function originalAttitudeLabel(attitude) {
+  if (!Number.isInteger(attitude) || attitude < -128 || attitude > 127)
+    throw Error("Invalid original attitude.");
+  return ["furious", "mad", "upset", "worried", "calm", "determined",
+    "pumped", "invincible", "invincible"][Math.max(-4, Math.min(4, attitude)) + 4];
+}
+
 // 0x4240fe–0x42414a and the putter branch 0x42429e–0x42438c.
 // Inputs deliberately expose original fields. Mapping current browser golfer
 // profiles and tournament flags to these values is not established yet.
@@ -15,19 +24,19 @@ export function originalPuttingAim({
   distanceYards,
   windowBeforeGreen,
   greenVariant = 0,
-  ability,
+  attitude,
   doubleDistanceFlag = false,
   seed,
 }) {
   if (!Number.isInteger(distanceYards) || distanceYards < 0 || distanceYards > 10000 ||
       !Number.isInteger(windowBeforeGreen) || windowBeforeGreen < 10 || windowBeforeGreen > 1024 ||
       !Number.isInteger(greenVariant) || greenVariant < 0 || greenVariant > 255 ||
-      !Number.isInteger(ability) || ability < -128 || ability > 127 ||
+      !Number.isInteger(attitude) || attitude < -128 || attitude > 127 ||
       typeof doubleDistanceFlag !== "boolean")
     throw Error("Invalid original putting fields.");
   const rng = originalRandom(seed);
   let window = windowBeforeGreen - (greenVariant & 0x80 ? 10 : 0);
-  if (ability < 2) window = Math.trunc(window / 2);
+  if (attitude < 2) window = Math.trunc(window / 2);
   const halfWindow = Math.trunc(window / 2);
   // The original bounded draw consumes RNG even for bound zero.
   const draw = rng.next(Math.max(1, halfWindow));

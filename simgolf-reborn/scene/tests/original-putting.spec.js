@@ -1,8 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
-import {originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
+import {originalAttitudeLabel,originalGreenVariant,originalPuttingAim} from '../src/simulation/original-putting.js';
 import {originalRandom} from '../src/simulation/original-rng.js';
-const input={distanceYards:12,windowBeforeGreen:20,ability:2,seed:1234};
+const input={distanceYards:12,windowBeforeGreen:20,attitude:2,seed:1234};
 test('green selection, tolerance penalty, putter test and miss constants match the supplied executable',()=>{
  const b=readFileSync(new URL("../../../resources/sim golf/Sid Meier's SimGolf/golf.exe",import.meta.url));
  const bytes=(va,length)=>b.subarray(va-0x400000,va-0x400000+length).toString('hex');
@@ -40,5 +40,28 @@ test('distance bands halve the signed miss angle and the double-distance flag ch
  expect(values[2].angularOffset).toBe(values[0].angularOffset/4);
  expect(values[3].angularOffset).toBe(values[0].angularOffset/8);
  expect(originalPuttingAim({...input,doubleDistanceFlag:true}).deviates).toBe(true);
- expect(originalPuttingAim({...input,ability:1}).toleranceYards).toBeLessThan(originalPuttingAim(input).toleranceYards);
+ expect(originalPuttingAim({...input,attitude:1}).toleranceYards).toBeLessThan(originalPuttingAim(input).toleranceYards);
+});
+
+test('attitude names and signed lookup order match the original UI jump table',()=>{
+ const b=readFileSync(new URL("../../../resources/sim golf/Sid Meier's SimGolf/golf.exe",import.meta.url));
+ const stringAt=va=>b.subarray(va-0x400000).toString('latin1').split('\0')[0];
+ expect(stringAt(0x4c5054)).toBe('Attitude: ');
+ const strings=new Map([[0x41aee0,0x4c5010],[0x41aed9,0x4c5018],[0x41aed2,0x4c501c],
+  [0x41aecb,0x4c5024],[0x41aeaf,0x4c504c],[0x41aeb6,0x4c5040],
+  [0x41aebd,0x4c5038],[0x41aec4,0x4c502c]]);
+ for(let attitude=-4;attitude<=4;attitude++) {
+  const branch=b.readUInt32LE(0x20cbc+(attitude+4)*4);
+  expect(originalAttitudeLabel(attitude)).toBe(stringAt(strings.get(branch)));
+ }
+ expect(originalAttitudeLabel(-128)).toBe('furious');
+ expect(originalAttitudeLabel(127)).toBe('invincible');
+ expect(()=>originalAttitudeLabel(128)).toThrow();
+});
+test('pumped attitude is the putting threshold, not determined or an accuracy skill level',()=>{
+ const result=attitude=>originalPuttingAim({...input,attitude});
+ for(const attitude of [-4,-3,-2,-1,0,1]) expect(result(attitude)).toEqual(result(0));
+ for(const attitude of [2,3,4]) expect(result(attitude)).toEqual(result(2));
+ expect(result(2).toleranceYards).toBeGreaterThan(result(1).toleranceYards);
+ expect(()=>originalPuttingAim({...input,attitude:undefined,ability:2})).toThrow();
 });

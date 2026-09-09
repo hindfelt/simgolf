@@ -18,7 +18,7 @@ A browser green variant should therefore remain a green tile with additional var
 - `0x42429e–0x42438c` is the club-code-13 putter branch. It clears the angular-offset field, optionally doubles the distance under global flag `0x200000`, and compares distance to the tolerance. Above tolerance it draws a side and a magnitude of 150–299, shifted left 18 bits. Distance at most 5 clears the resulting offset **after those draws**. Distances above 15, 25 and 35 each halve the offset.
 - `0x45bab0` calls the RNG before applying the unsigned 16-bit bound. Bound zero therefore still advances the RNG, yielding zero.
 
-`scene/src/simulation/original-putting.js` reconstructs this confirmed slice. Its seed is the RNG state immediately before the tolerance draw, not the beginning of the complete shot. `windowBeforeGreen`, `ability` and `doubleDistanceFlag` are explicit original-field inputs. The earlier skill/difficulty adjustments and the meaning of the global flag have not been bound to browser fields. The helper is not connected to the playable shot engine yet.
+`scene/src/simulation/original-putting.js` reconstructs this confirmed slice. Its seed is the RNG state immediately before the tolerance draw, not the beginning of the complete shot. `windowBeforeGreen`, `attitude` and `doubleDistanceFlag` are explicit original-field inputs. The earlier skill/difficulty adjustments and the meaning of the global flag have not been bound to browser fields. The helper is not connected to the playable shot engine yet.
 
 ## A branch that must not be generalized into live behavior
 
@@ -29,3 +29,16 @@ At `0x42c5ed–0x42c630`, a green/high-bit check can add roughly ±15 degrees to
 Five tests pass: selected instruction bytes/constants against the supplied binary; variant alternation; reduced tolerance; draw accounting including zero bounds and short misses; distance bands and eligibility flags. These tests verify the extracted slice and its boundary behavior, not a complete original shot or retail runtime parity.
 
 Next work: decode the upstream ECX adjustments at `0x424071–0x4240db` and golfer field identities; verify putter-specific heading application and physical units; connect variant editing, save/course-package state, rendering and shot behavior together. Verify ordinary/tricky greens in actual original gameplay before claiming completed fidelity. Multiplayer replay must pin any integrated rules/RNG change.
+
+## Attitude identity and upstream adjustments
+
+The previous name `ability` for byte `0x577f3e` was wrong. The UI at `0x41ae5f–0x41aee5` formats this exact field after the literal **Attitude:** (`0x4c5054`). It clamps the signed byte to -4…4 and uses the jump table at `0x420cbc`: -4 furious, -3 mad, -2 upset, -1 worried, 0 calm, 1 determined, 2 pumped, 3 and 4 invincible. Thus the putting threshold at 2 means pumped or higher. It does not represent Accurate Putter points. The isolated helper now requires `attitude`; it deliberately rejects the old field name rather than silently interpreting it.
+
+The preceding window calculation is now traced arithmetically:
+
+1. `0x424071–0x424090`: low bit of global `0x5a3228` selects an initial window of 10 when set, 20 otherwise. This global also has -1/-2 lifecycle values; it is **not yet justified** to label it tournament speed.
+2. `0x424093–0x4240ba`: if golfer byte `0x577f21` has bit 4, global `0x542bc8` is nonzero, and `(golfer[0x577f20] & 0xe0) != 0x20`, add signed-integer `window / (4 - global[0x542bc8])`. These flags/settings still require semantic identification and valid-range checks.
+3. `0x4240bc–0x4240d9`: if golfer byte `0x577f1e` has bit `0x10`, add `trunc(window * unsignedByte[0x577ffc] / 8)`. This looks like the fifth skill slot, but its allocation and activation must be traced before connecting browser skill levels.
+4. Apply the target green penalty and attitude reduction already reconstructed.
+
+Seven focused tests now pass, including matching all nine attitude UI jump-table entries and strings against the supplied binary and checking the determined/pumped threshold. The browser's continuous happiness scale is not an established mapping to this signed attitude state. These findings remain isolated from live physics until that mapping and the remaining shot pipeline are recovered.

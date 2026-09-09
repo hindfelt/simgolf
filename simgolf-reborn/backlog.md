@@ -405,3 +405,7 @@ Validation: putting, skill, trunk-roll and competition-save checks passed (16 te
 Static inspection of the supplied executable identifies ordinary/tricky green as terrain code 1 with variant byte 0/255. The target green's high bit subtracts 10 from a putting tolerance calculation. A reconstructed, isolated helper preserves bounded random draws, short-putt suppression and distance bands; five tests pass, including selected instruction bytes checked against the supplied executable. See `references/observations/tricky-green-executable.md`.
 
 This is source recovery, not a playable tricky-green feature. Upstream golfer/difficulty mappings, construction/persistence/rendering integration and original-runtime comparison remain open. A separate apparent deflection branch has unproven reachability and must not be used as evidence for arbitrary random bounces. No production rules or deployment changed in this step.
+
+### Original putting attitude correction
+
+Confirmed the raw putting byte is Attitude, using the original UI's signed jump table and labels. Corrected the isolated helper's misleading `ability` name to `attitude`; determined (1) still receives the reduction, pumped (2) does not. Seven focused tests cover the recovered slice, including all attitude labels checked against the executable. The upstream window arithmetic is recorded with unresolved flags explicitly identified. Live tricky greens, original attitude transitions, skill activation and browser integration remain open; no live rules or deployment changed.
