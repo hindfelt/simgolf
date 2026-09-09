@@ -7,7 +7,7 @@ import {
   openHole,
   update,
 } from "../src/simulation/game.js";
-import { coastColumn } from "../src/simulation/coast.js";
+import { coastalWater } from "../src/simulation/coast.js";
 import { buyLand } from "../src/simulation/land-purchase.js";
 import { key, GRID, blocked } from "../src/simulation/world.js";
 import {
@@ -20,8 +20,11 @@ test("seeded coastline reaches the property edge and continues through purchased
     expect(restore(serialize(g)).landscapeStyle).toBe("coast");
     expect(buyLand(g).ok).toBe(true);
     for (let r = 0; r < 52; r++)
-      for (let c = coastColumn(seed, r); c < GRID.width; c++)
-        if (!blocked(c, r)) expect(g.tiles[key(c, r)]?.type).toBe("water");
+      for (let c = 27; c < GRID.width; c++)
+        if (!blocked(c, r))
+          expect(g.tiles[key(c, r)]?.type === "water").toBe(
+            coastalWater(seed, c, r),
+          );
     expect(restore(serialize(g)).tiles).toEqual(g.tiles);
   }
 });
@@ -35,9 +38,30 @@ test("coastal hole plays and shared course preserves shoreline geometry", async 
   expect(g.rounds.length).toBeGreaterThan(0);
   const copy = coursePractice(await exportCourse(g));
   // Course sharing intentionally omits live turf wear from played shots.
-  expect(copy.tiles).toEqual(Object.fromEntries(Object.entries(g.tiles).map(([k,{wear,...surface}])=>[k,surface])));
+  expect(copy.tiles).toEqual(
+    Object.fromEntries(
+      Object.entries(g.tiles).map(([k, { wear, ...surface }]) => [k, surface]),
+    ),
+  );
   expect(copy.elevation).toEqual(g.elevation);
   expect(copy.landscapeStyle).toBe("coast");
+});
+test("offshore island accepts a green and older saves keep their edited shoreline", () => {
+  const g = createGame(1234, "coast", "links");
+  expect(build(g, "green", 39, 15).ok).toBe(true);
+  expect(g.tiles[key(44, 15)].type).toBe("water");
+  const saved = JSON.parse(serialize(g));
+  // Simulate the previous protocol without regenerating its saved tile map.
+  saved.protocol = {
+    version: 66,
+    ruleset: "prototype-editable-scenery-trees-2026-09-06",
+    tick: 0,
+    revision: 0,
+    clients: [],
+  };
+  const restored = restore(JSON.stringify(saved));
+  expect(restored.tiles).toEqual(g.tiles);
+  expect(restored.holes[0].green).toEqual(g.holes[0].green);
 });
 test("coast option previews and starts in the browser", async ({ page }) => {
   await page.goto("/");

@@ -1,4 +1,4 @@
-import { coastColumn } from "./coast.js";
+import { coastalWater } from "./coast.js";
 import { GRID, key, blocked } from "./world.js";
 import { STARTING_ROWS } from "./land-purchase.js";
 
@@ -45,7 +45,7 @@ export function generateLandscape(seed, style) {
   const protectedCell = (c, r) => blocked(c, r) || (c < 15 && r < 23);
   for (let r = 0; r < STARTING_ROWS; r++)
     for (let c = 0; c < GRID.width; c++) {
-      if (style === "coast" && !blocked(c, r) && c >= coastColumn(seed, r)) {
+      if (style === "coast" && !blocked(c, r) && coastalWater(seed, c, r)) {
         wet.add(key(c, r));
         continue;
       }
