@@ -56,6 +56,10 @@ test("insufficient funds and spectators cannot purchase; generation is repeatabl
 test("browser buys a parcel through the visible dialog", async ({ page }) => {
   await page.goto("/");
   await page.locator("#loading").waitFor({ state: "hidden" });
+  await page.locator('[data-mode="play"]').click();
+  await expect(page.locator("#buy-land")).toHaveCount(0);
+  await page.locator('[data-mode="build"]').click();
+  await expect(page.locator("#panel #buy-land")).toBeVisible();
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).toContainText("450 tiles");
   await page.locator("#confirm-land").click();

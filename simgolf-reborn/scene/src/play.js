@@ -104,7 +104,7 @@ document.body.innerHTML = `<main id="game">
       `<button data-mode="${id}"><b>${icon}</b>${label}</button>`,
   )
   .join("")}</nav>
-<div class="control-body"><div class="headline"><div><small id="eyebrow">BUILD YOUR FIRST HOLE</small><h2 id="title">Start with a tee</h2></div><div class="time-controls"><button id="pause" aria-label="Pause simulation">Ⅱ</button><button id="speed" aria-label="Simulation speed">1×</button><button id="open-hole">Open hole · H</button></div></div><div class="hole-controls"><label>Hole <select id="hole-select" aria-label="Selected hole"></select></label><button id="add-hole">＋ Add hole</button><button id="scorecard">Scorecards</button><button id="edit-holes">Edit holes</button><button id="buy-land">Buy land</button></div><div id="panel"></div><p id="hint"></p></div>
+<div class="control-body"><div class="headline"><div><small id="eyebrow">BUILD YOUR FIRST HOLE</small><h2 id="title">Start with a tee</h2></div><div class="time-controls"><button id="pause" aria-label="Pause simulation">Ⅱ</button><button id="speed" aria-label="Simulation speed">1×</button><button id="open-hole">Open hole · H</button></div></div><div class="hole-controls"><label>Hole <select id="hole-select" aria-label="Selected hole"></select></label><button id="add-hole">＋ Add hole</button><button id="scorecard">Scorecards</button><button id="edit-holes">Edit holes</button></div><div id="panel"></div><p id="hint"></p></div>
 </section>
 <dialog id="menu"><form method="dialog"><button class="close" aria-label="Close menu">×</button></form><h2>Willow Brook Golf Club</h2><p>Your course is saved automatically in this browser.</p><div class="menu-actions"><button id="save">Save now</button><button id="export">Export save</button><label class="button">Import save<input id="import" type="file" accept="application/json,.json" hidden></label><button id="new">Start a new course</button><button id="world-screen">World properties</button><label>Course title <input id="course-title" maxlength="80" value="Willow Brook"></label><button id="export-course">Export course layout</button><button id="championship">Local championship</button><button id="pro-challenge">Pro challenge exhibition</button><a id="resume-championship" hidden>Resume championship</a><label class="button">Import championship<input id="import-championship" type="file" accept=".json,application/json" hidden></label><label class="button">Practise an exported course<input id="import-course" type="file" accept="application/json,.json" hidden></label><a id="return-resort" href="./" hidden>Return to my resort</a><a href="?mode=art">View the approved art study</a></div><p id="save-status"></p><p class="muted">Course building, ordered rounds, maintenance and practice. Local championships are available. SGA invitations and full resort progression are still to come.</p></dialog>
 <dialog id="new-dialog"><h2>Start a new course?</h2><p>Choose a landscape and preview its terrain before starting.</p><label>Environment <select id="new-environment" aria-label="Course environment"></select></label><p id="environment-summary"></p><label>Landscape <select id="new-landscape" aria-label="New course landscape"></select></label><label>Terrain seed <input id="new-seed" aria-label="Terrain seed" type="number" min="0" max="4294967295" step="1"></label><button id="reroll-landscape">New terrain</button><canvas id="landscape-preview" width="360" height="336" aria-label="New property terrain preview"></canvas><p id="landscape-summary"></p><p>This replaces your current course. A backup is kept in this browser; export your save for a separate copy.</p><button id="cancel-new">Keep playing</button><button id="confirm-new">Start new course</button><button id="restore-previous" hidden>Restore previous course</button></dialog>
@@ -708,7 +708,7 @@ function renderPanel() {
       )
       .join(
         "",
-      )}</div><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
+      )}</div><button id="buy-land">Buy land</button><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
       ...TOOLS,
       "demolish",
     ]
@@ -735,6 +735,7 @@ function renderPanel() {
           panel.querySelector(`[data-palette="${paletteGroup}"]`).focus();
         }),
     );
+    $("#buy-land").onclick = showLandPurchase;
     $("#building-rotation").value = String(buildingRotation);
     $("#building-rotation").onchange = (e) => {
       buildingRotation = Number(e.target.value);
@@ -1328,7 +1329,6 @@ function showLandPurchase() {
   };
   if (!landDialog.open) landDialog.showModal();
 }
-$("#buy-land").onclick = showLandPurchase;
 $("#world-screen").onclick = async () => {
   const { createWorldScreen } = await import("./ui/world-screen.js");
   worldScreen ??= createWorldScreen();
