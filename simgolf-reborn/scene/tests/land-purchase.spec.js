@@ -86,6 +86,8 @@ test("browser buys a parcel through the visible dialog", async ({ page }) => {
   await page.locator("#confirm-land").click();
   const before = await page.evaluate(() => window.__gameTest.getState());
   expect(before.cash).toBeLessThan(30000);
+  await expect(page.locator("#buy-land")).toContainText("$30,000");
+  await expect(page.locator("#land-status")).toContainText("Need $");
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).not.toBeVisible();
   await expect(page.locator("#toast")).toContainText("Not enough funds");

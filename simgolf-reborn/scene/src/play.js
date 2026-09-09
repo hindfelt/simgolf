@@ -723,7 +723,7 @@ function renderPanel() {
       )
       .join(
         "",
-      )}</div><button id="buy-land">Buy land</button><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
+      )}</div><button id="buy-land">Buy land</button><span id="land-status" role="status"></span><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
       ...TOOLS,
       "demolish",
     ]
@@ -1046,6 +1046,18 @@ function updateStaffControls(force = false) {
     : "Send to area";
 }
 function refresh() {
+  const landButton = $("#buy-land");
+  if (landButton) {
+    const parcels = game.landParcels || 0;
+    const cost = LAND_PRICES[parcels];
+    landButton.textContent = cost === undefined ? "All land owned" : `Buy land · $${cost.toLocaleString()}`;
+    $("#land-status").textContent = cost === undefined
+      ? "3 of 3 parcels purchased"
+      : game.cash < cost
+        ? `${parcels} of 3 parcels · Need $${Math.ceil(cost - game.cash).toLocaleString()} more`
+        : `${parcels} of 3 parcels · 450 tiles available`;
+  }
+
   for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
     $(id).hidden = mode !== "build" || !!coursePackage;
   if (coursePackage) {
