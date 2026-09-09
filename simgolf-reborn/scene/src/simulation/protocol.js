@@ -1,5 +1,5 @@
-export const PROTOCOL_VERSION = 67;
-export const RULESET_VERSION = "prototype-coastal-islands-2026-09-09";
+export const PROTOCOL_VERSION = 68;
+export const RULESET_VERSION = "prototype-lighthouse-2026-09-09";
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +65,8 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 67 &&
+      p.ruleset === "prototype-coastal-islands-2026-09-09") ||
     (p?.version === 66 &&
       p.ruleset === "prototype-editable-scenery-trees-2026-09-06") ||
     (p?.version === 65 && p.ruleset === "prototype-links-church-2026-09-06") ||

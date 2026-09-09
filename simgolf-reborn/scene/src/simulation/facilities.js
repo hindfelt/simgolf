@@ -1,5 +1,6 @@
 // Original facility purposes; prices, dimensions and training strength are provisional.
 export const FACILITIES = {
+  lighthouse: { name: "Lighthouse", radius: 1, scenery: true },
   "building-lot": { name: "Building Lot", radius: 1 },
   home: { name: "Home", radius: 1 },
   marina: { name: "Marina", radius: 3, radiusX: 3, radiusZ: 2 },

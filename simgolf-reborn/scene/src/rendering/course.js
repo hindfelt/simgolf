@@ -15,6 +15,7 @@ import { plantedTrees } from "./planted-trees.js";
 import { tennisCourt } from "./tennis-court.js";
 import { trainingFacility } from "./training-facilities.js";
 import { TRAINING_FACILITIES } from "../simulation/facilities.js";
+import { lighthouse } from "./lighthouse.js";
 import { church } from "./church.js";
 import { buildHazardView } from "./hazards.js";
 import { TERRAIN } from "../simulation/terrain.js";
@@ -448,6 +449,7 @@ export function buildCourseView(scene) {
       group = housing(scene, f.type, p.x, p.z);
     else if (["marina", "helipad", "airstrip"].includes(f.type))
       group = transportFacility(scene, f.type, p.x, p.z);
+    else if (f.type === "lighthouse") group = lighthouse(scene, p.x, p.z);
     else if (f.type === "church") group = church(scene, p.x, p.z);
     else if (f.type === "snack") group = snackBar(scene, p.x, p.z);
     else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z);

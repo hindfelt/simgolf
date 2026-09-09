@@ -7,6 +7,7 @@ export function constructionIcon(type) {
   const building =
     '<path d="m19 23 17-9 18 9v15l-18 9-17-10Z" fill="#ded8b8" stroke="#657052"/><path d="m16 23 19-14 23 13-20 11Z" fill="#945c43" stroke="#604734"/><path d="M38 32v13m7-17v8m7-12v8m-27-8v9" stroke="#45645b" stroke-width="3"/>';
   const art = {
+    lighthouse: '<path d="M29 37 31 9h10l3 28Z" fill="#e9dfbe"/><path d="m30 17 12 4v5l-12-4Z" fill="#a44839"/><path d="m29 29 14 4v5l-14-4Z" fill="#a44839"/><path d="M29 9h14v6H29Z" fill="#627c80"/><path d="m27 9 9-7 9 7Z" fill="#9b4739"/>',
     fairway:
       '<path d="m13 28 24-12 21 12-24 12Z" fill="#a5bd5c"/><path d="m20 25 20 11m-12-15 20 11m-12-15 20 11" stroke="#779746" stroke-width="4"/>',
     firm: '<path d="m13 28 24-12 21 12-24 12Z" fill="#c4c57b"/><path d="m20 25 20 11m-12-15 20 11m-12-15 20 11" stroke="#9cac58" stroke-width="4"/>',

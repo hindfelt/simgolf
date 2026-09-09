@@ -432,6 +432,7 @@ const names = {
   "building-lot": "Building Lot",
   marina: "Marina",
   church: "Church",
+  lighthouse: "Lighthouse",
   helipad: "Helipad",
   airstrip: "Airstrip",
   stable: "Stable",
