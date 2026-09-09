@@ -1,3 +1,4 @@
+import { helicopterView } from "./rendering/helicopter.js";
 import { shotPreview } from "./simulation/shot-preview.js";
 import { greenFee, airstripFeeBonus } from "./simulation/happiness.js";
 import { buildOcean } from "./rendering/ocean.js";
@@ -316,6 +317,7 @@ const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeSt
 const ocean = buildOcean(scene);
 ocean.update(game);
 const view = buildCourseView(scene);
+const helicopter = helicopterView(scene, height);
 const coverage = staffCoverage(scene, height);
 let staffRangePreview = null;
 const cursor = new THREE.LineSegments(
@@ -1239,7 +1241,7 @@ function refresh() {
     $("#hint").textContent = "Building Lot · $500 · Connect to the clubhouse path. Golfers who have completed a round can buy a home. Nearby water, trees and fun holes improve its value.";
   if (mode === "build" && ["marina", "helipad", "airstrip"].includes(tool))
     $("#hint").textContent =
-      `${FACILITIES[tool].name} · $${RULES.costs[tool]} · ${tool === "marina" ? "7 × 5 tiles: landward building on dry land, docks over water. Rotate to match the shore." : tool === "airstrip" ? "31 × 7 tiles: runway, apron and hangar. A clubhouse path connection adds 25% to green fees." : "5 × 5 tiles: compact landing pad."} Connect a path to the landward entrance. ${tool === "airstrip" ? "" : "Connected buildings improve home-sale prices by 25%."}`;
+      `${FACILITIES[tool].name} · $${RULES.costs[tool]} · ${tool === "marina" ? "7 × 5 tiles: landward building on dry land, docks over water. Rotate to match the shore." : tool === "airstrip" ? "31 × 7 tiles: runway, apron and hangar. A clubhouse path connection adds 25% to green fees." : "5 × 5 tiles: occasional helicopter visits, $200 per landing. One helicopter parks while its pair plays; visits are at least 10 simulation minutes apart after departure."} Connect a path to the landward entrance. ${tool === "airstrip" ? "" : "Connected buildings improve home-sale prices by 25%."}`;
   if (mode === "build" && FACILITIES[tool]?.recreation)
     $("#hint").textContent =
       `${FACILITIES[tool].name} · $${RULES.costs[tool]} · Connect an adjacent path to the clubhouse to improve incoming golfers’ starting attitude.`;
@@ -2240,6 +2242,7 @@ function frame(now) {
   startingBridge.visible = !game.starterBridgeRemoved;
   landscape.animate(game.time);
   view.update(game, game.time, opponentViews());
+  helicopter.update(game);
   coverage.update(
     game,
     mode === "staff" ? game.staff.find((s) => s.id === selectedStaffId) : null,

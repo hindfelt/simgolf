@@ -1,5 +1,5 @@
-export const PROTOCOL_VERSION = 71;
-export const RULESET_VERSION = "prototype-boundary-drop-2026-09-09";
+export const PROTOCOL_VERSION = 72;
+export const RULESET_VERSION = "prototype-helicopter-visits-2026-09-09";
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +65,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 71 && p.ruleset === "prototype-boundary-drop-2026-09-09") ||
     (p?.version === 70 && p.ruleset === "prototype-trunk-ground-roll-2026-09-09") ||
     (p?.version === 69 && p.ruleset === "prototype-scenery-collisions-2026-09-09") ||
     (p?.version === 68 && p.ruleset === "prototype-lighthouse-2026-09-09") ||

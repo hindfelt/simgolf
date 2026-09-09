@@ -1,3 +1,4 @@
+import { stepHelicopter, validateHelicopter } from "./helicopter.js";
 import { sceneryTreeAt } from "./scenery-trees.js";
 import {
   facilityExtents,
@@ -833,12 +834,14 @@ function queueForHole(g, v, offset = 0) {
   };
   return setRoute(g, v, queueSpot, "queue") || setRoute(g, v, tee, "queue");
 }
-function arrivals(g) {
+function arrivals(g, arrivalPoint = entrance) {
+  const arrived = [];
   const candidates = nextVisitorPair(g);
-  if (candidates.length < 2) return;
+  if (candidates.length < 2) return arrived;
   const pair = g.nextId;
   for (const [i, candidate] of candidates.entries()) {
     const v = golfer(g, candidate.name, pair);
+    v.pos = { ...arrivalPoint };
     v.id = candidate.id;
     v.appearance = structuredClone(candidate.appearance);
     v.skills = { ...candidate.profile.skills };
@@ -857,6 +860,7 @@ function arrivals(g) {
     if (candidate.record) v.comment = "Good to be back for another round!";
     if (queueForHole(g, v, i)) {
       g.guests.push(v);
+      arrived.push(v.id);
       rememberGuest(g, v);
       chooseService(g, v, "start");
     }
@@ -865,6 +869,7 @@ function arrivals(g) {
     g,
     candidates.map((p) => p.name).join(" and ") + " have arrived for a round.",
   );
+  return arrived;
 }
 export function shotLimit(g, v) {
   const surface = lie(g, v.ball);
@@ -1301,7 +1306,11 @@ function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
     advanceRound(g, v);
     return;
   }
-  if (!setRoute(g, v, entrance, "departed")) v.phase = "departed";
+  const exit = g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance;
+  if (!setRoute(g, v, exit, "departed")) {
+    v.phase = "finished";
+    v.comment = "Please restore my route to the exit.";
+  }
 }
 function facilityEntrance(g, f) {
   return connectedEntrance(g, f);
@@ -1658,7 +1667,14 @@ export function update(g, dt, runResort = true) {
         );
       g.nextWage += RULES.wageInterval;
     }
-    if (g.time >= g.nextArrival && firstHoleReadyForArrivals(g)) {
+    stepHelicopter(g, {
+      ready: () => firstHoleReadyForArrivals(g),
+      entrance: f => connectedEntrance(g, f),
+      arrive: p => arrivals(g, p),
+      money: (amount, reason) => money(g, amount, reason),
+      event: message => event(g, message),
+    });
+    if (g.time >= g.nextArrival && !['arriving', 'unloading'].includes(g.helicopter?.phase) && firstHoleReadyForArrivals(g)) {
       arrivals(g);
       g.nextArrival = g.time + RULES.arrivalRetryDelay;
     }
@@ -1694,7 +1710,7 @@ export function update(g, dt, runResort = true) {
       if (!v.path.length) {
         v.wait -= dt;
         if (v.wait > 0) continue;
-        const exitPath = route(g, v.pos, entrance);
+        const exitPath = route(g, v.pos, g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance);
         if (!exitPath) {
           v.wait = 1;
           v.comment = "I cannot reach the exit. Please reconnect the path.";
@@ -2224,6 +2240,7 @@ export function restore(raw) {
   validateHousing(g);
   validateAccomplishments(g);
   validateLand(g);
+  validateHelicopter(g);
   validateOwnership(g);
   validateEnvironment(g.environment);
   if (g.facilities.some((f) => !availableInEnvironment(g, f.type)))

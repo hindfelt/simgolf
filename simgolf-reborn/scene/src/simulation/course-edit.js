@@ -99,6 +99,8 @@ export function demolitionCheck(g, c, r) {
     ),
   );
   if (f) {
+    if (g.helicopter?.padId === f.id)
+      return { ok: false, message: "Wait for the helicopter to depart before removing its helipad." };
     if (
       [...g.guests, ...(g.pro ? [g.pro] : [])].some(
         (v) =>
