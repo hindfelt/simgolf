@@ -58,8 +58,21 @@ test("browser buys a parcel through the visible dialog", async ({ page }) => {
   await page.locator("#loading").waitFor({ state: "hidden" });
   await page.locator('[data-mode="play"]').click();
   await expect(page.locator("#buy-land")).toHaveCount(0);
+  for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
+    await expect(page.locator(id)).toBeHidden();
+  await expect(page.locator("#practice")).toBeVisible();
+  await expect(page.locator("#scorecard")).toBeVisible();
+  await page.evaluate(() => {
+    window.managementShortcutClicks = 0;
+    document.querySelector("#open-hole").addEventListener("click", () => window.managementShortcutClicks++);
+  });
+  await page.locator("#title").click();
+  await page.keyboard.press("h");
+  expect(await page.evaluate(() => window.managementShortcutClicks)).toBe(0);
   await page.locator('[data-mode="build"]').click();
   await expect(page.locator("#panel #buy-land")).toBeVisible();
+  for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
+    await expect(page.locator(id)).toBeVisible();
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).toContainText("450 tiles");
   await page.locator("#confirm-land").click();

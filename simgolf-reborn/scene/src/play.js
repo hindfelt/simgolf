@@ -1018,6 +1018,8 @@ function updateStaffControls(force = false) {
     : "Send to area";
 }
 function refresh() {
+  for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
+    $(id).hidden = mode !== "build" || !!coursePackage;
   if (coursePackage) {
     $("#cash").textContent = "Course practice";
     for (const id of [
@@ -1791,7 +1793,8 @@ addEventListener("keydown", (e) => {
     e.preventDefault();
     $("#pause").click();
   }
-  if (e.key.toLowerCase() === "h") $("#open-hole").click();
+  if (e.key.toLowerCase() === "h" && mode === "build" && !coursePackage)
+    $("#open-hole").click();
   if (e.key === "Escape") {
     movingStaff = false;
     pickingAnalysis = false;
