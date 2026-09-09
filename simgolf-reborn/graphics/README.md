@@ -2,6 +2,8 @@
 
 ## Coastal direction — approved 7 September 2026
 
+[Coastal island example save](samples/coastal-island-example.json) contains an open hole with a mainland tee, island green and a connected crossing. Import through the club menu on the current development build. A simulation regression verifies that the hole cannot open without a crossing and that visitors finish paid rounds after it is connected. Export your existing resort before importing this example. It requires the coastal-island build (protocol 67); the initial public deployment predates it.
+
 The owner approved [coastal concept V2](samples/coastal-concept-v2.png) with “looks wonderful!”. Its target is dark slate-blue sea, compact rocky islands and headlands, conifers, a striped lighthouse, connected timber bridges, and rounded course tiles with green borders. It follows the [Vancouver course reference](https://www.reddit.com/r/SimGolf/comments/1n37jjv/this_is_a_picture_of_the_second_hole_of_the/). The Reddit author notes that their original-game terrain tiles were modified.
 
 The first implementation pass adds matching inland/offshore blue water and editable stone banks, with gaps at bridge crossings. This is partial: coastal scenery now has layered evergreen crowns that retain tree removal and terrain-following. New coastal properties now generate a seeded chain of editable offshore islands with room for greens; the chain continues into purchased parcels. Cliff faces, planted conifer selection, lighthouse assets and the full composition still need implementation. Concept approval does not imply the playable render has reached that target.

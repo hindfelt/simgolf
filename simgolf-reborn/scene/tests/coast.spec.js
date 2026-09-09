@@ -78,3 +78,17 @@ test("coast option previews and starts in the browser", async ({ page }) => {
   ).toBe("coast");
   await page.screenshot({ path: "/tmp/simgolf-coast.png" });
 });
+
+test("an island green needs a crossing and supports paid rounds after it is connected", () => {
+  const g = createGame(1234, "coast", "links");
+  expect(build(g, "tee", 24, 15).ok).toBe(true);
+  expect(build(g, "green", 39, 15).ok).toBe(true);
+  expect(openHole(g).ok).toBe(false);
+  for (let c = 28; c <= 37; c++) expect(build(g, "path", c, 19).ok).toBe(true);
+  expect(Object.keys(g.bridges).length).toBeGreaterThan(0);
+  expect(openHole(g).ok).toBe(true);
+  for (let i = 0; i < 24000 && !g.rounds.length; i++) update(g, 0.05);
+  expect(g.rounds.length).toBeGreaterThan(0);
+  expect(g.stats.fees).toBeGreaterThan(0);
+  expect(restore(serialize(g)).rounds).toEqual(g.rounds);
+});
