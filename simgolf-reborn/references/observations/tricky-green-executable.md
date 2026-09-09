@@ -100,3 +100,15 @@ Six new tests plus the sixteen putting and two metadata tests pass (24 total). T
 - The initializer writes 256 entries through `0x8394a8`. Interpolation can also read the following BSS word `0x8394ac`; no direct write to it was found, so the reconstructed startup table supplies zero. The helper accepts a complete replacement table for a future captured runtime comparison rather than asserting that the startup assumption holds for every runtime state.
 
 Five additional tests pass, alongside the existing 22 putting/ground tests rerun in this step. Tests cover executable constants/instructions, cardinal direction and sign conventions, velocity truncation, integer magnitude boundaries and a composed flat-green trajectory from recovered initial curvature through movement and slowdown. That trajectory resumes identically after serialization. It is not a complete original putt: launch speed selection, cup capture, collisions, gravity/bounce, slope sampling and update timing remain open. The production game is unchanged.
+
+## Cup capture after ground response
+
+`original-cup.js` recovers the decision and position snap at `0x42c354–0x42c477`. It takes the cell locals from the original ground update explicitly; it must not infer a later animation-frame cell.
+
+- `0x40bc50` rejects cells outside the 50×50 map and terrain code 20. Capture additionally requires bit `0x80` in the referenced cell's 16-bit flag array at `0x53ba00`.
+- Horizontal speed must be strictly below 320 (`0x140`). Passing exactly through the cup at speed 320 does not pass this check.
+- Distance is calculated relative to the tile centre (`cell*1024+512`) using `0x40a9f0`. Within the short-distance domain, this truncates the square root of the sum of squared differences. The helper explicitly limits samples to that recovered domain; it does not generalize the function's unusual large-distance scaling.
+- The strict radius is `trunc(trunc(1024 / (club==13 ? 1 : 3)) / (flag0x200000 ? 30 : 20))`: putter radii 51 or 34, other-club radii 17 or 11, in original fixed-point units. The meaning of the global flag still needs confirmation; the helper calls it `eventFlag` as a raw input, not an assumed tournament rule.
+- On capture, original code snaps X/Z to the centre, increments byte `0x577f2a`, calls `0x426b00`, clears speed and a movement flag, and exits the update. The helper returns only the snap and zero speed. The original scoring transition, animation/audio and caller motion flags are not reconstructed by this return value.
+
+Five tests pass: executable constants, strict radial/speed boundaries, other-club/event-flag differences, map/flag eligibility and a rolling flat-green sequence combining recovered position, resistance and capture. The pipeline still requires original launch speed/timing, slope sampling and other collision/bounce paths before live integration. No deployed gameplay changed.

@@ -425,3 +425,7 @@ Recovered ground resistance/slope response and connected it to the isolated gree
 ### Original directional position stepping
 
 Reconstructed the original direction wrapper, integer lookup interpolation and coordinate/height update. A flat-green test now combines initial curvature, position movement, ground response and slowdown, preserving the final state across save/resume. Five new checks and 22 existing putting/ground checks pass. Original x87 table samples and adjacent BSS word still need runtime verification. Live replacement still requires launch speed, cup/hazards/bounce, slope sampling and original timing; no deployment change.
+
+### Original cup-capture decision
+
+Recovered the ground-path cup capture: required cell flag, map/terrain eligibility, strict speed limit, club-dependent radius and centre snap. Five focused tests pass, including a rolling sequence using recovered movement and ground response. Original scoring/audio/animation transition is still separate; launch speed, timing, slopes, bounce/hazards and complete live integration remain open. No deployment change.
