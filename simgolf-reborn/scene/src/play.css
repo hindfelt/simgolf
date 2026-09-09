@@ -967,3 +967,5 @@ dialog h2 {
   border: 2px solid #595477;
   border-radius: 12px;
 }
+
+[data-shot]:disabled { opacity: 0.45; cursor: default; }

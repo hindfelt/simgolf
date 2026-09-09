@@ -393,3 +393,9 @@ Validation: all 432 regression tests passed in 5.1 minutes; production build pas
 - This is a provisional stop response. Original-runtime deflection/bounce measurements, detailed roots and branches, and full putting-slope fidelity remain open.
 
 Validation: full 438-test suite passed in 4.7 minutes; production build passed.
+
+### Automatic-putting controls
+
+The existing automatic-putt eligibility now drives the UI as well as simulation: shot shapes are disabled, manual flight aiming is hidden, and clicks cannot trigger an early putt through the browser controls. Practice headings describe the current activity. Unattended putting and mid-lineup resumption are tested. The existing range/timing/accuracy rules remain unchanged; tricky-green and tournament fast-green behavior remain open. See `references/observations/putting-controls.md` for the source check and its limits.
+
+Validation: putting, skill, trunk-roll and competition-save checks passed (16 tests), browser play-through checks passed (9 tests including the earlier putting checks), and the final four-test putting/control rerun plus production build passed. The latest full-suite baseline remains the preceding 438-test run.

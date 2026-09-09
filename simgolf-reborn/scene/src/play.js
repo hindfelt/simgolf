@@ -77,6 +77,7 @@ import {
   par,
   connected,
   shotLimit,
+  isPutting,
 } from "./simulation/game.js";
 import { GRID, cellAt, center } from "./simulation/world.js";
 import { RULES, TOOLS } from "./simulation/rules.js";
@@ -1108,7 +1109,11 @@ function refresh() {
         : competition.snapshot().kind === "pro-challenge"
           ? "Gary Golf plays the challenge"
           : "Gary Golf plays the championship"
-      : "Gary Golf takes the tee",
+      : game.pro?.phase === "finished"
+        ? "Practice round complete"
+        : game.pro && isPutting(game, game.pro)
+          ? `${game.pro.name} reads the green`
+          : `${game.pro?.name || "Gary Golf"} plays the course`,
     reports: "Life at Willow Brook",
   };
   $("#eyebrow").textContent = {
@@ -1205,8 +1210,16 @@ function refresh() {
   if (!live) return;
   if (mode === "play") {
     const p = game.pro;
+    const putting = p && p.phase !== "finished" && (p.shot ? p.shot.putt : isPutting(game, p));
+    if (!p || p.phase !== "address" || putting)
+      aiming.visible = aimTargetLine.visible = false;
+    document.querySelectorAll("[data-shot]").forEach(button => {
+      button.disabled = !!putting;
+      button.title = putting ? "Putting is automatic" : "";
+    });
+    if (putting) $("#hint").textContent = "Putting is automatic. Gary reads the green and plays the putt.";
     live.textContent = p
-      ? `${p.name} · Hole ${p.holeNumbers[p.holeIndex]} · ${TERRAIN[tile(game, cellAt(p.ball.x, p.ball.z).c, cellAt(p.ball.x, p.ball.z).r)]?.name || "Trouble"} · ${p.strokes} strokes · ${p.phase === "finished" ? "Finished!" : p.phase === "address" ? `Ready — ${Math.round(shotLimit(game, p) * 4)} yd maximum carry` : p.phase === "shot" ? (p.ballHeight > 0.1 ? "Ball in flight" : "Ball rolling") : p.phase} · ${p.comment}`
+      ? `${p.name} · Hole ${p.holeNumbers[p.holeIndex]} · ${TERRAIN[tile(game, cellAt(p.ball.x, p.ball.z).c, cellAt(p.ball.x, p.ball.z).r)]?.name || "Trouble"} · ${p.strokes} strokes · ${p.phase === "finished" ? "Finished!" : p.phase === "address" ? putting ? "Lining up an automatic putt" : `Ready — ${Math.round(shotLimit(game, p) * 4)} yd maximum carry` : p.phase === "shot" ? (p.ballHeight > 0.1 ? "Ball in flight" : "Ball rolling") : p.phase} · ${p.comment}`
       : "Practise the hole you built. Choose a shot shape, then aim on the course.";
   }
   if (mode === "staff") {
@@ -1886,7 +1899,7 @@ function hover(e) {
         { type: tool, c: c.c, r: c.r, rotation: buildingRotation },
         check.ok,
       );
-  } else if (mode === "play" && game.pro?.phase === "address") {
+  } else if (mode === "play" && game.pro?.phase === "address" && !isPutting(game, game.pro)) {
     const from = game.pro.ball,
       d = Math.hypot(p.x - from.x, p.z - from.z),
       ratio = Math.min(1, shotLimit(game, game.pro) / (d || 1)),
@@ -1995,8 +2008,10 @@ function act(e) {
     )
       toast(result.message);
     refresh();
-  } else if (mode === "play" && game.pro)
-    toast(command("shot", { x: p.x, z: p.z, technique }).message);
+  } else if (mode === "play" && game.pro) {
+    if (isPutting(game, game.pro)) toast("Putting is automatic. Let Gary finish the putt.");
+    else toast(command("shot", { x: p.x, z: p.z, technique }).message);
+  }
   else {
     const employee = game.staff.find(
       (s) => Math.hypot(s.pos.x - p.x, s.pos.z - p.z) < 2,
@@ -2085,6 +2100,7 @@ window.__gameTest = Object.freeze({
   getCompetition: () => competition?.snapshot() ?? null,
   getVisibleActors: () => view.visibleActors(),
   getStaffCoverage: () => coverage.snapshot(),
+  getAimPreview: () => ({ flight: aiming.visible, target: aimTargetLine.visible }),
   project: (x, z, aboveGround = 0) => {
     const v = new THREE.Vector3(x, height(x, z) + aboveGround, z).project(camera);
     return {

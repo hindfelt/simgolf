@@ -907,15 +907,18 @@ export function chooseTarget(g, v) {
   }
   return { x, z, technique: "straight" };
 }
+export function isPutting(g, v) {
+  if (!v?.ball || !golferHole(g, v)?.green) return false;
+  const cell = cellAt(v.ball.x, v.ball.z);
+  return lie(g, v.ball) === "green" &&
+    g.tiles[key(cell.c, cell.r)]?.holeId === v.holeId &&
+    distance(v.ball, golferHole(g, v).green) < 12;
+}
 export function takeShot(g, v, target, technique = "straight") {
   if (v.shot || v.phase !== "address")
     return { ok: false, message: "Wait until the golfer is ready." };
   const cup = golferHole(g, v).green,
-    putt =
-      lie(g, v.ball) === "green" &&
-      g.tiles[key(cellAt(v.ball.x, v.ball.z).c, cellAt(v.ball.x, v.ball.z).r)]
-        ?.holeId === v.holeId &&
-      distance(v.ball, cup) < 12;
+    putt = isPutting(g, v);
   const from = { ...v.ball },
     aim = putt ? { x: cup.x, z: cup.z } : target,
     d = distance(from, aim);
@@ -1838,11 +1841,7 @@ export function update(g, dt, runResort = true) {
     }
     if (v.phase === "address") {
       v.wait += dt;
-      const autoPutt =
-        lie(g, v.ball) === "green" &&
-        g.tiles[key(cellAt(v.ball.x, v.ball.z).c, cellAt(v.ball.x, v.ball.z).r)]
-          ?.holeId === v.holeId &&
-        distance(v.ball, golferHole(g, v).green) < 12;
+      const autoPutt = isPutting(g, v);
       if (v.pro && !autoPutt) continue;
       if (
         v.wait < 1.1 / (isMotivated(g, v) ? RULES.rangerPaceFactor : 1) ||
