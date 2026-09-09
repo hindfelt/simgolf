@@ -245,3 +245,28 @@ test("confirm or cancel removal, reorder holes and remove an unused hole through
     .click();
   await expect(page.locator("#hole-select")).toHaveValue("hole-1");
 });
+
+
+test("choosing Tee on an open hole starts the next hole without moving the first", async ({ page }) => {
+  await ready(page);
+  await page.locator("#pause").click();
+  await place(page, "tee", -29, 7);
+  await place(page, "green", 1, -13);
+  await page.locator("#open-hole").click();
+  const first = await page.evaluate(() => window.__gameTest.getState().holes[0]);
+  expect(first.open).toBe(true);
+  await place(page, "tee", 11, -13);
+  await expect(page.locator("#hole-select")).toHaveValue("hole-2");
+  let holes = await page.evaluate(() => window.__gameTest.getState().holes);
+  expect(holes).toHaveLength(2);
+  expect(holes[0]).toEqual(first);
+  expect(holes[1].tee).not.toBeNull();
+  await page.locator("#hole-select").selectOption("hole-1");
+  await page.locator('[data-tool="tee"]').click();
+  await expect(page.locator("#hole-select")).toHaveValue("hole-2");
+  expect(await page.evaluate(() => window.__gameTest.getState().holes.length)).toBe(2);
+  await place(page, "green", 29, 7);
+  await page.locator("#open-hole").click();
+  holes = await page.evaluate(() => window.__gameTest.getState().holes);
+  expect(holes[1].open).toBe(true);
+});

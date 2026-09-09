@@ -761,6 +761,19 @@ function renderPanel() {
           placingStoryReward = false;
           pickingAnalysis = false;
           shotOverlay.clear();
+          if (b.dataset.tool === "tee" && selectedHole().open) {
+            const unfinished = game.holes.find((hole) => !hole.tee || !hole.green);
+            if (unfinished) {
+              selectedHoleId = unfinished.id;
+              toast(`Continue hole ${game.holes.indexOf(unfinished) + 1}: place its tee and green.`);
+            } else {
+              const result = command("add-hole");
+              toast(result.message);
+              if (!result.ok) return;
+              selectedHoleId = result.holeId;
+              save();
+            }
+          }
           tool = b.dataset.tool;
           syncControls();
           renderPanel();
