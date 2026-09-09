@@ -1,5 +1,66 @@
 import { test, expect } from "@playwright/test";
 import { coastalBanks } from "../src/rendering/coastal-style.js";
+import { createGame, serialize } from "../src/simulation/game.js";
+import { key } from "../src/simulation/world.js";
+
+test("raised island preview renders without browser errors", async ({
+  page,
+}) => {
+  const g = createGame(1234, "coast", "links");
+  for (let r = 11; r <= 19; r++)
+    for (let c = 36; c <= 42; c++)
+      if (g.tiles[key(c, r)]?.type !== "water") g.elevation[key(c, r)] = 2;
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.addInitScript(
+    (save) => localStorage.setItem("simgolf-reborn.course.v1", save),
+    serialize(g),
+  );
+  await page.goto("/");
+  await page.locator("#loading").waitFor({ state: "hidden" });
+  await page.screenshot({ path: "/tmp/simgolf-raised-coast.png" });
+  expect(errors).toEqual([]);
+});
+
+test("raised coastal banks grow rock faces and lowering restores the original bank", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#loading").waitFor({ state: "hidden" });
+  const result = await page.evaluate(async () => {
+    const THREE = await import("/node_modules/three/build/three.module.js");
+    const { buildOcean } = await import("/src/rendering/ocean.js");
+    const { key } = await import("/src/simulation/world.js");
+    const g = {
+      landscapeStyle: "coast",
+      tiles: { [key(20, 20)]: { type: "water" } },
+      elevation: {},
+      bridges: {},
+      revision: 0,
+    };
+    const scene = new THREE.Scene();
+    const ocean = buildOcean(scene);
+    ocean.update(g);
+    const mesh = scene.getObjectByName("coastal-stone-banks");
+    const matrix = new THREE.Matrix4();
+    const read = () => {
+      mesh.getMatrixAt(1, matrix);
+      return { y: matrix.elements[13], height: matrix.elements[5] };
+    };
+    const before = read();
+    g.elevation[key(21, 20)] = 4;
+    g.revision++;
+    ocean.update(g);
+    const raised = read();
+    delete g.elevation[key(21, 20)];
+    g.revision++;
+    ocean.update(g);
+    return { before, raised, lowered: read() };
+  });
+  expect(result.raised.height).toBeGreaterThan(result.before.height + 0.5);
+  expect(result.raised.y).toBeGreaterThan(result.before.y + 0.5);
+  expect(result.lowered).toEqual(result.before);
+});
 
 test("stone banks follow edited islands and leave bridge crossings unobstructed", () => {
   const grid = { width: 3, height: 3 };

@@ -68,13 +68,19 @@ export function buildOcean(scene) {
           const along = (n - 1) * 0.58;
           const x = GRID.minX + (c + 0.5) * GRID.size + dc * 0.75 + dr * along;
           const z = GRID.minZ + (r + 0.5) * GRID.size + dr * 0.75 + dc * along;
-          dummy.position.set(x, courseHeight(g, x, z) + 0.1, z);
+          const waterY = courseHeight(g, x - dc * 0.75, z - dr * 0.75);
+          const landY = courseHeight(g, x, z);
+          const bankRise = Math.max(0, landY - waterY);
+          const rockHeight = 0.12 + jitter * 0.08 + bankRise * 0.5;
+          dummy.position.set(x, waterY + bankRise * 0.5 - 0.05, z);
           dummy.scale.set(
             0.36 + jitter * 0.12,
-            0.25 + jitter * 0.24,
+            rockHeight,
             0.36 + jitter * 0.1,
           );
-          dummy.rotation.set(0.12, jitter * Math.PI, 0.1);
+          // Tall faces remain upright so their top follows the grass lip and
+          // their base stays at the water even after repeated terrain edits.
+          dummy.rotation.set(0, jitter * Math.PI, 0);
           dummy.updateMatrix();
           stones.setMatrixAt(count, dummy.matrix);
           shade.setHSL(0.13, 0.06, 0.42 + jitter * 0.18);
