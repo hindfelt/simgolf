@@ -421,3 +421,7 @@ Traced the putting error field into ground movement: the original adds half its 
 ### Original ground resistance and stop state
 
 Recovered ground resistance/slope response and connected it to the isolated green-curvature update. Identified the startup terrain roll coefficient and the separate origin-green override. Added the exact low-speed/zero-height/zero-vertical-speed stopping predicate for use after bounce handling. Twenty-four focused checks pass, including multi-update decay and saved-state continuation. Still not live: original position stepping, terrain slope sampling, bounce/cup handling and timing remain required before replacing browser physics.
+
+### Original directional position stepping
+
+Reconstructed the original direction wrapper, integer lookup interpolation and coordinate/height update. A flat-green test now combines initial curvature, position movement, ground response and slowdown, preserving the final state across save/resume. Five new checks and 22 existing putting/ground checks pass. Original x87 table samples and adjacent BSS word still need runtime verification. Live replacement still requires launch speed, cup/hazards/bounce, slope sampling and original timing; no deployment change.
