@@ -429,3 +429,7 @@ Reconstructed the original direction wrapper, integer lookup interpolation and c
 ### Original cup-capture decision
 
 Recovered the ground-path cup capture: required cell flag, map/terrain eligibility, strict speed limit, club-dependent radius and centre snap. Five focused tests pass, including a rolling sequence using recovered movement and ground response. Original scoring/audio/animation transition is still separate; launch speed, timing, slopes, bounce/hazards and complete live integration remain open. No deployment change.
+
+### Original gravity and ground rebound
+
+Recovered post-integration gravity and the ground rebound calculation, including the terrain bounce coefficient, boundary minimum, signed-product division, maximum rebound and small-bounce cutoff. A vertical flight/landing/rebound test settles and resumes deterministically. All 39 focused recovered-physics/terrain checks pass. Live terrain/collision/scoring/timing integration and original runtime comparison remain open; no deployment change.

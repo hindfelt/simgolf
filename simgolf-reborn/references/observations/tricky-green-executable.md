@@ -112,3 +112,13 @@ Five additional tests pass, alongside the existing 22 putting/ground tests rerun
 - On capture, original code snaps X/Z to the centre, increments byte `0x577f2a`, calls `0x426b00`, clears speed and a movement flag, and exits the update. The helper returns only the snap and zero speed. The original scoring transition, animation/audio and caller motion flags are not reconstructed by this return value.
 
 Five tests pass: executable constants, strict radial/speed boundaries, other-club/event-flag differences, map/flag eligibility and a rolling flat-green sequence combining recovered position, resistance and capture. The pipeline still requires original launch speed/timing, slope sampling and other collision/bounce paths before live integration. No deployed gameplay changed.
+
+## Gravity and ground rebound
+
+`original-bounce.js` reconstructs the vertical arithmetic at `0x42be61–0x42be95` and `0x42c527–0x42c5e8`.
+
+After height integration, gravity subtracts 64 from vertical speed if either height or vertical speed is nonzero. A separate near-apex visual-object callback does not alter that arithmetic. The helper omits the callback, not the gravity.
+
+Ground rebound requires height at most zero and negative vertical speed. The signed terrain coefficient is metadata byte 32 (raw index 0, runtime `0x576dc0 + terrainCode*48`), now exposed by `originalTerrainMetadata` as `bounceCoefficient`. A nonzero boundary flag raises coefficients below 2 to 2. The original computes a signed 32-bit coefficient×vertical-speed product, divides by 12 with truncation, subtracts that result from -64, clamps to 0…9999, then discards rebounds below 128. Height resets to zero. The recovered helper reports the impact-effect threshold below -256 without trying to reproduce original effect/audio callbacks.
+
+Five new tests cover constants/table bytes, post-integration gravity, strict rebound/effect boundaries, coefficient adjustment and a repeated flight/rebound sequence that settles to rest and resumes identically after serialization. All 39 focused putting, ground, position, cup, bounce and terrain tests pass together. These checks establish the reconstructed arithmetic and interactions on flat terrain; original runtime execution, terrain-height offsets, launch parameters, obstacles, scoring transitions and timing remain necessary before live integration.
