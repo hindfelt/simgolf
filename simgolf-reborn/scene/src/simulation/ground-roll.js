@@ -3,7 +3,7 @@ import { terrainRule } from "./terrain.js";
 // Resolve ground travel in short deterministic segments. The caller supplies
 // the launch/putt distance and slope bias; each crossed lie consumes that budget
 // at its own resistance. No random draws or browser geometry enter this result.
-export function groundRoll(from, proposed, surfaceAt) {
+export function groundRoll(from, proposed, surfaceAt, blocked = () => false) {
   const initial = surfaceAt(from);
   if (initial === "water") return { end: { ...from }, water: true };
   const distance = Math.hypot(proposed.x - from.x, proposed.z - from.z);
@@ -27,6 +27,7 @@ export function groundRoll(from, proposed, surfaceAt) {
     const step = Math.min(0.05, budget / resistance);
     traveled += step;
     const next = { x: from.x + dx * traveled, z: from.z + dz * traveled };
+    if (blocked(probe, next)) return { end: probe, water: false };
     if (surfaceAt(next) === "water") return { end: next, water: true };
     budget = Math.max(0, budget - step * resistance);
   }

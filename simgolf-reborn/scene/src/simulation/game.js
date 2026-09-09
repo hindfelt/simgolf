@@ -69,7 +69,7 @@ import {
   releaseRefreshment,
   isRefreshmentStaff,
 } from "./vendors.js";
-import { treeCollision } from "./trees.js";
+import { treeCollision, treeGroundBlocker } from "./trees.js";
 import {
   newEvaluation,
   beginObservation,
@@ -557,6 +557,30 @@ export function route(g, from, to) {
     ["water", "blocked"].includes(tile(g, end.c, end.r))
   )
     return null;
+  if (tile(g, end.c, end.r) === "tree") {
+    const blocked = treeGroundBlocker(g, from, to);
+    if (start.c === end.c && start.r === end.r && !blocked(from, to))
+      return [{ ...to }];
+    // A ball beside a trunk is reachable from a neighboring tile. Do not route
+    // via this tile's center, which is the trunk of a planted tree.
+    let best = null, bestDistance = Infinity;
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const c = end.c + dc, r = end.r + dr;
+      if (!inBounds(c, r) || tile(g, c, r) === "tree") continue;
+      const approach = center(c, r);
+      if (treeGroundBlocker(g, approach, to)(approach, to)) continue;
+      const path = route(g, from, approach);
+      if (!path) continue;
+      path.push({ ...to });
+      let previous = from, length = 0;
+      for (const point of path) {
+        length += distance(previous, point);
+        previous = point;
+      }
+      if (length < bestDistance) { bestDistance = length; best = path; }
+    }
+    return best;
+  }
   const total = GRID.width * GRID.height,
     dist = new Float64Array(total).fill(Infinity),
     parent = new Int32Array(total).fill(-1),
@@ -605,6 +629,10 @@ export function route(g, from, to) {
         nr = r + dr,
         t = tile(g, nc, nr);
       if (t === "water" || t === "blocked") continue;
+      if (k === sk && tile(g, start.c, start.r) === "tree") {
+        const next = center(nc, nr);
+        if (treeGroundBlocker(g, from, next)(from, next)) continue;
+      }
       const nk = key(nc, nr),
         nd =
           dist[k] +
@@ -951,7 +979,9 @@ export function takeShot(g, v, target, technique = "straight") {
     elevationAt(g, landing.x, landing.z - 0.5);
   endpoint.x -= sx * (putt ? 2 : behavior.roll);
   endpoint.z -= sz * (putt ? 2 : behavior.roll);
-  const ground = groundRoll(putt ? from : landing, endpoint, (p) => lie(g, p));
+  const rollFrom = putt ? from : landing;
+  const ground = groundRoll(rollFrom, endpoint, (p) => lie(g, p),
+    treeGroundBlocker(g, rollFrom, endpoint));
   endpoint.x = ground.end.x;
   endpoint.z = ground.end.z;
   const waterLanding = ground.water;

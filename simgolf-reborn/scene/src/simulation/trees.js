@@ -7,8 +7,7 @@ export const TREE = {
   height: 7,
   trunkRadius: 0.24,
 };
-export function treeCollision(g, shot) {
-  if (shot.putt) return null;
+function collisionTrees(g) {
   const trees = Object.entries(g.tiles)
     .filter(([, v]) => v.type === "tree")
     .map(([k]) => ({
@@ -25,6 +24,12 @@ export function treeCollision(g, shot) {
       trunkRadius: TREE.trunkRadius * tree.size,
     });
   }
+  return trees;
+}
+
+export function treeCollision(g, shot) {
+  if (shot.putt) return null;
+  const trees = collisionTrees(g);
   // Exclude trees beyond the flight envelope before stepping the trajectory.
   const margin = Math.abs(shot.curve) + 3;
   const candidates = trees.filter((t) =>
@@ -65,4 +70,29 @@ export function treeCollision(g, shot) {
     }
   }
   return null;
+}
+
+// Test each ground segment against trunk footprints. Filter against a ray,
+// not just the intended endpoint: faster turf can extend the roll beyond it.
+export function treeGroundBlocker(g, from, proposed) {
+  const dx = proposed.x - from.x, dz = proposed.z - from.z;
+  const length = Math.hypot(dx, dz);
+  if (!length) return () => false;
+  const trees = collisionTrees(g).filter(tree => {
+    const x = tree.x - from.x, z = tree.z - from.z;
+    return (x * dx + z * dz) / length >= -tree.trunkRadius &&
+      Math.abs(x * dz - z * dx) / length <= tree.trunkRadius;
+  });
+  return (a, b) => trees.some(tree => {
+    const ax = a.x - tree.x, az = a.z - tree.z;
+    const bx = b.x - tree.x, bz = b.z - tree.z;
+    const radius2 = tree.trunkRadius ** 2;
+    // Legacy balls or a landing inside a trunk can roll out, but not deeper in.
+    const sx = b.x - a.x, sz = b.z - a.z;
+    if (ax * ax + az * az < radius2 && ax * sx + az * sz >= 0 &&
+      bx * bx + bz * bz > ax * ax + az * az) return false;
+    const distance2 = sx * sx + sz * sz;
+    const t = distance2 ? Math.max(0, Math.min(1, -(ax * sx + az * sz) / distance2)) : 0;
+    return (ax + t * sx) ** 2 + (az + t * sz) ** 2 < radius2;
+  });
 }

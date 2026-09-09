@@ -1,5 +1,12 @@
 # SimGolf Reborn 1.0.0 — major browser rebuild
 
+## Tree physics update — 9 September 2026
+
+- Airborne shots now collide with natural scenery trees as well as planted trees; tree removal and terrain edits affect the result.
+- Putts and ground release stop at trunk footprints. Golfers can reach a ball beside a tree without an automatic unplayable penalty or a route through the trunk.
+- Protocol 70 migrates earlier resort saves. Existing tree positions remain unchanged; shared-course play uses the same simulation rules.
+- Full regression suite: **438 passed in 4.7 minutes**; production build passed. Trunk response is a provisional stop, with original-game deflection and detailed putting-slope fidelity still pending.
+
 ## Hosted preview update — 9 September 2026
 
 - Coastal maps now generate editable offshore islands and continue them into purchased parcels.

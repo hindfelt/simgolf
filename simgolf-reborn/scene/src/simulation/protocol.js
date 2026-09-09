@@ -1,5 +1,5 @@
-export const PROTOCOL_VERSION = 69;
-export const RULESET_VERSION = "prototype-scenery-collisions-2026-09-09";
+export const PROTOCOL_VERSION = 70;
+export const RULESET_VERSION = "prototype-trunk-ground-roll-2026-09-09";
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +65,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 69 && p.ruleset === "prototype-scenery-collisions-2026-09-09") ||
     (p?.version === 68 && p.ruleset === "prototype-lighthouse-2026-09-09") ||
     (p?.version === 67 &&
       p.ruleset === "prototype-coastal-islands-2026-09-09") ||
