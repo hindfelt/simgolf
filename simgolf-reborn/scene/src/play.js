@@ -1,3 +1,4 @@
+import { shotPreview } from "./simulation/shot-preview.js";
 import { greenFee, airstripFeeBonus } from "./simulation/happiness.js";
 import { buildOcean } from "./rendering/ocean.js";
 import { renderHousingReport } from "./ui/housing-report.js";
@@ -333,9 +334,10 @@ const aiming = new THREE.Line(
   new THREE.BufferGeometry(),
   new THREE.LineDashedMaterial({
     color: 0xffffdd,
-    dashSize: 0.8,
-    gapSize: 0.5,
+    dashSize: 1.5,
+    gapSize: 0.15,
     depthTest: false,
+    depthWrite: false,
   }),
 );
 aiming.visible = false;
@@ -344,7 +346,7 @@ scene.add(aiming);
 const aimTargetLine = new THREE.Line(
   new THREE.BufferGeometry(),
   new THREE.LineDashedMaterial({
-    color: 0xffffdd,
+    color: 0x8be8bf,
     dashSize: 0.5,
     gapSize: 0.25,
     depthTest: false,
@@ -1951,37 +1953,18 @@ function hover(e) {
         check.ok,
       );
   } else if (mode === "play" && game.pro?.phase === "address" && !isPutting(game, game.pro)) {
-    const from = game.pro.ball,
-      d = Math.hypot(p.x - from.x, p.z - from.z),
-      ratio = Math.min(1, shotLimit(game, game.pro) / (d || 1)),
-      points = [];
-    for (let i = 0; i <= 24; i++) {
-      const t = i / 24,
-        x = from.x + (p.x - from.x) * ratio * t,
-        z = from.z + (p.z - from.z) * ratio * t;
-      points.push(
-        new THREE.Vector3(
-          x,
-          height(x, z) + 0.2 + 4 * d * ratio * 0.18 * t * (1 - t),
-          z,
-        ),
-      );
-    }
+    const preview = shotPreview(game, p, technique);
+    if (!preview) return;
+    const project = (points) => points.map(({ x, z, lift }) =>
+      new THREE.Vector3(x, height(x, z) + 0.2 + lift, z));
     aiming.geometry.dispose();
-    aiming.geometry = new THREE.BufferGeometry().setFromPoints(points);
+    aiming.geometry = new THREE.BufferGeometry().setFromPoints(project(preview.flight));
     aiming.computeLineDistances();
     aiming.visible = true;
-    const full = [];
-    for (let i = 0; i <= 64; i++) {
-      const t = i / 64,
-        x = from.x + (p.x - from.x) * t,
-        z = from.z + (p.z - from.z) * t;
-      full.push(new THREE.Vector3(x, height(x, z) + 0.18, z));
-    }
     aimTargetLine.geometry.dispose();
-    aimTargetLine.geometry = new THREE.BufferGeometry().setFromPoints(full);
+    aimTargetLine.geometry = new THREE.BufferGeometry().setFromPoints(project(preview.roll));
     aimTargetLine.computeLineDistances();
-    aimTargetLine.visible = true;
+    aimTargetLine.visible = preview.roll.length > 0;
   }
 }
 function act(e) {
