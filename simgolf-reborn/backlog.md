@@ -399,3 +399,9 @@ Validation: full 438-test suite passed in 4.7 minutes; production build passed.
 The existing automatic-putt eligibility now drives the UI as well as simulation: shot shapes are disabled, manual flight aiming is hidden, and clicks cannot trigger an early putt through the browser controls. Practice headings describe the current activity. Unattended putting and mid-lineup resumption are tested. The existing range/timing/accuracy rules remain unchanged; tricky-green and tournament fast-green behavior remain open. See `references/observations/putting-controls.md` for the source check and its limits.
 
 Validation: putting, skill, trunk-roll and competition-save checks passed (16 tests), browser play-through checks passed (9 tests including the earlier putting checks), and the final four-test putting/control rerun plus production build passed. The latest full-suite baseline remains the preceding 438-test run.
+
+### Original tricky-green calculation recovered
+
+Static inspection of the supplied executable identifies ordinary/tricky green as terrain code 1 with variant byte 0/255. The target green's high bit subtracts 10 from a putting tolerance calculation. A reconstructed, isolated helper preserves bounded random draws, short-putt suppression and distance bands; five tests pass, including selected instruction bytes checked against the supplied executable. See `references/observations/tricky-green-executable.md`.
+
+This is source recovery, not a playable tricky-green feature. Upstream golfer/difficulty mappings, construction/persistence/rendering integration and original-runtime comparison remain open. A separate apparent deflection branch has unproven reachability and must not be used as evidence for arbitrary random bounces. No production rules or deployment changed in this step.
