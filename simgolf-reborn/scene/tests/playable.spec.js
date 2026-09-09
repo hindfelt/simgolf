@@ -288,3 +288,23 @@ test("holding Space pans without building or pausing, then restores the tool", a
   await expect(page.locator("#pause")).toHaveAttribute("aria-label", "Pause simulation");
   await expect(page.locator('[data-tool="fairway"]')).toHaveClass(/active/);
 });
+
+
+test("right-click removes an object in Build without changing the selected tool", async ({ page }) => {
+  await ready(page);
+  await page.locator("#pause").click();
+  await place(page, "bench", 11, 1);
+  await page.locator('[data-tool="fairway"]').click();
+  const point = await page.evaluate(() => window.__gameTest.project(11, 1));
+  await page.mouse.click(point.x, point.y, { button: 'right' });
+  await expect(page.locator("#remove-dialog")).toBeVisible();
+  await page.locator("#cancel-removal").click();
+  expect(await page.evaluate(() => window.__gameTest.getState().facilities.length)).toBe(1);
+  await page.mouse.click(point.x, point.y, { button: 'right' });
+  await page.locator("#confirm-removal").click();
+  expect(await page.evaluate(() => window.__gameTest.getState().facilities.length)).toBe(0);
+  await expect(page.locator('[data-tool="fairway"]')).toHaveClass(/active/);
+  await page.locator('[data-mode="play"]').click();
+  await page.mouse.click(point.x, point.y, { button: 'right' });
+  await expect(page.locator("#remove-dialog")).not.toBeVisible();
+});

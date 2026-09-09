@@ -498,6 +498,7 @@ function syncControls() {
     mode === "play" ||
     (mode === "staff" && movingStaff);
   controls.mouseButtons.LEFT = placing && !spacePanning ? null : THREE.MOUSE.PAN;
+  controls.mouseButtons.RIGHT = mode === "build" ? null : THREE.MOUSE.PAN;
   controls.touches.ONE = placing ? null : THREE.TOUCH.PAN;
   renderer.domElement.style.cursor = placing && !spacePanning ? "crosshair" : "grab";
   boundary.visible = mode === "build";
@@ -1161,7 +1162,7 @@ function refresh() {
   $("#hint").textContent =
     mode === "build"
       ? tool === "inspect"
-        ? "Choose a tool to build. Drag to pan · scroll or pinch to zoom · H opens the hole."
+        ? "Choose a tool to build. Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
         : `${names[tool]} · ${RULES.costs[tool] ? `$${RULES.costs[tool]}${["tee", "green"].includes(tool) || isFacility(tool) ? " each" : " per tile"}` : "Free"} · Click to place${["fairway", "firm", "sand", "water", "path", "rough", ...EXTRA_TERRAIN].includes(tool) ? " or drag to paint" : ""}. Right-drag to pan; two fingers on touch.`
       : mode === "play"
         ? "Click a landing target when Gary is ready. Balls bounce and roll; putting is automatic on the green."
@@ -2084,6 +2085,16 @@ addEventListener("blur", () => {
   spacePanning = false;
   stroke = false;
   syncControls();
+});
+renderer.domElement.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  if (mode !== "build" || coursePackage || competition || $("dialog[open]")) return;
+  const point = groundAt(e);
+  if (!point) return;
+  const cell = cellAt(point.x, point.z);
+  const check = demolitionCheck(game, cell.c, cell.r);
+  if (check.ok) confirmRemoval("demolish", cell, check.message);
+  else toast(check.message);
 });
 renderer.domElement.addEventListener("pointerdown", (e) => {
   pointers.add(e.pointerId);
