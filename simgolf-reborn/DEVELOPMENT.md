@@ -38,7 +38,7 @@ npx wrangler deploy --config simgolf-reborn/scene/wrangler.jsonc --dry-run
 npx wrangler deploy --config simgolf-reborn/scene/wrangler.jsonc
 ```
 
-Only the built `dist` assets are published. No local course saves, original game resources, credentials, or source research are uploaded. Browser saves are origin-specific: use export/import when moving from localhost or another hostname. The initial hosted build remains a playable preview; the approved coastal concept is not yet implemented.
+Only the built `dist` assets are published. No local course saves, original game resources, credentials, or source research are uploaded. Browser saves are origin-specific: use export/import when moving from localhost or another hostname. The hosted build remains a playable preview. The 9 September update adds coastal islands, conifers, terrain-following stone banks and a placeable lighthouse; the full approved coastal composition remains unfinished.
 
 ## Where to work
 

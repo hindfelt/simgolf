@@ -1,5 +1,11 @@
 # Build backlog
 
+## Coastal implementation update — 9 September 2026
+
+The approved coastal concept is preserved in `graphics/samples/coastal-concept-v2.png`. The playable renderer now has slate-blue water, terrain-following rock banks and layered coastal conifers. New coastal properties contain editable island chains continuing into purchased parcels. A lighthouse can be built, removed, saved and shared; its $2,000 cost and 3×3 footprint are provisional. The coastal example verifies island access, bridge requirements and paid rounds. The full approved composition, richer cliff/foliage detail and selectable planted conifers remain unfinished.
+
+Hosting is separate from the original application: `simgolfer.0x4d.in`, Worker `simgolfer`, branch `codex/simgolf-reborn-v1`. This does not close the original fidelity, career, regional world or multiplayer backlog below.
+
 The objective is the complete playable SimGolf recreation described in `whattobuild.md`, using the approved dimensional graphics, stepped terrain, rounded corners and dark-green collars. This backlog tracks delivery; an implemented prototype is not evidence of 1:1 behavior.
 
 ## Fidelity and single-player completion

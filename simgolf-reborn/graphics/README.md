@@ -2,7 +2,7 @@
 
 ## Coastal direction — approved 7 September 2026
 
-[Coastal island example save](samples/coastal-island-example.json) contains an open hole with a mainland tee, island green and a connected crossing. Import through the club menu on the current development build. A simulation regression verifies that the hole cannot open without a crossing and that visitors finish paid rounds after it is connected. Export your existing resort before importing this example. It requires the coastal-island build (protocol 67); the initial public deployment predates it.
+[Coastal island example save](samples/coastal-island-example.json) contains an open hole with a mainland tee, island green and a connected crossing. Import through the club menu on the [hosted preview](https://simgolfer.0x4d.in/) or current development build. A simulation regression verifies that the hole cannot open without a crossing and that visitors finish paid rounds after it is connected. Export your existing resort before importing this example. It requires protocol 67 or later; the hosted preview was updated to protocol 68 on 9 September 2026.
 
 The owner approved [coastal concept V2](samples/coastal-concept-v2.png) with “looks wonderful!”. Its target is dark slate-blue sea, compact rocky islands and headlands, conifers, a striped lighthouse, connected timber bridges, and rounded course tiles with green borders. It follows the [Vancouver course reference](https://www.reddit.com/r/SimGolf/comments/1n37jjv/this_is_a_picture_of_the_second_hole_of_the/). The Reddit author notes that their original-game terrain tiles were modified.
 

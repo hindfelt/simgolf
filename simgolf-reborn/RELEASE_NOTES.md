@@ -1,5 +1,14 @@
 # SimGolf Reborn 1.0.0 — major browser rebuild
 
+## Hosted preview update — 9 September 2026
+
+- Coastal maps now generate editable offshore islands and continue them into purchased parcels.
+- Slate-blue water, layered coastal conifers and terrain-following stone banks begin implementing the approved coastal concept.
+- Build includes a removable, shareable lighthouse with a provisional $2,000 cost and 3×3 footprint.
+- Protocol 68 migrates older resort saves without regenerating their terrain. New islands appear on newly generated coastal maps; existing courses retain their edits.
+- Published at [simgolfer.0x4d.in](https://simgolfer.0x4d.in/); the live course renderer and Lighthouse construction tool were checked in the browser.
+- Full regression suite: **429 passed in 5.0 minutes**. Production build passed. This remains a preview; the coastal art target and original-game fidelity are not complete.
+
 This release introduces the new standalone implementation in `simgolf-reborn/scene`. It is a playable preview of the larger recreation effort, not a claim of complete original-game parity.
 
 ## Included
