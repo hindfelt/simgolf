@@ -1323,6 +1323,10 @@ document.body.append(landDialog);
 function showLandPurchase() {
   const parcel = game.landParcels || 0,
     cost = LAND_PRICES[parcel];
+  if (cost !== undefined && game.cash < cost) {
+    toast(`Not enough funds: this parcel costs $${cost.toLocaleString()}. You need $${Math.ceil(cost - game.cash).toLocaleString()} more.`);
+    return;
+  }
   landDialog.innerHTML = `<form method="dialog"><button class="close" aria-label="Close land purchase">×</button></form><h2>Expand your property</h2><p>${parcel} of 3 adjoining parcels purchased · ${ownedRows(game) * GRID.width} tiles owned</p><p>Each parcel adds 450 tiles along the southern boundary, with rolling hills, hollows and a pond. Extend your paths into the new land to reach your next holes.</p><p>${cost === undefined ? "You own all the adjoining land." : `Next parcel: $${cost.toLocaleString()} · Funds: $${Math.floor(game.cash).toLocaleString()}`}</p><button id="confirm-land" ${cost === undefined || game.cash < cost || competition || coursePackage ? "disabled" : ""}>Buy southern parcel${cost === undefined ? "" : ` · $${cost.toLocaleString()}`}</button>`;
   landDialog.querySelector("#confirm-land").onclick = () => {
     const start = ownedRows(game),

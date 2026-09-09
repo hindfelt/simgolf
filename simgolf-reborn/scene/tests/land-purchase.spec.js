@@ -83,6 +83,17 @@ test("browser buys a parcel through the visible dialog", async ({ page }) => {
   await expect(page.locator("#land-purchase")).not.toBeVisible();
   await page.locator("#buy-land").click();
   await expect(page.locator("#land-purchase")).toContainText("1 of 3");
+  await page.locator("#confirm-land").click();
+  const before = await page.evaluate(() => window.__gameTest.getState());
+  expect(before.cash).toBeLessThan(30000);
+  await page.locator("#buy-land").click();
+  await expect(page.locator("#land-purchase")).not.toBeVisible();
+  await expect(page.locator("#toast")).toContainText("Not enough funds");
+  await expect.poll(() => page.evaluate(() => window.__gameTest.getState().time)).toBeGreaterThan(before.time);
+  const after = await page.evaluate(() => window.__gameTest.getState());
+  expect(after.landParcels).toBe(before.landParcels);
+  await page.locator('[data-mode="play"]').click();
+  await expect(page.locator("#practice")).toBeVisible();
 });
 
 test('all parcels unlock in sequence, enforce the final limit and reject forged ownership', () => {
