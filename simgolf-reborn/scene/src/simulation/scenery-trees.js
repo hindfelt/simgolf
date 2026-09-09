@@ -13,15 +13,18 @@ export function sceneryTrees(coastal = false) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const trees = [];
-  const add = (x, z) => {
+  const add = (x, z, size = 1) => {
     if (coastal && x >= 46) return;
+    const height = (5 + rng() * 2) * size;
     trees.push({
+      size,
+      height,
       x,
       z,
       c: Math.floor((x - GRID.minX) / 2),
       r: Math.floor((z - GRID.minZ) / 2),
     });
-    for (let i = 0; i < 597; i++) rng();
+    for (let i = 0; i < 596; i++) rng();
   };
   let count = 0;
   for (let attempts = 0; attempts < 1200 && count < 155; attempts++) {
@@ -33,23 +36,22 @@ export function sceneryTrees(coastal = false) {
       (x > 5 && x < 38 && z > 25 && z < 54)
     )
       continue;
-    rng();
-    add(x, z);
+    add(x, z, 0.7 + rng() * 0.6);
     count++;
   }
-  for (const [x, z] of [
-    [-45, -26],
-    [-44, -12],
+  for (const [x, z, size] of [
+    [-45, -26, 1.1],
+    [-44, -12, 0.8],
     [-11, -31],
     [46, -32],
-    [49, 1],
-    [40, 10],
+    [49, 1, 1.05],
+    [40, 10, 0.8],
     [-44, 17],
     [45, 49],
-    [-27, 41],
+    [-27, 41, 1.1],
     [-51, -35],
   ])
-    add(x, z);
+    add(x, z, size);
   cache.set(coastal, trees);
   cells.set(
     coastal,
