@@ -500,3 +500,10 @@ The live report/accomplishment classifier now handles the former all-three
 0.5–1.0 gap. Original par-seeded exact-cohort measurements, optional comparison
 mode, scenic fields, fun denominator and time units still need integration;
 the executable observation notes record the newly traced operations.
+
+F09 observation inputs (2026-09-11): reconstructed par-seeded exact-skill score
+comparisons and added saved per-score counts to new live visitor completions.
+Legacy observations retain their known totals without fabricated distributions.
+Ten focused tests (including real completions, save/restore and phone report)
+and production build pass. Original comparison-mode selection, training masks
+and scores above nine must be resolved before switching the live rating inputs.

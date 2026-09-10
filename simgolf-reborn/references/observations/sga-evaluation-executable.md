@@ -86,3 +86,22 @@ Further measurement evidence, not yet mapped to browser state:
 The classification decision is now source-backed; current broad cohort mean
 inputs remain provisional. Do not claim the complete original measurement
 pipeline or SGA qualification is integrated from this correction alone.
+
+## Reconstructed score inputs (2026-09-11)
+
+`original-hole-observations.js` now reproduces the eight groups seeded with
+8 par scores, per-group signed-integer mean calculations, complementary-mask
+comparisons, the explicit optional second contrast, difficulty thresholds and
+actual-only course score totals. Input score counts correspond to the original
+signed-word bins for scores 1..9; negative/corrupt records are rejected.
+Four tests cover seed dilution, unrelated-cohort isolation, optional contrasts,
+integer rounding and all final score bins.
+
+New live completions now preserve `scoreCounts` within each existing skill/training
+cohort. Restore validates sample and stroke reconciliation. Older groups without
+a distribution remain valid; subsequently recorded distributions can cover only
+a subset of their historical totals. No historical histogram is reconstructed
+from an average. Raw scores are preserved, including scores above nine, pending
+verification of the original recording/clamping behavior. The original mode bit,
+training-to-mask mapping and scores above nine remain adapter questions before
+replacing live broad-mean ratings with the reconstructed calculation.

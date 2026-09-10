@@ -18,6 +18,8 @@ export function recordObservation(g, v, hole) {
     seconds: 0,
     mood: 0,
   });
+  const scores = (group.scoreCounts ??= {});
+  scores[v.strokes] = (scores[v.strokes] ?? 0) + 1;
   group.count++;
   group.strokes += v.strokes;
   group.seconds += g.time - sample.startedAt;
@@ -81,6 +83,22 @@ export function validateEvaluation(stats) {
       v.mood > v.count * 100
     )
       throw Error("Invalid skill cohort.");
+    if (v.scoreCounts !== undefined) {
+      if (!v.scoreCounts || typeof v.scoreCounts !== 'object' || Array.isArray(v.scoreCounts))
+        throw Error('Invalid score distribution.');
+      let samples = 0, total = 0;
+      for (const [score, n] of Object.entries(v.scoreCounts)) {
+        const value = Number(score);
+        if (!Number.isSafeInteger(value) || value < 1 || String(value) !== score ||
+            !Number.isSafeInteger(n) || n < 1)
+          throw Error('Invalid score distribution.');
+        samples += n; total += value * n;
+      }
+      if (!Number.isSafeInteger(samples) || !Number.isSafeInteger(total) ||
+          samples > v.count || total > v.strokes ||
+          v.strokes - total < v.count - samples || (samples === v.count && total !== v.strokes))
+        throw Error('Score distribution exceeds cohort observations.');
+    }
     count += v.count;
     strokes += v.strokes;
   }

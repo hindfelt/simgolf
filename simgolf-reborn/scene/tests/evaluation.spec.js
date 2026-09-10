@@ -36,3 +36,18 @@ test('course report displays actual cohorts on a phone',async({page})=>{
  await page.screenshot({path:'../graphics/samples/course-report-phone.png'});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
+
+test('new score distributions reconcile, survive saves and never invent legacy samples',()=>{
+ const g=course();openHole(g);advance(g,160);
+ const h=g.holes[0];
+ for (const c of Object.values(h.stats.evaluation.cohorts)) {
+  expect(Object.values(c.scoreCounts).reduce((a,b)=>a+b,0)).toBe(c.count);
+  expect(Object.entries(c.scoreCounts).reduce((a,[score,n])=>a+Number(score)*n,0)).toBe(c.strokes);
+ }
+ expect(restore(serialize(g)).holes[0].stats.evaluation).toEqual(h.stats.evaluation);
+ const stats={completed:3,strokes:15,evaluation:{cohorts:{0:{count:3,strokes:15,seconds:60,mood:180,scoreCounts:{4:1}}}}};
+ validateEvaluation(stats); // Only one of three older observations has a known score.
+ stats.evaluation.cohorts[0].scoreCounts={4:3};expect(()=>validateEvaluation(stats)).toThrow();
+ stats.evaluation.cohorts[0].scoreCounts={15:1};expect(()=>validateEvaluation(stats)).toThrow();
+ stats.evaluation.cohorts[0].scoreCounts={5:3};validateEvaluation(stats);
+});
