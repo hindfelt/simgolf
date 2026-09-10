@@ -30,7 +30,7 @@ for (const [name, ratings] of [
     expect(classifyHole(r).name).toBe(name);
     expect(r.skills.map((s) => s.advantage)).toEqual(ratings);
   });
-test("missing comparisons and ambiguous three-skill thresholds do not fabricate a classification", () => {
+test("missing comparisons remain unclassified; three qualifying skills drop the weakest below one", () => {
   expect(
     classifyHole(
       evaluationReport({
@@ -42,6 +42,17 @@ test("missing comparisons and ambiguous three-skill thresholds do not fabricate 
       }),
     ).name,
   ).toBeNull();
-  expect(classifyHole(report([0.75, 0.75, 0.75])).name).toBeNull();
-  expect(classifyHole(report([0.5, 0.5, 0.5])).name).toBe("Breather");
+  expect(classifyHole(report([0.75, 0.75, 0.75])).name).toBe("Strategic");
+  expect(classifyHole(report([0.5, 0.5, 0.5])).name).toBe("Strategic");
+});
+
+test("weakest skill removal, stable ties and inclusive difficulty thresholds follow executable", () => {
+  const direct = values => ({skills: ["length", "accuracy", "imagination"].map((skill,i) => ({skill, advantage: values[i]}))});
+  expect(classifyHole(direct([0.8,0.6,0.9])).name).toBe("Heroic");
+  expect(classifyHole(direct([0.8,0.9,0.6])).name).toBe("Challenge");
+  expect(classifyHole(direct([0.5,0.5,0])).name).toBe("Challenge");
+  expect(classifyHole(direct([0.25,0.25,0]), {difficulty:0}).name).toBe("Challenge");
+  expect(classifyHole(direct([0.25,0.25,0]), {difficulty:1}).name).toBe("Breather");
+  expect(classifyHole(direct([1,1,0.999])).name).toBe("Challenge");
+  expect(classifyHole(direct([1,1,1])).name).toBe("Classic");
 });

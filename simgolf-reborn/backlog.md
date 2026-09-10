@@ -493,3 +493,10 @@ mapping. Static executable evidence and unresolved integration inputs are in
 This is not yet live qualification: original measurement aggregation, facility
 identities, prize settlement and tournament lifecycle remain required. Keep
 those calculations under the authoritative competition host for future multiplayer.
+
+F09 classification correction (2026-09-11): source confirms inclusive skill
+thresholds and removal of the weakest skill below 1.00, including stable ties.
+The live report/accomplishment classifier now handles the former all-three
+0.5–1.0 gap. Original par-seeded exact-cohort measurements, optional comparison
+mode, scenic fields, fun denominator and time units still need integration;
+the executable observation notes record the newly traced operations.

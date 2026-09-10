@@ -53,3 +53,36 @@ clock trace: 0x417c55 periodically calls 0x44f480 with argument 2 and checks
 
 Focused tests cover category boundaries, integer targets, each independently
 failing criterion, exact time/fun thresholds, facilities and championship titles.
+
+## Hole classification and observation trace (2026-09-11)
+
+Confirmed classification fix: 0x44f486–0x44f499 produces threshold 25 when
+original difficulty 0x820344 is zero, otherwise 50. Ratings are in hundredths
+of a stroke. The skill branches use >=, not >. They track the minimum rating
+starting at 100, updating only on strictly smaller values in length, accuracy,
+imagination order. At 0x44fff9–0x45000c the weakest skill bit is cleared when
+that minimum is below 100. Table 0x4c1a20 maps masks 0..7 to Breather, Freeway,
+Precise, Challenge, Creative, Heroic, Strategic, Classic. Consequently three
+ratings of 75 produce Strategic, not an unclassified hole. This decision rule
+now drives the browser report and its existing accomplishment consumer.
+Browser play currently uses the normal (50) threshold; the pure classifier
+also accepts the original difficulty range 0..3.
+
+Further measurement evidence, not yet mapped to browser state:
+- 0x44f592–0x44f5b9 seeds eight skill groups with count 8 and total par*8.
+  0x44f5ca–0x44f649 adds the per-skill score histogram (scores 1..9).
+- Length compares masks 6 vs 7, accuracy 5 vs 7, imagination 3 vs 7,
+  each subtracting independently truncated mean scores times 100.
+- Global 0x59d208 bit 0x40 adds another contrast: mask 0 vs 1, 0 vs 2,
+  and 0 vs 4 respectively. Its mode semantics must be resolved.
+- Scenic count at 0x44f658–0x44f67f uses three record fields, with the
+  middle contribution halved; sum >=8 qualifies. Field identities remain open.
+- Time at 0x44f6e6–0x44f710 divides aggregate by count then by 40 before
+  summing per-hole minutes. Browser simulation seconds are not that unit.
+- Fun at 0x44f720–0x44f748 divides a signed word times 100 by a denominator
+  made from count + half another accumulated field +4. Field meanings remain open.
+- Variety at 0x44f985–0x44f993 tests hole-record offset 0x1fc <2.
+
+The classification decision is now source-backed; current broad cohort mean
+inputs remain provisional. Do not claim the complete original measurement
+pipeline or SGA qualification is integrated from this correction alone.
