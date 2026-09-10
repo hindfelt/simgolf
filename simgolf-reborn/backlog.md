@@ -483,3 +483,13 @@ Original parity still open: full arrival/candidate semantics, extra roster bytes
 ### Live per-hole challenge wagers — 11 September 2026
 
 F09 settlement now pays replay-derived hole wagers as both golfers complete each hole, recording a paid-prefix receipt and individual ledger entries. The match wager and ladder result apply only after completion. Live event screens synchronize those payments into the saved resort; returning mid-match or after an interrupted tab also recovers unpaid results. Concurrent settlement, reload, stale/contradictory replay, partial return/resume and the final remaining balance are tested. Previously settled results and older active invitations without partial receipts remain compatible. Eleven focused career/challenge tests and the production build pass; the six session regressions also passed during this change. Original invitation cadence/candidate semantics and the advertised-versus-internal match-payout discrepancy remain open, as do SGA tournaments and the full multiplayer backlog.
+
+### SGA evaluation arithmetic recovered (2026-09-11)
+
+F09: added the original ten-criterion SGA report calculation, category-specific
+length/hole/facility targets, zero-grade disqualification and event recommendation
+mapping. Static executable evidence and unresolved integration inputs are in
+`references/observations/sga-evaluation-executable.md`. Three focused tests pass.
+This is not yet live qualification: original measurement aggregation, facility
+identities, prize settlement and tournament lifecycle remain required. Keep
+those calculations under the authoritative competition host for future multiplayer.
