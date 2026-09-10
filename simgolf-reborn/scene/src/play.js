@@ -729,7 +729,7 @@ function renderPanel() {
       )
       .join(
         "",
-      )}</div><button id="boundary-outline">Outline OB region</button><button id="finish-boundary" ${boundaryCorners ? "" : "hidden"}>Finish region</button><button id="cancel-boundary" ${boundaryCorners ? "" : "hidden"}>Cancel region</button><button id="buy-land">Buy land</button><span id="land-status" role="status"></span><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
+      )}</div><div class="construction-settings"><button id="boundary-outline">Outline OB region</button><button id="finish-boundary" ${boundaryCorners ? "" : "hidden"}>Finish region</button><button id="cancel-boundary" ${boundaryCorners ? "" : "hidden"}>Cancel region</button><button id="buy-land">Buy land</button><span id="land-status" role="status"></span><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div></div><div class="tools" role="group" aria-label="Construction tools">${[
       ...TOOLS,
       "demolish",
     ]
