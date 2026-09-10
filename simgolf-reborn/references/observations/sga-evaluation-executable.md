@@ -251,3 +251,20 @@ now implements that step and has boundary/wrap/flag-preservation tests.
 This identifies more of the variety inputs but does not yet recreate the editor's
 bend-point selection, exact heading conversion or elevation reaction events.
 Four focused variety/dogleg tests pass. Live variety integration remains open.
+
+## Heading routine verified against executed instructions (2026-09-11)
+
+`original-heading.js` reproduces 0x466ba0–0x466cad, including axis/zero cases,
+14-bit ratio, constants 0x1333 and 0x2800, signed multiplication/shift rounding,
+quadrant selection and the final 16-bit shift. This is an integer approximation,
+not a call to atan2. `originalDoglegFromPoints` now composes original headings
+with the recovered flags using integer tee/bend/green coordinates.
+
+Independent differential verification executed the original function bytes in
+Unicorn x86 emulation, with only code and stack memory mapped and no OS calls.
+All 10,033 axis/random/course-range/extreme-int32 vectors exactly matched the JS
+result. `scripts/verify-original-heading.py` reproduces the comparison, checking
+the source executable SHA256 first (requires Python pefile/unicorn and Node).
+A 65-vector oracle subset is retained in the ordinary test fixtures so routine
+regressions do not require an emulator. Six heading/variety checks pass.
+This verifies this isolated function, not whole-game timing or runtime parity.

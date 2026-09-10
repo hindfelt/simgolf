@@ -560,3 +560,9 @@ and tested dogleg side flags from original heading differences, including strict
 turn thresholds, wrap and bend-at-green behavior. Four focused checks pass.
 Bend selection, heading conversion and elevation incident semantics remain needed
 before live variety scoring; see executable SGA observation notes.
+
+F09 direction geometry (2026-09-11): original integer heading function now drives
+coordinate-based dogleg reconstruction. Independently verified against isolated
+original x86 instructions for 10,033 vectors, with a repeatable oracle script and
+committed regression subset. Six heading/variety tests pass. Editor bend selection
+and elevation reaction admission remain before full live variety integration.

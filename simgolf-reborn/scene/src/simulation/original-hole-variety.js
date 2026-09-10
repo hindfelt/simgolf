@@ -1,3 +1,4 @@
+import {originalHeading} from "./original-heading.js";
 // golf.exe 0x42da36–0x42db3c. Two record feature fields retain their offsets
 // until their original meanings are verified. Headings use the original uint32 turn.
 export function originalHoleVariety(input) {
@@ -33,4 +34,15 @@ export function originalDoglegFlags({flags, teeToGreenHeading, bendToGreenHeadin
   if (turn > 0x071c71c6) result = (result | 0x20) >>> 0;
   if (turn < -0x071c71c6) result = (result | 0x40) >>> 0;
   return result;
+}
+
+export function originalDoglegFromPoints({tee, bend, green, flags = 0}) {
+  if (![tee,bend,green].every(p => p && [p.x,p.z].every(n =>
+      Number.isInteger(n) && n >= -0x80000000 && n <= 0x7fffffff)))
+    throw Error('Invalid original course points.');
+  const teeToGreenHeading = originalHeading((green.x-tee.x)|0, (green.z-tee.z)|0);
+  const bendToGreenHeading = originalHeading((green.x-bend.x)|0, (green.z-bend.z)|0);
+  return {teeToGreenHeading, bendToGreenHeading,
+    flags: originalDoglegFlags({flags,teeToGreenHeading,bendToGreenHeading,
+      bendAtGreen:bend.x===green.x && bend.z===green.z})};
 }
