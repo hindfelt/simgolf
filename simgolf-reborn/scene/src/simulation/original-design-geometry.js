@@ -1,3 +1,4 @@
+import {originalRouteSegment} from "./original-route-distance.js";
 import {originalHeading} from './original-heading.js';
 import {originalDoglegFromPoints} from './original-hole-variety.js';
 
@@ -17,4 +18,11 @@ export function originalDesignGeometry({tee, green, firstLanding, routeMeasure, 
   const bend=routeMeasure<250 ? {...tee} : {...firstLanding};
   const dogleg=originalDoglegFromPoints({tee,bend,green,flags:terrainFlags});
   return {teeFacing,bend,flags:dogleg.flags};
+}
+
+export function originalDesignGeometryFromSegments({segments, ...geometry}) {
+  if (!Array.isArray(segments) || segments.length < 1 || segments.length > 20)
+    throw Error('Invalid original design route.');
+  const routeMeasure = segments.reduce((n,s) => n + originalRouteSegment(s.origin,s.targetTile),0);
+  return {...originalDesignGeometry({...geometry,routeMeasure}),routeMeasure};
 }

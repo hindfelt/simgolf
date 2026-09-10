@@ -314,3 +314,24 @@ length. The module therefore requires the original measure explicitly and does
 not label it browser yards. Nine focused design/heading/variety checks pass.
 Live integration still needs the original planner/landing and measure adapter;
 user-requested manual tee rotation remains supported in the browser.
+
+## Route units verified (2026-09-11)
+
+`original-route-distance.js` reconstructs 0x40a9f0 and 0x40c1a0 within the
+original map-coordinate domain. The distance helper divides each component
+whose absolute value exceeds 16384 by eight (signed truncation), independently
+multiplies a result scale by eight for each such component, computes square root
+and truncates after scaling. This unusual behavior is retained, not replaced by
+hypot. The route helper subtracts the target tile centre (tile*1024+512) from
+fixed-point origin coordinates and returns trunc(distance*25/1024).
+
+`verify-original-distance.py` emulates both original functions plus their x87
+integer-conversion callee 0x4a57a0 with a known FPU control word. All 10,049
+boundary/random distances and 1,000 route segments matched exactly. The ordinary
+suite covers component thresholds, signed behavior, tile centres and composition.
+
+`originalDesignGeometryFromSegments` now accumulates measured source segments
+and feeds the dogleg cutoff instead of requiring an invented route measure.
+Six distance/design tests pass. The full design-pass shot simulation and choice
+of segments still need reconstruction; this does not authorize substituting
+browser routing distances or change live golf physics.

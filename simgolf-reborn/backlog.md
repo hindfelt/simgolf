@@ -578,3 +578,9 @@ not the alternate tee fields. Reconstructed eight-direction tee facing, strict
 one-level elevation flags and the original route-measure dogleg suppression.
 Nine focused checks pass. Full original design simulation and route-unit adapter
 remain required before replacing the browser routing inputs.
+
+F09 design route measure (2026-09-11): reconstructed original map distance and
+fixed-origin/tile-centre route units, independently matching original x86 for
+10,049 distances and 1,000 segments. Segment accumulation now feeds design geometry
+and the dogleg cutoff. Six focused checks pass. Original design-pass simulation
+and live editor integration remain open.
