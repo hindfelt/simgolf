@@ -425,3 +425,30 @@ is set, and 75 otherwise; a strictly greater distance and current terrain code
 other than 1 enter the intermediate route search. Reconstructing that search,
 its distance units, and subsequent shot selection remains necessary. The current
 helper is not a replacement for the complete shot planner or live physics.
+
+### Intermediate-route candidate admission (2026-09-11)
+
+Route search 0x422450 enumerates offsets -10 through +10 around an initial
+landing estimate (21-by-21 candidate storage, six score slots each). Reconstructed
+its first admission block 0x42290e–0x422af8 as `originalRouteCandidate`:
+
+- Actor flag bit 1 excludes the previous target tile. All actors reject outside
+  the 50-by-50 map or terrain code 20 through original helper 0x40bc50.
+- Candidate shot distance must be <= current range + 16. With actor flag bit 1
+  clear, it cannot be below both trunc(range/3) and trunc(cup distance/3).
+- Reject current tile, terrain code 0, and signed terrain shot class > 1.
+- Class 1 gets the stronger progress requirement unless at least one cardinal
+  neighbor has class <= 0. Other admitted classes use the normal requirement.
+- Candidate-to-cup and current-tile-to-cup distances use original 0x40a9f0 with
+  tile deltas. Terrain code 1 is rejected when more than three units from cup.
+- Require remaining + 1 <= initial for supported candidates, or remaining +
+  trunc(initial/2) <= initial for an isolated class-1 candidate.
+
+`verify-original-route-candidate.py` executes the original filter, map-bounds/
+terrain-code helper, distance helper and conversion instructions on supplied
+terrain bytes. All 5,000 deterministic cases match (319 admitted). Five focused
+regressions cover range/short-shot thresholds, neighboring terrain, green distance,
+actor override, excluded surfaces and progress. Nineteen combined planner-helper
+and design-pass tests pass. This is candidate admission only. Six-way candidate
+shot simulation, score comparison, iterative search and winning-target assignment
+remain before this constitutes a full original planner. No live adapter is wired.

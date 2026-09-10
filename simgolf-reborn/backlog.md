@@ -605,3 +605,11 @@ and bounded distance adjustment for short direct shots, independently matching
 5,000 executions of the original x86 branch. Fourteen combined planner-helper
 and design-pass tests pass. Intermediate route search and final shot selection
 remain open before live integration; no deployed behavior changes in this pass.
+
+F09 original route admission (2026-09-11): reconstructed intermediate landing
+filters for range, short shots, terrain, adjacent better lies, current/previous
+targets, green proximity and required progress toward the cup. Independently
+matched 5,000 original x86 cases; 19 combined planner-helper/design-pass tests
+pass. Candidate shot simulation, scoring and final selection remain before live
+integration. Cooperative building, earnings competition and tournaments across
+user-built courses remain tracked under M01–M05.
