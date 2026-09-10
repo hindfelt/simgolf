@@ -1,3 +1,4 @@
+import { buildBoundaryRegion, validBoundaryPoints } from "./boundary-region.js";
 import { buyLand } from "./land-purchase.js";
 import { renameVisitor } from "./visitor-name.js";
 import { decideMembership } from "./membership.js";
@@ -43,6 +44,7 @@ const permissions = {
     "set-visitor-pair",
     "clear-visitor-pair",
     "place-story-reward",
+    "build-boundary-region",
     "build",
     "add-hole",
     "reorder-holes",
@@ -78,6 +80,7 @@ const permissions = {
     "remove-hole",
     "demolish",
     "add-hole",
+    "build-boundary-region",
     "build",
     "open-hole",
     "close-hole",
@@ -142,6 +145,8 @@ function validPayload(type, p) {
       );
     case "place-story-reward":
       return keysMatch(p, ["c", "r"]) && inBounds(p.c, p.r);
+    case "build-boundary-region":
+      return keysMatch(p, ["points", "holeId"]) && typeof p.holeId === "string" && validBoundaryPoints(p.points);
     case "build":
       return (
         (keysMatch(p, ["tool", "c", "r", "brush", "holeId"]) ||
@@ -342,6 +347,9 @@ export function createSession(game, { courseLocked = false } = {}) {
           break;
         case "buy-land":
           result = buyLand(game);
+          break;
+        case "build-boundary-region":
+          result = buildBoundaryRegion(game, p.points, p.holeId);
           break;
         case "build":
           result = build(game, p.tool, p.c, p.r, p.brush, p.holeId, p.rotation);

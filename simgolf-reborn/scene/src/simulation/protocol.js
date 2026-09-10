@@ -1,5 +1,5 @@
-export const PROTOCOL_VERSION = 74;
-export const RULESET_VERSION = "prototype-dogleg-routing-2026-09-10";
+export const PROTOCOL_VERSION = 75;
+export const RULESET_VERSION = "prototype-boundary-regions-2026-09-10";
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +65,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 74 && p.ruleset === "prototype-dogleg-routing-2026-09-10") ||
     (p?.version === 73 && p.ruleset === "prototype-boundary-entry-2026-09-09") ||
     (p?.version === 72 && p.ruleset === "prototype-helicopter-visits-2026-09-09") ||
     (p?.version === 71 && p.ruleset === "prototype-boundary-drop-2026-09-09") ||

@@ -237,6 +237,7 @@ function command(type, payload = {}) {
     localPlayer,
   );
 }
+let boundaryCorners = null;
 let mode = coursePackage ? "play" : "build",
   tool = "inspect",
   paletteGroup = "all",
@@ -481,6 +482,7 @@ const names = {
 };
 function setMode(next) {
   mode = next;
+  boundaryCorners = null;
   pickingAnalysis = false;
   shotOverlay.clear();
   movingStaff = false;
@@ -727,7 +729,7 @@ function renderPanel() {
       )
       .join(
         "",
-      )}</div><button id="buy-land">Buy land</button><span id="land-status" role="status"></span><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
+      )}</div><button id="boundary-outline">Outline OB region</button><button id="finish-boundary" ${boundaryCorners ? "" : "hidden"}>Finish region</button><button id="cancel-boundary" ${boundaryCorners ? "" : "hidden"}>Cancel region</button><button id="buy-land">Buy land</button><span id="land-status" role="status"></span><label class="brush">Brush<select id="brush"><option value="1">1 tile</option><option value="3">3 × 3</option><option value="5">5 × 5</option></select></label><label class="brush">Building direction<select id="building-rotation"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></label></div><div class="tools" role="group" aria-label="Construction tools">${[
       ...TOOLS,
       "demolish",
     ]
@@ -754,6 +756,13 @@ function renderPanel() {
           panel.querySelector(`[data-palette="${paletteGroup}"]`).focus();
         }),
     );
+    $("#boundary-outline").onclick = () => { boundaryCorners = []; tool = "out-of-bounds"; syncControls(); renderPanel(); toast("Click corners around the excluded area, then Finish region. $5 per newly marked tile."); };
+    $("#finish-boundary").onclick = () => {
+      const result = command("build-boundary-region", { points: boundaryCorners, holeId: selectedHoleId });
+      toast(result.message);
+      if(result.ok){boundaryCorners=null;tool="inspect";syncControls();renderPanel();save();}
+    };
+    $("#cancel-boundary").onclick = () => {boundaryCorners=null;tool="inspect";syncControls();renderPanel();};
     $("#buy-land").onclick = showLandPurchase;
     $("#building-rotation").value = String(buildingRotation);
     $("#building-rotation").onchange = (e) => {
@@ -766,6 +775,7 @@ function renderPanel() {
     panel.querySelectorAll("[data-tool]").forEach(
       (b) =>
         (b.onclick = () => {
+          boundaryCorners = null;
           placingStoryReward = false;
           pickingAnalysis = false;
           shotOverlay.clear();
@@ -1863,6 +1873,7 @@ addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "h" && mode === "build" && !coursePackage)
     $("#open-hole").click();
   if (e.key === "Escape") {
+    boundaryCorners = null;
     movingStaff = false;
     pickingAnalysis = false;
     shotOverlay.clear();
@@ -1915,6 +1926,12 @@ function hover(e) {
       staffRangePreview = center(cell.c, cell.r);
   }
   if (mode === "build" && tool !== "inspect") {
+    if (boundaryCorners) {
+      const vertices = [...boundaryCorners, cellAt(p.x,p.z), boundaryCorners[0]].filter(Boolean).map(c=>center(c.c,c.r));
+      aiming.geometry.dispose();
+      aiming.geometry = new THREE.BufferGeometry().setFromPoints(vertices.map(v=>new THREE.Vector3(v.x,height(v.x,v.z)+.2,v.z)));
+      aiming.computeLineDistances();aiming.visible=true;return;
+    }
     const c = cellAt(p.x, p.z),
       check =
         tool === "demolish"
@@ -1997,6 +2014,10 @@ function act(e) {
     return;
   }
   shotOverlay.clear();
+  if(mode === "build" && boundaryCorners){
+    if(boundaryCorners.length>=32){toast("Maximum 32 corners. Finish or cancel this region.");return;}
+    boundaryCorners.push(cellAt(p.x,p.z));toast(`${boundaryCorners.length} corners selected. Finish region when the outline is complete.`);return;
+  }
   if (mode === "build" && tool === "inspect") {
     const cell = cellAt(p.x, p.z);
     const facility = game.facilities.find(f => facilityContains(f, cell.c, cell.r));
@@ -2133,7 +2154,7 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
   moved = false;
   lastCell = "";
   stroke =
-    !spacePanning && e.button === 0 &&
+    !boundaryCorners && !spacePanning && e.button === 0 &&
     e.pointerType !== "touch" &&
     mode === "build" &&
     ([

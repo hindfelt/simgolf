@@ -222,6 +222,8 @@ export function buildCourseView(scene) {
       const c = Number(k) % GRID.width,
         r = Math.floor(Number(k) / GRID.width),
         p = center(c, r);
+      if (c > 0 && c < GRID.width - 1 && r > 0 && r < GRID.height - 1 &&
+          [[1,0],[-1,0],[0,1],[0,-1]].every(([dc,dr]) => g.outOfBounds[key(c+dc,r+dr)])) continue;
       add(new THREE.BoxGeometry(0.13, 1.2, 0.13), 0xf5f1df,
         p.x, height(p.x, p.z) + 0.6, p.z, construction);
     }
