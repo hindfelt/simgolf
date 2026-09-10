@@ -592,3 +592,10 @@ orchestration/geometry/distance tests pass. The original shot planner and cache
 invalidation rules remain required before live preview integration; this helper
 does not yet change the deployed game. Future multiplayer requirements remain
 tracked under M01–M05 and must share authoritative simulation inputs.
+
+F09 original planner range (2026-09-11): reconstructed the planner's complete
+range helper, including skills, special design-actor lies, professional abilities,
+surface penalties and upper cap. Independently matched 5,000 original x86 cases
+with only map surface lookup supplied; committed a repeatable verifier and
+40-case oracle fixture. Ten focused range/design-pass tests pass. Full landing
+candidate search and original terrain/input adapters remain before live use.

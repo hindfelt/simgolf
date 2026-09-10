@@ -362,3 +362,37 @@ This is source-disassembly reconstruction, not independent emulation of the whol
 design routine. The original planner at 0x4235c0, screen drawing, and cache
 invalidation triggers remain unimplemented here. It is not connected to the live
 browser design preview; no heuristic replacement is claimed to be original.
+
+### Planner range input (2026-09-11)
+
+Planner entry 0x4235de calls 0x4219e0. Reconstructed that complete arithmetic
+routine through its return at 0x421b47 as `originalShotRange`:
+
+- Skill bit 1 selects base 200 versus 150. Global 0x820344 >= 1 adds
+  trunc(50 * signed actor byte +0xc2 / 3); otherwise add 40 versus 25.
+- Surface comes from 0x40bc90, except actor IDs >= 152 force surface 0 for
+  shot byte +0x2a == 0 and surface 2 otherwise. This includes design actor 154.
+- Nonzero professional byte +0x20 permits ability-word +0x1e bonuses: bit 1
+  adds 4 * unsigned +0xf8 - 20; bit 2 adds 6 * (unsigned +0xf9 - 5), only
+  on effective surface 0.
+- Positive signed byte +0x3e adds trunc(min(value,3) * range / 24).
+  Length skill then adds 15 * global 0x542bd8.
+- Positive signed surface-table byte at 0x576dc2 + 48 * effectiveSurface
+  subtracts trunc(min(value,3) * range / 8).
+- Nonzero effective surface subtracts a fifth, truncated toward zero.
+  Return is capped at 330; no lower clamp is present.
+
+The wrapper uses explicit inputs for the globals and resolved surface class.
+`level`, `boost`, and `lengthBonus` are API labels, not proof of the complete
+original UI/clock ownership of those fields. The supplied shotClass must describe
+the effective surface after the special-actor override. It must not be mapped
+from the browser terrain names without validating their original IDs.
+
+`verify-original-shot-range.py` independently runs the original range routine
+and original clamp callee in Unicorn. Only the surface lookup returns a supplied
+surface ID; all range arithmetic executes original instructions. All 5,000
+fixed-seed cases matched. A 40-case original-output fixture runs in regular
+Playwright tests, alongside specific special-actor/ability/cap tests. Ten combined
+range/design-pass checks pass. This does not emulate the full planner or replace
+live shot physics. Landing candidate search, terrain routing and final shot
+selection remain before full planner integration.

@@ -1,0 +1,722 @@
+[
+  [
+    {
+      "actorId": 0,
+      "skillMask": 5,
+      "difficulty": 0,
+      "level": -1,
+      "surface": 4,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 8,
+      "longDrive": 9,
+      "boost": -1,
+      "lengthBonus": 0,
+      "shotClass": 3
+    },
+    120
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 5,
+      "difficulty": 0,
+      "level": 2,
+      "surface": 0,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 12,
+      "longDrive": 1,
+      "boost": 5,
+      "lengthBonus": 4,
+      "shotClass": -2
+    },
+    264
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 5,
+      "difficulty": 3,
+      "level": 4,
+      "surface": 0,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 12,
+      "longDrive": 11,
+      "boost": 5,
+      "lengthBonus": 4,
+      "shotClass": -2
+    },
+    288
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 4,
+      "difficulty": 3,
+      "level": 1,
+      "surface": 7,
+      "shot": 3,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 6,
+      "longDrive": 5,
+      "boost": -2,
+      "lengthBonus": 4,
+      "shotClass": 2
+    },
+    100
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 1,
+      "level": 5,
+      "surface": 8,
+      "shot": 5,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 0,
+      "longDrive": 7,
+      "boost": -2,
+      "lengthBonus": 0,
+      "shotClass": 1
+    },
+    164
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 5,
+      "difficulty": 2,
+      "level": 4,
+      "surface": 9,
+      "shot": 3,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 2,
+      "longDrive": 0,
+      "boost": 1,
+      "lengthBonus": 0,
+      "shotClass": 5
+    },
+    140
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 7,
+      "difficulty": 3,
+      "level": 5,
+      "surface": 7,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 0,
+      "longDrive": 15,
+      "boost": -1,
+      "lengthBonus": 2,
+      "shotClass": 1
+    },
+    220
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 5,
+      "difficulty": 2,
+      "level": -1,
+      "surface": 2,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 11,
+      "longDrive": 9,
+      "boost": 1,
+      "lengthBonus": 3,
+      "shotClass": 1
+    },
+    166
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 3,
+      "level": -2,
+      "surface": 7,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 11,
+      "longDrive": 4,
+      "boost": 3,
+      "lengthBonus": 2,
+      "shotClass": 1
+    },
+    92
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 3,
+      "difficulty": 1,
+      "level": -3,
+      "surface": 9,
+      "shot": 2,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 12,
+      "longDrive": 15,
+      "boost": 0,
+      "lengthBonus": 2,
+      "shotClass": 4
+    },
+    91
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 1,
+      "difficulty": 0,
+      "level": 2,
+      "surface": 5,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 0,
+      "longDrive": 13,
+      "boost": 2,
+      "lengthBonus": 4,
+      "shotClass": -2
+    },
+    256
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 4,
+      "difficulty": 2,
+      "level": -3,
+      "surface": 5,
+      "shot": 2,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 9,
+      "longDrive": 8,
+      "boost": -2,
+      "lengthBonus": 4,
+      "shotClass": 5
+    },
+    51
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 6,
+      "difficulty": 0,
+      "level": 7,
+      "surface": 6,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 5,
+      "longDrive": 1,
+      "boost": 1,
+      "lengthBonus": 0,
+      "shotClass": 3
+    },
+    92
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 4,
+      "difficulty": 1,
+      "level": -3,
+      "surface": 5,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 1,
+      "power": 11,
+      "longDrive": 9,
+      "boost": -2,
+      "lengthBonus": 4,
+      "shotClass": 1
+    },
+    88
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 4,
+      "difficulty": 0,
+      "level": 6,
+      "surface": 2,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 5,
+      "longDrive": 0,
+      "boost": -1,
+      "lengthBonus": 3,
+      "shotClass": 4
+    },
+    88
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 4,
+      "difficulty": 0,
+      "level": 4,
+      "surface": 1,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 14,
+      "longDrive": 11,
+      "boost": 0,
+      "lengthBonus": 3,
+      "shotClass": -2
+    },
+    140
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 3,
+      "difficulty": 1,
+      "level": -2,
+      "surface": 1,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 15,
+      "longDrive": 11,
+      "boost": 0,
+      "lengthBonus": 4,
+      "shotClass": -1
+    },
+    182
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 3,
+      "level": 8,
+      "surface": 6,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 14,
+      "longDrive": 13,
+      "boost": 4,
+      "lengthBonus": 4,
+      "shotClass": 3
+    },
+    199
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 0,
+      "surface": 5,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 1,
+      "longDrive": 6,
+      "boost": 0,
+      "lengthBonus": 3,
+      "shotClass": 3
+    },
+    88
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 3,
+      "difficulty": 1,
+      "level": -5,
+      "surface": 2,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 3,
+      "longDrive": 12,
+      "boost": 0,
+      "lengthBonus": 4,
+      "shotClass": 0
+    },
+    142
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 0,
+      "level": 2,
+      "surface": 5,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 3,
+      "power": 6,
+      "longDrive": 10,
+      "boost": 3,
+      "lengthBonus": 3,
+      "shotClass": 4
+    },
+    101
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 0,
+      "difficulty": 1,
+      "level": -5,
+      "surface": 1,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 9,
+      "longDrive": 12,
+      "boost": 2,
+      "lengthBonus": 1,
+      "shotClass": 1
+    },
+    51
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 1,
+      "difficulty": 2,
+      "level": 6,
+      "surface": 0,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 3,
+      "power": 6,
+      "longDrive": 15,
+      "boost": -1,
+      "lengthBonus": 4,
+      "shotClass": 0
+    },
+    330
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 1,
+      "difficulty": 0,
+      "level": -2,
+      "surface": 7,
+      "shot": 2,
+      "professional": true,
+      "abilityFlags": 3,
+      "power": 6,
+      "longDrive": 14,
+      "boost": 5,
+      "lengthBonus": 1,
+      "shotClass": 3
+    },
+    145
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 7,
+      "difficulty": 1,
+      "level": -5,
+      "surface": 7,
+      "shot": 2,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 13,
+      "longDrive": 12,
+      "boost": 1,
+      "lengthBonus": 2,
+      "shotClass": 1
+    },
+    107
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 4,
+      "difficulty": 2,
+      "level": 5,
+      "surface": 9,
+      "shot": 5,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 3,
+      "longDrive": 14,
+      "boost": 3,
+      "lengthBonus": 4,
+      "shotClass": 4
+    },
+    132
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 6,
+      "difficulty": 0,
+      "level": -1,
+      "surface": 7,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 3,
+      "power": 15,
+      "longDrive": 13,
+      "boost": 2,
+      "lengthBonus": 3,
+      "shotClass": 1
+    },
+    163
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 7,
+      "difficulty": 2,
+      "level": 7,
+      "surface": 9,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 8,
+      "longDrive": 14,
+      "boost": 1,
+      "lengthBonus": 2,
+      "shotClass": -2
+    },
+    288
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 7,
+      "difficulty": 3,
+      "level": 3,
+      "surface": 9,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 3,
+      "power": 2,
+      "longDrive": 14,
+      "boost": 2,
+      "lengthBonus": 0,
+      "shotClass": -1
+    },
+    206
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 5,
+      "difficulty": 3,
+      "level": -2,
+      "surface": 7,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 6,
+      "longDrive": 3,
+      "boost": -1,
+      "lengthBonus": 0,
+      "shotClass": 5
+    },
+    84
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 1,
+      "difficulty": 1,
+      "level": 7,
+      "surface": 7,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 1,
+      "longDrive": 0,
+      "boost": 5,
+      "lengthBonus": 1,
+      "shotClass": 4
+    },
+    186
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 0,
+      "difficulty": 2,
+      "level": -4,
+      "surface": 8,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 12,
+      "longDrive": 3,
+      "boost": -1,
+      "lengthBonus": 3,
+      "shotClass": -1
+    },
+    68
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 7,
+      "difficulty": 2,
+      "level": 6,
+      "surface": 4,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 11,
+      "longDrive": 6,
+      "boost": 1,
+      "lengthBonus": 0,
+      "shotClass": -2
+    },
+    250
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 8,
+      "surface": 6,
+      "shot": 0,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 6,
+      "longDrive": 12,
+      "boost": 5,
+      "lengthBonus": 0,
+      "shotClass": 2
+    },
+    147
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 7,
+      "surface": 8,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 2,
+      "longDrive": 3,
+      "boost": 2,
+      "lengthBonus": 0,
+      "shotClass": 5
+    },
+    96
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 3,
+      "level": 3,
+      "surface": 6,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 6,
+      "longDrive": 2,
+      "boost": -2,
+      "lengthBonus": 4,
+      "shotClass": 0
+    },
+    160
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 7,
+      "difficulty": 1,
+      "level": 3,
+      "surface": 5,
+      "shot": 2,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 4,
+      "longDrive": 6,
+      "boost": 2,
+      "lengthBonus": 1,
+      "shotClass": 3
+    },
+    144
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 6,
+      "difficulty": 2,
+      "level": 3,
+      "surface": 6,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 10,
+      "longDrive": 6,
+      "boost": -1,
+      "lengthBonus": 2,
+      "shotClass": 1
+    },
+    140
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 6,
+      "difficulty": 0,
+      "level": 5,
+      "surface": 1,
+      "shot": 2,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 4,
+      "longDrive": 7,
+      "boost": -2,
+      "lengthBonus": 3,
+      "shotClass": 4
+    },
+    88
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 0,
+      "difficulty": 0,
+      "level": 5,
+      "surface": 0,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 6,
+      "longDrive": 8,
+      "boost": 4,
+      "lengthBonus": 3,
+      "shotClass": 1
+    },
+    172
+  ]
+]
