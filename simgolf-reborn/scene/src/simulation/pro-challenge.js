@@ -1,7 +1,19 @@
 import { createCompetition, restoreCompetition } from "./competition.js";
 
-// The invitation adapter supplies stakes. Their original schedule is not known.
-// Overall wager currently uses total strokes; verify against the original runtime.
+// Advertised invitation stakes, golf.exe 0x40fd5b–0x40fde4.
+// The zero-based ladder counter increments when an invitation is accepted.
+// This is the offer calculation, not proof of the original cash settlement.
+export function originalChallengeOfferStakes(completedLevels = 0) {
+  const level = completedLevels + 1;
+  if (!Number.isSafeInteger(completedLevels) || completedLevels < 0 ||
+      !Number.isSafeInteger(level * 4000))
+    throw Error("Invalid challenge level.");
+  return { perHole: level * 2000, match: level * 4000 };
+}
+
+// Exhibition callers can supply their own stakes.
+// Original 0x426fab–0x426fe3 sums hole scores for the match comparison.
+// Exhibition payouts honor the agreed terms; original cash timing remains open.
 function validateTerms(terms) {
   if (
     !terms ||

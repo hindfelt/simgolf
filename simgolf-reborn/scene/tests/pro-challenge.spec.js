@@ -58,3 +58,23 @@ test("challenge derives zero-sum stakes from played holes and replays without du
   damaged.stakes.perHole = -1;
   await expect(restoreProChallenge(JSON.stringify(damaged))).rejects.toThrow();
 });
+
+test("original invitation defaults follow the saved challenge ladder and reject invalid counters", async ({page}) => {
+  const { originalChallengeOfferStakes } = await import('../src/simulation/pro-challenge.js');
+  expect(originalChallengeOfferStakes()).toEqual({perHole:2000,match:4000});
+  expect(originalChallengeOfferStakes(1)).toEqual({perHole:4000,match:8000});
+  expect(originalChallengeOfferStakes(9)).toEqual({perHole:20000,match:40000});
+  for (const value of [-1,0.5,NaN,Infinity,Number.MAX_SAFE_INTEGER,'1',null])
+    expect(()=>originalChallengeOfferStakes(value)).toThrow();
+  await page.goto('/');
+  await page.waitForFunction(()=>!!window.__gameTest);
+  await page.locator('#menu-button').click();
+  await page.locator('#pro-challenge').click();
+  await expect(page.locator('#challenge-hole-stake')).toHaveValue('2000');
+  await expect(page.locator('#challenge-match-stake')).toHaveValue('4000');
+  await page.locator('#challenge-hole-stake').fill('75');
+  await page.locator('[aria-label="Close championship setup"]').click();
+  await page.locator('#menu-button').click();
+  await page.locator('#pro-challenge').click();
+  await expect(page.locator('#challenge-hole-stake')).toHaveValue('75');
+});

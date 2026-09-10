@@ -463,3 +463,9 @@ Build now offers Outline OB region: click 3–32 corners and finish to exclude t
 ### Regression audit and phone construction controls — 10 September 2026
 
 The 502-test full suite completed with 501 passes and one phone tee-placement failure: the expanded construction header covered the intended canvas point. Phone construction settings now scroll horizontally in a dedicated row beneath the categories, reducing the 390×844 Build panel from 455 to 356 pixels tall. Desktop settings retain their existing layout. The original failing test and all 18 tests across playable, land-purchase and boundary-region suites pass after the fix; production build passes. Visually inspected the phone panel and exercised rotation plus outline/cancel after scrolling. Full original-game parity, career progression and future network authority remain open; this audit establishes regression coverage, not completion of fidelity.
+
+### Pro-challenge ladder source recovery — 10 September 2026
+
+Traced original invitation stakes and the saved challenge counter in golf.exe: displayed offers are §2,000/§4,000 times the next level; acceptance increments the counter and loss/tie rolls it back. Added the pure offer calculation and use it for new exhibition defaults, preserving custom/saved stakes. Documented candidate selection and the remaining eligibility/cash-settlement ambiguity in references/observations/challenge-invitations-executable.md. Next F09 work: map original admission gates and complete the invitation/acceptance/resort-accounting lifecycle; don't substitute exhibition play for career completion. Existing local authoritative event hosts remain the base for future server-owned tournaments.
+
+Validation: challenge settlement/replay and browser default/custom-stake checks pass (2 tests); production build passes. The documented cash discrepancy remains unresolved and was not silently changed in existing exhibitions.
