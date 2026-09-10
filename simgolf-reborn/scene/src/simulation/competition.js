@@ -1,3 +1,4 @@
+import { originalProfessionalSkills } from "./roster-opponent.js";
 import { validateAppearance } from "./appearance.js";
 import { canonical, RULESET_VERSION } from "./protocol.js";
 import { importCourse, coursePractice } from "./course-package.js";
@@ -44,10 +45,12 @@ export async function createCompetition({
       throw Error("Invalid competition entrant.");
     ids.add(p.id);
     validateGolferPackage(p.golfer);
+    if (p.professional !== undefined) originalProfessionalSkills(p.professional);
     return {
       id: p.id,
       name: p.name,
       profile: structuredClone(p.golfer),
+      professional: p.professional ?? null,
       appearance:
         p.appearance === undefined
           ? null
@@ -69,6 +72,7 @@ export async function createCompetition({
       id: p.id,
       name: p.name,
       golfer: p.profile,
+      ...(p.professional ? { professional: p.professional } : {}),
       ...(p.appearance ? { appearance: p.appearance } : {}),
     })),
   };
@@ -84,6 +88,7 @@ export async function createCompetition({
     loadGolfer(p.game, p.profile);
     const result = startPractice(p.game, p.game.holes[0].id);
     if (!result.ok) throw Error(result.message);
+    if (p.professional) p.game.pro.proSkills = originalProfessionalSkills(p.professional);
     p.game.pro.ownerId = p.id;
     p.game.pro.name = p.name;
     if (p.appearance) p.game.pro.appearance = structuredClone(p.appearance);

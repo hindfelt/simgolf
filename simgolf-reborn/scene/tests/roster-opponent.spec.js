@@ -2,28 +2,23 @@ import { test, expect } from "@playwright/test";
 import roster from "../src/simulation/pro-roster.json" with { type: "json" };
 import {
   ROSTER_OPPONENT_NAMES,
+  originalProfessionalSkills,
   rosterOpponent,
 } from "../src/simulation/roster-opponent.js";
 import { validateGolferPackage } from "../src/simulation/golfer-package.js";
 import { createGame, build, serialize } from "../src/simulation/game.js";
-test("all original professionals have valid, distinct cap-guided exhibition allocations", () => {
+test("original professionals retain every roster skill without granting player allocation points", () => {
   expect(ROSTER_OPPONENT_NAMES).toHaveLength(95);
-  const profiles = new Set();
   for (const record of roster.golfers) {
     const chosen = rosterOpponent(record.name);
-    expect(chosen.name).toBe(record.name);
+    expect(chosen.professional).toBe(record.name);
     expect(() => validateGolferPackage(chosen.golfer)).not.toThrow();
-    expect(
-      Object.values(chosen.golfer.profile.skills).reduce((n, v) => n + v, 0),
-    ).toBe(10);
-    for (const [key, n] of Object.entries(chosen.golfer.profile.skills))
-      expect(n).toBeLessThanOrEqual(record.skillCaps[key]);
-    profiles.add(JSON.stringify(chosen.golfer.profile.skills));
+    expect(originalProfessionalSkills(chosen.professional)).toEqual(record.skillCaps);
+    expect(Object.values(chosen.golfer.profile.skills).every(n => n === 0)).toBe(true);
   }
-  expect(profiles.size).toBeGreaterThan(1);
-  const chosen = rosterOpponent("Joe Pro");
-  chosen.golfer.profile.skills.power = 10;
-  expect(rosterOpponent("Joe Pro").golfer.profile.skills.power).not.toBe(10);
+  const skills = originalProfessionalSkills("Joe Pro");
+  skills.power = 99;
+  expect(originalProfessionalSkills("Joe Pro").power).toBe(3);
   expect(() => rosterOpponent("Invented opponent")).toThrow(/roster/);
 });
 test("phone selects a named professional and preserves the opponent after event reload", async ({
@@ -44,7 +39,7 @@ test("phone selects a named professional and preserves the opponent after event 
   await expect(page.locator("#championship-opponent option")).toHaveCount(96);
   await page.locator("#championship-opponent").selectOption("Joe Pro");
   await expect(page.locator("#opponent-profile")).toContainText(
-    "10-point exhibition",
+    "Professional skills",
   );
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
@@ -75,4 +70,31 @@ test("phone selects a named professional and preserves the opponent after event 
   });
   await page.locator("#standings").click();
   await expect(page.locator("#standings-content")).toContainText("Joe Pro");
+});
+
+test("competition uses full NPC abilities, preserves replay and leaves player skills alone", async () => {
+  const {createCompetition, restoreCompetition} = await import('../src/simulation/competition.js');
+  const {exportCourse} = await import('../src/simulation/course-package.js');
+  const {exportGolfer} = await import('../src/simulation/golfer-package.js');
+  const g = createGame(); build(g,'tee',7,20); build(g,'green',36,5);
+  const strongest = roster.golfers.find(p=>Object.values(p.skillCaps).some(n=>n>10));
+  const config = {id:'roster-full',course:await exportCourse(g),entrants:[
+    {id:'owner',name:'Gary',golfer:exportGolfer(g)},
+    {id:'rival',...rosterOpponent(strongest.name)},
+  ]};
+  const host = await createCompetition(config);
+  expect(host.roundSnapshot('rival').pro.proSkills).toEqual(strongest.skillCaps);
+  expect(host.roundSnapshot('owner').pro.proSkills).toEqual(g.proProfile.skills);
+  const cup = host.roundSnapshot('rival').holes[0].green;
+  expect(host.execute(host.nextCommand('rival','shot',{x:cup.x,z:cup.z,technique:'straight'}),{id:'rival',role:'golfer'}).ok).toBe(true);
+  host.stepTicks(40);
+  const restored = await restoreCompetition(host.save());
+  expect(restored.roundSnapshot('rival')).toEqual(host.roundSnapshot('rival'));
+  expect(restored.roundSnapshot('rival').pro.proSkills).toEqual(strongest.skillCaps);
+  const wrong = structuredClone(config); wrong.entrants[1].professional = 'Unknown';
+  await expect(createCompetition(wrong)).rejects.toThrow(/roster/);
+  // Existing event configurations without the new identifier keep their own allocations.
+  const legacy = structuredClone(config); delete legacy.entrants[1].professional;
+  const oldHost = await createCompetition(legacy);
+  expect(oldHost.roundSnapshot('rival').pro.proSkills).toEqual(legacy.entrants[1].golfer.profile.skills);
 });

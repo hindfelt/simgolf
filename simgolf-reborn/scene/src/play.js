@@ -22,6 +22,7 @@ import { isMotivated } from "./simulation/rangers.js";
 import { ACCOMPLISHMENTS } from "./simulation/accomplishments.js";
 import {
   ROSTER_OPPONENT_NAMES,
+  originalProfessionalSkills,
   rosterOpponent,
 } from "./simulation/roster-opponent.js";
 import { analyzeShots } from "./simulation/shot-analysis.js";
@@ -1507,8 +1508,8 @@ opponentSelect.onchange = () => {
   }
   const chosen = rosterOpponent(opponentSelect.value);
   $("#opponent-profile").textContent =
-    "10-point exhibition opponent · " +
-    Object.entries(effectiveProSkills(game, chosen.golfer.profile))
+    "Professional skills · " +
+    Object.entries(originalProfessionalSkills(chosen.professional))
       .filter(([, n]) => n > 0)
       .map(([key, n]) => PRO_SKILLS[key] + " " + n * 10 + "%")
       .join(" · ");

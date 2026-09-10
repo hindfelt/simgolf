@@ -27,3 +27,11 @@ The end-of-match cash branch at 0x42750d–0x427538 computes `2000*acceptedCount
 ## Live use
 
 `originalChallengeOfferStakes` now supplies the exhibition's initial amounts (§2,000/§4,000), replacing arbitrary §100/§500 defaults. Explicit custom stakes and existing saved exhibitions remain intact. This does not implement invitations, eligibility, resort money settlement or persistent career advancement; those remain required follow-through, using the evidence above.
+
+## Challenger skill copy and tick follow-up
+
+The roster loader at 0x465a58–0x465aa7 decodes ten characters into record offsets 0x25–0x2e and stores their sum separately at offset 0x36 (0x465ab1). It does not read the trailing source suffix as a skill. The challenge-start loop at 0x40f133–0x40f15d copies twelve record bytes directly into the challenger ability array at 0x577ff8, setting the corresponding nonzero-skill bits. The first ten are therefore the actual supplied roster values, not a ten-point reallocation. The additional two bytes remain outside the current ten-skill model and still require interpretation.
+
+Named professionals in new local events now retain all ten source values, including values above 100%. A host-selected `professional` identifier records this NPC choice in the event config; the round host installs the abilities after creating the practice round. It does not mint player allocation points, relax player profile validation or silently upgrade older events lacking that identifier. UI skill descriptions use the same full roster values. Existing explicit custom player packages still follow their existing rules.
+
+0x41730b–0x417328 confirms that 0x831828 is incremented by the simulation loop (an additional increment can depend on a global flag and parity). This resolves it as a clock/phase counter rather than a static eligibility flag, but does not establish a wall-clock conversion. The invitation's `>0x2000` check must not be translated into an invented number of real minutes.
