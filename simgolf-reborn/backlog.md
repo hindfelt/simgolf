@@ -599,3 +599,9 @@ surface penalties and upper cap. Independently matched 5,000 original x86 cases
 with only map surface lookup supplied; committed a repeatable verifier and
 40-case oracle fixture. Ten focused range/design-pass tests pass. Full landing
 candidate search and original terrain/input adapters remain before live use.
+
+F09 original direct approach (2026-09-11): recovered target-side terrain sampling
+and bounded distance adjustment for short direct shots, independently matching
+5,000 executions of the original x86 branch. Fourteen combined planner-helper
+and design-pass tests pass. Intermediate route search and final shot selection
+remain open before live integration; no deployed behavior changes in this pass.

@@ -396,3 +396,32 @@ Playwright tests, alongside specific special-actor/ability/cap tests. Ten combin
 range/design-pass checks pass. This does not emulate the full planner or replace
 live shot physics. Landing candidate search, terrain routing and final shot
 selection remain before full planner integration.
+
+### Direct approach terrain adjustment (2026-09-11)
+
+Reconstructed 0x4239f7–0x423b66 as `originalShotApproach`. This branch first
+writes the target tile centre to landing globals 0x5a7270/0x5a7278. Terrain
+code 1 or distance <= 25 skips the surrounding-terrain adjustment.
+
+For other direct approaches, the original eight-way facing selects cardinal
+vectors at indices facing & 6 and (facing + 1) & 6 from tables 0x4c1870/0x4c1890.
+Even facings therefore sample the same axis twice; odd facings sample adjacent
+axes. It sums the two signed shot-class bytes behind the target and subtracts
+the two ahead. A balance >= 4 adds clamp(trunc(distance / 4) - deduction, 0, 12),
+where deduction is 0 on a positive current shot class and 6 otherwise. A balance
+<= -4 subtracts 6. This changes the planned distance while retaining the tile-
+centre landing globals. These are terrain shot classes, not elevation values.
+
+`verify-original-shot-approach.py` executes this original instruction block and
+its original clamp callee, loading the original direction tables, with supplied
+map terrain/class bytes. All 5,000 fixed-seed cases match the JS implementation.
+A 40-case oracle fixture and boundary/near-side/far-side tests are committed.
+Fourteen combined approach/range/design-pass tests pass.
+
+Preceding branch evidence, not yet integrated: 0x42376c–0x4237a9 bypasses route
+search for nonzero second argument or explicit target (third argument != -1).
+Otherwise the distance threshold is 25 when actor flags bit 1 or skill bit 4
+is set, and 75 otherwise; a strictly greater distance and current terrain code
+other than 1 enter the intermediate route search. Reconstructing that search,
+its distance units, and subsequent shot selection remains necessary. The current
+helper is not a replacement for the complete shot planner or live physics.
