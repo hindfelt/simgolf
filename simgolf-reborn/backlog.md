@@ -584,3 +584,11 @@ fixed-origin/tile-centre route units, independently matching original x86 for
 10,049 distances and 1,000 segments. Segment accumulation now feeds design geometry
 and the dogleg cutoff. Six focused checks pass. Original design-pass simulation
 and live editor integration remain open.
+
+F09 design-pass orchestration (2026-09-11): reconstructed the two active skill
+passes, five-shot limit, terrain stops, snapped landing origins, first-green par,
+route-derived length and cached redraw without new planner calls. Thirteen
+orchestration/geometry/distance tests pass. The original shot planner and cache
+invalidation rules remain required before live preview integration; this helper
+does not yet change the deployed game. Future multiplayer requirements remain
+tracked under M01–M05 and must share authoritative simulation inputs.

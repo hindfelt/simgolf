@@ -335,3 +335,30 @@ and feeds the dogleg cutoff instead of requiring an invented route measure.
 Six distance/design tests pass. The full design-pass shot simulation and choice
 of segments still need reconstruction; this does not authorize substituting
 browser routing distances or change live golf physics.
+
+### Design-pass orchestration and cached redraw (2026-09-11)
+
+Reconstructed `original-design-pass.js` from 0x413230–0x413619. The normal
+entry initializes pass index 2; the switch uses skill masks 3 and 7 for the two
+active passes. Dummy actor 154 begins at the tee tile centre. Pass 2 records only
+its first landing. Pass 3 accumulates route segments, snaps each origin to the
+previous landing's tile centre, and stops at five shots, the cup, or terrain whose
+signed shot-class byte is greater than 1. An unplayable segment is not counted.
+The first landing on terrain code 1 supplies shot index + 3 as suggested par.
+The final coordinate comparison independently checks for the cup and, when equal,
+stores trunc(routeMeasure / 4) as length, even after a terrain stop.
+
+At 0x413340, global bit 0x40000 selects fresh planner calls versus cached redraw.
+Fresh results are shifted by 10 and written to parallel tile-coordinate arrays
+0x541d0c / 0x541d34; 0x4133ad consumes the same sequence without calling the
+planner. The reconstruction exposes an optional tile landing cache and returns
+a copied landing trace, keeping replay independent of caller mutation. Incomplete
+caches fail explicitly rather than using invented coordinates.
+
+Seven orchestration tests cover separate skill passes, snapped origins, terrain
+stops, the five-shot cap, first-green par, final cup-coordinate handling, and
+planner-free cached replay. Together with geometry/distance tests, 13 pass.
+This is source-disassembly reconstruction, not independent emulation of the whole
+design routine. The original planner at 0x4235c0, screen drawing, and cache
+invalidation triggers remain unimplemented here. It is not connected to the live
+browser design preview; no heuristic replacement is claimed to be original.
