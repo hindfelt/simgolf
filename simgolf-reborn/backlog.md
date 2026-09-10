@@ -530,3 +530,9 @@ per-hole rounding, active-hole fun averaging, scenic/variety tests and distinct
 facility bits. Seven focused composition/report tests pass. Fixtures are synthetic
 records; original runtime comparison and browser accumulator mappings remain open.
 No live qualification/prize claim or deployment in this step.
+
+F09 fun denominator (2026-09-11): verified original inputs count hole starts and
+non-putter shots, including unfinished rounds. Live shot handling now saves both
+counters with restore validation and no fabricated history. Original signed
+reaction accumulation and playing-time timestamp conversion remain open before
+switching live fun/time to SGA values.

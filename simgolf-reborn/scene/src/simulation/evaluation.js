@@ -10,6 +10,16 @@ export function beginObservation(g, v) {
   );
   v.holeObservation = { mask, startedAt: g.time, mood: v.mood };
 }
+// Counts actual shot events, including rounds that have not finished.
+// Original first-shot gate: 0x42cb01; non-putter gate: 0x4249a6.
+export function recordEvaluationShot(g, v, putt) {
+  if (v.pro) return;
+  const hole = g.holes.find(h => h.id === v.holeId);
+  if (!hole) return;
+  const activity = (hole.stats.evaluation.activity ??= {starts: 0, nonPuttShots: 0});
+  if (v.strokes === 0) activity.starts++;
+  if (!putt) activity.nonPuttShots++;
+}
 export function recordObservation(g, v, hole) {
   const sample = v.holeObservation;
   if (v.pro || !sample) return;
@@ -50,6 +60,10 @@ export function validateEvaluation(stats) {
     Object.keys(e.cohorts).length > 27
   )
     throw Error("Invalid hole observations.");
+  if (e.activity !== undefined && (!e.activity || typeof e.activity !== 'object' ||
+      Array.isArray(e.activity) ||
+      ![e.activity.starts, e.activity.nonPuttShots].every(n => Number.isSafeInteger(n) && n >= 0)))
+    throw Error('Invalid hole activity.');
   let count = 0,
     strokes = 0;
   for (const [key, v] of Object.entries(e.cohorts)) {

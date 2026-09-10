@@ -1,13 +1,15 @@
 import { classifyHole } from "../src/simulation/hole-classification.js";
 import {test,expect} from '@playwright/test';
 import {createGame,build,openHole,update,serialize,restore,startPractice,takeShot,par} from '../src/simulation/game.js';
-import {evaluationReport,newEvaluation,validateEvaluation,beginObservation,recordObservation} from '../src/simulation/evaluation.js';
+import {evaluationReport,newEvaluation,validateEvaluation,beginObservation,recordObservation,recordEvaluationShot} from '../src/simulation/evaluation.js';
 const advance=(g,seconds)=>{for(let i=0;i<seconds/.05;i++)update(g,.05);};
 function course(){const g=createGame(22);build(g,'tee',7,20);build(g,'green',23,17);for(let c=9;c<=21;c++)build(g,'fairway',c,19);return g;}
 test('actual paid completions feed cohorts once and reconcile with per-hole results',()=>{
  const g=course();openHole(g);advance(g,160);const h=g.holes[0],r=evaluationReport(h);
  expect(r.count).toBeGreaterThan(0);expect(r.count).toBe(h.stats.completed);expect(r.cohorts.reduce((n,c)=>n+c.strokes,0)).toBe(h.stats.strokes);
  for(const s of r.skills)expect(s.withSkill.count+s.without.count).toBe(r.count);
+ expect(h.stats.evaluation.activity.starts).toBeGreaterThanOrEqual(h.stats.completed);
+ expect(h.stats.evaluation.activity.nonPuttShots).toBeGreaterThan(0);
  expect(r.seconds).toBeGreaterThan(0);expect(r.mood).toBeGreaterThanOrEqual(0);
  const resumed=restore(serialize(g));advance(g,50);advance(resumed,50);expect(serialize(resumed)).toBe(serialize(g));
 });
@@ -63,4 +65,18 @@ test('original rating adapter uses recorded score bins and preserves legacy aver
  expect(r.skills.map(s=>s.advantage)).toEqual([3,0.5,0.5]);
  expect(classifyHole(r).name).toBe('Heroic'); // weakest tie: accuracy removed first
  expect(cohorts[0].scoreCounts).toBeUndefined();
+});
+
+test('hole activity counts starts and non-putts independently of completed rounds',()=>{
+ const g=course(), h=g.holes[0], v={holeId:h.id,strokes:0,pro:false};
+ recordEvaluationShot(g,v,false);v.strokes=1;
+ recordEvaluationShot(g,v,false);v.strokes=2;
+ recordEvaluationShot(g,v,true);
+ expect(h.stats.evaluation.activity).toEqual({starts:1,nonPuttShots:2});
+ expect(h.stats.completed).toBe(0);
+ recordEvaluationShot(g,{...v,strokes:0,pro:true},false);
+ expect(h.stats.evaluation.activity).toEqual({starts:1,nonPuttShots:2});
+ expect(restore(serialize(g)).holes[0].stats.evaluation.activity).toEqual(h.stats.evaluation.activity);
+ h.stats.evaluation.activity.starts=-1;
+ expect(()=>validateEvaluation(h.stats)).toThrow();
 });

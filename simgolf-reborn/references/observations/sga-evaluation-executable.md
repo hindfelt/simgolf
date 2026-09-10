@@ -176,3 +176,25 @@ comparison: no original saved-course fixture was found by extension search.
 Live browser scenery/time/fun/variety still need an authentic measurement adapter;
 the report must not receive arbitrary browser mood or elapsed seconds as if
 those were original accumulators.
+
+## Fun denominator events identified (2026-09-11)
+
+Original +0x20 is hole **starts**, not completed holes: 0x42cb01–0x42cb09 checks
+that the current stroke byte is zero before 0x42cb3a increments it. Original
++0x24 counts **non-putter shots**: 0x4249a6 skips the increment when club byte
+0x577f24 is 13 (putter); 0x4249cb–0x4249da increments otherwise. Thus the fun
+denominator is starts + trunc(nonPutterShots/2) +4, including unfinished play.
+The live simulation now preserves those two actual event counts in optional
+`evaluation.activity`, excludes the player-controlled pro as other visitor
+observations do, and never reconstructs missing historical activity.
+
+Original +0x158 receives the signed reaction value in BX at 0x467f21. Negative
+values can first be suppressed based on prior incidents/difficulty (0x467e4f
+onward), and some are transformed with trunc((value-1)/2) at 0x467ecd–0x467ee5.
+Current browser positive/negative comment counts therefore are not yet a proven
+replacement for this accumulator. They remain descriptive legacy fun values.
+
+Playing time +0x1ec adds half a positive timestamp difference at
+0x426ee2–0x426f0a. The prior timestamp is stored on the golfer at 0x577fc8.
+Exact timestamp boundaries and browser clock conversion still need tracing;
+do not substitute current seconds divided by 60.

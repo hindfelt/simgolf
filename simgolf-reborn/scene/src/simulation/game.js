@@ -75,6 +75,7 @@ import { treeCollision, treeGroundBlocker } from "./trees.js";
 import {
   newEvaluation,
   beginObservation,
+  recordEvaluationShot,
   recordObservation,
   validateEvaluation,
 } from "./evaluation.js";
@@ -996,6 +997,7 @@ export function takeShot(g, v, target, technique = "straight") {
   endpoint.z = ground.end.z;
   const waterLanding = ground.water;
   beginObservation(g, v);
+  recordEvaluationShot(g, v, putt);
   v.strokes++;
   if (v.holeReactions?.holeId === v.holeId) v.holeReactions.shots++;
   v.shot = {
