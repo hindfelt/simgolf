@@ -27,3 +27,9 @@ test('all excluded options mark candidate; second slot sentinel skips whole row'
  expect(result.scores[0][1]).toBe(100000);expect(result.survivors).toEqual([]);
  expect(result.continueSearch).toBe(false);
 });
+test('negative original landing scores remain valid and competitive',()=>{
+ const scores=grid();scores[0]=[-8,-16,113,99999,99999,99999];
+ const result=run(scores,{bestScore:-16});
+ expect(result.scores[0]).toEqual([-8,-16,99999,99999,99999,99999]);
+ expect(result.survivors).toHaveLength(2);
+});

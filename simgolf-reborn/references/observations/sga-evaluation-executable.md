@@ -479,3 +479,31 @@ small survivor counts and sentinel behavior. Nine pruning/admission tests pass.
 Sample-count-4 heading and remaining-distance spread bookkeeping is not part
 of this score-only helper or oracle. Candidate shot simulation, scoring inputs,
 spread flags, and complete search orchestration remain open before live use.
+
+### Simulated landing score (2026-09-11)
+
+Reconstructed `originalRouteLandingScore` from 0x422c34–0x422d87 and
+0x422e5a–0x422ea4. After a simulated landing, imagination bit 4 samples eight
+nearby points: cardinal offsets truncate(1024/3), diagonal offsets 1024/4.
+Each sample adds its signed terrain shot class, minus 1 for marker bit 0x80;
+outside-map/code-20 points instead add the excluded class at 0x577182.
+
+The landing itself adds eight times an adjusted lie value. Exclusion (bounds,
+code 20, or metadata bit 0x400) overrides with excluded class. Otherwise marker
+bit 0x80 subtracts 1 when low five bits match the actor's hole, or adds 2 for
+another hole. The raw nonpositive landing class increments the good-landing
+counter, independently of that adjusted lie. Add trunc(original route distance
+to cup / divisor), with divisor 2, 4 or 6 supplied by the outer search setup.
+The helper accumulates onto the existing score and good-landing count.
+
+Negative scores are possible: a zero-class same-hole marker at the cup gives
+-8 even without imagination. Corrected pruning input validation to admit signed
+scores rather than rejecting these valid original results.
+
+`verify-original-route-landing-score.py` executes original sampling, surface and
+marker handling, distance and score arithmetic for 1,000 supplied terrain cases.
+It skips unrelated heading/target bookkeeping between the two score blocks.
+All scores and good-landing counters match. Pruning independently matches 200
+complete x86 grids now including negative scores. Nine landing/pruning tests
+pass. This does not include the imaginative follow-up shot assessment at
+0x422ea4 onward, full shot simulation, or a live planner adapter.

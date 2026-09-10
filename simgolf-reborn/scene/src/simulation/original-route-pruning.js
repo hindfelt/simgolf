@@ -3,8 +3,8 @@
 // carries the original whole-candidate exclusion sentinel.
 export function originalRoutePruning({scores,bestScore,samples,work}) {
  if(!Array.isArray(scores)||scores.length!==441||scores.some(row=>!Array.isArray(row)||row.length!==6||
-   row.some(n=>!Number.isInteger(n)||n<0||n>100000))||
-   !Number.isInteger(bestScore)||bestScore<0||bestScore>99999||
+   row.some(n=>!Number.isInteger(n)||n< -2147483648||n>100000))||
+   !Number.isInteger(bestScore)||bestScore< -2147483648||bestScore>99999||
    ![2,4].includes(samples)||!Number.isInteger(work)||work<0||work>1000000)
    throw Error('Invalid original route pruning inputs.');
  const result=scores.map(row=>[...row]);

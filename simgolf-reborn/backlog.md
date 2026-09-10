@@ -619,3 +619,10 @@ score exclusion, tie boundaries, adaptive margin tightening and refinement
 continuation. Independently matched 200 complete original x86 score grids;
 nine pruning/admission tests pass. Shot simulations and scoring inputs, spread
 flags and full orchestration remain needed before live planner integration.
+
+F09 original landing scores (2026-09-11): reconstructed simulated-landing terrain
+costs, imagination's eight surrounding samples, hole-marker adjustments and
+remaining-distance cost. Matched 1,000 executions of original x86 score blocks.
+Corrected pruning to support valid negative scores and reverified 200 score grids.
+Nine landing/pruning tests pass. Follow-up-shot assessment and the underlying
+shot simulation remain before full planner/live integration.
