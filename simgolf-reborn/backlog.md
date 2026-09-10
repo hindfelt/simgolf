@@ -536,3 +536,13 @@ non-putter shots, including unfinished rounds. Live shot handling now saves both
 counters with restore validation and no fabricated history. Original signed
 reaction accumulation and playing-time timestamp conversion remain open before
 switching live fun/time to SGA values.
+
+### Evaluation update published (2026-09-11)
+
+Published tested source through 4619fd2 to the existing simgolfer.0x4d.in Worker
+(version e6f05a56-59c2-4083-946f-ff6629a45af7) and pushed the release branch.
+All 52 combined evaluation/classification/accomplishment/original-SGA/challenge/
+session checks passed. Public HTML references the current entry asset, and the
+served game bundle matches the local production output byte-for-byte. Live scope:
+corrected classification, original normal-mode skill rating adapter and saved
+score/activity inputs. Full SGA tournament qualification is still incomplete.
