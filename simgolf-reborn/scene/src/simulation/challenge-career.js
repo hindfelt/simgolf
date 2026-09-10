@@ -70,21 +70,39 @@ export async function settleCareerChallenge(g, raw) {
       canonical(s.stakes)!==canonical(o.stakes) || rival?.professional!==o.professional ||
       canonical(owner?.golfer.profile)!==canonical(o.profile))
     throw Error('The event does not match this accepted challenge.');
-  if (s.status!=='complete') return {ok:false,message:'Finish the challenge round before settling it.'};
-  // Recheck after async replay: duplicate concurrent completions must pay once.
+  // Read the current receipts only after async replay. A concurrent settlement
+  // may already have paid these holes while this replay was in progress.
   if (c.offer!==o) return {ok:false,message:'This challenge was already settled.'};
-  const won=s.matchAmount>0;
-  if (!won) c.level=o.level;
-  g.cash+=s.residentNet;
-  g.ledger.push({id:g.ledger.length+1,time:g.time,amount:s.residentNet,reason:`Pro challenge: ${o.professional}`});
-  c.results.push({id:o.id,eventId:o.eventId,professional:o.professional,level:o.level,
-    amount:s.residentNet,won,at:g.time});
-  c.results=c.results.slice(-100);
-  c.offer=null; c.nextAt=g.time+INTERVAL; g.revision++;
+  const paid=o.paidHoles ?? [];
+  if (paid.length>s.holes.length || paid.some((h,i)=>canonical(h)!==canonical(s.holes[i])))
+    throw Error('This replay contradicts hole wagers already settled.');
+  const pending=s.holes.slice(paid.length),complete=s.status==='complete';
+  if (!pending.length && !complete) return {ok:false,message:'No new completed hole wagers to settle.'};
+  const pay=(amount,reason)=>{
+    g.cash+=amount;
+    g.ledger.push({id:g.ledger.length+1,time:g.time,amount,reason});
+  };
+  for (const h of pending)
+    pay(h.residentAmount,`Pro challenge: ${o.professional}, hole ${h.number}`);
+  o.paidHoles=structuredClone(s.holes);
+  const delta=pending.reduce((n,h)=>n+h.residentAmount,0)+(complete?s.matchAmount:0);
+  if (complete) {
+    pay(s.matchAmount,`Pro challenge: ${o.professional}, match wager`);
+    const won=s.matchAmount>0;
+    if (!won) c.level=o.level;
+    c.results.push({id:o.id,eventId:o.eventId,professional:o.professional,level:o.level,
+      amount:s.residentNet,won,at:g.time});
+    c.results=c.results.slice(-100);
+    c.offer=null; c.nextAt=g.time+INTERVAL;
+  }
+  g.revision++;
   if (g.protocol) g.protocol.revision++;
-  const message=`Challenge settled: ${s.residentNet<0?'−':'+'}$${Math.abs(s.residentNet).toLocaleString()}.`;
+  const cash=n=>`${n<0?'−':'+'}$${Math.abs(n).toLocaleString()}`;
+  const message=complete
+    ? `Match complete: ${cash(s.residentNet)} net; ${cash(delta)} settled now.`
+    : `${pending.length} hole wager${pending.length===1?'':'s'} settled: ${cash(delta)}. Match still in progress.`;
   g.events.unshift({time:g.time,text:message}); g.events.length=Math.min(g.events.length,100);
-  return {ok:true,message};
+  return {ok:true,message,complete,amount:delta};
 }
 export function validateChallengeCareer(g) {
   const c=g.challengeCareer;
@@ -108,5 +126,15 @@ export function validateChallengeCareer(g) {
       (o.status==='playing' && (typeof o.eventId!=='string'||typeof o.courseDigest!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(o.eventId)||
         !/^[a-f0-9]{64}$/.test(o.courseDigest)||!o.profile||!o.layout)))
     throw Error('Invalid challenge invitation.');
-  if (o.status==='playing') validateProProfile(o.profile);
+  if (o.status==='playing') {
+    validateProProfile(o.profile);
+    const paid=o.paidHoles ?? [];
+    if (!Array.isArray(paid) || paid.length>o.layout.holes.length || paid.some((h,i)=>
+      !h || h.holeId!==o.layout.holes[i].id || h.number!==i+1 ||
+      !Number.isSafeInteger(h.residentStrokes) || h.residentStrokes<1 ||
+      !Number.isSafeInteger(h.challengerStrokes) || h.challengerStrokes<1 ||
+      h.residentAmount!==Math.sign(h.challengerStrokes-h.residentStrokes)*o.stakes.perHole ||
+      h.winner!==(h.residentStrokes<h.challengerStrokes?'local-owner':h.residentStrokes>h.challengerStrokes?'club-rival':null)))
+      throw Error('Invalid settled challenge holes.');
+  }
 }

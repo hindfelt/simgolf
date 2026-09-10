@@ -31,11 +31,13 @@ async function completed(delayRival=false){
  const host=await createProChallenge({id:'career-event',course:pkg,resident:{id:'local-owner',name:'Gary',golfer:exportGolfer(g)},challenger:{id:'club-rival',...rosterOpponent(o.professional)},stakes:o.stakes});
  expect(acceptChallenge(g,o.id,'career-event',pkg.digest).ok).toBe(true);
  expect((await settleCareerChallenge(g,host.save())).ok).toBe(false);
+ const initialEvent=host.save();let partial=null;
  for(let tick=0;tick<15000&&host.snapshot().status!=='complete';tick++){
   for(const id of ['local-owner','club-rival']){const r=host.roundSnapshot(id),p=r.pro;if(p.phase==='address') {const cup=r.holes.find(h=>h.id===p.holeId).green;host.execute(host.nextCommand(id,'shot',{x:id==='club-rival'&&delayRival&&p.strokes<10?p.ball.x+8:cup.x,z:id==='club-rival'&&delayRival&&p.strokes<10?p.ball.z:cup.z,technique:'straight'}),{id,role:'golfer'});}}
   host.stepTicks(10);
+  if (!partial && host.snapshot().holes.length===1 && host.snapshot().status!=='complete') partial={save:serialize(g),event:host.save(),amount:host.snapshot().residentNet};
  }
- expect(host.snapshot().status).toBe('complete');return {g,host};
+ expect(host.snapshot().status).toBe('complete');return {g,host,partial,initialEvent};
 }
 test('accepted match settles derived money once after reload and rolls ladder back on non-win',async()=>{
  const {g,host}=await completed();const loaded=restore(serialize(g)),cash=loaded.cash;
@@ -87,4 +89,49 @@ test('a forged event digest cannot substitute another course for the accepted re
  const cash=g.cash;
  await expect(settleCareerChallenge(g,host.save())).rejects.toThrow(/does not match/);
  expect(g.cash).toBe(cash);
+});
+
+test('mid-match wagers persist, concurrent returns pay once and final settlement pays only the remainder',async()=>{
+ const {host,partial,initialEvent}=await completed(true);expect(partial).not.toBeNull();
+ let g=restore(partial.save);const startCash=g.cash;
+ const outcomes=await Promise.all([settleCareerChallenge(g,partial.event),settleCareerChallenge(g,partial.event)]);
+ expect(outcomes.filter(r=>r.ok)).toHaveLength(1);
+ expect(g.cash).toBe(startCash+partial.amount);
+ expect(g.challengeCareer.offer.status).toBe('playing');
+ expect(g.challengeCareer.offer.paidHoles).toHaveLength(1);
+ expect(g.challengeCareer.results).toHaveLength(0);
+ g=restore(serialize(g));
+ const before=serialize(g);
+ await expect(settleCareerChallenge(g,initialEvent)).rejects.toThrow(/already settled/);
+ expect(serialize(g)).toBe(before);
+ expect((await settleCareerChallenge(g,partial.event)).ok).toBe(false);
+ const final=await settleCareerChallenge(g,host.save());
+ expect(final.amount).toBe(host.snapshot().residentNet-partial.amount);
+ expect(g.cash).toBe(startCash+host.snapshot().residentNet);
+ expect(g.ledger.filter(e=>e.reason.includes('Pro challenge:'))).toHaveLength(4);
+ expect(g.challengeCareer.results[0].amount).toBe(host.snapshot().residentNet);
+});
+
+test('a partial return shows the resume invitation and cannot repeat the completed-hole payment',async({page})=>{
+ const {partial}=await completed(true);
+ const initial=restore(partial.save),expected=initial.cash+partial.amount;
+ await page.addInitScript(({save,event})=>{if(!localStorage.getItem('simgolf-reborn.course.v1')){localStorage.setItem('simgolf-reborn.course.v1',save);localStorage.setItem('simgolf-reborn.championship.career-event',event)}},partial);
+ await page.goto('/');await page.waitForFunction(()=>window.__gameTest);
+ expect(await page.evaluate(()=>window.__gameTest.getState().cash)).toBe(expected);
+ await page.locator('#menu-button').click();await expect(page.locator('#career-challenge')).toHaveText('Resume invited challenge');
+ await page.reload();await page.waitForFunction(()=>window.__gameTest);
+ expect(await page.evaluate(()=>window.__gameTest.getState().cash)).toBe(expected);
+ expect(await page.evaluate(()=>window.__gameTest.getState().challengeCareer.offer.paidHoles.length)).toBe(1);
+});
+
+test('the live invited match records completed wagers without leaving its screen',async({page})=>{
+ const {partial}=await completed(true);const expected=restore(partial.save).cash+partial.amount;
+ await page.addInitScript(({save,event})=>{if(!localStorage.getItem('simgolf-reborn.course.v1')){localStorage.setItem('simgolf-reborn.course.v1',save);localStorage.setItem('simgolf-reborn.championship.career-event',event)}},partial);
+ await page.goto('/?championship=career-event');await page.waitForFunction(()=>window.__gameTest);
+ await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('simgolf-reborn.course.v1')).challengeCareer.offer.paidHoles?.length)).toBe(1);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('simgolf-reborn.course.v1')).cash)).toBe(expected);
+ await page.reload();await page.waitForFunction(()=>window.__gameTest);
+ await page.locator('#standings').click();
+ await expect(page.locator('#challenge-accounting')).toContainText('Invited match');
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('simgolf-reborn.course.v1')).cash)).toBe(expected);
 });

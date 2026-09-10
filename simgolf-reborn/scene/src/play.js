@@ -1494,8 +1494,11 @@ function showStandings() {
     total.textContent = `Match wager: ${state.matchAmount === null ? "pending" : money(state.matchAmount)} · Gary’s net: ${money(state.residentNet)}`;
     const note = document.createElement("p");
     let invited=false;
-    try { invited=JSON.parse(localStorage.getItem("simgolf-reborn.course.v1"))?.challengeCareer?.offer?.eventId===state.id; } catch {}
-    note.textContent = invited ? "Invited match. Return to your resort after finishing to settle the result." : "Exhibition result. Resort balance unchanged.";
+    try { const career=JSON.parse(localStorage.getItem("simgolf-reborn.course.v1"))?.challengeCareer;
+      invited=career?.offer?.eventId===state.id || career?.results?.some(r=>r.eventId===state.id);
+    } catch {}
+    note.id="challenge-accounting";
+    note.textContent = invited ? "Invited match. Completed wagers are recorded in your resort account; the match wager settles when the round is finished." : "Exhibition result. Resort balance unchanged.";
     if (invited) {
       const back=document.createElement("a");back.href="./";back.textContent="Return to resort";details.append(back);
     }
@@ -1532,7 +1535,7 @@ function openEventSetup(kind) {
   opponentSelect.disabled = invited;
   $("#challenge-hole-stake").disabled = invited;
   $("#challenge-match-stake").disabled = invited;
-  $("#challenge-terms p").textContent = invited ? "An invited match: winnings and losses will be applied to your resort when you return. Win to advance the challenge ladder." : "Exhibition stakes are recorded for this match; your resort balance stays unchanged.";
+  $("#challenge-terms p").textContent = invited ? "An invited match: completed hole wagers update your resort account as you play. Finish the round to settle the match wager; win to advance the challenge ladder." : "Exhibition stakes are recorded for this match; your resort balance stays unchanged.";
   if (invited) {
     const offer=game.challengeCareer.offer;
     opponentSelect.value=offer.professional; opponentSelect.onchange();
@@ -2275,6 +2278,40 @@ window.__gameTest = Object.freeze({
     };
   },
 });
+let careerSettlementBusy=false,careerSettlementCursor="";
+async function syncLiveChallengeWagers() {
+  if (!competition || careerSettlementBusy) return;
+  const state=competition.snapshot();
+  if (state.kind!=="pro-challenge" || !state.holes.length) return;
+  const cursor=`${state.id}:${state.holes.length}:${state.status}`;
+  if (cursor===careerSettlementCursor) return;
+  careerSettlementBusy=true;
+  const resortKey="simgolf-reborn.course.v1";
+  try {
+    const before=localStorage.getItem(resortKey);
+    if (!before) {careerSettlementCursor=cursor;return;}
+    const resort=restore(before);
+    if (resort.challengeCareer?.offer?.eventId!==state.id) {careerSettlementCursor=cursor;return;}
+    const event=competition.save();
+    // Persist the replay before its receipts so an interrupted tab can recover.
+    localStorage.setItem(saveKey,event);
+    const result=await settleCareerChallenge(resort,event);
+    // Another local action may have saved the resort during replay. Retry from
+    // that newer state instead of overwriting it with this snapshot.
+    if (localStorage.getItem(resortKey)!==before) return;
+    if (result.ok) {
+      localStorage.setItem(resortKey,serialize(resort));
+      toast(result.message);
+      const note=$("#challenge-accounting");
+      if (note) note.textContent="Invited match. Completed wagers have been recorded in your resort account.";
+    }
+    careerSettlementCursor=cursor;
+  } catch(error) {
+    // Keep the event playable; return-to-resort recovery can retry its replay.
+    careerSettlementCursor=cursor;
+    toast(`Wagers remain pending: ${error.message}`);
+  } finally {careerSettlementBusy=false;}
+}
 let rivalView = competition?.roundSnapshot("club-rival").pro ?? null;
 const opponentViews = () =>
   rivalView
@@ -2289,6 +2326,7 @@ let last = performance.now(),
   lastUI = 0,
   lastSave = last;
 function frame(now) {
+  void syncLiveChallengeWagers();
   const dt = Math.min((now - last) / 1000, 0.15);
   last = now;
   if (!paused && !document.hidden && !$("dialog[open]")) {
