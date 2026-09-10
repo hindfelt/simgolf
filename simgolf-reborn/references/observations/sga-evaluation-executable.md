@@ -452,3 +452,30 @@ actor override, excluded surfaces and progress. Nineteen combined planner-helper
 and design-pass tests pass. This is candidate admission only. Six-way candidate
 shot simulation, score comparison, iterative search and winning-target assignment
 remain before this constitutes a full original planner. No live adapter is wired.
+
+### Route score pruning and refinement (2026-09-11)
+
+Reconstructed score-only pruning and refinement control from 0x423305–0x423492
+as `originalRoutePruning`. Each 21-by-21 candidate holds six scores. A second
+slot > 99999 skips the whole candidate; individual scores >= 99999 are excluded.
+Scores strictly greater than best + margin become 99999. Equal cutoff scores
+survive. Six excluded options mark the second slot 100000.
+
+Margin starts at 128. Tighten by half while survivor count > 4, margin > 16,
+and previous work + 3 * survivors * current sample count > 250. Exclusion is
+persistent across tighter passes. Refinement doubles sample count from 2 to 4
+or 4 to 8 and only continues with more than one survivor. Outer caller checks
+at 0x423261/0x42326c bypass pruning entirely at eight samples or design mode 2;
+those remain caller responsibilities, not silent assumptions inside the helper.
+
+`verify-original-route-pruning.py` executes the original score scan, exclusion
+writes and margin-control instructions for 200 full 441-by-6 score grids at
+sample count 2. Its hook skips heading/spread setup when rescanning, resets the
+survivor counter and re-enters the original scan. The idle/UI call is stubbed;
+no score arithmetic is stubbed. All output grids, survivor counts and final
+margins match. Four tests cover cutoff equality, work budgets, minimum margin,
+small survivor counts and sentinel behavior. Nine pruning/admission tests pass.
+
+Sample-count-4 heading and remaining-distance spread bookkeeping is not part
+of this score-only helper or oracle. Candidate shot simulation, scoring inputs,
+spread flags, and complete search orchestration remain open before live use.

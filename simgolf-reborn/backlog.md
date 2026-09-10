@@ -613,3 +613,9 @@ matched 5,000 original x86 cases; 19 combined planner-helper/design-pass tests
 pass. Candidate shot simulation, scoring and final selection remain before live
 integration. Cooperative building, earnings competition and tournaments across
 user-built courses remain tracked under M01–M05.
+
+F09 original route pruning (2026-09-11): reconstructed six-option candidate
+score exclusion, tie boundaries, adaptive margin tightening and refinement
+continuation. Independently matched 200 complete original x86 score grids;
+nine pruning/admission tests pass. Shot simulations and scoring inputs, spread
+flags and full orchestration remain needed before live planner integration.
