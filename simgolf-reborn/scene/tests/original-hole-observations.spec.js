@@ -29,3 +29,23 @@ test('source score slots remain separate and invalid histogram/switch inputs rej
  expect(()=>originalHoleObservations({...a,combineContrasts:undefined})).toThrow();
  a.histogram[0][0]=-1;expect(()=>originalHoleObservations(a)).toThrow();
 });
+
+test('original completion recording caps high scores and excludes extended mask rows',async()=>{
+ const {originalScoreSlot}=await import('../src/simulation/original-hole-observations.js');
+ expect(originalScoreSlot(12,6)).toEqual({row:6,bin:9,includedInSga:true});
+ expect(originalScoreSlot(-1,7)).toEqual({row:7,bin:0,includedInSga:false});
+ expect(originalScoreSlot(4,15)).toEqual({row:15,bin:4,includedInSga:false});
+ expect(originalScoreSlot(4,0x87)).toEqual({row:7,bin:4,includedInSga:true});
+ expect(()=>originalScoreSlot(128,0)).toThrow();
+});
+test('raw original record decoding honors offsets, stride and signed bins',async()=>{
+ const {originalHoleRecordObservations}=await import('../src/simulation/original-hole-observations.js');
+ const backing=new Uint8Array(540), record=backing.subarray(10,530);
+ const v=new DataView(record.buffer,record.byteOffset,520);v.setInt8(0,4);
+ // Skill mask 7: eight birdies; mask 6: eight scores of nine (including capped scores).
+ v.setInt16(0x28+7*22+3*2,8,true);v.setInt16(0x28+6*22+9*2,8,true);
+ const r=originalHoleRecordObservations(record,{difficulty:1,combineContrasts:false});
+ expect(r.advantages).toEqual([300,50,50]);expect(r.completed).toBe(16);
+ v.setInt16(0x28+2,-1,true);
+ expect(()=>originalHoleRecordObservations(record,{difficulty:1,combineContrasts:false})).toThrow();
+});

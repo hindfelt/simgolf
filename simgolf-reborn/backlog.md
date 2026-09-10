@@ -507,3 +507,10 @@ Legacy observations retain their known totals without fabricated distributions.
 Ten focused tests (including real completions, save/restore and phone report)
 and production build pass. Original comparison-mode selection, training masks
 and scores above nine must be resolved before switching the live rating inputs.
+
+F09 original score-record integration (2026-09-11): verified completion scores
+are clamped to nine for SGA histograms. Added exact row/bin selection and a direct
+reader for original 520-byte hole records, feeding the reconstructed rating
+calculation. Six focused tests pass. Extra golfer flag rows/admission semantics
+and the tee-related comparison-mode flag remain to be mapped before replacing
+browser rating inputs. No deployment in this step.

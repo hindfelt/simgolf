@@ -25,3 +25,26 @@ export function originalHoleObservations({par, histogram, difficulty, combineCon
   return {groups, advantages, qualifyingSkills, completed,
     averageHundredths: completed ? Math.trunc(100 * strokes / completed) : 0};
 }
+
+// 0x426b39–0x426b6f clamps the recorded signed score to 0..9 and
+// selects a histogram row with the low FOUR bits of the golfer's flags.
+// Rows 8..15 are outside the eight groups consumed by the SGA calculation.
+export function originalScoreSlot(score, golferFlags) {
+  if (!Number.isInteger(score) || score < -128 || score > 127 ||
+      !Number.isInteger(golferFlags) || golferFlags < 0 || golferFlags > 255)
+    throw Error('Invalid original golfer score.');
+  const row = golferFlags & 15;
+  const bin = Math.max(0, Math.min(9, score));
+  return {row, bin, includedInSga: row < 8 && bin > 0};
+}
+
+// Read the eight report groups directly from an original 520-byte hole record.
+// No gameplay-state mapping or assumptions about the original flags are made.
+export function originalHoleRecordObservations(record, options) {
+  if (!(record instanceof Uint8Array) || record.byteLength !== 520)
+    throw Error('Invalid original hole record.');
+  const view = new DataView(record.buffer, record.byteOffset, record.byteLength);
+  const histogram = Array.from({length:8}, (_,mask) =>
+    Array.from({length:9}, (_,score) => view.getInt16(0x28 + 22 * mask + 2 * (score + 1), true)));
+  return originalHoleObservations({...options, par:view.getInt8(0), histogram});
+}

@@ -105,3 +105,27 @@ from an average. Raw scores are preserved, including scores above nine, pending
 verification of the original recording/clamping behavior. The original mode bit,
 training-to-mask mapping and scores above nine remain adapter questions before
 replacing live broad-mean ratings with the reconstructed calculation.
+
+## Score recording and direct record input (2026-09-11)
+
+Completion function 0x426b00 checks golfer byte +0x18 (absolute 0x577f20)
+for zero before the histogram branch. At 0x426b39 it loads the signed score
+byte at 0x577f2a, then calls clamp 0x466a00 with limits 0 and 9. At 0x426b4c
+it loads the golfer flag byte 0x577f21 and masks with **15**, not 7. Row stride
+is 11 signed words, and 0x426b6f increments the selected word at
+0x574528 + 520*hole + 22*row + 2*clampedScore.
+
+The report consumes only rows 0..7 and bins 1..9. Hence scores above nine
+contribute as nine; bin zero and rows 8..15 do not contribute. The meaning of
+flag bit 8 and the admission byte must still be established before mapping
+browser training/professional state to these rows. This supersedes the earlier
+unknown high-score handling; it does not resolve the remaining flags.
+
+`originalScoreSlot` implements this indexing without guessing flag meanings.
+`originalHoleRecordObservations` now reads the confirmed 520-byte record layout
+directly, including signed par, signed histogram words and byte-offset views,
+and feeds the reconstructed SGA observation calculation. Six focused tests pass.
+
+Global mode bit 0x40 is also read by tee-coordinate editing around 0x41f7e5,
+0x41f9b3 and 0x41fdd6. This suggests a relation to tee layouts, but its semantics
+are not yet proven; the explicit `combineContrasts` input remains required.
