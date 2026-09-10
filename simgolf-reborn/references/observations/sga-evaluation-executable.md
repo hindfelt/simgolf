@@ -154,3 +154,25 @@ word so long-running browser observations do not fail at 32768; raw record
 reading still interprets original signed words and rejects negative counts.
 Thirteen evaluation/source-input tests and build pass; twenty evaluation,
 classification and accomplishment checks passed before the final adapter test.
+
+## Complete original-record report composition (2026-09-11)
+
+`original-sga-records.js` composes the 18-record loop with the ten-criterion
+report. It consumes original records plus the explicit original hole count and
+facility bitmask. For each nonzero-par record it reads length at +4, count +0x20,
+extra denominator total +0x24, time +0x1ec, fun numerator +0x158, scenery fields
++0xee/+0x104/+0x110 and variety +0x1fc. The middle scenery field is halved with
+signed truncation. Time truncates per hole, first by count then by 40; fun
+truncates per hole then averages across active records (0x451c51–0x451c58 uses
+the active-record counter at the pre-push stack offset 0x20). Facility bits
+6..19 count once each, regardless of how many buildings share that type.
+
+Tests now compose synthetic raw records through measurement and grading, reaching
+100/100 for a fully qualifying 18-hole fixture and testing time/fun rounding,
+inactive records, scenery's inclusive eight-point gate, variety's strict <2 gate,
+facility bits and invalid/empty inputs. Seven report/composition checks pass.
+This is end-to-end for the decoded record schema, not an original-runtime
+comparison: no original saved-course fixture was found by extension search.
+Live browser scenery/time/fun/variety still need an authentic measurement adapter;
+the report must not receive arbitrary browser mood or elapsed seconds as if
+those were original accumulators.
