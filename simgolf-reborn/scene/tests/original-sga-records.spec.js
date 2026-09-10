@@ -38,3 +38,14 @@ test('empty or malformed records cannot earn a recommendation',()=>{
  expect(()=>originalSgaFromRecords(a)).toThrow();
  expect(()=>originalSgaFromRecords({...fixture(),records:[]})).toThrow();
 });
+
+test('fresh classifications recalculate variety instead of trusting stored penalties',()=>{
+ const a=fixture();
+ expect(originalSgaFromRecords(a).measurements.variety).toBe(18);
+ const report=originalSgaFromRecords({...a,classifications:Array(18).fill(7)});
+ expect(report.measurements.variety).toBe(1);
+ expect(report.holes[0].varietyPenalty).toBe(0);
+ expect(report.holes[1].varietyPenalty).toBe(4);
+ expect(report.report.unacceptable).toContain('variety');
+ expect(()=>originalSgaFromRecords({...a,classifications:[7]})).toThrow();
+});

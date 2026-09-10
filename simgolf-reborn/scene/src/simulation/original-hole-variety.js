@@ -46,3 +46,20 @@ export function originalDoglegFromPoints({tee, bend, green, flags = 0}) {
     flags: originalDoglegFlags({flags,teeToGreenHeading,bendToGreenHeading,
       bendAtGreen:bend.x===green.x && bend.z===green.z})};
 }
+
+export function originalHoleVarietyFromRecords({record, previousRecord, holeNumber,
+  classification, previousClassification, difficulty}) {
+  const read = bytes => {
+    if (!(bytes instanceof Uint8Array) || bytes.byteLength !== 520)
+      throw Error('Invalid original variety record.');
+    return new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  };
+  const current = read(record), previous = read(previousRecord);
+  const heading = v => originalHeading((v.getInt32(24,true)-v.getInt32(8,true))|0,
+    (v.getInt32(28,true)-v.getInt32(12,true))|0);
+  return originalHoleVariety({holeNumber,classification,previousClassification,difficulty,
+    starts:current.getInt32(32,true), flags:current.getUint32(512,true),
+    previousFlags:previous.getUint32(512,true), feature132:current.getInt16(306,true),
+    feature134:current.getInt16(308,true), par:current.getInt8(0),previousPar:previous.getInt8(0),
+    heading:heading(current),previousHeading:heading(previous)});
+}

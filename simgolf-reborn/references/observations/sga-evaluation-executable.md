@@ -268,3 +268,23 @@ the source executable SHA256 first (requires Python pefile/unicorn and Node).
 A 65-vector oracle subset is retained in the ordinary test fixtures so routine
 regressions do not require an emulator. Six heading/variety checks pass.
 This verifies this isolated function, not whole-game timing or runtime parity.
+
+## Record-based variety verified and composed (2026-09-11)
+
+`originalHoleVarietyFromRecords` now reads the actual record fields and computes
+headings using the verified original function. Independent emulation runs the
+unaltered block 0x42da34–0x42db42 plus its original heading callee, with original
+records, stack classifications and difficulty memory populated. All 2,000
+randomized record pairs matched exactly across starts at 0/7/8/30, all four
+difficulties, first/later holes, par/flags and nonzero elevation-event counters.
+The repeatable script is `scripts/verify-original-variety.py`; it verifies the
+executable hash and requires pefile/unicorn/Node. It executes no OS services.
+
+`originalSgaFromRecords` optionally accepts the current 18 classification masks
+and recalculates variety before grading. Without them it continues to report the
+stored original values. Inactive holes preserve the prior active classification,
+while geometry references the preceding physical record, matching the original
+loop's two different sources. The recomputed penalty is included for diagnostics.
+Tests demonstrate stale zero penalties cannot qualify eighteen repetitive holes
+when fresh classifications are provided. Eleven geometry/variety/report tests
+pass. This is original-record integration; browser incident/bend adapters remain.

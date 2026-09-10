@@ -566,3 +566,9 @@ coordinate-based dogleg reconstruction. Independently verified against isolated
 original x86 instructions for 10,033 vectors, with a repeatable oracle script and
 committed regression subset. Six heading/variety tests pass. Editor bend selection
 and elevation reaction admission remain before full live variety integration.
+
+F09 variety composition (2026-09-11): record-based variety exactly matched the
+original x86 block across 2,000 independently executed cases. SGA record reports
+can now recompute variety from fresh classification masks and geometry instead
+of trusting stale stored penalties. Eleven focused tests pass. Browser elevation-
+event and bend-selection adapters remain before live course-editor integration.
