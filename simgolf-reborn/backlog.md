@@ -626,3 +626,9 @@ remaining-distance cost. Matched 1,000 executions of original x86 score blocks.
 Corrected pruning to support valid negative scores and reverified 200 score grids.
 Nine landing/pruning tests pass. Follow-up-shot assessment and the underlying
 shot simulation remain before full planner/live integration.
+
+F09 original follow-up selection (2026-09-11): reconstructed four-sample
+imagination gate, lie-dependent weighting, first-shot range reduction and choice
+among straight/draw/fade assessments. Thirteen follow-up/landing/pruning checks
+pass. The underlying route assessment, its original projection table and incoming
+flag lifetime remain open; callback is explicit and no heuristic is substituted.

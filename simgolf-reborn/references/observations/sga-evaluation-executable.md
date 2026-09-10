@@ -507,3 +507,32 @@ All scores and good-landing counters match. Pruning independently matches 200
 complete x86 grids now including negative scores. Nine landing/pruning tests
 pass. This does not include the imaginative follow-up shot assessment at
 0x422ea4 onward, full shot simulation, or a live planner adapter.
+
+### Follow-up shot selection (2026-09-11)
+
+Reconstructed 0x422e99–0x423098 orchestration as `originalRouteFollowup`.
+It runs only at four samples, with mode != 2, imagination bit 4, and the
+beyond-two-shots flag clear. Positive adjusted lie adds twice the straight
+assessment using unchanged range. Other lies reduce range by trunc(range/5)
+on shot zero; compare straight plus enabled shape -1 and +1 assessments,
+then add trunc(minimum cost/2).
+
+For the straight assessment, the carried follow-up flag becomes 1 when raw
+landing class <= 0, remaining distance >= 50 and
+trunc(60 * (range - remaining) / (3 * range)) >= 4. Otherwise it is preserved;
+curve assessments receive flag 0. The incoming flag is explicit because its
+initialization/lifetime outside this block is not yet established. Shape mask
+bits 1/2 come from the search's earlier skill/professional ability gates.
+
+Four tests assert callback arguments, skipped passes, first-shot range handling,
+curve choice and threshold/flag persistence. Thirteen combined follow-up,
+landing-score and pruning tests pass. These are disassembly-derived tests, not
+an independent x86 oracle for this orchestration. The callback explicitly needs
+original 0x421450 assessment; browser heuristic costs are not a valid substitute.
+
+Next dependency inspected: 0x421450–0x42186f samples terrain along a curved or
+straight prospective route, including endpoint terrain and neighboring tile
+penalties. It uses original heading/distance and projection helpers 0x466b40 /
+0x466b80. Those delegate to 0x4913e0, which interpolates a runtime table at
+0x8390ac. Recover table initialization and fixed-point interpolation before
+reconstructing the complete assessment; do not silently use Math.sin/cos.
