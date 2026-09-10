@@ -22,3 +22,15 @@ export function originalHoleVariety(input) {
   const penalty = Math.max(0, similarities.length - (difficulty < 2 ? 1 : 0));
   return {penalty, qualifies:penalty < 2, similarities};
 }
+
+// 0x413768–0x413814: dogleg side from tee→green minus bend→green heading.
+// The original 0x071c71c6 threshold is about ten degrees, strictly exceeded.
+export function originalDoglegFlags({flags, teeToGreenHeading, bendToGreenHeading, bendAtGreen}) {
+  if (![flags,teeToGreenHeading,bendToGreenHeading].every(n=>Number.isInteger(n) && n >= 0 && n <= 0xffffffff) ||
+      typeof bendAtGreen !== 'boolean') throw Error('Invalid original dogleg inputs.');
+  const turn = bendAtGreen ? 0 : (teeToGreenHeading - bendToGreenHeading) | 0;
+  let result = (flags & ~0x60) >>> 0;
+  if (turn > 0x071c71c6) result = (result | 0x20) >>> 0;
+  if (turn < -0x071c71c6) result = (result | 0x40) >>> 0;
+  return result;
+}

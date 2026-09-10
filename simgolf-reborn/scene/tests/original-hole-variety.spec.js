@@ -24,3 +24,14 @@ test('direction threshold uses signed shifted subtraction including wrap and neg
  expect(originalHoleVariety({...base,heading:0,previousHeading:0xff000000}).similarities).toContain('heading');
  expect(()=>originalHoleVariety({...base,heading:-1})).toThrow();
 });
+
+test('dogleg flags preserve unrelated bits, strict turn boundaries and a bend at the green',async()=>{
+ const {originalDoglegFlags}=await import('../src/simulation/original-hole-variety.js');
+ const turn=delta=>originalDoglegFlags({flags:0x80000060,teeToGreenHeading:delta>>>0,bendToGreenHeading:0,bendAtGreen:false});
+ expect(turn(0x071c71c6)).toBe(0x80000000);
+ expect(turn(0x071c71c7)).toBe(0x80000020);
+ expect(turn(-0x071c71c6)).toBe(0x80000000);
+ expect(turn(-0x071c71c7)).toBe(0x80000040);
+ expect(originalDoglegFlags({flags:0x60,teeToGreenHeading:0x40000000,bendToGreenHeading:0,bendAtGreen:true})).toBe(0);
+ expect(originalDoglegFlags({flags:0,teeToGreenHeading:0,bendToGreenHeading:0xf0000000,bendAtGreen:false})).toBe(0x20);
+});

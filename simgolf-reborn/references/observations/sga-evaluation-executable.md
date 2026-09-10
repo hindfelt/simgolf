@@ -227,3 +227,27 @@ loop. That classification has an easy-difficulty weakest-skill cutoff of 50 at
 0x42d98a–0x42d9ae, whereas the SGA report's separate classification display uses
 100. Preserve this distinction rather than using one inferred formula everywhere.
 No browser variety rule is claimed from the pure reconstruction yet.
+
+## Variety field identities and dogleg flags (2026-09-11)
+
+The two +0x132/+0x134 fields belong to the per-hole **reaction counter array**,
+not terrain/building counts: 0x467fb9–0x467fdb increments
+0x5745d8 + 520*hole + 2*incident. Their incident IDs are 45 and 46.
+Call sites 0x4252a6–0x42531b compare two height-reader 0x40be60 results and
+emit event 46 for one inequality and 45 for the opposite inequality. This
+establishes elevation-related observations, but exact shot-point identities,
+which event denotes uphill, and admission/suppression still need tracing.
+Incident 45's dispatcher has no initial happiness value, whereas 46 sets +1;
+the later counter increment is also conditional. Do not equate these counters
+with merely finding any elevated tile on a hole.
+
+Flags 0x20/0x40 are opposing dogleg sides. 0x413768–0x4137c2 computes
+tee→green heading minus bend→green heading with signed uint32 wrap; if the bend
+matches the green coordinates, the difference is forced to zero. The routine
+clears only those two flags, then sets 0x20 above 0x071c71c6, or 0x40 below
+-0x071c71c6 (strict bounds, approximately ten degrees). `originalDoglegFlags`
+now implements that step and has boundary/wrap/flag-preservation tests.
+
+This identifies more of the variety inputs but does not yet recreate the editor's
+bend-point selection, exact heading conversion or elevation reaction events.
+Four focused variety/dogleg tests pass. Live variety integration remains open.

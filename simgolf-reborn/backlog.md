@@ -553,3 +553,10 @@ hole exemption and difficulty adjustment. Three focused tests pass, including
 signed angular wrap/rounding and the strict qualification boundary. Feature
 identities, heading conversion and live editor integration remain open; findings
 are recorded in the executable SGA observation notes.
+
+F09 variety input identification (2026-09-11): the two feature words are elevation-
+related reaction counts (incidents 45/46), not terrain-object counts. Recovered
+and tested dogleg side flags from original heading differences, including strict
+turn thresholds, wrap and bend-at-green behavior. Four focused checks pass.
+Bend selection, heading conversion and elevation incident semantics remain needed
+before live variety scoring; see executable SGA observation notes.
