@@ -1,3 +1,5 @@
+import { inspectFacility } from "./ui/facility-inspector.js";
+import { facilityContains } from "./simulation/facilities.js";
 import { helicopterView } from "./rendering/helicopter.js";
 import { shotPreview } from "./simulation/shot-preview.js";
 import { greenFee, airstripFeeBonus } from "./simulation/happiness.js";
@@ -1176,7 +1178,7 @@ function refresh() {
   $("#hint").textContent =
     mode === "build"
       ? tool === "inspect"
-        ? "Choose a tool to build. Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
+        ? "Inspect / pan: click a building for status. Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
         : `${names[tool]} · ${RULES.costs[tool] ? `$${RULES.costs[tool]}${["tee", "green"].includes(tool) || isFacility(tool) ? " each" : " per tile"}` : "Free"} · Click to place${["fairway", "firm", "sand", "water", "path", "rough", ...EXTRA_TERRAIN].includes(tool) ? " or drag to paint" : ""}. Right-drag to pan; two fingers on touch.`
       : mode === "play"
         ? "Click a landing target when Gary is ready. Balls bounce and roll; putting is automatic on the green."
@@ -1982,6 +1984,10 @@ function hover(e) {
     aimTargetLine.visible = preview.roll.length > 0;
   }
 }
+const facilityDialog = document.createElement("dialog");
+facilityDialog.id = "facility-inspector";
+facilityDialog.setAttribute("aria-label", "Building status");
+document.body.append(facilityDialog);
 function act(e) {
   if (spacePanning) return;
   const p = groundAt(e);
@@ -1991,6 +1997,11 @@ function act(e) {
     return;
   }
   shotOverlay.clear();
+  if (mode === "build" && tool === "inspect") {
+    const cell = cellAt(p.x, p.z);
+    const facility = game.facilities.find(f => facilityContains(f, cell.c, cell.r));
+    if (facility) { inspectFacility(facilityDialog, game, facility); return; }
+  }
   if (mode === "staff" && movingStaff) {
     const c = cellAt(p.x, p.z);
     const result = command("reposition-staff", {

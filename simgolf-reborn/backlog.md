@@ -447,3 +447,7 @@ Out-of-bounds has one stake per marked tile and the requested one-stroke nearby 
 ### Helicopter visits — 9 September 2026
 
 Connected helipads now receive occasional animated helicopter visits when a course is open. A single craft approaches over the property, lands ($200 credited once), unloads a pair, remains parked through their real rounds and return walk, then boards and departs. First eligibility is five simulation minutes; the following visit is delayed 10–14.5 simulation minutes after departure. Occupied helipad demolition is blocked. Visit phase/passenger IDs/timing persist in saves, with protocol 72 migration. Lifecycle, actual completed rounds, single fee after restore and browser rendering tests pass. This is the user's requested feature, not an original-game fidelity claim.
+
+### Building inspection — 10 September 2026
+
+Build → Inspect / pan now opens a building status panel on a facility footprint. It shows actual clubhouse connectivity, distinguishes passive hotel/recreation/transport benefits from completed service visits, reports home ownership and lot value, and exposes helipad phase, passengers still playing and property-wide landing income. Tested disconnected/connected helipad states and browser hotel inspection/close. This improves F10 information flows; original balance, SGA/career, polygon boundaries and remaining fidelity work stay open.
