@@ -572,3 +572,9 @@ original x86 block across 2,000 independently executed cases. SGA record reports
 can now recompute variety from fresh classification masks and geometry instead
 of trusting stale stored penalties. Eleven focused tests pass. Browser elevation-
 event and bend-selection adapters remain before live course-editor integration.
+
+F09 design geometry (2026-09-11): traced the bend to a simulated first landing,
+not the alternate tee fields. Reconstructed eight-direction tee facing, strict
+one-level elevation flags and the original route-measure dogleg suppression.
+Nine focused checks pass. Full original design simulation and route-unit adapter
+remain required before replacing the browser routing inputs.

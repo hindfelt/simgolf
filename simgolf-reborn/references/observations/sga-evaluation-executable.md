@@ -288,3 +288,29 @@ loop's two different sources. The recomputed penalty is included for diagnostics
 Tests demonstrate stale zero penalties cannot qualify eighteen repetitive holes
 when fresh classifications are provided. Eleven geometry/variety/report tests
 pass. This is original-record integration; browser incident/bend adapters remain.
+
+## Design pass bend selection, facing and elevation (2026-09-11)
+
+The bend used for dogleg flags is **not** the alternate tee coordinate pair at
+record +0x10/+0x14. The design pass simulates shots via 0x4235c0 (actor 0x9a)
+at 0x413363, reads planned landing globals 0x5a7270/0x5a7278 and shifts them
+by ten bits. At 0x4133d2–0x4133dd, first-shot state with outer iteration index
+2 selects 0x4135a0 to store the landing in stack locals +0x174/+0x18c.
+At 0x413619 these become the bend coordinates used by the subsequent geometry.
+The full simulation/planner loop is not yet reconstructed.
+
+`original-design-geometry.js` composes the confirmed later steps:
+- 0x413631–0x413657: tee→first-landing heading rounds to one of eight facings.
+- 0x413668–0x413738: clear prior elevation flags; set 0x1000 if green height is
+  more than one level above tee, 0x2000 if more than one below.
+- 0x41373a–0x413761: accumulated route measure below 250 replaces the dogleg
+  bend with the tee. Facing was calculated earlier and remains unchanged.
+- 0x413768 onward: apply reconstructed dogleg-side flags.
+
+The route measure is accumulated through 0x40c1a0. That helper subtracts tile
+center coordinates from fixed-point origins, calls 0x40a9f0, multiplies by 25
+and shifts by ten. The design pass later applies another scale to displayed
+length. The module therefore requires the original measure explicitly and does
+not label it browser yards. Nine focused design/heading/variety checks pass.
+Live integration still needs the original planner/landing and measure adapter;
+user-requested manual tee rotation remains supported in the browser.
