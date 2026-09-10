@@ -1,3 +1,4 @@
+import { settleCareerChallenge } from "./simulation/challenge-career.js";
 import { originalChallengeOfferStakes } from "./simulation/pro-challenge.js";
 import { inspectFacility } from "./ui/facility-inspector.js";
 import { facilityContains } from "./simulation/facilities.js";
@@ -112,7 +113,7 @@ document.body.innerHTML = `<main id="game">
   .join("")}</nav>
 <div class="control-body"><div class="headline"><div><small id="eyebrow">BUILD YOUR FIRST HOLE</small><h2 id="title">Start with a tee</h2></div><div class="time-controls"><button id="pause" aria-label="Pause simulation">Ⅱ</button><button id="speed" aria-label="Simulation speed">1×</button><button id="open-hole">Open hole · H</button></div></div><div class="hole-controls"><label>Hole <select id="hole-select" aria-label="Selected hole"></select></label><button id="add-hole">＋ Add hole</button><button id="scorecard">Scorecards</button><button id="edit-holes">Edit holes</button></div><div id="panel"></div><p id="hint"></p></div>
 </section>
-<dialog id="menu"><form method="dialog"><button class="close" aria-label="Close menu">×</button></form><h2>Willow Brook Golf Club</h2><p>Your course is saved automatically in this browser.</p><div class="menu-actions"><button id="save">Save now</button><button id="export">Export save</button><label class="button">Import save<input id="import" type="file" accept="application/json,.json" hidden></label><button id="new">Start a new course</button><button id="world-screen">World properties</button><label>Course title <input id="course-title" maxlength="80" value="Willow Brook"></label><button id="export-course">Export course layout</button><button id="championship">Local championship</button><button id="pro-challenge">Pro challenge exhibition</button><a id="resume-championship" hidden>Resume championship</a><label class="button">Import championship<input id="import-championship" type="file" accept=".json,application/json" hidden></label><label class="button">Practise an exported course<input id="import-course" type="file" accept="application/json,.json" hidden></label><a id="return-resort" href="./" hidden>Return to my resort</a><a href="?mode=art">View the approved art study</a></div><p id="save-status"></p><p class="muted">Course building, ordered rounds, maintenance and practice. Local championships are available. SGA invitations and full resort progression are still to come.</p></dialog>
+<dialog id="menu"><form method="dialog"><button class="close" aria-label="Close menu">×</button></form><h2>Willow Brook Golf Club</h2><p>Your course is saved automatically in this browser.</p><div class="menu-actions"><button id="save">Save now</button><button id="export">Export save</button><label class="button">Import save<input id="import" type="file" accept="application/json,.json" hidden></label><button id="new">Start a new course</button><button id="world-screen">World properties</button><label>Course title <input id="course-title" maxlength="80" value="Willow Brook"></label><button id="export-course">Export course layout</button><button id="championship">Local championship</button><button id="pro-challenge">Pro challenge exhibition</button><button id="career-challenge" hidden>Challenge invitation</button><a id="resume-championship" hidden>Resume championship</a><label class="button">Import championship<input id="import-championship" type="file" accept=".json,application/json" hidden></label><label class="button">Practise an exported course<input id="import-course" type="file" accept="application/json,.json" hidden></label><a id="return-resort" href="./" hidden>Return to my resort</a><a href="?mode=art">View the approved art study</a></div><p id="save-status"></p><p class="muted">Course building, ordered rounds, maintenance and practice. Local championships are available. Invited pro challenges are available; SGA tournaments and full resort progression are still to come.</p></dialog>
 <dialog id="new-dialog"><h2>Start a new course?</h2><p>Choose a landscape and preview its terrain before starting.</p><label>Environment <select id="new-environment" aria-label="Course environment"></select></label><p id="environment-summary"></p><label>Landscape <select id="new-landscape" aria-label="New course landscape"></select></label><label>Terrain seed <input id="new-seed" aria-label="Terrain seed" type="number" min="0" max="4294967295" step="1"></label><button id="reroll-landscape">New terrain</button><canvas id="landscape-preview" width="360" height="336" aria-label="New property terrain preview"></canvas><p id="landscape-summary"></p><p>This replaces your current course. A backup is kept in this browser; export your save for a separate copy.</p><button id="cancel-new">Keep playing</button><button id="confirm-new">Start new course</button><button id="restore-previous" hidden>Restore previous course</button></dialog>
 <dialog id="housing-dialog"><form method="dialog"><button class="close" aria-label="Close housing report">×</button></form><h2>Homes and building lots</h2><div id="housing-content"></div></dialog><dialog id="evaluation-dialog"><form method="dialog"><button class="close" aria-label="Close course report">×</button></form><h2>Course report</h2><p>Ratings and provisional classifications reflect completed visitor rounds. Practice is excluded. SGA accreditation is not yet available.</p><div id="evaluation-content"></div></dialog><dialog id="score-dialog"><form method="dialog"><button class="close" aria-label="Close scorecards">×</button></form><h2>Course scorecards</h2><div id="score-content"></div></dialog><dialog id="hole-editor"><form method="dialog"><button class="close" aria-label="Close hole editor">×</button></form><h2>Hole order</h2><p>New rounds follow this order. Booked rounds keep their route.</p><div id="hole-list"></div></dialog>
 <dialog id="accomplishments-dialog"><form method="dialog"><button class="close" aria-label="Close accomplishments">×</button></form><h2>Professional accomplishments</h2><div id="accomplishments-content"></div></dialog><dialog id="skills-dialog"><form method="dialog"><button class="close" aria-label="Close pro skills">×</button></form><h2>Gary Golf · Skills</h2><p id="skill-points"></p><p id="course-skill-limit"></p><div id="skill-list"></div><div class="actions"><button id="export-golfer">Save golfer</button><label>Load golfer <input id="import-golfer" type="file" accept=".json,application/json"></label></div><p>Each point adds 10%. Finish practice before reallocating points.</p></dialog><dialog id="remove-dialog"><h2>Confirm removal</h2><p id="remove-description"></p><button id="cancel-removal">Keep it</button><button id="confirm-removal">Remove</button></dialog>
@@ -1062,6 +1063,10 @@ function updateStaffControls(force = false) {
     : "Send to area";
 }
 function refresh() {
+  const invitation=game.challengeCareer?.offer;
+  $("#career-challenge").hidden=!!coursePackage || !invitation;
+  $("#career-challenge").textContent=invitation?.status === "playing" ? "Resume invited challenge" : "Challenge invitation";
+  $("#menu-button").classList.toggle("has-invitation",!coursePackage && invitation?.status === "offered");
   const landButton = $("#buy-land");
   if (landButton) {
     const parcels = game.landParcels || 0;
@@ -1488,7 +1493,12 @@ function showStandings() {
     const total = document.createElement("p");
     total.textContent = `Match wager: ${state.matchAmount === null ? "pending" : money(state.matchAmount)} · Gary’s net: ${money(state.residentNet)}`;
     const note = document.createElement("p");
-    note.textContent = "Exhibition result. Resort balance unchanged.";
+    let invited=false;
+    try { invited=JSON.parse(localStorage.getItem("simgolf-reborn.course.v1"))?.challengeCareer?.offer?.eventId===state.id; } catch {}
+    note.textContent = invited ? "Invited match. Return to your resort after finishing to settle the result." : "Exhibition result. Resort balance unchanged.";
+    if (invited) {
+      const back=document.createElement("a");back.href="./";back.textContent="Return to resort";details.append(back);
+    }
     details.append(total, note);
     root.append(details);
   }
@@ -1517,12 +1527,23 @@ opponentSelect.onchange = () => {
 let eventKind = "championship";
 function openEventSetup(kind) {
   eventKind = kind;
-  const challenge = kind === "pro-challenge";
+  const challenge = kind !== "championship";
+  const invited = kind === "career-challenge";
+  opponentSelect.disabled = invited;
+  $("#challenge-hole-stake").disabled = invited;
+  $("#challenge-match-stake").disabled = invited;
+  $("#challenge-terms p").textContent = invited ? "An invited match: winnings and losses will be applied to your resort when you return. Win to advance the challenge ladder." : "Exhibition stakes are recorded for this match; your resort balance stays unchanged.";
+  if (invited) {
+    const offer=game.challengeCareer.offer;
+    opponentSelect.value=offer.professional; opponentSelect.onchange();
+    $("#challenge-hole-stake").value=offer.stakes.perHole;
+    $("#challenge-match-stake").value=offer.stakes.match;
+  }
   $("#challenge-terms").hidden = !challenge;
   $("#championship-rounds").disabled = challenge;
   if (challenge) $("#championship-rounds").value = "1";
   $("#championship-setup h2").textContent = challenge
-    ? "Pro challenge exhibition"
+    ? invited ? "Invited pro challenge" : "Pro challenge exhibition"
     : "Local championship";
   $("#start-championship").textContent = challenge
     ? "Start challenge"
@@ -1547,7 +1568,9 @@ $("#start-championship").onclick = async () => {
       irons: 2,
       putter: 2,
     });
-    const selectedOpponent = opponentSelect.value
+    const invitation=eventKind === "career-challenge" ? game.challengeCareer?.offer : null;
+    if (eventKind === "career-challenge" && invitation?.status!=="offered") throw Error("This invitation is no longer available.");
+    const selectedOpponent = invitation ? rosterOpponent(invitation.professional) : opponentSelect.value
       ? rosterOpponent(opponentSelect.value)
       : { name: "Club professional", golfer: rival };
     const entrants = [
@@ -1556,13 +1579,13 @@ $("#start-championship").onclick = async () => {
     ];
     const idForEvent = crypto.randomUUID();
     const host =
-      eventKind === "pro-challenge"
+      eventKind !== "championship"
         ? await createProChallenge({
             id: idForEvent,
             course,
             resident: entrants[0],
             challenger: entrants[1],
-            stakes: {
+            stakes: invitation ? invitation.stakes : {
               perHole: Number($("#challenge-hole-stake").value),
               match: Number($("#challenge-match-stake").value),
             },
@@ -1573,10 +1596,14 @@ $("#start-championship").onclick = async () => {
             rounds: Number($("#championship-rounds").value),
             entrants,
           });
-    if (!save())
-      throw Error("Save your resort before starting the championship.");
     const id = host.snapshot().id;
     localStorage.setItem(`simgolf-reborn.championship.${id}`, host.save());
+    if (invitation) {
+      const accepted=command("accept-challenge",{id:invitation.id,eventId:id,courseDigest:course.digest});
+      if (!accepted.ok) throw Error(accepted.message);
+    }
+    if (!save())
+      throw Error("Save your resort before starting the championship.");
     localStorage.setItem("simgolf-reborn.last-championship", id);
     location.href = `?championship=${id}`;
   } catch (error) {
@@ -1584,6 +1611,31 @@ $("#start-championship").onclick = async () => {
     button.disabled = false;
   }
 };
+const invitationDialog=document.createElement("dialog");
+invitationDialog.id="invitation-dialog";
+document.body.append(invitationDialog);
+$("#career-challenge").onclick=()=>{
+  const o=game.challengeCareer?.offer;
+  if (!o) return;
+  if (o.status==='playing') { location.href=`?championship=${o.eventId}`; return; }
+  invitationDialog.replaceChildren();
+  const add=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;invitationDialog.append(n);return n;};
+  add('h2',`${o.professional} challenges Gary`);
+  add('p',`$${o.stakes.perHole.toLocaleString()} per hole and $${o.stakes.match.toLocaleString()} for the match. Winnings and losses affect your resort.`);
+  const accept=add('button','Review and accept');accept.onclick=()=>{invitationDialog.close();openEventSetup('career-challenge');};
+  const decline=add('button','Decline');decline.onclick=()=>{const r=command('decline-challenge',{id:o.id});toast(r.message);save();invitationDialog.close();refresh();};
+  add('button','Later').onclick=()=>invitationDialog.close();
+  $('#menu').close();invitationDialog.showModal();
+};
+async function collectInvitedChallenge() {
+  const o=game.challengeCareer?.offer;
+  if (coursePackage || o?.status!=='playing') return;
+  const raw=localStorage.getItem(`simgolf-reborn.championship.${o.eventId}`);
+  if (!raw) return;
+  try { const result=await settleCareerChallenge(game,raw); if (result.ok) {save();toast(result.message);refresh();} }
+  catch(error) {toast(`Challenge result kept pending: ${error.message}`);}
+}
+await collectInvitedChallenge();
 const lastChampionship = localStorage.getItem(
   "simgolf-reborn.last-championship",
 );

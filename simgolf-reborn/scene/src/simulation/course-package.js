@@ -186,7 +186,7 @@ function designGame(content, seed = 2002) {
   }
   return g;
 }
-export async function exportCourse(g, title = "Willow Brook") {
+export function courseContent(g, title = "Willow Brook") {
   const content = {
     removedTrees: {...g.removedTrees},
     landscapeStyle: g.landscapeStyle ?? "classic",
@@ -222,6 +222,10 @@ export async function exportCourse(g, title = "Willow Brook") {
     })),
   };
   designGame(content);
+  return freeze(content);
+}
+export async function exportCourse(g, title = "Willow Brook") {
+  const content=courseContent(g,title);
   return freeze({ content, digest: await courseDigest(content) });
 }
 export async function importCourse(raw) {

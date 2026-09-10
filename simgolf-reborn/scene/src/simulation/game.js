@@ -1,3 +1,4 @@
+import { stepChallengeCareer, validateChallengeCareer } from "./challenge-career.js";
 import { stepHelicopter, validateHelicopter } from "./helicopter.js";
 import { sceneryTreeAt } from "./scenery-trees.js";
 import {
@@ -1652,6 +1653,7 @@ export function startPractice(g, holeId = g.holes[0]?.id) {
 export function update(g, dt, runResort = true) {
   g.time += dt;
   if (runResort) {
+    stepChallengeCareer(g);
     for (const name of awardCourseAccomplishments(g, par))
       event(g, name + ": earned 3 professional skill points.");
     growCrabgrass(g);
@@ -2242,6 +2244,7 @@ export function restore(raw) {
   validateAccomplishments(g);
   validateLand(g);
   validateHelicopter(g);
+  validateChallengeCareer(g);
   validateOwnership(g);
   validateEnvironment(g.environment);
   if (g.facilities.some((f) => !availableInEnvironment(g, f.type)))

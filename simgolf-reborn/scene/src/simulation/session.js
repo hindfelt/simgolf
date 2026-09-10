@@ -1,3 +1,4 @@
+import { acceptChallenge, declineChallenge } from "./challenge-career.js";
 import { buildBoundaryRegion, validBoundaryPoints } from "./boundary-region.js";
 import { buyLand } from "./land-purchase.js";
 import { renameVisitor } from "./visitor-name.js";
@@ -37,6 +38,8 @@ import {
 
 const permissions = {
   owner: new Set([
+    "accept-challenge",
+    "decline-challenge",
     "buy-land",
     "decide-membership",
     "rename-visitor",
@@ -108,6 +111,10 @@ const keysMatch = (p, keys) =>
   keys.every((k) => Object.hasOwn(p, k));
 function validPayload(type, p) {
   switch (type) {
+    case "accept-challenge":
+      return keysMatch(p,["id","eventId","courseDigest"]) && Number.isSafeInteger(p.id) && p.id>0 && typeof p.eventId==="string" && /^[a-zA-Z0-9_-]{1,64}$/.test(p.eventId) && typeof p.courseDigest==="string" && /^[a-f0-9]{64}$/.test(p.courseDigest);
+    case "decline-challenge":
+      return keysMatch(p,["id"]) && Number.isSafeInteger(p.id) && p.id>0;
     case "buy-land":
       return keysMatch(p, []);
     case "decide-membership":
@@ -344,6 +351,12 @@ export function createSession(game, { courseLocked = false } = {}) {
           break;
         case "place-story-reward":
           result = placeStoryReward(game, p.c, p.r);
+          break;
+        case "accept-challenge":
+          result = acceptChallenge(game,p.id,p.eventId,p.courseDigest);
+          break;
+        case "decline-challenge":
+          result = declineChallenge(game,p.id);
           break;
         case "buy-land":
           result = buyLand(game);

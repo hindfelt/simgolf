@@ -57,3 +57,11 @@ Staff also hires **Soda Vendors**, who walk to thirsty visitors and stop with th
 A connected **Tennis Court** improves incoming visitors’ starting attitude. Its floor follows the manual’s yellow-baseline description; the numerical tuning and original unlock remain provisional.
 
 Disconnected paths appear as muddy tracks. Joining them to the clubhouse finishes the whole connected branch and enables facilities reached by that network.
+
+## Invited professional challenges
+
+After completing three holes and allowing the club simulation to run, look for an envelope on **Club menu**. Open **Challenge invitation** to review the visiting professional and fixed wagers. You can decline, leave the invitation for later, or review and start the match. Invited matches use a frozen copy of the course and your current golfer; you can resume them from Club menu.
+
+After finishing, choose **Return to resort** to apply the net winnings or losses once. Winning advances the challenge ladder; a loss or tie leaves you at the previous level. The next level needs another complete hole and raises the wagers. Freely started **Pro challenge exhibitions** still leave resort finances unchanged.
+
+This is the initial career implementation. Original invitation timing, complete opponent-arrival behavior and a discrepancy between the original advertised and internal match payments remain under investigation. SGA invitations, tournament prizes and retirement are not complete.

@@ -987,3 +987,8 @@ dialog h2 {
   }
   .construction-settings > * { flex-shrink: 0; white-space: nowrap; }
 }
+
+#menu-button.has-invitation::after { content: " ✉"; color: #ffeb69; }
+#invitation-dialog button { margin: 5px; }
+#challenge-terms label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; }
+#challenge-terms input { max-width: 50%; min-width: 0; }
