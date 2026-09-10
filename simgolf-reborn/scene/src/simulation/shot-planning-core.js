@@ -1,3 +1,4 @@
+import { approachRoute } from "./approach-route.js";
 import { isOut } from "./landforming.js";
 import { terrainRule } from "./terrain.js";
 
@@ -14,6 +15,7 @@ export function planShotWith(
     fractions = [1, 0.85, 0.6, 0.35],
     degrees = [0, -30, 30, -60, 60, -90, 90, 180],
     shortlistSize = 6,
+    techniques = ["draw", "fade", "backspin", "punch"],
   } = {},
 ) {
   if (!golfer || golfer.phase !== "address" || golfer.shot) return null;
@@ -22,6 +24,7 @@ export function planShotWith(
   const distance = Math.hypot(cup.x - golfer.ball.x, cup.z - golfer.ball.z);
   if (lie(game, golfer.ball) === "green" && distance < 12)
     return { x: cup.x, z: cup.z, technique: "straight" };
+  const remainingRoute = approachRoute(game, cup, lie);
   const range = shotLimit(game, golfer);
   const angle = Math.atan2(cup.z - golfer.ball.z, cup.x - golfer.ball.x);
   const candidates = [{ x: cup.x, z: cup.z }];
@@ -49,7 +52,9 @@ export function planShotWith(
       score +=
         (penalty ? 1000 : 0) +
         (shot.obstruction ? 80 : 0) +
-        Math.hypot(cup.x - end.x, cup.z - end.z) -
+        (Number.isFinite(remainingRoute(end))
+          ? Math.hypot(cup.x-end.x,cup.z-end.z) + Math.max(0, remainingRoute(end) - 1.35 * (Math.abs(cup.x-end.x) + Math.abs(cup.z-end.z)))
+          : 250 + Math.hypot(cup.x-end.x,cup.z-end.z)) -
         terrainRule(lie(probe, end)).preference;
     }
     return { target, technique, score };
@@ -68,7 +73,7 @@ export function planShotWith(
     ]),
   ];
   for (const target of shortlist)
-    for (const technique of ["draw", "fade", "backspin", "punch"]) {
+    for (const technique of techniques) {
       const candidate = evaluate(target, technique);
       if (candidate.score < best.score) best = candidate;
     }

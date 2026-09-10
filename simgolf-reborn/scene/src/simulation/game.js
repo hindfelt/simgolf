@@ -896,7 +896,7 @@ export function chooseTarget(g, v) {
   let ratio = Math.min(1, d < 11 ? 1 : range / d),
     x = v.ball.x + (cup.x - v.ball.x) * ratio,
     z = v.ball.z + (cup.z - v.ball.z) * ratio;
-  if (v.skills.imagination) {
+  if (v.skills.imagination || isOut(g, {x,z}) || ["water", "blocked"].includes(lie(g,{x,z}))) {
     const planned = planShotWith(
       g,
       v,
@@ -904,8 +904,9 @@ export function chooseTarget(g, v) {
       {
         samples: [17],
         fractions: [1, 0.6],
-        degrees: [0, -30, 30],
+        degrees: [0, -30, 30, -60, 60, -90, 90],
         shortlistSize: 2,
+        techniques: v.skills.imagination ? ["draw", "fade", "backspin", "punch"] : [],
       },
     );
     if (planned) return planned;

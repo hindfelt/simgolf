@@ -451,3 +451,7 @@ Connected helipads now receive occasional animated helicopter visits when a cour
 ### Building inspection — 10 September 2026
 
 Build → Inspect / pan now opens a building status panel on a facility footprint. It shows actual clubhouse connectivity, distinguishes passive hotel/recreation/transport benefits from completed service visits, reports home ownership and lot value, and exposes helipad phase, passengers still playing and property-wide landing income. Tested disconnected/connected helipad states and browser hotel inspection/close. This improves F10 information flows; original balance, SGA/career, polygon boundaries and remaining fidelity work stay open.
+
+### Dogleg planning — 10 September 2026
+
+Shot scoring now adds a playable-ground detour cost around water, blocked land and marked out-of-bounds. Straight unobstructed approaches retain their previous distance score; existing punch/draw/fade/backspin regressions pass. Visitors lacking imagination still use only straight shots, but evaluate safe layups when their direct target is water/blocked/out-of-bounds instead of blindly repeating it. This deterministic tactical policy uses fixed independent samples, not the live shot RNG. Added tests for routing around a long barrier and unskilled safe layups; session replay and migration pass under protocol 74. Full original AI fidelity and the user's exact saved dogleg layout remain unverified; pole-defined excluded regions remain a separate open task.
