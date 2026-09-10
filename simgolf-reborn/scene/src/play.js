@@ -973,7 +973,7 @@ function renderEvaluation() {
     : "Course fun: awaiting completed visitor holes";
   $("#evaluation-content").append(funSummary);
   for (const [index, hole] of game.holes.entries()) {
-    const report = evaluationReport(hole),
+    const report = evaluationReport(hole, {par: par(game, hole.id), difficulty: 1, combineContrasts: false}),
       section = document.createElement("section"),
       heading = document.createElement("h3"),
       summary = document.createElement("p");
@@ -986,7 +986,7 @@ function renderEvaluation() {
     section.append(heading, classificationNote, summary);
     addTable(
       section,
-      ["Skill", "With: avg / n", "Without: avg / n", "Difference"],
+      ["Skill", "With: avg / n", "Without: avg / n", "Rating"],
       report.skills.map((r) => [
         r.skill[0].toUpperCase() + r.skill.slice(1),
         `${number(r.withSkill.score)} / ${r.withSkill.count}`,
@@ -997,7 +997,7 @@ function renderEvaluation() {
     const note = document.createElement("p");
     note.className = "muted";
     note.textContent =
-      "Difference = average without skill minus average with skill. Other skills and training can affect this comparison; small samples can be misleading.";
+      "Ratings compare golfers missing one skill against golfers with all three. Each group starts with eight par scores; scores above nine count as nine. Older rounds without individual scores are excluded from ratings. With/without averages show all recorded rounds.";
     section.append(note);
     const detail = document.createElement("details"),
       label = document.createElement("summary");

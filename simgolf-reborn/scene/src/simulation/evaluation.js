@@ -1,3 +1,4 @@
+import {originalHoleObservations} from "./original-hole-observations.js";
 export const EVALUATION_SKILLS = ["length", "accuracy", "imagination"];
 export const newEvaluation = () => ({ cohorts: {} });
 export function beginObservation(g, v) {
@@ -105,7 +106,7 @@ export function validateEvaluation(stats) {
   if (count > stats.completed || strokes > stats.strokes)
     throw Error("Hole observations exceed completed play.");
 }
-export function evaluationReport(hole) {
+export function evaluationReport(hole, originalOptions) {
   const all = Object.entries(hole.stats.evaluation?.cohorts || {}).map(
     ([mask, v]) => ({ mask: Number(mask), ...v }),
   );
@@ -123,7 +124,17 @@ export function evaluationReport(hole) {
       mood: n ? rows.reduce((s, r) => s + r.mood, 0) / n : null,
     };
   };
+  let original = null;
+  if (originalOptions) {
+    const histogram = Array.from({length:8}, () => Array(9).fill(0));
+    for (const group of all) {
+      for (const [score, count] of Object.entries(group.scoreCounts || {}))
+        histogram[group.mask & 7][Math.min(9, Number(score)) - 1] += count;
+    }
+    original = originalHoleObservations({...originalOptions, histogram});
+  }
   return {
+    original,
     ...summarize(all),
     cohorts: all,
     skills: EVALUATION_SKILLS.map((skill, i) => {
@@ -133,7 +144,7 @@ export function evaluationReport(hole) {
         skill,
         withSkill,
         without,
-        advantage:
+        advantage: original ? original.advantages[i] / 100 :
           withSkill.count && without.count
             ? without.score - withSkill.score
             : null,

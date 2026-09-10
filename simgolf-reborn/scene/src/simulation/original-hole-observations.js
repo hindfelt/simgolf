@@ -7,7 +7,7 @@ export function originalHoleObservations({par, histogram, difficulty, combineCon
       typeof combineContrasts !== 'boolean' ||
       !Array.isArray(histogram) || histogram.length !== 8 ||
       histogram.some(row => !Array.isArray(row) || row.length !== 9 ||
-        row.some(n => !Number.isInteger(n) || n < 0 || n > 32767)))
+        row.some(n => !Number.isInteger(n) || n < 0 || n > 1000000000)))
     throw Error('Invalid original hole observations.');
   // Eight virtual par scores damp the rating until actual scores accumulate.
   const groups = histogram.map(row => {

@@ -514,3 +514,12 @@ reader for original 520-byte hole records, feeding the reconstructed rating
 calculation. Six focused tests pass. Extra golfer flag rows/admission semantics
 and the tee-related comparison-mode flag remain to be mapped before replacing
 browser rating inputs. No deployment in this step.
+
+F09 live rating adapter (2026-09-11): course report and new classification awards
+now use par-seeded exact base-skill score distributions, rather than broad mean
+differences. Scores cap at nine; legacy averages remain visible and are not
+converted into invented samples. Normal-difficulty/single-contrast selection and
+training folded by base skill are explicit adapter assumptions pending complete
+original mode/training integration. Report explains the calculation. Evaluation,
+classification, accomplishment regressions and production build pass. Full SGA
+course measurements, invitation/prizes and other fidelity/multiplayer scope remain.

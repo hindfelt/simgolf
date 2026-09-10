@@ -1,6 +1,6 @@
 // golf.exe 0x44f486–0x44f499, 0x44f7ff–0x44f97f, 0x44fff9–0x45001e.
-// Browser advantages still use observed cohort means; the original uses
-// par-seeded exact skill cohorts. See sga-evaluation-executable.md.
+// Live reports use par-seeded exact cohorts; legacy callers may pass means.
+// See sga-evaluation-executable.md for adapter assumptions.
 export function classifyHole(report, {difficulty = 1} = {}) {
   if (!Number.isInteger(difficulty) || difficulty < 0 || difficulty > 3)
     throw Error('Invalid course classification difficulty.');
@@ -21,5 +21,5 @@ export function classifyHole(report, {difficulty = 1} = {}) {
   const names = ['Breather', 'Freeway', 'Precise', 'Challenge', 'Creative', 'Heroic', 'Strategic', 'Classic'];
   return {name: names[mask], reason: mask === 7
     ? 'All three skill advantages reach 1.00.'
-    : `Skills qualify at ${threshold.toFixed(2)}; the weakest is excluded below 1.00. Ratings use observed golfer averages.`};
+    : `Skills qualify at ${threshold.toFixed(2)}; the weakest is excluded below 1.00. ${report.original ? 'Ratings use par-seeded skill groups.' : 'Ratings use observed golfer averages.'}`};
 }

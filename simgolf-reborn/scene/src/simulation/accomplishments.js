@@ -31,7 +31,7 @@ export function awardCourseAccomplishments(g, par) {
     .map((h) => ({
       ...h,
       par: par(g, h.id),
-      classification: classifyHole(evaluationReport(h)).name,
+      classification: classifyHole(evaluationReport(h, {par: par(g, h.id), difficulty: 1, combineContrasts: false})).name,
     }));
   const earned = [];
   for (const a of ACCOMPLISHMENTS) {

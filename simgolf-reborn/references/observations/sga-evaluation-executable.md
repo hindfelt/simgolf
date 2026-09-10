@@ -129,3 +129,28 @@ and feeds the reconstructed SGA observation calculation. Six focused tests pass.
 Global mode bit 0x40 is also read by tee-coordinate editing around 0x41f7e5,
 0x41f9b3 and 0x41fdd6. This suggests a relation to tee layouts, but its semantics
 are not yet proven; the explicit `combineContrasts` input remains required.
+
+## Browser rating adapter (2026-09-11)
+
+The live course report and course-accomplishment consumer now request the
+reconstructed ratings with calculated par, normal difficulty and the optional
+second contrast disabled. Score distributions are folded into the eight base
+skill masks, preserving raw saved scores but capping them to nine for this
+calculation. Training remains separately stored; grouping training by its base
+skill is an adapter choice, not a claim that all original training semantics
+have been recovered. Existing average-score columns remain broad descriptive
+averages; the last column is now labeled Rating and explains the seeded groups.
+Legacy score totals without distributions are excluded from rating samples.
+
+Additional source evidence: 0x421142–0x421183 skips masks 0,1,2,4 in the initial
+normal-mode selection when global bit 0x40 is clear; when set, all eight can be
+considered. Later creation writes at 0x421214 and 0x421244 supply masks within
+0..7. These support complementary-mask comparisons for ordinary visitors but
+do not yet establish the complete bit-0x40 mode or original training behavior.
+The normal-mode adapter is therefore useful live progress, not complete parity.
+
+The pure calculation now permits larger aggregate counts than a signed original
+word so long-running browser observations do not fail at 32768; raw record
+reading still interprets original signed words and rejects negative counts.
+Thirteen evaluation/source-input tests and build pass; twenty evaluation,
+classification and accomplishment checks passed before the final adapter test.
