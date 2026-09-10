@@ -198,3 +198,32 @@ Playing time +0x1ec adds half a positive timestamp difference at
 0x426ee2–0x426f0a. The prior timestamp is stored on the golfer at 0x577fc8.
 Exact timestamp boundaries and browser clock conversion still need tracing;
 do not substitute current seconds divided by 60.
+
+## Variety penalty reconstructed (2026-09-11)
+
+`original-hole-variety.js` reproduces 0x42da36–0x42db3c. Hole 1 is assigned zero.
+Later holes add one for each condition:
+
+1. Current classification equals previous classification, with at least eight
+   current starts (0x42da60–0x42da75).
+2. Current/previous record flags +0x200 have identical bits 0x60
+   (0x42da7f–0x42da92).
+3. Both current signed-word fields +0x132 and +0x134 are zero
+   (0x42da98–0x42daac). Their exact feature identities remain unverified.
+4. Same par as preceding record (0x42dab2–0x42dac2).
+5. Absolute signed heading difference, after arithmetic shift right 24, is
+   strictly below 40 (0x42dac8–0x42db22). Heading calls use previous/current
+   tee (+8,+12) to green (+24,+28) vectors through 0x466ba0.
+
+A positive penalty loses one on difficulty 0 or 1. SGA's <2 variety test then
+uses this result. The direction test wraps signed 32-bit subtraction and shifts
+before taking absolute value, so a negative fractional unit behaves differently
+from its positive counterpart. Three tests cover those boundaries, all five
+contributions, first-hole exemption and difficulty adjustment.
+
+Unresolved integration: identify feature words and flag bits, reproduce original
+heading conversion, and connect the original live classification used by this
+loop. That classification has an easy-difficulty weakest-skill cutoff of 50 at
+0x42d98a–0x42d9ae, whereas the SGA report's separate classification display uses
+100. Preserve this distinction rather than using one inferred formula everywhere.
+No browser variety rule is claimed from the pure reconstruction yet.

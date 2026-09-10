@@ -546,3 +546,10 @@ session checks passed. Public HTML references the current entry asset, and the
 served game bundle matches the local production output byte-for-byte. Live scope:
 corrected classification, original normal-mode skill rating adapter and saved
 score/activity inputs. Full SGA tournament qualification is still incomplete.
+
+F09 variety rule (2026-09-11): reconstructed the original preceding-hole penalty
+from classification, flags, two feature counters, par and direction, with first-
+hole exemption and difficulty adjustment. Three focused tests pass, including
+signed angular wrap/rounding and the strict qualification boundary. Feature
+identities, heading conversion and live editor integration remain open; findings
+are recorded in the executable SGA observation notes.
