@@ -1174,3 +1174,10 @@ through 0x424988. Exact-target launch now uses it; automatic sentinel preparatio
 matches 1,000 native runs at the split point. Another 1,000 exact launches and
 seventeen related tests pass. Feeding assessment rating/dominant fields into the
 automatic flow, initial target search, remark effects and live mapping remain open.
+
+F09 preparation handoff (2026-09-11): mapped preparation outputs into automatic
+context, including counter rating, scratch-reference resets and distinct heading
+locals. 1,000 native handoff snapshots match. Added prepared-launch wrapper;
+seven related tests pass, including replacing stale fields while retaining
+persistent actor/partner state. One uninterrupted assessment-to-final oracle,
+initial target search, full remark effects and live mapping remain open.

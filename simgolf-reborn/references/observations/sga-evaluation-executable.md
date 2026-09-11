@@ -2580,3 +2580,26 @@ exact-target results remain unchanged. Seventeen related tests pass, including
 flat/nonflat native candidate fixtures. The remaining handoff must map assessment
 rating and dominant fields into the automatic middle's actor/scratch state; initial
 target selection, full remark effects and live gameplay integration remain open.
+
+### Preparation-to-automatic handoff
+
+`original-launch-handoff.js` translates prepared launch results into the automatic
+context: clamped strength replaces distance, assessment rating becomes actor byte
++0x1b, and dominant terrain/direction become reaction cue values. Scanned/named
+references reset to zero, marked terrain is retained, and the last ray sample x
+remains in the local later reused as scenery-facing state. Initial aim direction
+is computed from the input heading, independently of the adjusted launch heading.
+The strength cache is cloned for output ownership.
+
+`verify-original-assessed-launch.py --handoff` reads these actor/stack values
+directly at 0x424988 after native preparation. All 1,000 snapshots match. The
+new `original-auto-prepared-launch.js` wrapper applies the update to the existing
+context and runs automatic launch through restoration, preserving unrelated
+actor and partner fields.
+
+Seven related tests pass. Wrapper tests reconstruct prepared inputs at existing
+native final-launch fixture boundaries and demonstrate replacement of stale
+seed, speed, counter and reference values. This is boundary-composition evidence,
+not yet one uninterrupted oracle from assessment through final launch. That wider
+comparison, initial target selection, full remark effects and live gameplay
+integration remain unfinished; no deployment is included.

@@ -5,7 +5,8 @@ import pefile
 from unicorn import Uc,UC_ARCH_X86,UC_MODE_32
 from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_ESI,UC_X86_REG_EBX,UC_X86_REG_EBP,UC_X86_REG_FPCW,UC_X86_REG_EAX,UC_X86_REG_EIP
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
-prepared_only='--prepared' in sys.argv
+handoff_only='--handoff' in sys.argv
+prepared_only='--prepared' in sys.argv or handoff_only
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x200000);u.mem_map(0x100000,0x4000)
 for a,n in [(0x423b66,0x1fad),(0x40bc50,0x33),(0x4c1870,64),(0x466a00,0x50),(0x421870,0x167),(0x405710,0x4e),(0x45ba70,0x60),(0x4a57a0,0x27),(0x4b9800,8)]:
@@ -65,6 +66,11 @@ def run(q):
  u.emu_start(0x423b66,stop,count=100000);assert u.reg_read(UC_X86_REG_EIP)==stop
  entries=[dict(distance=struct.unpack('<i',u.mem_read(0x5a3200+j*4,4))[0],verticalSpeed=struct.unpack('<i',u.mem_read(0x567278+j*4,4))[0],speed=struct.unpack('<i',u.mem_read(0x53ec30+j*4,4))[0]) for j in range(10)]
  def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
+ if handoff_only:
+  return dict(distance=read(sp+0x10),heading=read(0x577fe8)&0xffffffff,referenceSpeed=read(sp+0x2c),modifier=read(sp+0x18),curveArgument=read(sp+0xb30),
+   aimHeading=read(sp+0x24),pathHeading=read(sp+0x4c),cueValue=read(sp+0x3c),state=dict(seed=read(0x820454)&0xffffffff,cache=dict(next=read(0x5a8728),entries=entries),
+   speed=read(0x577fec),verticalSpeed=read(0x577ff0),heading=read(0x577fe8)&0xffffffff,scannedTile=read(sp+0x38),namedReference=read(sp+0x1c),sceneryTile=read(sp+0x48),pathHeading=read(sp+0x44),
+   actor=dict(club=u.mem_read(0x577f24,1)[0],actorFlags=read(0x577f18)&0xffffffff,angularOffset=read(0x577ff4),stateCode=struct.unpack('<h',u.mem_read(0x577fb4,2))[0],elevationCounter=u.mem_read(0x577f23,1)[0])))
  if prepared_only:
   return dict(club=u.mem_read(0x577f24,1)[0],speed=read(0x577fec),verticalSpeed=read(0x577ff0),referenceSpeed=read(sp+0x2c),variation=variation,
    heading=read(0x577fe8)&0xffffffff,referenceHeading=reference_heading,angularOffset=read(0x577ff4),modifier=read(sp+0x18),actorFlags=read(0x577f18)&0xffffffff,
@@ -90,11 +96,13 @@ for i in range(1000):
  rows.append([q,run(q)])
 name='original-launch-preparation' if prepared_only else 'original-assessed-launch'
 module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalLaunchPreparation??module.originalAssessedLaunch;
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalLaunchPreparation??module.originalAssessedLaunch;const {originalLaunchHandoff}=await import(HANDOFF);
 const {originalStrengthCache}=await import(CACHE);let cache=originalStrengthCache();
-const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,e] of rows){const a=run(q,cache,{terrainAt:(x,z)=>q.terrain[x*50+z],kindAt:c=>q.kinds[c],shotClassAt:lie=>q.classes[lie+1],marksAt:(x,z)=>q.marks[x*50+z],heightAt:(x,z)=>q.heights[x*50+z]});if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q:{distance:q.distance,skillMask:q.skillMask},a,e}));cache=a.cache;}
+const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,e] of rows){const prepared=run(q,cache,{terrainAt:(x,z)=>q.terrain[x*50+z],kindAt:c=>q.kinds[c],shotClassAt:lie=>q.classes[lie+1],marksAt:(x,z)=>q.marks[x*50+z],heightAt:(x,z)=>q.heights[x*50+z]});const a=HANDOFF_ONLY?originalLaunchHandoff(q.heading,prepared):prepared;if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q:{distance:q.distance,skillMask:q.skillMask},a,e}));cache=prepared.cache;}
 console.log(`${rows.length} launch-stage outputs and shared caches match original x86.`);
 """.replace('MODULE',json.dumps(module)).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri()))
+script=script.replace('HANDOFF_ONLY',str(handoff_only).lower()).replace('HANDOFF',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-launch-handoff.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
+ if handoff_only:name='original-launch-handoff'
  (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(rows[:20],separators=(',',':'))+'\n')
