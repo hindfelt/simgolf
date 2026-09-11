@@ -1796,3 +1796,31 @@ helpers without stubs; all 5,000 cases match. Sixty fixtures and thirteen spread
 pruning/finish tests pass. Pruning composition has targeted integration tests,
 not yet a contiguous full retry-loop oracle. Repeated-pass orchestration, physical
 candidate integration and live deployment remain unfinished.
+
+### Repeated search passes and contiguous pruning verification (2026-09-11)
+
+`original-route-search-passes.js` composes 0x422799–0x4234eb. Each pass resets
+all 441×6 stored distances and the winner score to 99999, while preserving the
+other winner fields, cumulative work, scores and shared flags. Eight samples or
+mode 2 exits immediately after evaluation. Other passes prune, publish spread
+diagnostics when the completed sample count is four, and double the sample count.
+A further pass runs only with more than one survivor. Diagnostics retain their
+previous value on other sample counts. The returned pass sequence supports
+inspection and deterministic replay without browser state.
+
+`verify-original-route-search-passes.py` executes that entire contiguous range
+against the original executable. It supplies simulated landings at 0x421b50 and
+follow-up assessment costs at 0x421450, records their ordered calls, and stubs
+only the UI yield at 0x483330 otherwise. All 30 cases match complete score,
+distance and flag grids, work, winner, diagnostics and callback ordering. Saved
+fixtures cover distinct pass sequences and mode-2 exits, including 2→4→8.
+
+`verify-original-route-pruned-state.py` separately executes the complete
+0x423279–0x423496 retry loop with real heading/distance helpers and the same
+UI-yield stub. All 200 cases match pruning retries, final survivors and spread.
+This closes the contiguous retry-loop evidence gap described above. Fifteen
+search/pass/spread/finish regression tests pass, including input immutability
+and serialized replay. These comparisons still supply physics outcomes and
+assessment costs; they do not prove complete original planning or live fidelity.
+Search entry/final publication, real physical callbacks and live integration
+remain unfinished. No deployment was made for this isolated logic.

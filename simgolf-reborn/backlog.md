@@ -950,3 +950,10 @@ F09 survivor statistics (2026-09-11): recovered distance/relative-heading extrem
 and composed them with final pruning survivors. 5,000 original spread cases and
 thirteen tests pass. Full retry-loop verification, repeated-pass orchestration,
 physical callbacks and live integration remain unfinished.
+
+F09 repeated route passes (2026-09-11): composed full-grid evaluation, pruning,
+survivor diagnostics and original stopping conditions. 30 contiguous original
+searches and ordered callbacks match, including 2→4→8 sample progression;
+200 complete original pruning retry loops match final scores/survivor spread.
+Fifteen targeted tests pass. Actual shot-physics and assessment callbacks,
+search entry/publication integration and live gameplay wiring remain open.
