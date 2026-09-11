@@ -2,7 +2,7 @@ import {coastalWater} from '../simulation/coast.js';
 import * as THREE from "three";
 import { GRID } from "../simulation/world.js";
 import { height, courseHeight } from "../landscape.js";
-import { COAST_WATER, coastalBanks } from "./coastal-style.js";
+import { COAST_WATER, coastalBanks, exteriorCoastalBanks, COAST_FIRST_ROW, COAST_LAST_ROW } from "./coastal-style.js";
 
 // Decorative water outside the playable grid. Ownership and shot rules remain
 // governed by the simulation; this surface cannot be built on or ray-picked.
@@ -45,7 +45,7 @@ export function buildOcean(scene) {
   let coastSeed;
   function rebuildContinuation(seed){
     const vertices=[],uv=[];
-    for(let r=-100;r<150;r++){
+    for(let r=COAST_FIRST_ROW;r<COAST_LAST_ROW;r++){
       if(r>=0 && r<GRID.height)continue;
       for(let c=0;c<GRID.width;c++){
         if(!coastalWater(seed,c,r))continue;
@@ -65,7 +65,7 @@ export function buildOcean(scene) {
   const stones = new THREE.InstancedMesh(
     new THREE.CylinderGeometry(0.85, 1, 2, 5, 1),
     new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }),
-    GRID.width * GRID.height * 12,
+    GRID.width * GRID.height * 12 + (COAST_LAST_ROW-COAST_FIRST_ROW)*60,
   );
   stones.name = "coastal-stone-banks";
   stones.count = 0;
@@ -88,16 +88,16 @@ export function buildOcean(scene) {
       currentGame = g;
       revision = g.revision;
       let count = 0;
-      for (const { c, r, dc, dr } of coastalBanks(g, GRID)) {
+      for (const { c, r, dc, dr, exterior } of [...coastalBanks(g, GRID), ...exteriorCoastalBanks(g, GRID)]) {
         for (let n = 0; n < 3; n++) {
-          const jitter = ((c * 31 + r * 17 + n * 13) % 19) / 19;
+          const jitter = (((c * 31 + r * 17 + n * 13) % 19 + 19) % 19) / 19;
           const along = (n - 1) * 0.58;
           const x = GRID.minX + (c + 0.5) * GRID.size + dc * 0.75 + dr * along;
           const z = GRID.minZ + (r + 0.5) * GRID.size + dr * 0.75 + dc * along;
           const waterY = courseHeight(g, x - dc * 0.75, z - dr * 0.75);
           const landY = courseHeight(g, x + dc * 0.75, z + dr * 0.75);
           const bankRise = Math.max(0, landY - waterY);
-          const rockHeight = 0.12 + jitter * 0.08 + bankRise * 0.5;
+          const rockHeight = (exterior ? 0.28 : 0.12) + jitter * 0.08 + bankRise * 0.5;
           dummy.position.set(x, waterY + bankRise * 0.5 - 0.05, z);
           dummy.scale.set(
             0.43 + jitter * 0.12,
