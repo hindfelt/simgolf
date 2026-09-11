@@ -907,3 +907,8 @@ F09 route winner updates (2026-09-11): recovered score accumulation, unsuccessfu
 sample threshold and strict best-option replacement with all winner metadata.
 5,000 original cases and seven tests pass. Batch simulation, pass orchestration,
 search completion and live integration remain unfinished.
+
+F09 route search completion (2026-09-11): recovered pass diagnostics, winning
+target publication, cup fallback and cleanup of temporary search state. 5,000
+original cases and eight tests pass. Candidate simulation, pass orchestration,
+automatic launch branch and live integration remain unfinished.

@@ -1643,3 +1643,23 @@ fixtures and seven winner/option tests pass. Inputs are completed batch scores
 and counters; their production by repeated shot simulation remains unfinished.
 Observer-only rendering after 0x42313e is excluded. Full pass orchestration,
 search completion and live integration remain open; no deployment.
+
+### Route completion, fallback and diagnostic state (2026-09-11)
+
+`original-route-finish.js` recovers diagnostics at 0x423496–0x4234db and final
+publication at 0x423516–0x4235b7. Only the four-sample pass resets diagnostic
+state: distance spread >75 sets 1, otherwise signed heading spread >0x15555555
+sets 2, otherwise zero. Other passes preserve the prior diagnostic.
+
+A winner whose target x is not -1 publishes its target and curve, retaining
+center/corner mode; its landing flag adds diagnostic bit 4. Missing winners
+fall back to the cup, return curve zero and clear corner mode. Both paths clear
+world bit 0x800000, preserve search mode only when it equals 2, and set global
+candidate skill mask to 7. Returned values represent explicit state changes,
+not implicit mutation of the caller's world.
+
+`verify-original-route-finish.py` executes both original blocks without stubs;
+5,000 diagnostic and publication states match, including signed spread overflow,
+fallbacks and mode reset. Sixty fixtures and eight finish/winner tests pass.
+Observer UI calls between these blocks are excluded. Full candidate simulation,
+pass orchestration and live state integration remain incomplete. No deployment.
