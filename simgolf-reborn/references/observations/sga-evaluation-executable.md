@@ -2881,3 +2881,13 @@ The external call0x447a30 indexes108-byte objects at0x80af00 and invokes the sou
 `verify-original-remark-response.py` executes the contiguous original block through restoration, preamble and outcome, with real sign/clamp/RNG helpers.1600 cases match complete actor/hole/tile/seed results. The sound-call boundary is controlled explicitly: fixtures either retain state or alter actor status/seed to prove later reads see resolved state. This controlled mutation is a test contract, not a claim that the sound routine changes gameplay RNG.48 full fixtures and ten focused tests pass, including resolver rejection, state ownership and zero-draw early exits.
 
 This closes composition of these two common stages only. Full remark dispatch, per-kind adjustment selection, earlier history/display processing, later social effects, audio adaptation and live authoritative actor mapping remain unfinished.
+
+### Complete per-kind adjustment selection: 0x467502–0x467d72 (2026-09-11)
+
+`original-remark-selection.js` reconstructs the full65-request switch, including the zero/out-of-range default, difficulty-dependent values, signed actor thresholds, profile flags and per-profile hole-byte checks. It preserves the request20/22/28 actor byte/word updates after the presentation call, and the conditional0x4a0000 requests. Positive/negative adjustment constants come from the executable, not the preview's uniform comment model.
+
+Voice lookup0x46c140, presentation0x40c1f0 and secondary0x4a0000 calls are explicit ordered speculative-state boundaries. Coordinates pushed before voice lookup remain captured even when the supplied effect changes actor position. Profile flags are reread using the actor's current profile index after earlier calls. Missing profiles/hole bytes or required handlers reject instead of inventing metadata.
+
+One native comparison corrected a low-byte instruction detail: the flag0x20000 branch for request2/3/8 masks CL while retaining ECX's high bits. Its presentation base becomes16, not272. The executable fixtures preserve this result.
+
+`verify-original-remark-selection.py` executes the entire switch with its actual dispatch tables for1320 cases. All65 requests plus the default are exercised across four difficulties, with controlled voice results and explicit boundary mutations. It compares full actor bytes, adjustment and ordered call arguments.264 fixtures retain a complete request/difficulty grid. Six selection/response tests pass. External call implementations, earlier entry/history/display processing, contiguous selection-to-response verification and final social effects remain required before live integration.
