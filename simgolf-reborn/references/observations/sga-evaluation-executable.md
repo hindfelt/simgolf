@@ -2720,3 +2720,26 @@ This proves field ownership and adapter behavior; the synthetic handoff records
 are not actual route-search observations. Existing physical-search/aim tests
 also pass (ten related tests total). A continuous search-through-launch native
 comparison and authoritative live-state application are still required.
+
+### Native physical search through automatic launch (2026-09-11)
+
+`verify-original-search-launch.py` now chains the actual physical route search,
+caller aim calculation and final automatic launch in one emulator instance.
+The six existing search scenarios execute 5,520 candidate trials; resulting
+actor, RNG, cache, course metadata and winner state remain intact for launch.
+All six final search/launch results match the JavaScript composition, including
+velocities, ordered reaction events, counters and metadata restoration.
+
+The oracle supplies the outer caller stack at the search-return boundary and
+initializes its known launch locals after aim calculation. Thus it closes the
+previous synthetic-result handoff gap, but does not claim an uninterrupted
+outer planner from entry: the original return/prologue wiring and source of
+the caller scratch score buffer remain separate. Height is controlled flat,
+surface lookup is supplied, and remark emission is recorded without remark
+state effects. Native actor/social state is reset between scenarios.
+
+An explicit code hook stops at 0x425aca because candidate executions can leave
+translated blocks spanning that checkpoint; relying on the emulator's end
+address alone executed past it. The committed fixture records the actual native
+outputs. Tests recompute physical search before launch rather than injecting
+stored search results, and verify serialized replay and input preservation.

@@ -1226,3 +1226,11 @@ stale pre-search copies. All 240 native launch snapshots pass handoff checks;
 ten related tests pass. These handoff records are synthetic boundary inputs,
 not proof of uninterrupted search-to-launch fidelity. The continuous combined
 native oracle, full outer orchestration and live application remain open.
+
+F09 native search-to-launch chain (2026-09-11): six real physical-search
+scenarios (5,520 candidate trials) now continue into automatic launch with
+the same native actor/course/shared state. Complete search and launch outputs
+match; seven related tests pass. This replaces synthetic-only handoff evidence.
+The outer caller stack is still supplied at the search boundary, heights are
+flat, and remark effects are controlled. Full outer orchestration, broader
+combined-world coverage, original effects and live integration remain open.
