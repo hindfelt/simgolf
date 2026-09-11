@@ -2173,3 +2173,28 @@ Seventeen targeted tests pass, including current-class corner gating.
 Candidate outcomes remain supplied in this oracle. Full physical candidate
 callback integration, uninterrupted full-search verification and live gameplay
 remain unfinished. No deployment is included.
+
+### Physical candidate callback and complete search connection (2026-09-11)
+
+`original-physical-candidates.js` adapts the search simulator request to exact
+candidate planning/flight. It owns shared state, carries metadata overrides and
+exposes current class/terrain accessors. Candidate arguments use the requested
+exact coordinates/curve, while search mode, cup target and world flags arrive as
+a separate callback context from originalRouteSample. Trial completion updates
+landing, RNG, cache and class overrides before the next search score is computed.
+The input actor/map remain unchanged; consumers receive independent shared-state
+snapshots. Evaluation currently runs synchronously to original termination.
+
+`originalPhysicalRouteSearch` connects this callback to the real range and
+follow-up assessment search. It verifies actor/position alignment and uses the
+search candidate skill mask for physics, keeping that distinct from launch
+attributes. Sequential callback tests match retained original candidate outputs,
+including state and metadata propagation. A full mode-2 search executes physical
+candidates and replays deterministically without supplied landings or costs.
+Seven callback/sample/live-metadata tests pass.
+
+This is the first connection of those complete modules, not yet a verified
+whole-search reproduction. Context/global-state mapping must be checked against
+an uninterrupted original route search, including all modes and boundary maps.
+The synchronous wrapper also needs integration with the game's execution model
+before live use. No deployment accompanies this change.

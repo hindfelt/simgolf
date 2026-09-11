@@ -1052,3 +1052,10 @@ exclusion class and corner-option gates reread origin class. Thirty original
 searches with candidate-induced class changes match, including 5,844 assessments;
 17 targeted tests pass. This removes stale metadata assumptions before physical
 candidate integration. Full search physics and live wiring remain unfinished.
+
+F09 physical candidate/search connection (2026-09-11): added the physical
+candidate callback with shared-state ownership and current metadata access;
+connected it to complete range/assessment search. Callback results match retained
+original sequences; a complete mode-2 search runs/replays without supplied
+landings or costs. Seven tests pass. Whole-search original comparison, broader
+mode/map coverage and live integration remain unfinished.
