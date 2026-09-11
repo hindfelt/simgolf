@@ -93,7 +93,7 @@ def run(q):
  assert bytes(u.mem_read(0x577f08,256))==original,'Actor record was not restored'
  entries=[dict(distance=struct.unpack('<i',u.mem_read(0x5a3200+j*4,4))[0],verticalSpeed=struct.unpack('<i',u.mem_read(0x567278+j*4,4))[0],speed=struct.unpack('<i',u.mem_read(0x53ec30+j*4,4))[0]) for j in range(10)]
  def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
- return dict(cache=dict(next=read(0x5a8728),entries=entries),end=dict(**terminal,seed=read(0x820454)&0xffffffff,steps=steps,landing=terminal.copy() if published else None))
+ return dict(shotClassOverrides=[dict(code=c,shotClass=u.mem_read(0x576dc2+c*48,1)[0]) for c in [17,20]],cache=dict(next=read(0x5a8728),entries=entries),end=dict(**terminal,seed=read(0x820454)&0xffffffff,steps=steps,landing=terminal.copy() if published else None))
 
 rng=random.Random(2002);rows=[]
 for i in range(30):
@@ -116,17 +116,18 @@ for i in range(30):
  rows.append([q,run(q)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-exact-candidate.js').as_uri()
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';
-const {originalExactCandidate}=await import(MODULE),{originalCandidateStep}=await import(STEP),{originalStrengthCache}=await import(CACHE),{originalShotMap}=await import(MAP);let cache=originalStrengthCache();
+const {originalCandidateTrialResult}=await import(TRIAL);const {originalExactCandidate}=await import(MODULE),{originalCandidateStep}=await import(STEP),{originalStrengthCache}=await import(CACHE),{originalShotMap}=await import(MAP);let cache=originalStrengthCache();
 const rows=JSON.parse(readFileSync(0,'utf8'));
 for(const [q,e] of rows){
 const map=originalShotMap({terrain:Uint8Array.from(q.terrain),marks:Uint16Array.from(q.marks),derived:{edgeMasks:new Uint8Array(2500),surfaceHeights:new Int8Array(2500),directionHeights:new Int8Array(20000)},readHeight:()=>0,globalFlags:0,metadata:code=>({flags:0,kind:q.kinds[code],shotClass:q.classes[code+1],bounceCoefficient:3,rollCoefficient:0})});
 const physical={professional:q.actorClass!==0,abilityFlags:q.abilityFlags,luck:5,skillMask:q.skillMask};
 const result=originalExactCandidate(q,cache,map.planning,physical);cache=result.launch.cache;let a=result.candidate;
 for(let i=0;i<2000&&a.speed!==0;i++)a=originalCandidateStep(a,{...map,mode:q.driftMode,variant:q.variant});
-const actual={cache,end:{x:a.x,z:a.z,seed:a.seed,steps:a.steps,landing:a.landing}};
+const shared=originalCandidateTrialResult({candidate:a,launch:result.launch,landing:a.landing,status:a.speed===0?'complete':'running'});
+const actual={shotClassOverrides:shared.shotClassOverrides,cache:shared.cache,end:{x:a.x,z:a.z,seed:a.seed,steps:a.steps,landing:a.landing}};
 if(a.speed!==0||!isDeepStrictEqual(actual,e))throw Error(JSON.stringify({actual,e}));
 }console.log(`${rows.length} uninterrupted original candidate calls match flight, RNG and cache; actor restoration verified.`);
-""".replace('MODULE',json.dumps(module)).replace('STEP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-step.js').as_uri())).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri())).replace('MAP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-shot-map.js').as_uri()))
+""".replace('TRIAL',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-trial.js').as_uri())).replace('MODULE',json.dumps(module)).replace('STEP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-step.js').as_uri())).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri())).replace('MAP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-shot-map.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
  (root/'simgolf-reborn/scene/tests/fixtures/original-contiguous-candidate.json').write_text(json.dumps(rows[:10],separators=(',',':'))+'\n')

@@ -1028,3 +1028,9 @@ calls now execute planning, flight and restoration in one emulator run. Final
 landing/position, RNG and cache match; the original 256-byte actor record is
 verified restored. Sliced browser trials match retained cases. Nonflat contiguous
 execution and search shared-state/live integration remain unfinished.
+
+F09 completed candidate shared state (2026-09-11): completed trials now publish
+landing, final RNG, independent cache snapshot and original planner epilogue
+class changes (17/20 → 8). Thirty uninterrupted original calls verify those
+metadata outputs; five targeted tests pass. Applying this state across search
+trials and live integration remain unfinished.

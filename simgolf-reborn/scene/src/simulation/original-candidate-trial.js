@@ -16,3 +16,13 @@ export function advanceOriginalCandidateTrial(trial,environment,stepBudget) {
  return {...trial,candidate,landing:candidate.landing?{...candidate.landing}:trial.landing,
   status:candidate.speed===0?'complete':'running'};
 }
+
+// Publish only once the speculative shot has finished. The planner epilogue
+// (0x425ab9–0x425aca) sets classes 17 and 20 to 8, outside the actor snapshot.
+export function originalCandidateTrialResult(trial) {
+ if(trial.status!=='complete'||trial.candidate.speed!==0)
+  throw Error('Candidate trial has not completed.');
+ return {landing:trial.landing?{...trial.landing}:null,seed:trial.candidate.seed,
+  cache:{next:trial.launch.cache.next,entries:trial.launch.cache.entries.map(e=>({...e}))},
+  shotClassOverrides:[{code:17,shotClass:8},{code:20,shotClass:8}]};
+}

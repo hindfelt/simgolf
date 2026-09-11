@@ -2086,3 +2086,24 @@ caller input and previous trial state remain unchanged. The targeted trial tests
 pass. This closes the uninterrupted flat-candidate evidence gap, but nonflat
 uninterrupted execution, cross-trial global metadata/state ownership, integration
 into the full search and live gameplay remain unfinished. No deployment.
+
+### Completed trial shared-state publication (2026-09-11)
+
+`originalCandidateTrialResult` exposes completed landing, final RNG, strength
+cache and terrain-class overrides as an independently owned snapshot. It rejects
+a running/nonzero-speed trial. The original planner epilogue at 0x425ab9 and
+0x425ac3 sets metadata classes for codes 17 and 20 to 8. Those globals lie outside
+the restored actor record. They differ from the temporary class-32 overrides
+returned by planner setup, so carrying setup patches forward as final state
+would be incorrect.
+
+The uninterrupted candidate verifier now reads both final metadata bytes after
+original return and compares them with the published trial result. All 30 cases
+match, alongside the existing cache/flight/RNG/restoration checks. Five targeted
+tests pass, including input/prior-state preservation and ensuring consumers can
+modify a result snapshot without changing a completed trial or later result.
+
+This defines completed cross-trial outputs; the owning search still must apply
+them before evaluating its next candidate and refresh metadata access accordingly.
+Contiguous nonflat verification, search scheduling/state integration and live
+use remain unfinished. No deployment is included.

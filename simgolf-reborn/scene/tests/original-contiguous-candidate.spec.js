@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
-import {originalCandidateTrial,advanceOriginalCandidateTrial} from '../src/simulation/original-candidate-trial.js';
+import {originalCandidateTrial,advanceOriginalCandidateTrial,originalCandidateTrialResult} from '../src/simulation/original-candidate-trial.js';
 import {originalStrengthCache} from '../src/simulation/original-strength-search.js';
 import {originalShotMap} from '../src/simulation/original-shot-map.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-contiguous-candidate.json',import.meta.url),'utf8'));
@@ -24,8 +24,20 @@ test('sliced trials match uninterrupted original candidate calls and preserve ca
   }
   expect(trial.status).toBe('complete');
   const a=trial.candidate;
-  expect({cache:trial.launch.cache,end:{x:a.x,z:a.z,seed:a.seed,steps:a.steps,landing:a.landing}}).toEqual(e);
+  const shared=originalCandidateTrialResult(trial);
+  expect(shared.seed).toBe(e.end.seed);expect(shared.landing).toEqual(e.end.landing??previous);
+  expect({shotClassOverrides:shared.shotClassOverrides,cache:shared.cache,end:{x:a.x,z:a.z,seed:a.seed,steps:a.steps,landing:a.landing}}).toEqual(e);
   expect(trial.landing).toEqual(e.end.landing??previous);
   cache=trial.launch.cache;
  }
+});
+
+test('completion publication rejects pending trials and owns its output snapshot',()=>{
+ expect(()=>originalCandidateTrialResult({status:'running',candidate:{speed:1}})).toThrow('has not completed');
+ const trial={status:'complete',candidate:{speed:0,seed:10},landing:{x:12,z:34},launch:{cache:originalStrengthCache()}};
+ const first=originalCandidateTrialResult(trial);
+ first.landing.x=99;first.cache.entries[0].speed=999;first.shotClassOverrides[0].shotClass=32;
+ const second=originalCandidateTrialResult(trial);
+ expect(second.landing).toEqual({x:12,z:34});expect(second.cache.entries[0].speed).toBe(0);
+ expect(second.shotClassOverrides).toEqual([{code:17,shotClass:8},{code:20,shotClass:8}]);
 });
