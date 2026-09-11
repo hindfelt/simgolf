@@ -3,14 +3,14 @@ import {originalRandom} from './original-rng.js';
 // values; facing is the direction captured before contact processing.
 export function originalCandidateImpact({speed,heading,verticalSpeed,flags,professional,
  luck,seed,skillMask,facing,terrainCode,boundaryFlags,terrainFlags,centre,mode,slopeAt}) {
- if(!Number.isInteger(speed)||speed<0||speed>32767||!Number.isInteger(heading)||heading<0||heading>0xffffffff||
+ if(!Number.isInteger(speed)||speed< -2147483648||speed>2147483647||!Number.isInteger(heading)||heading<0||heading>0xffffffff||
    !Number.isInteger(verticalSpeed)||verticalSpeed<0||verticalSpeed>9999||!Number.isInteger(flags)||flags<0||flags>0xffffffff||
    typeof professional!=='boolean'||!Number.isInteger(luck)||luck<0||luck>255||
    !Number.isInteger(skillMask)||!Number.isInteger(facing)||facing<0||facing>7||
    !Number.isInteger(terrainCode)||!Number.isInteger(boundaryFlags)||!Number.isInteger(terrainFlags)||
    typeof centre!=='boolean'||!Number.isInteger(mode))throw Error('Invalid original candidate impact.');
  const random=originalRandom(seed);
- const draw=bound=>random.next(Math.max(1,bound)); // Bound zero still advances the original LCG and returns zero.
+ const draw=bound=>random.next(Math.max(1,bound&0xffff)); // Bound zero still advances the original LCG and returns zero.
  if(flags&0x100) {
    heading=(heading^0x80000000)>>>0;flags=(flags&~0x100)>>>0;
    const value=draw(speed*2);

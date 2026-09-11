@@ -784,3 +784,30 @@ and determinism check, not an original-executable oracle for nonflat complete
 trajectories. Twelve terrain/candidate tests pass. Full nonflat trajectory
 comparison, launch selection and outer planner integration remain unfinished;
 these helpers are not yet connected to the live browser planner.
+
+
+### Complete nonflat candidate comparison (2026-09-11)
+
+Extended `verify-original-candidate-mixed.py --nonflat` to execute the original
+height and directional slope routines inside the complete candidate loop. The
+51×51 supplied vertex grid contains stepped rises and falls; original corner
+and vertex reads are intercepted, while interpolation, slopes, flight, ground
+response, impacts, obstacle detection and RNG execute in x86. All 150 seeded
+mixed-surface trajectories match terminal coordinates, published landing (or
+absence), step count and RNG. Actor restoration is checked as in the flat run.
+The full nonflat set is saved in `original-candidate-nonflat.json`.
+
+This exposed transient negative horizontal speed after slope impact. Candidate
+air collision and impact validation incorrectly assumed nonnegative speed.
+They now accept signed int32 speed; collision subtraction wraps int32, and
+impact RNG bounds use the original low 16 bits (including zero-bound draw).
+The trajectory regression explicitly requires encountering negative speed,
+serializes/resumes that state, and compares the eventual original outcome.
+This is evidence for the encountered trajectories, not exhaustive proof for
+arbitrary int32 launch/impact inputs or extreme arithmetic overflow.
+
+Validation: 150 nonflat and 150 flat trajectories match x86; existing 5,000-case
+impact and 5,000-case airborne collision comparisons still match. All 22 focused
+candidate/terrain tests pass. Original launch selection is still supplied,
+metadata flattening combinations are covered by the separate sample oracle,
+and live browser map adaptation and outer planner integration remain open.

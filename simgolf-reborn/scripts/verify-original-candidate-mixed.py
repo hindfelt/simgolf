@@ -1,4 +1,4 @@
-"""Compare mixed-surface candidate trajectories with original x86; flat height/slope helpers supplied."""
+"""Compare mixed-surface candidate trajectories with original x86; optional original nonflat height/slope routines."""
 from pathlib import Path
 import hashlib,json,random,struct,subprocess,sys
 import pefile
@@ -27,9 +27,21 @@ for a,n in [(0x421b50,0x8f8),(0x406e80,0x1d0),(0x45ba70,0x60),(0x4b9800,8)]:
 # Launch fields supplied directly; terrain height and directional slopes are flat.
 u.mem_write(0x4235c0,b'\xc3')
 for a in [0x42f110,0x40c140]:u.mem_write(a,b'\x31\xc0\xc3')
+nonflat='--nonflat' in sys.argv
+if nonflat:
+ for a,n in [(0x42f110,0x156),(0x40bfe0,0x1be),(0x42eb90,0x80)]:
+  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
+height_grid=[3+((r//3+c//4)%5) for r in range(51) for c in range(51)]
+def vertex(r,c):return height_grid[r*51+c]
 steps=0;terminal={};published=False
 def hook(u,a,s,d):
  global steps,terminal,published
+ if nonflat and a in [0x40bcd0,0x40be60]:
+  sp=u.reg_read(UC_X86_REG_ESP);ret,r,c,direction=struct.unpack('<4I',u.mem_read(sp,16))
+  if a==0x40bcd0:
+   r,c={5:(r,c),7:(r,c-1),1:(r+1,c-1),3:(r+1,c)}[direction]
+  value=vertex(r,c)
+  u.reg_write(UC_X86_REG_EAX,value&0xffffffff);u.reg_write(UC_X86_REG_ESP,sp+4);u.reg_write(UC_X86_REG_EIP,ret)
  if a==0x421bde:steps+=1
  if a==0x422401:published=True
  if a==0x422431:
@@ -57,6 +69,7 @@ def run(q,world):
 rng=random.Random(2002)
 metadata={code:dict(bounceCoefficient=3,rollCoefficient=0) for code in [2,10,12,13,17]}
 world=dict(grid=[rng.choice(list(metadata)) for _ in range(2500)],marks=[rng.choice([0,0,0,32]) for _ in range(2500)],walls=[rng.choice([0,0,0,1,4,16,64]) for _ in range(2500)],metadata=metadata,mode=0,variant=0)
+if nonflat:world['heights']=height_grid
 rows=[]
 for i in range(150):
  q=dict(x=26112,z=26112,height=0,speed=rng.randrange(1000,4000),verticalSpeed=rng.randrange(256,1000),heading=rng.randrange(2**32),angularOffset=rng.randrange(-100000,100000),flags=rng.choice([0,128,256]),seed=rng.randrange(2**32),professional=bool(rng.randrange(2)),abilityFlags=512,luck=5,skillMask=rng.choice([3,7]))
@@ -64,12 +77,16 @@ for i in range(150):
  rows.append([q,world['mode'],world['variant'],run(q,world)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-candidate-step.js').as_uri()
 script="""import {readFileSync} from 'node:fs';const {originalCandidateStart,originalCandidateStep}=await import(MODULE);
+const {originalPhysicsHeight,originalPhysicsSlope}=await import(TERRAIN);
 const {world,rows}=JSON.parse(readFileSync(0,'utf8'));for(const [q,mode,variant,e] of rows){let a=originalCandidateStart(q);
-const env={terrainAt:p=>{const i=p.x*50+p.z,code=world.grid[i];return {code,flags:world.marks[i],wallFlags:world.walls[i],...world.metadata[code]};},heightAt:()=>0,slopeAt:()=>0,mode,variant};
+const vertexHeight=(r,c)=>world.heights[r*51+c];
+const cornerHeight=(r,c,d)=>{const [a,b]=({5:[r,c],7:[r,c-1],1:[r+1,c-1],3:[r+1,c]})[d];return vertexHeight(a,b);};
+const sample=p=>({...p,terrainCode:world.grid[(p.x>>10)*50+(p.z>>10)],metadataFlags:0,globalFlags:0,vertexHeight,cornerHeight});
+const env={terrainAt:p=>{const i=p.x*50+p.z,code=world.grid[i];return {code,flags:world.marks[i],wallFlags:world.walls[i],...world.metadata[code]};},heightAt:p=>world.heights?originalPhysicsHeight(sample(p)):0,slopeAt:(p,d)=>world.heights?originalPhysicsSlope(sample(p),d):0,mode,variant};
 for(let i=0;i<2000&&a.speed!==0;i++)a=originalCandidateStep(a,env);
 if(a.speed!==0||a.x!==e.x||a.z!==e.z||a.seed!==e.seed||a.steps!==e.steps||JSON.stringify(a.landing)!==JSON.stringify(e.landing))throw Error(JSON.stringify({q,mode,variant,a,e}));}
 console.log(`${rows.length} mixed-terrain trajectories and RNG states match original x86.`);
-""".replace('MODULE',json.dumps(module))
+""".replace('MODULE',json.dumps(module)).replace('TERRAIN',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-physics-terrain.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(dict(world=world,rows=rows)),text=True,check=True)
 if '--write-fixture' in sys.argv:
- (root/'simgolf-reborn/scene/tests/fixtures/original-candidate-mixed.json').write_text(json.dumps(dict(world=world,rows=rows[:20]+[row for row in rows[20:] if row[3]['landing'] is None]),separators=(',',':'))+'\n')
+ (root/('simgolf-reborn/scene/tests/fixtures/original-candidate-nonflat.json' if nonflat else 'simgolf-reborn/scene/tests/fixtures/original-candidate-mixed.json')).write_text(json.dumps(dict(world=world,rows=rows if nonflat else rows[:20]+[row for row in rows[20:] if row[3]['landing'] is None]),separators=(',',':'))+'\n')

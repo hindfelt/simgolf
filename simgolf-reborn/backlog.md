@@ -703,3 +703,10 @@ fixtures and rising/flat/falling candidate integration with deterministic resume
 launch selection and outer planner integration remain before live use. Multiplayer
 requirements A01–A05/M01–M05 remain open; resumable simulation remains independent
 of rendering and browser state.
+
+F09 nonflat candidate verification (2026-09-11): 150 full trajectories now match
+original x86 with real height/slope routines and supplied nonflat vertices. Fixed
+rejection of transient negative speed from slope impacts and preserved uint16
+RNG bounds. All 22 focused tests, 150 flat trajectories and both 5,000-case impact/
+air-collision oracles pass. Launch selection, live map adaptation and outer
+planner integration remain open; no live deployment change in this step.
