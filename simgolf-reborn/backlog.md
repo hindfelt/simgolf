@@ -957,3 +957,10 @@ searches and ordered callbacks match, including 2→4→8 sample progression;
 200 complete original pruning retry loops match final scores/survivor spread.
 Fifteen targeted tests pass. Actual shot-physics and assessment callbacks,
 search entry/publication integration and live gameplay wiring remain open.
+
+F09 search preparation (2026-09-11): recovered projected anchor and initial
+sampling/weighting, composed with mode/curve setup and temporary next-shot range
+query. 5,000 anchor and 5,000 contiguous prepared-search cases match the original;
+11 targeted tests pass. Preserves original tile-index/fixed-point weighting
+quirk. Initial entry state, final publication, physical callbacks and live
+integration remain open.

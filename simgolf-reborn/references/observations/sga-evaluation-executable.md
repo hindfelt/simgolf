@@ -1824,3 +1824,28 @@ and serialized replay. These comparisons still supply physics outcomes and
 assessment costs; they do not prove complete original planning or live fidelity.
 Search entry/final publication, real physical callbacks and live integration
 remain unfinished. No deployment was made for this isolated logic.
+
+### Search anchor and complete preparation (2026-09-11)
+
+`original-route-search-anchor.js` recovers 0x422688–0x422799: project the
+range-minus-25 distance clamped to [0, cup distance] using the original integer
+sine table; convert to a tile anchor; initialize two samples and zero work.
+The distance divisor is 2 below 100, 6 above 200, and 4 otherwise. Crucially,
+0x422760 passes the origin tile indices to the fixed-point distance helper,
+not the actor's full fixed-point position. This apparent original quirk is
+preserved, rather than replaced with a conventional golfer-to-cup distance.
+The earlier two distance calls in this block have no retained result.
+
+`originalPreparedRouteSearch` composes existing search setup with this block,
+preserving the range-query callback and original shot counter. The anchor oracle
+executes the complete block and real clamp, projection and distance routines;
+all 5,000 cases match. The prepared-search oracle executes 0x42252c–0x422799
+contiguously, supplying only the next-range result at 0x4219e0 and checking its
+call state. All 5,000 cases match, including mode, curve mask, heading, reach,
+anchor and initial pass parameters. Each verifier has its own fixture file.
+Eleven setup/anchor/repeated-pass tests pass. A fixture filename collision in
+the new verifier was corrected before rerunning and saving both fixture sets.
+
+The actual initial range query and entry flags/table initialization before
+0x42252c, final search publication, physical candidate callbacks and live wiring
+remain unfinished; this isolated preparation is not a deployed gameplay change.
