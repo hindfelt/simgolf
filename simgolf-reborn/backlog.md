@@ -885,3 +885,8 @@ cardinal score adjustment and rounded-vector heading/distance. 5,000 original
 cases and eight tests pass. Route-search production of targets/score grids,
 observer side effect, automatic launch middle branch and live integration remain
 unfinished.
+
+F09 route-search setup (2026-09-11): recovered mode normalization, skill/ability
+curve mask, cup aim and temporary next-shot range query. 5,000 original cases
+and eight tests pass. Initial search globals, full range-query composition,
+candidate loops, automatic launch branch and live integration remain unfinished.

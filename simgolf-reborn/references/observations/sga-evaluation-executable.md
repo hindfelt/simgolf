@@ -1571,3 +1571,22 @@ vectors, flags, adjusted score, heading and distance. Thirty fixtures and eight
 request/result tests pass, including read order and heading truncation. The
 following observer side effect at 0x4239cf onward, route search, automatic launch
 middle branch and live integration remain unfinished. Nothing deployed.
+
+### Route-search mode, curve options and two-shot reach (2026-09-11)
+
+Recovered 0x42252c–0x422688 in `original-route-search-setup.js`. Mode zero
+becomes one unless actor flag 1 is set or a nonzero actor class has a positive
+terrain shot class. Nonpositive terrain class plus skill bit 4 enables two
+curve choices; professional ability bits 0x20/0x40 independently gate them.
+The search targets the cup center and computes heading/distance from the reduced
+yard vector. It then increments the shot-counter byte (wrapping 255 to zero),
+queries next-shot range with the new target/heading/mode, and restores the counter.
+A flag records whether cup distance exceeds current plus next-shot range.
+
+`verify-original-route-search-setup.py` executes the original setup, heading and
+x87 distance calculation. The next-range helper is supplied and its call-time
+actor counter, target, heading and mode are independently captured. All 5,000
+cases match outputs and query state. Sixty fixtures and eight search/result tests
+pass, including counter wrap and exact two-shot reach boundary. The initial
+search globals, range-query integration, candidate loops and live integration
+remain open; this is not a complete route search or deployed feature.
