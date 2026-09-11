@@ -11,7 +11,7 @@ import { lie } from "../simulation/game.js";
 import { snackBar } from "./snack-bar.js";
 import { resortHotel } from "./hotel.js";
 import { flowerbed } from "./flowerbed.js";
-import { bridgeEdges } from "./bridge-layout.js";
+import { bridgeEdges, bridgeDeckHeights, bridgeWalkHeight } from "./bridge-layout.js";
 import { connectedPathCells } from "../simulation/game.js";
 import { plantedTrees } from "./planted-trees.js";
 import { tennisCourt } from "./tennis-court.js";
@@ -24,15 +24,11 @@ import { TERRAIN } from "../simulation/terrain.js";
 import * as THREE from "three";
 import { terrainContours, roundedTerrainPath } from "./terrain-outline.js";
 import { GRID, key, center, onBridge, riverZ } from "../simulation/world.js";
-import { height } from "../landscape.js";
+import { height, courseHeight } from "../landscape.js";
 import { person } from "../actors.js";
 import { bench } from "../architecture.js";
 function travelHeight(g, pos) {
-  const bridgeCell = key(
-    Math.floor((pos.x - GRID.minX) / 2),
-    Math.floor((pos.z - GRID.minZ) / 2),
-  );
-  let y = g.bridges?.[bridgeCell] ? 0.4 : height(pos.x, pos.z);
+  let y = bridgeWalkHeight(g,pos) ?? height(pos.x, pos.z);
   if (!g.starterBridgeRemoved && onBridge(pos.x, pos.z))
     y = Math.max(
       y,
@@ -175,12 +171,29 @@ export function buildCourseView(scene) {
       const edges = bridgeEdges(g, c, r);
       const eastWest = edges.some((e) => e.dc && e.deck);
       const deck = new THREE.Group();
-      deck.position.set(p.x, 0.27, p.z);
+      deck.name = `bridge-deck-${k}`;
+      deck.position.set(p.x, bridgeDeckHeights(g)[k] - 0.09, p.z);
       construction.add(deck);
       add(new THREE.BoxGeometry(2.01, 0.18, 2.01), 0x977b51, 0, 0, 0, deck);
+      // Side stringers and a second handrail make the deck read as a wooden
+      // bridge at the normal isometric zoom, rather than floating thin rails.
       const posts = new Set();
-      for (const { dc, dr, rail } of edges) {
+      for (const { dc, dr, rail, deck: adjacentDeck } of edges) {
+        if (!rail && !adjacentDeck) {
+          const bankY=courseHeight(g,p.x+dc*2,p.z+dr*2)+.045-deck.position.y;
+          const vertices=[];
+          for(const [reach,side] of [[1,-1],[2,-1],[1,1],[1,1],[2,-1],[2,1]])
+            vertices.push(dc*reach+dr*side,reach===1?.09:bankY,dr*reach+dc*side);
+          const geometry=new THREE.BufferGeometry();
+          geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.computeVertexNormals();
+          const ramp=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0x977b51,roughness:.85,side:THREE.DoubleSide}));
+          ramp.name='bridge-bank-approach';ramp.receiveShadow=true;deck.add(ramp);
+        }
         if (!rail) continue;
+        add(new THREE.BoxGeometry(dc ? 0.12 : 2, 0.18, dr ? 0.12 : 2),
+          0x725739, dc*0.92, -0.13, dr*0.92, deck);
+        add(new THREE.BoxGeometry(dc ? 0.07 : 2, 0.08, dr ? 0.07 : 2),
+          0xa58b60, dc*0.92, 0.4, dr*0.92, deck);
         add(
           new THREE.BoxGeometry(dc ? 0.08 : 2, 0.1, dr ? 0.08 : 2),
           0xb39a6b,

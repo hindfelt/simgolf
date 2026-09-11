@@ -57,3 +57,16 @@ test("browser renders a complete multi-tile bridge", async ({ page }) => {
     ),
   ).toBeGreaterThan(1);
 });
+
+import {bridgeDeckHeights} from '../src/rendering/bridge-layout.js';
+import {courseHeight} from '../src/landscape.js';
+test('raised-water crossings have a continuous deck above water and banks, recalculated after edits',()=>{
+ const g=crossing(),ids=Object.keys(g.bridges);g.elevation={};
+ for(let r=25;r<=32;r++)for(let c=25;c<=27;c++)g.elevation[key(c,r)]=2;
+ g.revision++;
+ const levels=bridgeDeckHeights(g);
+ expect(new Set(ids.map(id=>levels[id])).size).toBe(1);
+ for(const id of ids){const p=center(Number(id)%45,Math.floor(Number(id)/45));expect(levels[id]).toBeGreaterThan(courseHeight(g,p.x,p.z)+.1);}
+ const before=levels[ids[0]];g.elevation[ids[0]]=4;g.revision++;
+ expect(bridgeDeckHeights(g)[ids[0]]).toBeGreaterThan(before);
+});
