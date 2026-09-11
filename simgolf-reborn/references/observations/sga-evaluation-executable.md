@@ -1684,3 +1684,23 @@ winner helper, oracle and fixtures. The threshold arithmetic is unchanged;
 all 5,000 winner comparisons still pass. Future loop composition must pass the
 landing scorer's goodLandings counter. Full simulation/scoring orchestration and
 live integration remain unfinished, with no deployment.
+
+### Contiguous landing review and progress flag (2026-09-11)
+
+`original-route-landing-review.js` completes the earlier landing score helper
+with 0x422d87–0x422e5a target-distance bookkeeping. The intended target uses a
+center or corner fixed-point position according to trial mode. Its distance to
+the cup is stored separately from the actual landing's remaining distance.
+The heading's low bit is cleared, then set if intended remaining distance exceeds
+actual remaining distance by >25 AND exceeds twice actual remaining distance.
+This marks unexpectedly strong progress toward the cup; it is not a penalty for
+falling short. Scoring recomputes actual remaining distance afterward, so the
+comparison's temporary doubled register does not double the distance score.
+
+`verify-original-route-landing-review.py` executes the entire original block
+0x422c34–0x422ea4 without the old bookkeeping skip hook or helper stubs. All
+1,000 cases match score, good-landings counter, lie, actual/intended remaining
+distances and the published sample flags. Forty fixtures and seven landing tests
+pass, including strict comparison boundaries and center/corner differences.
+Follow-up assessment, sample loop orchestration and live integration remain open;
+this does not establish a complete planner or deployed change.

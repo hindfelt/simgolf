@@ -918,3 +918,9 @@ and asymmetric work count. 5,000 dispatch cases, 5,000 winner regressions and si
 tests pass. Corrected winner threshold input to goodLandings, confirmed by the
 original landing increment; previous bad/unsuccessful wording was incorrect.
 Full candidate simulation/scoring orchestration and live integration remain open.
+
+F09 contiguous landing review (2026-09-11): integrated intended-target distance
+and actual landing progress flag with terrain scoring. 1,000 complete original
+block comparisons and seven tests pass. The flag means unexpectedly strong cup
+progress, not short-shot penalty. Follow-up/sample orchestration and live
+integration remain unfinished.
