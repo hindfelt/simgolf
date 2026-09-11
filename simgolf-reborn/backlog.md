@@ -794,3 +794,9 @@ F09 accuracy/recovery stage (2026-09-11): recovered short-shot identity effects,
 recovery lie replacement and later directional noise. All 5,000 x86 state/seed
 comparisons and ten tests pass. Whole-tail composition, earlier conditional
 planning, upstream assessment and live integration remain unfinished.
+
+F09 full final-launch tail (2026-09-11): composed shape, recovery and final lie
+normalization with original baseline/seed ordering. All 5,000 complete x86 tail
+outputs and 17 tests pass. Serializable input/output preserves deterministic
+session architecture. Conditional middle planning, upstream assessment and
+live map/planner integration remain before full gameplay parity.

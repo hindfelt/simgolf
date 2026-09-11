@@ -6,7 +6,7 @@ export function originalLaunchFinish(q) {
  let {speed,verticalSpeed,heading,angularOffset,actorFlags}=q;
  const {lie,curveOffset,baseSpeed,modifier,club,variant,stateFlags,tileFlags,skillMask,shotClass,mode,seed}=q;
  if(![speed,verticalSpeed,heading,angularOffset,actorFlags,lie,curveOffset,baseSpeed,modifier,club,variant,stateFlags,tileFlags,skillMask,shotClass,mode].every(Number.isInteger)||
- speed<0||speed>100000||baseSpeed<0||baseSpeed>100000||heading<0||heading>0xffffffff||mode<0||mode>3)
+ speed<0||speed>999999||baseSpeed<0||baseSpeed>999999||heading<0||heading>0xffffffff||mode<0||mode>3)
  throw Error('Invalid original launch finish.');
  const rng=originalRandom(seed),draw=n=>rng.next(Math.max(1,n&0xffff));
  angularOffset=(angularOffset+curveOffset)|0;

@@ -1199,3 +1199,28 @@ which this block otherwise preserves.
 This closes the arithmetic gap immediately before final dispatch. Whole-tail
 composition/oracle, the earlier conditional middle-planning section, upstream
 assessment and live map integration still remain before full planner parity.
+
+
+### Complete final launch tail composition (2026-09-11)
+
+`original-launch-tail.js` now composes shot shape, accuracy/recovery and final
+lie dispatch/normalization across `0x42536b–0x425ab9`. Clamped shape speed
+becomes the baseline retained throughout later corrections; the recovery seed
+feeds final variation, and the selected effective lie determines its metadata.
+The stored curve addition is applied only in the final stage. Output includes
+final ball state, effective lie, shot type and total draw count, with no hidden
+session state or mutation of upstream inputs.
+
+`verify-original-launch-tail.py` executes the entire original contiguous tail
+and helper routines without stubs, x87 control word 0x37f. All 5,000 mixed input
+cases match final speed/lift/heading/curvature, flags, seed, lie and shot type.
+Incoming nominal speeds/reference speeds up to 100000 can increase during shape
+setup, so final normalization now accepts speeds through the original curved
+shot clamp 999999. The combined test exercises values above the former helper
+limit. One hundred executable-output fixtures retained; 17 focused tests pass,
+including serialized inputs, changed lies and multiple-draw sequences.
+
+This is the complete final arithmetic tail, not the whole original planner.
+The conditional middle section `0x424988–0x42536b`, upstream assessment and
+live browser mapping remain uncomposed. Original UI dirty flags/epilogue are
+outside the pure state implementation. No live deployment change in this step.
