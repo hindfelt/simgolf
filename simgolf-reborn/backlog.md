@@ -1167,3 +1167,10 @@ with speculative candidate completion. 240 native runs extend through both
 epilogue writes, resetting their incoming values per case; thirteen automatic
 and candidate tests pass. Target selection, full remark effects and live owning
 state application remain unfinished.
+
+F09 shared launch preparation (2026-09-11): extracted terrain assessment,
+elevation correction, club selection and terrain-dependent launch preparation
+through 0x424988. Exact-target launch now uses it; automatic sentinel preparation
+matches 1,000 native runs at the split point. Another 1,000 exact launches and
+seventeen related tests pass. Feeding assessment rating/dominant fields into the
+automatic flow, initial target search, remark effects and live mapping remain open.

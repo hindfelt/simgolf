@@ -2559,3 +2559,24 @@ automatic/candidate tests pass, including flat and nonflat contiguous candidate
 fixtures, serialized shared trials and independent output ownership. The earlier
 epilogue omission is closed at this boundary. Initial target/club selection,
 complete remark effects and applying the state to live gameplay remain open.
+
+### Shared preparation before automatic/exact split: 0x423b66–0x424988
+
+`original-launch-preparation.js` composes target ray/neighborhood assessment,
+elevation distance correction, club selection, launch core and terrain-dependent
+low/approach shot selection. It returns the complete prepared launch, cache,
+assessment (including rating and dominant terrain/direction), adjusted distance,
+clamped strength and actual origin terrain. Unlike the exact-target wrapper,
+this stage accepts the automatic -1 sentinel because the paths split afterward.
+
+The existing exact-target assessed launch now shares this preparation and applies
+the final tail afterward. Its rejection of the automatic sentinel remains, so
+callers cannot silently bypass the automatic-only scenery/reaction stages.
+
+`verify-original-assessed-launch.py --prepared` stops at the actual split point
+with planner argument -1. All 1,000 cases match full preparation outputs and
+sequential shared caches. Running the default verifier also confirms 1,000
+exact-target results remain unchanged. Seventeen related tests pass, including
+flat/nonflat native candidate fixtures. The remaining handoff must map assessment
+rating and dominant fields into the automatic middle's actor/scratch state; initial
+target selection, full remark effects and live gameplay integration remain open.
