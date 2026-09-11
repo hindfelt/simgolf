@@ -1,6 +1,7 @@
 import {originalPreparedRouteSearch} from './original-route-search-anchor.js';
 import {originalRouteSearchPasses} from './original-route-search-passes.js';
 import {originalRouteFinish} from './original-route-finish.js';
+import {originalRouteEntry} from './original-route-entry.js';
 // Search body after entry initialization (0x42252c), through publication.
 // Callbacks own the range query, candidate physics and follow-up assessment.
 export function originalRouteSearch(q,nextRange,simulate) {
@@ -12,4 +13,14 @@ export function originalRouteSearch(q,nextRange,simulate) {
  const result=originalRouteFinish({...q,mode:prepared.mode,winner:search.winner,
   diagnostics:search.diagnostics,cornerTarget:search.winner.cornerTarget});
  return {search,result};
+}
+
+// The initial range query has search flags but retains the actor's old aim;
+// the subsequent query receives the temporary next-shot counter and cup aim.
+export function originalEnteredRouteSearch(q,initialRange,nextRange,simulate) {
+ const entry=originalRouteEntry(q,initialRange);
+ const shotClass=q.terrainAt(entry.originTile).shotClass;
+ return originalRouteSearch({...q,...entry,shotClass,originClass:shotClass,
+  winner:{...q.winner,target:{...q.winner.target,x:entry.winnerTargetX},
+   curve:entry.curve,cornerTarget:entry.cornerTarget}},nextRange,simulate);
 }

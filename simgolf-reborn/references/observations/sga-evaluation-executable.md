@@ -1899,3 +1899,29 @@ composed into the full search body or connected to real range/physical candidate
 callbacks. Original allocation mechanics and incidental register/stack state are
 not browser behavior. Live shot-planning integration remains unfinished and
 this change has not been deployed.
+
+### Entry-to-publication composition (2026-09-11)
+
+`originalEnteredRouteSearch` connects recovered entry state to the complete
+search body. It replaces incoming score grids with fresh zeroed candidates,
+sets search flags and initial winner X/curve/corner fields, and derives origin
+shot class from terrain for both setup and candidate options. Winner fields
+not initialized by entry remain supplied state until replaced by a successful
+candidate; they are not claimed as meaningful results when no candidate exists.
+Initial and next-shot range callbacks remain distinct because they observe
+different original state: search flags/old aim versus temporary shot count/cup
+heading and normalized mode.
+
+`verify-original-entered-route-search.py` runs 0x42245e through 0x423582
+contiguously, including both range queries. Thirty runs match all retained
+search tables/state, published result and ordered initial-range, next-range,
+candidate and assessment calls. Fresh grids exercise more work than the prior
+seeded-grid oracle; the emulator instruction ceiling was raised from five to
+fifty million to allow original execution to finish, with the stop address
+still asserted. Fully excluded terrain also matches the cup fallback.
+Nine entry/search regression tests pass, including input immutability and replay.
+
+These runs still supply range returns, candidate landings and follow-up costs.
+Observer UI is disabled and the UI yield is stubbed as documented for the search
+body. Actual range/physical/assessment composition, complete automatic shot
+planning and live use remain open. No deployment is included.

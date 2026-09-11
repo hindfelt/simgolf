@@ -977,3 +977,10 @@ search flags, first range-query context, previous target and origin tile lookup.
 500 contiguous original entries and six targeted tests pass. Entry-to-body
 composition, actual range/physics/assessment callbacks and live integration
 remain unfinished.
+
+F09 entry-to-publication composition (2026-09-11): originalEnteredRouteSearch
+now initializes fresh candidate scores and search flags before preparation,
+passes and publication; derives origin class from the supplied terrain.
+Thirty full contiguous searches and nine targeted tests pass, including both
+range-query contexts and fully excluded terrain. Actual range/physics/assessment
+callbacks and live integration remain unfinished.
