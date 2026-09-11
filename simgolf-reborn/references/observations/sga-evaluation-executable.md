@@ -2628,3 +2628,19 @@ pass, including stale planning inputs and the exact-coordinate guard. The earlie
 assessment-to-final verification gap is closed for these controlled scenarios;
 initial target/range search, full remark behavior and live state mapping remain
 unfinished. No deployment is included.
+
+### Connected target selection (2026-09-11)
+
+`originalTargetSelection` connects 0x42365d target geometry to branch selection
+and the complete short-approach block, without intervening native stubs.
+`verify-original-target-selection.py` executes 5,000 cases with the actual
+heading/projection helpers, varied ranges and current terrain-class bytes.
+Direct and short paths stop at 0x423b66; long paths stop at 0x42381a before
+route-search setup. The comparison includes target, heading, curve, flags,
+adjusted distance, shared landing/diagnostics and pending search request.
+
+The 240 stored cases cover all three paths, positive/negative/zero approach
+adjustments, and projected search waypoints distinct from the cup. Initial
+coverage used a range too large to distinguish these; varying range exposed
+and closed that test-data gap. Ten related tests pass. No route search is
+replaced with an approach, and this stage has not been wired into live play.

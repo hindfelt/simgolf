@@ -1188,3 +1188,11 @@ restoration. All 240 uninterrupted native runs from 0x423b66 match final state,
 events, cache and seed; seventeen related tests pass. Wider verification found
 and fixed a stale scenery value passed to later reactions. Initial target search,
 complete remark behavior and live owning-state integration remain unfinished.
+
+F09 connected target selection (2026-09-11): composed original target geometry,
+automatic branch request and short-approach adjustment. 5,000 uninterrupted
+Windows runs match through 0x423b66 for direct/approach paths, or 0x42381a for
+search requests. Ten related regression tests pass. Long shots retain their cup
+and shared landing/diagnostics while awaiting real route search; projected
+waypoints are not substituted for search results. Full search-to-assessment
+composition, remark behavior and live state integration remain open.
