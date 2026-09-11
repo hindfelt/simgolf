@@ -2472,3 +2472,24 @@ named references; the lookup pattern was corrected and all native cases rerun.
 The committed fixtures now exercise changes to all three reference outputs.
 Thirteen related tests pass. Original object lookup, full remark effects and
 automatic planner composition/live integration remain unfinished; not deployed.
+
+### Original object lookup: 0x40dc70–0x40dce6
+
+`original-object-index.js` scans exactly 256 records in storage order, skipping
+type -1 and returning the first matching square footprint. Origin coordinates
+are signed words; base size is a signed metadata byte. Types at least 6 except
+7 add expansion-1 to size. Both coordinate intervals include the lower bound
+and exclude the upper bound. No sorting or nearest-object heuristic is used.
+
+Automatic scenery sampling now calls this implementation directly. Its native
+verifier also executes real 0x40dc70 against a complete object table rather than
+returning a controlled index. Object records, base sizes and expansion values
+remain explicit data inputs; the special backing record at index -1 is still
+supplied where the caller's subsequent code reads it.
+
+`verify-original-object-index.py` compares 1,000 scans, including first-match
+overlap, slot 255, no hit, negative coordinates/base sizes, expanded footprints
+and the type-7 exception. All 300 complete scenery loops still match native
+state and RNG with this lookup included. Ten related tests pass. The previous
+object-lookup-boundary limitation is superseded; full live record mapping,
+remark effects and automatic planner integration remain unfinished.

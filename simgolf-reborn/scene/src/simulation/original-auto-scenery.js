@@ -1,8 +1,9 @@
 import {originalRandom} from './original-rng.js';
 import {originalProjection} from './original-projection.js';
+import {originalObjectIndex} from './original-object-index.js';
 const dx=[0,1,1,1,0,-1,-1,-1],dz=[-1,-1,0,1,1,1,0,-1];
 // Non-putter automatic scenery sampling, 0x4249b3–0x424c46.
-// Map metadata and object lookup remain explicit original-record boundaries.
+// Map metadata and original object records remain explicit boundaries.
 export function originalAutoScenery(q,map) {
  const state=structuredClone(q.state),rng=originalRandom(state.seed);
  state.holeCounter=(state.holeCounter+1)|0;
@@ -24,7 +25,7 @@ export function originalAutoScenery(q,map) {
      if(map.heightAt(x,z)<=ceiling&&behindKind()!==13)state.sceneryTile=index;
     }
     if(map.categoryAt(code)===16&&behindKind()!==13){
-     const recordIndex=map.objectIndexAt(x,z);
+     const recordIndex=originalObjectIndex(x,z,map);
      if(code===21){
       const record=recordIndex===-1?null:map.objectAt(recordIndex);
       if(record?.type===5&&record.value)state.namedReference=record.value;

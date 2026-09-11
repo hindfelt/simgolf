@@ -986,6 +986,12 @@ related tests pass; fixtures cover each reference output. Original object lookup
 and height values remain supplied map boundaries. Full remark effects and
 automatic planner composition/live integration remain unfinished.
 
+F09 original object lookup (2026-09-11): recovered 0x40dc70's first-match
+256-record footprint scan and integrated it into automatic scenery sampling.
+1,000 object scans and 300 scenery loops with the real native lookup match;
+ten related tests pass. Supplied object-lookup results are removed. Original
+record/metadata mapping, remark effects and live planner integration remain open.
+
 F09 route entry initialization (2026-09-11): recovered cleared score grid,
 search flags, first range-query context, previous target and origin tile lookup.
 500 contiguous original entries and six targeted tests pass. Entry-to-body
