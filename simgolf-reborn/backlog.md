@@ -677,3 +677,9 @@ collision chance, deflection, speed loss and exact RNG consumption, including
 16-bit speed bounds. Matched 5,000 original x86 results/RNG states; nine focused
 tests pass. Obstacle-height detection, launch selection and complete candidate
 lifecycle/map integration remain open.
+
+F09 obstacle-height detection (2026-09-11): reconstructed complete original
+height-band decision and integrated it with airborne collision response, preserving
+RNG consumption even before the design-mode bypass. Matched 5,000 original x86
+decisions/RNG states; eight focused tests pass. Launch selection, original map/
+variant adapters and full candidate lifecycle remain before live integration.

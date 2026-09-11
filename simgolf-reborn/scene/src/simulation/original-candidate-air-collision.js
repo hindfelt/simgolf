@@ -1,3 +1,4 @@
+import {originalObstacleHeight} from './original-obstacle-height.js';
 import {originalMapDistance} from './original-route-distance.js';
 import {originalRandom} from './original-rng.js';
 // 0x421e4d–0x421f43, after original obstacle-height test 0x406e80.
@@ -22,4 +23,12 @@ export function originalCandidateAirCollision({position,oldTile,speed,heading,fl
    }
  }
  return {speed,heading,flags,seed:rng.state,draws:rng.draws,hit};
+}
+
+// The original detector runs before the mode-2 bypass, so even design mode
+// must preserve any random draw used to determine obstacle height.
+export function originalCandidateAirObstacle(input) {
+ const detection=originalObstacleHeight(input);
+ const collision=originalCandidateAirCollision({...input,seed:detection.seed,obstructed:detection.obstructed});
+ return {...collision,obstructed:detection.obstructed,draws:detection.draws+collision.draws};
 }

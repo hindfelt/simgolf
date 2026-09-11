@@ -694,3 +694,20 @@ conversion without stubbing their arithmetic; obstruction is supplied at entry.
 All 5,000 motion/flag/RNG outputs match. Nine air-collision/impact tests pass.
 Original obstacle-height detection, launch generation, map/slope adapters and
 complete simulation lifecycle remain required before live planner replacement.
+
+### Complete obstacle-height check and airborne composition (2026-09-11)
+
+Reconstructed complete 0x406e80–0x40703f as `originalObstacleHeight`. Terrain
+13–16 uses variant-specific lower/upper bands; upper heights consume one original
+RNG draw. Terrain 21/22 uses low-five-bit metadata to select the fixed 0–200
+band; ordinary terrain defaults to equal bounds. Both bounds are strict. The
+signed selector at 0x5a1f30 is exposed as variant, without assuming a browser
+landscape-name mapping. All 5,000 original x86 decisions and RNG states match
+in the repeatable verifier (whole function and original RNG, no stubs).
+
+Added `originalCandidateAirObstacle` to compose detection with collision response.
+The detector is called before the original mode-2 collision bypass, so design
+mode still consumes any obstacle-height RNG draw. This ordering is covered by
+an integration regression. Eight height/collision tests pass. Launch generation,
+terrain/variant adapters and the full candidate lifecycle remain open before
+this original simulation replaces browser planning.
