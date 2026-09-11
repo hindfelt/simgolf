@@ -27,7 +27,6 @@ export function transportFacility(scene, type, x, z) {
     }
     for (const [px, pz] of [
       [-3.8, 2.2],
-      [0, 1.7],
       [3.8, 2.7],
     ]) {
       const hull = new THREE.SphereGeometry(1, 12, 6);
@@ -88,6 +87,15 @@ export function transportFacility(scene, type, x, z) {
     mesh.castShadow = mesh.receiveShadow = true;
     group.add(mesh);
     for (const geo of geos) geo.dispose();
+  }
+  if(type==='marina'){
+    const boat=new THREE.Group();boat.position.set(0,0,1.7);group.add(boat);group.userData.marinaBoat=boat;
+    const part=(geometry,color,x,y,z)=>{const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.7}));mesh.position.set(x,y,z);mesh.castShadow=true;boat.add(mesh);return mesh;};
+    const hull=new THREE.SphereGeometry(1,12,6);hull.scale(.7,.36,1.65);
+    part(hull,0xe4dfc9,0,.37,0);
+    part(new THREE.BoxGeometry(.85,.5,1.2),0xf1ebd7,0,.78,0);
+    part(new THREE.BoxGeometry(.78,.22,.6),0x53777c,0,.98,-.12);
+    part(new THREE.BoxGeometry(.05,2.3,.05),0x968c71,0,1.6,.4);
   }
   scene.add(group);
   return group;

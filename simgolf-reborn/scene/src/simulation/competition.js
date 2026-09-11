@@ -1,6 +1,6 @@
 import { originalProfessionalSkills } from "./roster-opponent.js";
 import { validateAppearance } from "./appearance.js";
-import { canonical, RULESET_VERSION, PROTOCOL_VERSION, PRE_TENNIS_RULESET, compatibleGolfRuleset } from "./protocol.js";
+import { canonical, RULESET_VERSION, PROTOCOL_VERSION, PRE_TENNIS_RULESET, PRE_MARINA_RULESET, compatibleGolfRuleset } from "./protocol.js";
 import { importCourse, coursePractice } from "./course-package.js";
 import { validateGolferPackage, loadGolfer } from "./golfer-package.js";
 import { startPractice } from "./game.js";
@@ -287,12 +287,13 @@ export async function restoreCompetition(raw) {
     )
       throw Error("Invalid competition command record.");
   }
-  if(data.ruleset===PRE_TENNIS_RULESET){
+  if(data.ruleset===PRE_TENNIS_RULESET || data.ruleset===PRE_MARINA_RULESET){
+    const previousVersion=data.ruleset===PRE_TENNIS_RULESET?75:76;
     for(const row of data.journal) if(row.type==='command' && row.request?.command){
       const c=row.request.command;
       // Translate only the formerly valid version. A formerly rejected future
       // version must stay rejected, rather than becoming valid on upgrade.
-      c.version=c.version===75?PROTOCOL_VERSION:c.version===PROTOCOL_VERSION?-1:c.version;
+      c.version=c.version===previousVersion?PROTOCOL_VERSION:c.version>=75?-1:c.version;
     }
   }
   const host = await createCompetition(data.config);

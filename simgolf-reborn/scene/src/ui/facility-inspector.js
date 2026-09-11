@@ -11,13 +11,13 @@ export function facilityDetails(g, f) {
     bench: 'Visitors rest here to recover energy.', snack: 'Visitors buy refreshments to reduce hunger and thirst.',
     ballwasher: 'Golfers clean their ball for a temporary accuracy benefit.',
     'pro-shop': 'Trains accuracy for visitors who already have that skill.',
-    'driving-range': 'Trains length for visitors who already have that skill.',
-    'putting-green': 'Trains imagination for visitors who already have that skill.',
+    'driving-range': 'Trains length for skilled visitors; some golfers return for extra practice after their round.',
+    'putting-green': 'Trains imagination for skilled visitors; some golfers return for extra putting practice.',
     hotel: 'Arriving visitors start better rested. This benefit does not require a visible hotel visit.',
     'cart-garage': 'New visitors can use golf carts.',
-    marina: 'A connected marina adds a home-sale value bonus.',
+    marina: 'Brings additional visiting golfers by boat and adds a home-sale value bonus.',
     church: 'A connected church adds a home-sale value bonus.',
-    airstrip: 'A connected airstrip adds 25% to green fees.',
+    airstrip: 'Brings additional visiting golfers by airport transfer and adds 25% to green fees.',
     flowerbed: 'Passing golfers can appreciate the flowers once per hole.',
     lighthouse: 'A coastal scenery landmark.',
   };
@@ -28,9 +28,15 @@ export function facilityDetails(g, f) {
     lines.push('Golfing partners can play tennis together after completing their round. One pair at a time.');
   }
   if (definition.recreation) lines.push('Improves the starting attitude of arriving golfers.');
+  if(f.type==='marina'){
+    const s=f.marinaActivity;
+    lines.push(`${s?.trips||0} completed passenger boat visits.`);
+    lines.push(s?.blocked?'Boat channel blocked — restore clear water ahead of the central berth.':`Boat: ${s?.phase||'waiting for a visit'}.`);
+    if(s?.phase==='parked')lines.push(`Waiting for ${s.guests.filter(id=>g.guests.some(v=>v.id===id)).length} visitors to finish and return.`);
+  }
   if (f.type === 'helipad') {
     const h = g.helicopter;
-    lines.push('$200 per landing; at most one helicopter on the property.');
+    lines.push('Brings additional golfers. $200 per landing; at most one helicopter on the property.');
     if (h?.padId === f.id) {
       lines.push(`Helicopter: ${h.phase}.`);
       if (h.phase === 'parked') lines.push(`Waiting for ${h.guests.filter(id => g.guests.some(v => v.id === id)).length} golfers to finish and return.`);

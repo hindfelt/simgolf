@@ -1,5 +1,11 @@
 # Simulation architecture and future multiplayer
 
+## Transport visits
+
+Protocol 77 stores marina phases, hull offsets, passenger IDs, cooldowns and channel blocking on the facility. Rendering samples saved state. Passengers have a saved transport exit and return before their boat departs. Connected airstrips schedule visitor transfers; helicopter landing state and its $200 fee remain authoritative. Separate persistent visitor pairs per transport type increase the roster without consuming walk-in candidates or growing it on each trip. Capacity and first-tee checks apply at admission. Post-round practice has a saved facility reservation and duration; tennis retains shared pair reservations.
+
+Course exports omit transient resort activity. Golf-only packages and replays from protocols 75 and 76 remain compatible, with explicit command-version translation and unchanged result verification. Arrival frequencies and practice selection are provisional browser rules.
+
 ## Post-round recreation
 
 Protocol 76 adds authoritative per-golfer tennis reservations and session times. The renderer samples the simulation clock for player and ball poses; it never awards a visit or changes finances. Session state survives resort saves. Disconnecting a court, removing it or losing a partner releases reservations without credit. One pair occupies a facility at a time.

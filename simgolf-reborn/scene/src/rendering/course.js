@@ -1,3 +1,4 @@
+import {practicePose} from "./practice-activity.js";
 import {tennisPose,updateTennisBall} from "./tennis-activity.js";
 import {facilityLighting} from './facility-lighting.js';
 import {coastalPreview} from './coastal-preview.js';
@@ -626,6 +627,11 @@ export function buildCourseView(scene) {
       for(const f of g.facilities) if(f.type==='tennis-court'){
         const group=facilityMap.get(f.id);if(group)updateTennisBall(group,g,f);
       }
+      for(const f of g.facilities)if(f.type==='marina'){
+        const boat=facilityMap.get(f.id)?.userData.marinaBoat;
+        if(boat){boat.visible=!!f.marinaActivity && f.marinaActivity.phase!=='idle';
+      boat.position.z=1.7+(f.marinaActivity?.offset||0);boat.rotation.y=f.marinaActivity?.direction===-1?Math.PI:0;}
+      }
       const people = [
           ...g.guests,
           ...g.staff,
@@ -737,10 +743,10 @@ export function buildCourseView(scene) {
           a.appearanceKey = appearanceKey;
           avatarMap.set(actorId, a);
         }
-        const tennis=tennisPose(g,p),display=tennis||p.pos;
-        const y = tennis ? travelHeight(g,p.pos)*(1-tennis.blend)+(height(tennis.center.x,tennis.center.z)+.25)*tennis.blend : travelHeight(g,p.pos);
+        const tennis=tennisPose(g,p),practice=practicePose(g,p),activity=tennis||practice,display=activity||p.pos;
+        const y = activity ? travelHeight(g,p.pos)*(1-activity.blend)+(height(activity.center.x,activity.center.z)+.25)*activity.blend : travelHeight(g,p.pos);
         a.group.position.set(display.x,y,display.z);
-        a.group.rotation.y=tennis?tennis.heading:p.heading||0;
+        a.group.rotation.y=activity?activity.heading:p.heading||0;
         if(a.racket){a.racket.visible=!!tennis;a.golfEquipment.forEach(mesh=>mesh.visible=!tennis);}
         const step =
           ["walking", "departing", "angry"].includes(p.phase) && p.path?.length
@@ -774,6 +780,7 @@ export function buildCourseView(scene) {
           a.arms[1].rotation.x = -0.5 + Math.sin(time * 6) * 0.2;
         if (p.phase === "shot")
           a.arms[1].rotation.x = -Math.max(0, 1 - (p.shot?.time || 0)) * 1.4;
+        if(practice)a.arms[1].rotation.x=practice.swing;
         if(tennis){a.arms[1].rotation.x=tennis.swing;a.legs[0].rotation.x=Math.sin(g.time*5)*.1;a.legs[1].rotation.x=-a.legs[0].rotation.x;}
         if (a.ball) {
           a.ball.visible = !p.paid && p.phase !== "finished";

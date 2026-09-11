@@ -23,6 +23,7 @@ export function stepHelicopter(g, api) {
     phase('unloading');
     api.event('Helicopter landed: $200 landing fee.');
   } else if (h.phase === 'unloading' && elapsed >= 5) {
+    if(!api.ready())return;
     h.guests = api.arrive(h.entrance);
     phase('parked');
   } else if (h.phase === 'parked' && h.guests.every(id => !g.guests.some(v => v.id === id))) {

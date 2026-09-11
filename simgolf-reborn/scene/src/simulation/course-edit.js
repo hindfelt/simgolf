@@ -99,6 +99,8 @@ export function demolitionCheck(g, c, r) {
     ),
   );
   if (f) {
+    if (f.marinaActivity && f.marinaActivity.phase!=="idle")
+      return {ok:false,message:"Wait for the visiting boat and its passengers to depart before removing the marina."};
     if (g.helicopter?.padId === f.id)
       return { ok: false, message: "Wait for the helicopter to depart before removing its helipad." };
     if (

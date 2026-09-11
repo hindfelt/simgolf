@@ -1,5 +1,13 @@
 # SimGolf Reborn 1.0.0 — major browser rebuild
 
+## Transport visitors — 11 September 2026
+
+- Helipads, marinas and airstrips now recruit additional visitor pairs independently of walk-in guests. Each transport type reuses its visitors rather than growing the roster on every trip. Existing capacity and tee safety checks remain.
+- A visiting boat approaches a connected marina, unloads golfers, stays until both return from golf/recreation, then departs. Hull clearance respects terrain, bridges and buildings. Occupied marinas cannot be demolished; blocked channels wait for repair.
+- Airports deliver occasional visitor transfers. Helicopters retain the $200 landing fee and one-helicopter limit. Airport plane-flight animation is not included.
+- Some golfers choose extra range or putting practice after golf, alongside paired tennis visits. Facility counts and saved visit state track actual use, with no extra golf round or new fee.
+- Protocol 77 migrates resort saves and retains compatible protocol-75/76 golf packages and tournament records. Transport frequency and recreation selection are browser adaptations requested by the user.
+
 ## Tennis activity — 11 September 2026
 
 - Golfing partners can reserve a connected tennis court after completing their round, walk over, wait for each other, play and depart. One pair uses a facility at a time.

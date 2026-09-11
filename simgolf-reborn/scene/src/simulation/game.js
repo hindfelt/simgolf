@@ -1,3 +1,4 @@
+import {stepMarinas,validateMarinas} from "./marina-activity.js";
 import {scheduleTennis, stepTennisVisit, validateTennis} from "./tennis-visits.js";
 import { stepChallengeCareer, validateChallengeCareer } from "./challenge-career.js";
 import { stepHelicopter, validateHelicopter } from "./helicopter.js";
@@ -35,7 +36,7 @@ import { considerMembership, validateMemberships } from "./membership.js";
 import { validateAppearance, ensureVisitorAppearances } from "./appearance.js";
 import { ensurePersonalities, compatibilityHappiness } from "./personality.js";
 import { nextVisitorPair, validateVisitorPairs } from "./visitor-pairing.js";
-import { initializeVisitorPool, validateVisitorPool } from "./visitor-pool.js";
+import { initializeVisitorPool, validateVisitorPool, transportVisitors } from "./visitor-pool.js";
 import {
   initialHappiness,
   happinessReaction,
@@ -843,14 +844,16 @@ function queueForHole(g, v, offset = 0) {
   };
   return setRoute(g, v, queueSpot, "queue") || setRoute(g, v, tee, "queue");
 }
-function arrivals(g, arrivalPoint = entrance) {
+function arrivals(g, arrivalPoint = entrance, transport) {
+  if (!firstHoleReadyForArrivals(g)) return [];
   const arrived = [];
-  const candidates = nextVisitorPair(g);
+  const candidates = transport ? transportVisitors(g, transport) : nextVisitorPair(g);
   if (candidates.length < 2) return arrived;
   const pair = g.nextId;
   for (const [i, candidate] of candidates.entries()) {
     const v = golfer(g, candidate.name, pair);
     v.pos = { ...arrivalPoint };
+    if (transport) v.transportExit = { ...arrivalPoint };
     v.id = candidate.id;
     v.appearance = structuredClone(candidate.appearance);
     v.skills = { ...candidate.profile.skills };
@@ -1281,6 +1284,7 @@ export function useBallwasher(g) {
 function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
   v.serviceContinuation = continuation;
   delete v.serviceId;
+  delete v.practiceFacilityId;
   if (continuation === "return-ball") {
     if (setRoute(g, v, v.ball, "address")) delete v.serviceContinuation;
     else {
@@ -1288,6 +1292,12 @@ function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
       v.comment = "Restore a walking route back to my ball.";
     }
     return;
+  }
+  if(continuation==='exit' && v.roundFinished && !v.practiceVisited && v.id%3===0) {
+    v.practiceVisited=true;
+    const options=g.facilities.filter(f=>['driving-range','putting-green'].includes(f.type) && connected(g,f));
+    const f=options[v.id%Math.max(1,options.length)],dest=f&&facilityEntrance(g,f);
+    if(dest && setRoute(g,v,dest,'service')) {v.serviceId=f.id;v.practiceFacilityId=f.id;v.wait=0;return;}
   }
   const facility = g.facilities.find(
     (f) =>
@@ -1317,7 +1327,7 @@ function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
     advanceRound(g, v);
     return;
   }
-  const exit = g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance;
+  const exit = v.transportExit || (g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance);
   if (!setRoute(g, v, exit, "departed")) {
     v.phase = "finished";
     v.comment = "Please restore my route to the exit.";
@@ -1662,6 +1672,16 @@ export function startPractice(g, holeId = g.holes[0]?.id) {
 export function update(g, dt, runResort = true) {
   g.time += dt;
   if (runResort) {
+    stepMarinas(g,dt,{connected,entrance:connectedEntrance,ready:()=>firstHoleReadyForArrivals(g),arrive:p=>arrivals(g,p,"marina")});
+    for (const f of g.facilities) if(f.type==="airstrip" && connected(g,f)) {
+      f.nextFlight ??= g.time+240;
+      if(g.time>=f.nextFlight && firstHoleReadyForArrivals(g)) {
+        const p=connectedEntrance(g,f);
+        const ids=p ? arrivals(g,p,"airstrip") : [];
+        f.nextFlight=g.time+(ids.length?480:30);
+        if(ids.length) {f.served=(f.served||0)+ids.length;event(g,"An airport transfer brought two visiting golfers.");}
+      }
+    }
     stepChallengeCareer(g);
     for (const name of awardCourseAccomplishments(g, par))
       event(g, name + ": earned 3 professional skill points.");
@@ -1682,7 +1702,7 @@ export function update(g, dt, runResort = true) {
     stepHelicopter(g, {
       ready: () => firstHoleReadyForArrivals(g),
       entrance: f => connectedEntrance(g, f),
-      arrive: p => arrivals(g, p),
+      arrive: p => arrivals(g, p, "helipad"),
       money: (amount, reason) => money(g, amount, reason),
       event: message => event(g, message),
     });
@@ -1724,7 +1744,7 @@ export function update(g, dt, runResort = true) {
       if (!v.path.length) {
         v.wait -= dt;
         if (v.wait > 0) continue;
-        const exitPath = route(g, v.pos, g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance);
+        const exitPath = route(g, v.pos, v.transportExit || (g.helicopter?.guests.includes(v.id) ? g.helicopter.entrance : entrance));
         if (!exitPath) {
           v.wait = 1;
           v.comment = "I cannot reach the exit. Please reconnect the path.";
@@ -1859,7 +1879,12 @@ export function update(g, dt, runResort = true) {
         chooseService(g, v);
         continue;
       }
-      if (v.wait > 3) {
+      if (v.wait > (v.practiceFacilityId===f.id ? 24 : 3)) {
+        if(v.practiceFacilityId===f.id){
+          delete v.practiceFacilityId;f.served++;g.stats.services++;
+          v.comment='Enjoyed a little extra practice before heading home.';
+          chooseService(g,v);continue;
+        }
         if (f.type === "bench") {
           v.energy = 100;
           v.comment = "That bench was just what I needed.";
@@ -2111,6 +2136,9 @@ export function restore(raw) {
   }
   for (const v of [...g.guests, ...(g.pro ? [g.pro] : [])]) {
     validateTennis(g,v);
+    if(v.transportExit!==undefined && !point(v.transportExit))throw Error('Invalid transport exit.');
+    if(v.practiceVisited!==undefined && typeof v.practiceVisited!=='boolean')throw Error('Invalid practice visit.');
+    if(v.practiceFacilityId!==undefined && (!Number.isSafeInteger(v.practiceFacilityId)||!v.practiceVisited||v.serviceId!==v.practiceFacilityId))throw Error('Invalid practice reservation.');
     if (
       v.wellRested !== undefined &&
       (typeof v.wellRested !== "boolean" || (v.pro && v.wellRested))
@@ -2176,6 +2204,7 @@ export function restore(raw) {
     if (
       !isFacility(f.type) ||
       !Number.isFinite(f.served) ||
+      (f.nextFlight!==undefined && (f.type!=="airstrip" || !Number.isFinite(f.nextFlight) || f.nextFlight<0)) ||
       (f.rotation !== undefined && ![0, 1, 2, 3].includes(f.rotation))
     )
       throw Error("Invalid facility in save.");
@@ -2256,6 +2285,7 @@ export function restore(raw) {
   validateAccomplishments(g);
   validateLand(g);
   validateHelicopter(g);
+  validateMarinas(g);
   validateChallengeCareer(g);
   validateOwnership(g);
   validateEnvironment(g.environment);

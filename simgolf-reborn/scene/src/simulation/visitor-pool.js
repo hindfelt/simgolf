@@ -63,6 +63,7 @@ export function eligibleVisitors(g) {
       (p) =>
         p.availableAt !== null &&
         p.availableAt <= g.time &&
+        !p.transport &&
         !g.guests.some((v) => v.id === p.id),
     )
     .sort((a, b) => a.availableAt - b.availableAt || a.id - b.id);
@@ -100,6 +101,7 @@ export function validateVisitorPool(g) {
       (record && record.name !== p.name)
     )
       throw Error("Invalid visitor pool record.");
+    if(p.transport!==undefined && !["marina","helipad","airstrip"].includes(p.transport))throw Error("Invalid visitor transport.");
     validatePersonality(p.personality);
     validateAppearance(p.appearance);
     ids.add(p.id);
@@ -109,7 +111,7 @@ export function validateVisitorPool(g) {
     throw Error("Visitor is missing from the pool.");
 }
 
-export function inviteVisitor(g, memberId, tier) {
+export function inviteVisitor(g, memberId, tier, transport) {
   const id = g.nextId++,
     index = g.visitorPool.length;
   let seed = (g.rng ^ Math.imul(id, 2654435761)) >>> 0;
@@ -145,10 +147,20 @@ export function inviteVisitor(g, memberId, tier) {
       },
       trained: {},
     },
-    invitation: { memberId, tier },
+    ...(transport ? {transport} : {invitation: { memberId, tier }}),
   };
   g.visitorPool.push(p);
   ensurePersonalities(g);
   ensureVisitorAppearances(g);
   return p;
+}
+
+// Transport has its own additional visitors, rather than taking walk-in slots.
+// Reuse two identities per transport type; do not grow the pool every flight.
+export function transportVisitors(g, type) {
+  let pair=g.visitorPool.filter(p=>p.transport===type);
+  while(pair.length<2)pair.push(inviteVisitor(g,null,null,type));
+  return pair.every(p=>!g.guests.some(v=>v.id===p.id) &&
+    (!g.guestRoster.some(r=>r.id===p.id) ||
+      g.guestRoster.some(r=>r.id===p.id && r.nextVisitAt!==null && r.nextVisitAt<=g.time))) ? pair.map(p=>{const record=g.guestRoster.find(r=>r.id===p.id);return {...p,record,profile:record?.profile||p.profile};}) : [];
 }
