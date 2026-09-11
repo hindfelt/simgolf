@@ -2,6 +2,10 @@
 
 ## Current delivery sequence — 11 September 2026
 
+Latest verification: the current 933-test regression suite passed in 5.5 minutes; production build passed. A 7,260-second simulation completed 25 rounds and 9 helicopter visits, with exact continuation through 12 save/reload cycles. Three additional projected-sound/reaction integration tests pass (nine focused tests including existing coverage). These checks establish a stable preview baseline, not original-game parity or release completion.
+
+The original reaction adjustment now executes real screen projection and positional speech before applying reaction outcomes, preserving shared RNG and queued sound state. 2,400 full projected-sound cases and 1,320 contiguous reaction cases match the supplied executable. Only playback and terrain helper outputs remain controlled in these comparisons. Earlier remark dispatch/history, later social effects, live map/actor adapters and authoritative application remain incomplete; this change does not alter the deployed game's behavior.
+
 The owner requested a feedback testing simulation first, followed by original-engine integration, career progression, resort behavior, worlds/presentation, then a final stability assessment. The isolated testing copy and prepared two-hole/helicopter scenario are implemented. The four feature areas remain incomplete; a baseline test run does not close them. See [the checkpoint and acceptance gates](references/release/playtesting-2026-09-11.md).
 
 ## Coastal shoreline correction — 11 September 2026

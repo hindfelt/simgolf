@@ -2,6 +2,16 @@
 
 This checkpoint is a preview of the existing playable simulation. It is not the completed original-engine integration or the final 1.0 release.
 
+## Latest verification after release-completion request
+
+- Full current regression run: **933 passed**, 5.5 minutes, exit code 0. Log: `/tmp/simgolf-release-tests.log` (local temporary artifact).
+- Added integration coverage: three new tests for projected sound and audible reactions; all nine focused new/existing tests passed.
+- Production build: passed. Vite still reports a main play chunk above 500 kB; physical-phone load/performance acceptance remains open.
+- Stability soak: 7,260 simulated seconds; 25 completed rounds; 9 landing fees; 12 save/reload cycles with exact replay equality; 78,380-byte checkpoint; approximately 3.27 seconds of simulation computation. This is a headless simulation measurement, not rendered frame-rate evidence.
+- Native integration comparisons: 2,400 complete projection/positional-sound executions and 1,320 contiguous reaction-selection/speech/outcome executions match the supplied Windows executable. Scripts: `verify-original-projected-sound.py` and `verify-original-audible-remark.py` under `simgolf-reborn/scripts`.
+
+No deployment was made for this change: the new native pipeline is not yet connected to live game state. Native reaction entry/history, later social effects, terrain/actor mapping and complete single-player feature acceptance remain open. The output assets are unchanged from the deployed preview.
+
 ## Using the testing simulation
 
 Open the game with `?testing=1`, or choose **Club menu → Open playtesting copy**. On the first visit this copies the normal resort saved in that browser. Testing purchases, construction, championship records, practice saves and career settlement use separate browser storage. Later visits resume the testing copy.

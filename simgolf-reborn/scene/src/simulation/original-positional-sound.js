@@ -1,4 +1,12 @@
 import {originalRandom} from './original-rng.js';
+import {originalScreenProjection} from './original-screen-projection.js';
+// Whole 0x40c1f0 helper: projection and playback share the same original
+// scale global. The native caller always passes a zero projection margin.
+// Keep the camera in the authoritative snapshot, not a spectator's viewport.
+export function originalPositionalSoundAt(q,map,resolveSound){
+ const projected=originalScreenProjection({...q.camera,x:q.x,z:q.z,margin:0},map);
+ return originalPositionalSound({...q,projected,audioLevel:q.camera.scale},resolveSound);
+}
 export const ORIGINAL_SOUND_SEQUENCE=Object.freeze([0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0,255,0,2,251,255,2,5,4,2,4]);
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 // 0x40c20e–0x40c3d6, after the original screen-projection boundary.
