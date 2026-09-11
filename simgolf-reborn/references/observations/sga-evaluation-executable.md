@@ -1405,3 +1405,28 @@ This closes the previously missing assessment ray, not target selection or full
 live integration. Upstream 0x4235c0–0x423b66 is still only partially recovered,
 and automatic planner argument -1 still requires its middle branch. Raw map and
 height adapters must be integrated coherently before replacing the live planner.
+
+### Assessment through resolved launch (2026-09-11)
+
+`original-assessed-launch.js` composes target ray/neighborhood, raw elevation
+distance correction, club selection and all recovered resolved-target launch
+stages. This covers contiguous original execution 0x423b66–0x425ab9 for planner
+argument != -1. The assessment seed enters launch RNG; its water index enters
+low-shot selection. Elevation correction applies before club/range clamping.
+Origin lie, metadata class, tile marks and target terrain are read from the same
+supplied map rather than trusting stale independently supplied launch fields.
+The returned state includes the assessment, adjusted distance, final launch and
+updated strength cache; inputs remain unchanged and serialize for replay.
+
+`verify-original-assessed-launch.py` executes that full contiguous original range
+for 1,000 mixed-terrain cases, with original RNG, x87 projection and strength
+cache carried between cases. Raw height reads are the only substituted helper;
+height values are fixture inputs. Compared every returned launch/assessment
+field and cache entry. Twenty saved cases and eleven assessment/ray/selected-
+launch tests pass. This establishes stage ordering across the previously isolated
+helpers, not live-course integration or complete target search. The original
+planner still supplies the initial target, heading, range and pre-assessment
+distance. The -1 automatic branch is deliberately rejected before map access.
+The map callback interface here supplies raw tile codes/classes/marks/heights;
+it still needs coherent integration with the existing physics map adapter and
+live course representation, including the original side-ray boundary behavior.

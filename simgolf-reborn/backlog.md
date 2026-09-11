@@ -841,3 +841,9 @@ assessment. 1,000 ray and continued assessment comparisons match original x86;
 12 targeted tests pass. This supersedes the preceding ray-scan TODO above.
 Earlier target selection, automatic planner middle branch and live integration
 remain unfinished; no deployment of these isolated original helpers yet.
+
+F09 assessment-to-launch integration (2026-09-11): composed terrain assessment,
+elevation correction and resolved-target launch using one raw map and sequential
+RNG/cache state. All 1,000 contiguous original-executable cases match; 11 targeted
+tests pass. Initial target/range selection, automatic -1 middle branch, shared
+live map/physics integration and deployment remain unfinished.
