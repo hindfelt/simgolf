@@ -1169,3 +1169,33 @@ comparisons do not establish broad RNG precision behavior on their own.
 Inputs remain the original state after the preceding accuracy/recovery stage;
 that gap (0x425582–0x4256bf with side branches), conditional middle planning and
 upstream assessment still need composition before complete/live planner parity.
+
+
+### Accuracy/recovery stage before final dispatch (2026-09-11)
+
+Recovered `0x425589–0x4256bf` plus side branch `0x42574c–0x4257a1` in
+`original-launch-recovery.js`. Inputs are after the speed clamp in shot-shape
+setup. Short strength <75 has level/actor-id/raw-target-argument exceptions:
+level zero with matching id divides curvature by three; its alternate odd-id
+case doubles curvature. Other non-green short shots alter heading according
+to skill mask and level. Identity uses the actual original argument value;
+it is not the active-actor comparison used elsewhere.
+
+Nonzero actor class on positive terrain shot class draws class*10; recovery
+byte +0x100 >= draw selects effective lie 2 and marks flag 0x400000. Mode zero
+non-green shots then draw directional noise and scale curvature using the
+effective lie's class. Actor flag 1 with shot counter >6 overrides to lie -1.
+The original temporary EDI is restored from the stored lie after a pushed
+argument; it matches final stored lie on all verified paths.
+
+`verify-original-launch-recovery.py` executes all original branches/RNG/sign
+instructions without stubs, with x87 control word explicitly 0x37f. 5,000
+results match heading, curvature, flags, effective lie, speed and RNG. It also
+checks dispatch register EDI equals stored lie. One hundred fixtures retained;
+ten recovery/final-launch tests pass, including strict short-shot/late-counter
+boundaries and skipped reads/draws. Preceding speed is the clamped base speed,
+which this block otherwise preserves.
+
+This closes the arithmetic gap immediately before final dispatch. Whole-tail
+composition/oracle, the earlier conditional middle-planning section, upstream
+assessment and live map integration still remain before full planner parity.

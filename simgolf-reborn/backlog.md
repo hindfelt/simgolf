@@ -789,3 +789,8 @@ branches and normalization; 5,000 original outputs/seeds and 13 tests pass.
 Oracle now explicitly sets x87 precision for large RNG bounds. Preceding
 accuracy/recovery and conditional middle-planning gaps, upstream assessment
 and full live integration remain unfinished.
+
+F09 accuracy/recovery stage (2026-09-11): recovered short-shot identity effects,
+recovery lie replacement and later directional noise. All 5,000 x86 state/seed
+comparisons and ten tests pass. Whole-tail composition, earlier conditional
+planning, upstream assessment and live integration remain unfinished.
