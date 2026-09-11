@@ -1040,3 +1040,9 @@ prior landing, RNG, cache and terrain-class overrides through a nonmutating
 planning view. Thirty sequential full original candidate calls match; six tests
 pass with serialization between slices/trials. Full search callback integration,
 nonflat contiguous execution and live wiring remain unfinished.
+
+F09 uninterrupted nonflat candidate verification (2026-09-11): original candidate
+entry, planner, nonflat height/slope physics and restoration now run together.
+Thirty flat and thirty uneven-terrain calls match all retained final/shared
+state; four targeted tests pass. Full route-search callback integration and
+live gameplay wiring remain unfinished.

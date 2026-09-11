@@ -1,11 +1,13 @@
+import {originalDirectionalHeightStage} from '../src/simulation/original-corner-height.js';
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {originalCandidateTrial,advanceOriginalCandidateTrial,originalCandidateTrialResult} from '../src/simulation/original-candidate-trial.js';
 import {originalStrengthCache} from '../src/simulation/original-strength-search.js';
 import {originalShotMap} from '../src/simulation/original-shot-map.js';
-const rows=JSON.parse(readFileSync(new URL('./fixtures/original-contiguous-candidate.json',import.meta.url),'utf8'));
-const sharedMap=q=>originalShotMap({terrain:Uint8Array.from(q.terrain),marks:Uint16Array.from(q.marks),derived:{edgeMasks:new Uint8Array(2500),surfaceHeights:new Int8Array(2500),directionHeights:new Int8Array(20000)},readHeight:()=>0,globalFlags:0,metadata:code=>({flags:0,kind:q.kinds[code],shotClass:q.classes[code+1],bounceCoefficient:3,rollCoefficient:0})});
-test('sliced trials match uninterrupted original candidate calls and preserve caller state',()=>{
+for(const variant of ['','nonflat-']){
+const rows=JSON.parse(readFileSync(new URL(`./fixtures/original-contiguous-${variant}candidate.json`,import.meta.url),'utf8'));
+const sharedMap=q=>{const readHeight=(r,c)=>q.vertices[r*51+c];return originalShotMap({terrain:Uint8Array.from(q.terrain),marks:Uint16Array.from(q.marks),derived:{...originalDirectionalHeightStage({readHeight,readMetadataFlags:()=>0}),edgeMasks:new Uint8Array(2500)},readHeight,globalFlags:0,metadata:code=>({flags:0,kind:q.kinds[code],shotClass:q.classes[code+1],bounceCoefficient:3,rollCoefficient:0})});};
+test(`${variant||'flat-'}sliced trials match uninterrupted original candidate calls and preserve caller state`,()=>{
  let cache=originalStrengthCache();
  for(const [q,e] of rows){
   const physical={professional:q.actorClass!==0,abilityFlags:q.abilityFlags,luck:5,skillMask:q.skillMask},map=sharedMap(q);
@@ -31,6 +33,8 @@ test('sliced trials match uninterrupted original candidate calls and preserve ca
   cache=trial.launch.cache;
  }
 });
+
+}
 
 test('completion publication rejects pending trials and owns its output snapshot',()=>{
  expect(()=>originalCandidateTrialResult({status:'running',candidate:{speed:1}})).toThrow('has not completed');

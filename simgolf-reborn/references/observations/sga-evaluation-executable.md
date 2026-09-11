@@ -2130,3 +2130,24 @@ run in serialized seven-step slices with shared state serialized between trials,
 input isolation and unchanged map metadata. Integrating this callback with the
 complete search, contiguous nonflat verification and live use remain unfinished.
 No deployment is included.
+
+### Uninterrupted nonflat candidate execution (2026-09-11)
+
+The contiguous candidate verifier now supports `--nonflat`. It loads original
+physics height/slope routines alongside the full planner and candidate loop;
+vertex/corner reads use a single nonzero 51×51 height field, with raw planning
+samples drawn from that field. Browser comparison uses originalShotMap and its
+derived directional heights on the identical vertices and terrain. The original
+actor is still restored and byte-compared after the complete call.
+
+All 30 nonflat calls match final position, landing, RNG, step count, cache and
+final class overrides. Flat mode was rerun and all 30 cases match too. Retained
+fixtures now include vertex heights. Four contiguous/shared-trial regression
+tests pass, including serialized seven-step trial advancement on both landscapes
+and independent result publication. This closes the uninterrupted nonflat
+candidate evidence gap for the supplied height/terrain scenarios.
+
+Surface lookup and vertex/corner reads remain supplied; no actor display record
+is present. This does not yet verify the full route-search invocation with actual
+candidate callbacks or live browser gameplay. Those integrations remain open;
+no deployment is included.

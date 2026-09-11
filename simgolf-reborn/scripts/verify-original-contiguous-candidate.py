@@ -1,4 +1,4 @@
-"""Verify uninterrupted original candidate planning, flight and actor restoration on flat terrain."""
+"""Verify uninterrupted original candidate planning, flight and actor restoration on flat or uneven terrain."""
 from pathlib import Path
 import hashlib,json,random,struct,subprocess,sys
 import pefile
@@ -16,11 +16,19 @@ u.reg_write(UC_X86_REG_FPCW,0x37f);u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_st
 u.mem_map(0x820000,0x1000)
 def write(a,v,n=4):u.mem_write(a,(v&((1<<(n*8))-1)).to_bytes(n,'little'))
 from unicorn import UC_HOOK_CODE
+nonflat='--nonflat' in sys.argv
 u.mem_write(0x42f110,b'\x31\xc0\xc3');u.mem_write(0x40c140,b'\x31\xc0\xc3')
+if nonflat:
+ for a,n in [(0x42f110,0x156),(0x40bfe0,0x1be),(0x42eb90,0x80)]:
+  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 steps=0;terminal={};published=False
 reference_heading=0;variation=0;current={};assessment={};adjusted=0;ray_draws=0;setup={}
 def hook(u,a,n,d):
  global reference_heading,variation,assessment,adjusted,ray_draws,setup,steps,terminal,published
+ if nonflat and a==0x40bcd0:
+  sp=u.reg_read(UC_X86_REG_ESP);ret,r,c,direction=struct.unpack('<4I',u.mem_read(sp,16))
+  r,c={5:(r,c),7:(r,c-1),1:(r+1,c-1),3:(r+1,c)}[direction]
+  u.reg_write(UC_X86_REG_EAX,current['vertices'][r*51+c]);u.reg_write(UC_X86_REG_ESP,sp+4);u.reg_write(UC_X86_REG_EIP,ret)
  if a==0x421bde:steps+=1
  if a==0x422401:published=True
  if a==0x422431:terminal={key:struct.unpack('<i',u.mem_read(0x577f00+off,4))[0] for off,key in [(0xdc,'x'),(0xe0,'z')]}
@@ -33,7 +41,7 @@ def hook(u,a,n,d):
   def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
   setup=dict(range=read(sp+0x30),originTile=dict(x=read(sp+0x34),z=read(sp+0x40)),originIndex=read(sp+0x50),terrainCode=read(sp+0x14),obstacleIndex=read(0x4c1fbc),shotClassOverrides=[dict(code=c,shotClass=u.mem_read(0x576dc2+c*48,1)[0]) for c in [17,20]] if current['actorFlags']&1 else [])
  if a==0x40be60:
-  sp=u.reg_read(UC_X86_REG_ESP);ret,x,z=struct.unpack('<3I',u.mem_read(sp,12));v=current['heights'][x*50+z]
+  sp=u.reg_read(UC_X86_REG_ESP);ret,x,z=struct.unpack('<3I',u.mem_read(sp,12));v=current['vertices'][x*51+z] if nonflat else current['heights'][x*50+z]
   u.reg_write(UC_X86_REG_EAX,v&0xffffffff);u.reg_write(UC_X86_REG_ESP,sp+4);u.reg_write(UC_X86_REG_EIP,ret)
  if a==0x423b66:
   sp=u.reg_read(UC_X86_REG_ESP);current['distance']=struct.unpack('<i',u.mem_read(sp+0x10,4))[0]
@@ -112,14 +120,16 @@ for i in range(30):
  q.update(plannerArgument=q['x']+rng.randrange(-4000,4001),targetZ=q['z']+rng.randrange(-4000,4001),cup=dict(x=10,z=10))
  q.update(actorId=0,obstacleCount=rng.randrange(-2,20),worldFlags=q['worldFlags']|rng.choice([0,32]))
  q['rangeInput']=dict(skillMask=q['skillMask'],difficulty=q['level'],level=rng.randrange(9),shot=q['shotCounter'],professional=q['actorClass']!=0,abilityFlags=q['abilityFlags'],power=rng.randrange(16),longDrive=rng.randrange(16),boost=q['attitude'],lengthBonus=rng.randrange(5))
- q.update(explicitTarget=False,mode=q['curve'],heights=[0]*2500)
+ q.update(explicitTarget=False,mode=q['curve'],vertices=[3+((r//3+c//4)%5) if nonflat else 0 for r in range(51) for c in range(51)])
+ q['heights']=[q['vertices'][r*51+c] for r in range(50) for c in range(50)]
  rows.append([q,run(q)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-exact-candidate.js').as_uri()
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';
-const {originalCandidateTrialResult}=await import(TRIAL);const {originalExactCandidate}=await import(MODULE),{originalCandidateStep}=await import(STEP),{originalStrengthCache}=await import(CACHE),{originalShotMap}=await import(MAP);let cache=originalStrengthCache();
+const {originalDirectionalHeightStage}=await import(HEIGHT);const {originalCandidateTrialResult}=await import(TRIAL);const {originalExactCandidate}=await import(MODULE),{originalCandidateStep}=await import(STEP),{originalStrengthCache}=await import(CACHE),{originalShotMap}=await import(MAP);let cache=originalStrengthCache();
 const rows=JSON.parse(readFileSync(0,'utf8'));
 for(const [q,e] of rows){
-const map=originalShotMap({terrain:Uint8Array.from(q.terrain),marks:Uint16Array.from(q.marks),derived:{edgeMasks:new Uint8Array(2500),surfaceHeights:new Int8Array(2500),directionHeights:new Int8Array(20000)},readHeight:()=>0,globalFlags:0,metadata:code=>({flags:0,kind:q.kinds[code],shotClass:q.classes[code+1],bounceCoefficient:3,rollCoefficient:0})});
+const readHeight=(r,c)=>q.vertices[r*51+c];
+const map=originalShotMap({terrain:Uint8Array.from(q.terrain),marks:Uint16Array.from(q.marks),derived:{...originalDirectionalHeightStage({readHeight,readMetadataFlags:()=>0}),edgeMasks:new Uint8Array(2500)},readHeight,globalFlags:0,metadata:code=>({flags:0,kind:q.kinds[code],shotClass:q.classes[code+1],bounceCoefficient:3,rollCoefficient:0})});
 const physical={professional:q.actorClass!==0,abilityFlags:q.abilityFlags,luck:5,skillMask:q.skillMask};
 const result=originalExactCandidate(q,cache,map.planning,physical);cache=result.launch.cache;let a=result.candidate;
 for(let i=0;i<2000&&a.speed!==0;i++)a=originalCandidateStep(a,{...map,mode:q.driftMode,variant:q.variant});
@@ -127,7 +137,7 @@ const shared=originalCandidateTrialResult({candidate:a,launch:result.launch,land
 const actual={shotClassOverrides:shared.shotClassOverrides,cache:shared.cache,end:{x:a.x,z:a.z,seed:a.seed,steps:a.steps,landing:a.landing}};
 if(a.speed!==0||!isDeepStrictEqual(actual,e))throw Error(JSON.stringify({actual,e}));
 }console.log(`${rows.length} uninterrupted original candidate calls match flight, RNG and cache; actor restoration verified.`);
-""".replace('TRIAL',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-trial.js').as_uri())).replace('MODULE',json.dumps(module)).replace('STEP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-step.js').as_uri())).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri())).replace('MAP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-shot-map.js').as_uri()))
+""".replace('HEIGHT',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-corner-height.js').as_uri())).replace('TRIAL',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-trial.js').as_uri())).replace('MODULE',json.dumps(module)).replace('STEP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-candidate-step.js').as_uri())).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri())).replace('MAP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-shot-map.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
- (root/'simgolf-reborn/scene/tests/fixtures/original-contiguous-candidate.json').write_text(json.dumps(rows[:10],separators=(',',':'))+'\n')
+ (root/('simgolf-reborn/scene/tests/fixtures/original-contiguous-'+('nonflat-' if nonflat else '')+'candidate.json')).write_text(json.dumps(rows[:10],separators=(',',':'))+'\n')
