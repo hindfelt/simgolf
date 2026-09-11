@@ -1758,3 +1758,21 @@ Forty fixtures and six option-loop/batch tests pass. The 1,000-case batch oracle
 also passes after exposing its flag output. Full physical candidate simulation,
 441-tile passes, pruning/statistics integration and live integration remain open.
 No deployment or complete-search claim.
+
+### Full 441-tile search pass (2026-09-11)
+
+`original-route-pass.js` composes trial preparation, admission and all six options
+for one full grid, preserving x-outer/z-inner order from -10 through +10. Score,
+distance and flag tables are copied; winner, work, search flag and follow-up
+state propagate across candidates. Excluded entries skip all further work;
+fresh rejected entries retain sentinels and accepted entries enter trial loops.
+
+`verify-original-route-pass.py` executes contiguous original code
+0x4227b1–0x423261 for 100 full passes. Candidate physics landings and follow-up
+costs remain supplied; their ordered calls and every table/shared-state field
+are compared. Cases include a fully untested grid, sparse cached/fresh entries,
+uniform terrain and mixed classes/excluded terrain with hole markers. All pass.
+Three saved whole-grid fixtures and ten pass/options/trial tests pass; the pass
+suite was rerun after adding the dense fixture. Repeated-pass pruning and
+statistics, real candidate physics, owning-state persistence and live integration
+remain unfinished. This is not yet a deployed complete route planner.

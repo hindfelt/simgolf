@@ -939,3 +939,9 @@ F09 six-option candidate loop (2026-09-11): composed option gates and batches
 in original center/corner and curve order with shared winner/follow-up state.
 1,000 candidate loops plus 1,000 batch regressions and six tests pass. Physical
 candidate callbacks, full-grid passes/pruning and live integration remain open.
+
+F09 full-grid search pass (2026-09-11): composed all 441 candidates in original
+order with admission, six-option evaluation and shared winner/state propagation.
+100 original full passes match, including dense fresh and mixed-terrain cases;
+ten targeted tests pass. Repeated passes/pruning, real physics callbacks and
+live integration remain unfinished.
