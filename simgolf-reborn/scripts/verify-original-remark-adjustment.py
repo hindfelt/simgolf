@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier'
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32)
 u.mem_map(0x400000,0x200000);u.mem_map(0x100000,0x4000);u.mem_map(0x820000,0x1000)
-for a,n in [(0x467502,0xb68),(0x469080,0xdd),(0x46c140,0x2c),(0x466a20,0x19),(0x466a00,0x20),(0x45ba70,0x60),(0x4b9800,8),(0x4a57a0,0x27)]:
+for a,n in [(0x467502,0xb68),(0x469080,0xdd),(0x46c140,0x2c),(0x4a0000,1),(0x466a20,0x19),(0x466a00,0x20),(0x45ba70,0x60),(0x4b9800,8),(0x4a57a0,0x27)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 def put(a,v,fmt='<I'):u.mem_write(a,struct.pack(fmt,v))
 def get(a,fmt='<I'):return struct.unpack(fmt,u.mem_read(a,struct.calcsize(fmt)))[0]
@@ -16,13 +16,12 @@ def invalid(u,access,address,size,value,data):
  print('invalid',hex(address),'at',hex(u.reg_read(UC_X86_REG_EIP)),flush=True);return False
 u.hook_add(UC_HOOK_MEM_INVALID,invalid)
 events=[];effectMutation=False
-for address in (0x447a30,0x40c1f0,0x4a0000):u.mem_write(address,b'\xc3')
+for address in (0x447a30,0x40c1f0):u.mem_write(address,b'\xc3')
 def hook(u,a,size,data):
  if a in (0x46c140,0x40c1f0,0x4a0000):
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[get(sp+4+j*4,'<i') for j in range(4 if a==0x40c1f0 else 1)]))
   if effectMutation and a==0x40c1f0:put(0x577fbe,1,'<h');put(0x577f25,99,'<B')
-  if effectMutation and a==0x4a0000:put(0x577f26,88,'<B')
-  if a!=0x46c140:u.reg_write(UC_X86_REG_EAX,0)
+  if a not in (0x46c140,0x4a0000):u.reg_write(UC_X86_REG_EAX,0)
  if a==0x469075:u.emu_stop()
  if a==0x447a30:
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[get(sp+4+j*4) for j in range(5)]))
@@ -63,6 +62,6 @@ for i in range(1320):
  result['selectedDelta']=get(sp+0x18,'<i') if end!=0x469075 else 0
  rows.append([q,result])
 module=(root/'simgolf-reborn/scene/src/simulation/original-remark-adjustment.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalRemarkAdjustment} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){q.state.actor=Uint8Array.from(q.state.actor);q.before=Uint8Array.from(q.before);const got=originalRemarkAdjustment(q,(event,state)=>{const v=new DataView(state.actor.buffer);if(q.effectMutation){if(event.address===0x447a30){state.actor[0x18]=0x40;state.seed=777;}if(event.address===0x40c1f0){v.setInt16(0xb6,1,true);state.actor[0x1d]=99;}if(event.address===0x4a0000)state.actor[0x1e]=88;}return {state,result:event.address===0x46c140?q.voice:0};});got.state.actor=[...got.state.actor];if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({q,expected,got}));}console.log(`${rows.length} native contiguous adjustment cases matched`);""".replace('MODULE',json.dumps(module))
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalRemarkAdjustment} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){q.state.actor=Uint8Array.from(q.state.actor);q.before=Uint8Array.from(q.before);const got=originalRemarkAdjustment(q,(event,state)=>{const v=new DataView(state.actor.buffer);if(q.effectMutation){if(event.address===0x447a30){state.actor[0x18]=0x40;state.seed=777;}if(event.address===0x40c1f0){v.setInt16(0xb6,1,true);state.actor[0x1d]=99;}}return {state,result:event.address===0x46c140?q.voice:0};});got.state.actor=[...got.state.actor];if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({q,expected,got}));}console.log(`${rows.length} native contiguous adjustment cases matched`);""".replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 (root/'simgolf-reborn/scene/tests/fixtures/original-remark-adjustment.json').write_text(json.dumps(rows[:132],separators=(',',':'))+'\n')

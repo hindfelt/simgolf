@@ -25,7 +25,9 @@ export function originalRemarkSelection(q,resolve){
   if(!Number.isInteger(result))throw Error(`Missing original profile ${id}.`);
   return result;
  };
- const activate=mask=>{if(profile()&mask)call(0x4a0000,[q.actorId]);};
+ // The supplied executable's 0x4a0000 consists of RET; preserve the call
+ // trace without allowing an external resolver to invent a state change.
+ const activate=mask=>{if(profile()&mask)events.push({address:0x4a0000,args:[q.actorId]});};
  const tired=()=>{state.actor[0x1d]=14;view().setInt16(0x9e,-24,true);};
  const negative={4:[-2,18],9:[-3,70],10:[-2,80],14:[-1,158],15:[-1,156],21:[-2,68],24:[-2,66],26:[-1,160],30:[-2,152],35:[-2,70],36:[-3,62],43:[-2,80]};
  const positive={6:20,11:74,29:150,32:162,33:162,47:72};

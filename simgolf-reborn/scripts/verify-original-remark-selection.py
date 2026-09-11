@@ -8,11 +8,11 @@ root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier'
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32)
 u.mem_map(0x400000,0x200000);u.mem_map(0x100000,0x4000);u.mem_map(0x820000,0x1000)
-for a,n in [(0x467502,0x870),(0x469080,0xdd),(0x46c140,0x2c)]:
+for a,n in [(0x467502,0x870),(0x469080,0xdd),(0x46c140,0x2c),(0x4a0000,1)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 def put(a,v,fmt='<I'):u.mem_write(a,struct.pack(fmt,v))
 def get(a,fmt='<i'):return struct.unpack(fmt,u.mem_read(a,struct.calcsize(fmt)))[0]
-for a in (0x40c1f0,0x4a0000):u.mem_write(a,b'\xc3')
+for a in (0x40c1f0,):u.mem_write(a,b'\xc3')
 q=None;events=[]
 def hook(u,a,size,data):
  if a not in (0x46c140,0x40c1f0,0x4a0000):return
@@ -20,8 +20,7 @@ def hook(u,a,size,data):
  events.append(dict(address=a,args=args))
  if q['mutate']:
   if a==0x40c1f0:put(0x577fbe,1,'<h');put(0x577f25,99,'<B')
-  if a==0x4a0000:put(0x577f26,88,'<B')
- if a!=0x46c140:u.reg_write(UC_X86_REG_EAX,0)
+ if a not in (0x46c140,0x4a0000):u.reg_write(UC_X86_REG_EAX,0)
 u.hook_add(UC_HOOK_CODE,hook)
 rng=random.Random(2002);rows=[]
 for i in range(1320):
@@ -42,6 +41,6 @@ for i in range(1320):
  state={**q['state'],'actor':list(u.mem_read(0x577f08,256))}
  rows.append([q,dict(state=state,delta=delta,events=events)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-remark-selection.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalRemarkSelection} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){q.state.actor=Uint8Array.from(q.state.actor);const got=originalRemarkSelection(q,(event,state)=>{const v=new DataView(state.actor.buffer);if(q.mutate){if(event.address===0x40c1f0){v.setInt16(0xb6,1,true);state.actor[0x1d]=99;}if(event.address===0x4a0000)state.actor[0x1e]=88;}return {state,result:event.address===0x46c140?q.voice:0};});got.state.actor=[...got.state.actor];if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({q,expected,got}));}console.log(`${rows.length} native per-kind selection cases matched`);""".replace('MODULE',json.dumps(module))
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalRemarkSelection} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){q.state.actor=Uint8Array.from(q.state.actor);const got=originalRemarkSelection(q,(event,state)=>{const v=new DataView(state.actor.buffer);if(q.mutate){if(event.address===0x40c1f0){v.setInt16(0xb6,1,true);state.actor[0x1d]=99;}}return {state,result:event.address===0x46c140?q.voice:0};});got.state.actor=[...got.state.actor];if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({q,expected,got}));}console.log(`${rows.length} native per-kind selection cases matched`);""".replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 (root/'simgolf-reborn/scene/tests/fixtures/original-remark-selection.json').write_text(json.dumps(rows[:264],separators=(',',':'))+'\n')

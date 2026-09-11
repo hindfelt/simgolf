@@ -29,3 +29,11 @@ test('voice lookup reads original profile data without invoking a mutable resolv
  expect(got.events[1].args.slice(1,3)).toEqual([1024,3072]);
  expect(new DataView(got.state.actor.buffer).getInt32(0,true)).toBe(1024);
 });
+test('the original empty secondary routine cannot introduce progression or actor changes',()=>{
+ const q=decode(rows[0][0]);q.kind=51;q.difficulty=0;
+ new DataView(q.state.actor.buffer).setInt16(0xb6,0,true);q.state.profiles[0]=4;
+ const before=structuredClone(q.state);
+ const result=originalRemarkSelection(q,()=>{throw Error('The original RET must not call a state resolver');});
+ expect(result.events).toEqual([{address:0x4a0000,args:[q.actorId]}]);
+ expect(result.delta).toBe(1);expect(result.state).toEqual(before);
+});
