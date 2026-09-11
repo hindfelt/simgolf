@@ -1086,3 +1086,9 @@ Seven coordinator/real-worker tests pass, covering course/ball/RNG changes,
 late cancelled responses and error recovery. Live game still uses the provisional
 planner; original coordinate/actor adapter and authoritative revision/application
 wiring remain unfinished.
+
+F09 automatic short approach (2026-09-11): recovered 0x4239f7–0x423b66,
+including shared landing publication, diagnostics reset and terrain-class-based
+distance adjustment. 5,000 executable comparisons and eleven related tests pass.
+This closes the short-approach branch in isolation; full automatic planner
+composition, later automatic launch logic and live state mapping remain open.

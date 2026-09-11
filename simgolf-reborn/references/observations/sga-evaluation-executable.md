@@ -2287,3 +2287,26 @@ disposal and errors; real Chrome worker tests retain original results while
 animation frames continue and verify cancellation/recovery. Actual live revision
 construction, coordinate/actor snapshot adapter, result application and outer
 original planner remain unfinished. No deployment is included.
+
+### Automatic short approach: 0x4239f7–0x423b66
+
+`original-auto-approach.js` publishes the target tile centre to the shared
+landing pair and clears diagnostics. Terrain code 1 or distance at most 25
+skips adjustment. Otherwise, the heading selects two cardinal directions
+(the same direction twice for an even facing). The sum of shot classes behind
+the target minus those ahead controls adjustment: at least 4 adds a clamped
+0–12 yards, at most -4 subtracts 6. The addition uses truncated distance/4,
+minus 6 when the origin terrain's current shot class is nonpositive.
+
+The map callback reads current metadata so planner mutations to terrain 17/20
+remain observable. This branch does not simulate a landing or finalize a launch.
+Raw edge reads are delegated to the map; the native comparison uses interior
+targets and makes no claim about unavailable outside-map data.
+
+`verify-original-auto-approach.py` executes the complete original branch and
+clamp routine in Unicorn, checks its terminal instruction address, and compares
+distance, shared landing and diagnostics in 5,000 seeded cases. The committed
+60-case fixture includes increased, decreased and unchanged distance. Eleven
+approach/request/result tests pass, including skipped reads and changing metadata.
+Automatic outer composition, subsequent launch logic and live integration are
+still unfinished; this work is not deployed.
