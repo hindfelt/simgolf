@@ -1,3 +1,4 @@
+import {safeDestination,loginLocation} from '../src/auth-destination.js';
 import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
@@ -49,7 +50,7 @@ async function handle(request,env){
    let linking=null;
    if(action==='link'){sameOrigin(request,env);linking=await session(request,env);if(!linking||request.headers.get('x-csrf-token')!==linking.csrf)throw fail(403,'Sign in before connecting another provider.');}
    const t={state:token(),verifier:token(),nonce:token()};
-   await env.DB.prepare('INSERT INTO transactions(state_hash,provider,verifier,nonce,link_player,link_session,expires_at) VALUES (?,?,?,?,?,?,?)').bind(await hash(t.state),id,t.verifier,t.nonce,linking?.id||null,linking?await hash(cookie(request,names.session)):null,Date.now()+600000).run();
+   await env.DB.prepare('INSERT INTO transactions(state_hash,provider,verifier,nonce,link_player,link_session,expires_at,return_to) VALUES (?,?,?,?,?,?,?,?)').bind(await hash(t.state),id,t.verifier,t.nonce,linking?.id||null,linking?await hash(cookie(request,names.session)):null,Date.now()+600000,safeDestination(url.searchParams.get('returnTo'))).run();
    const target=await authorization(env,id,t),transactionCookie=setCookie(names.oauth,t.state,600,id==='apple'?'None':'Lax');
    return linking?json({url:target},200,{'set-cookie':transactionCookie}):redirect(target,[transactionCookie]);
   }
@@ -59,12 +60,13 @@ async function handle(request,env){
    const body=await readText(request,10000);params=new URLSearchParams(body);
   }
   const state=params.get('state'),code=params.get('code');
-  if(!state||state.length>128||state!==cookie(request,names.oauth)||!code||code.length>4096)return redirect('/login.html?error=signin');
-  const t=await env.DB.prepare('DELETE FROM transactions WHERE state_hash=? AND provider=? AND expires_at>? RETURNING *').bind(await hash(state),id,Date.now()).first();
+  if(!state||state.length>128||state!==cookie(request,names.oauth))return redirect('/login.html?error=signin');
+  const t=await env.DB.prepare('DELETE FROM transactions WHERE state_hash=? AND provider=? RETURNING *').bind(await hash(state),id).first();
   if(!t)return redirect('/login.html?error=signin');
-  if(t.link_player && !await env.DB.prepare('SELECT 1 FROM sessions WHERE token_hash=? AND player_id=? AND expires_at>?').bind(t.link_session,t.link_player,Date.now()).first())return redirect('/login.html?error=signin');
-  try{return redirect('/',[await login(env,id,await identity(env,id,code,t),t.link_player),setCookie(names.oauth,'',0,id==='apple'?'None':'Lax')]);}
-  catch(error){return redirect('/login.html?error='+(error.message?.startsWith('Temporary email')?'email-policy':'signin'),[setCookie(names.oauth,'',0,id==='apple'?'None':'Lax')]);}
+  if(t.expires_at<=Date.now()||!code||code.length>4096)return redirect(loginLocation(t.return_to,'signin'));
+  if(t.link_player && !await env.DB.prepare('SELECT 1 FROM sessions WHERE token_hash=? AND player_id=? AND expires_at>?').bind(t.link_session,t.link_player,Date.now()).first())return redirect(loginLocation(t.return_to,'signin'));
+  try{return redirect(safeDestination(t.return_to),[await login(env,id,await identity(env,id,code,t),t.link_player),setCookie(names.oauth,'',0,id==='apple'?'None':'Lax')]);}
+  catch(error){return redirect(loginLocation(t.return_to,error.message?.startsWith('Temporary email')?'email-policy':'signin'),[setCookie(names.oauth,'',0,id==='apple'?'None':'Lax')]);}
  }
  if(path==='/api/auth/email/start'){
   if(request.method!=='POST')throw fail(405,'Method not allowed.');sameOrigin(request,env);
@@ -75,7 +77,7 @@ async function handle(request,env){
   await rateLimit(env.DB,'mailip:'+await hash(request.headers.get('cf-connecting-ip')||'unknown'),10,600);
   await rateLimit(env.DB,'mail:'+await hash(email),3,600);
   const id=token(),browser=token(),code=String(crypto.getRandomValues(new Uint32Array(1))[0]%100000000).padStart(8,'0');
-  await env.DB.prepare('INSERT INTO email_codes(id,email,code_hash,browser_hash,expires_at) VALUES (?,?,?,?,?)').bind(id,email,await hash(id+code),await hash(browser),Date.now()+600000).run();
+  await env.DB.prepare('INSERT INTO email_codes(id,email,code_hash,browser_hash,expires_at,return_to) VALUES (?,?,?,?,?,?)').bind(id,email,await hash(id+code),await hash(browser),Date.now()+600000,safeDestination(body.returnTo)).run();
   try{await env.EMAIL.send({to:email,from:{email:env.EMAIL_FROM,name:'SimGolfer'},subject:'Your SimGolfer sign-in code',text:`Your SimGolfer code is ${code}. It expires in 10 minutes. If you did not request this code, ignore this email.`,html:`<p>Your SimGolfer code is <strong>${code}</strong>.</p><p>It expires in 10 minutes. If you did not request this code, ignore this email.</p>`});}
   catch{await env.DB.prepare('DELETE FROM email_codes WHERE id=?').bind(id).run();throw fail(503,'The code could not be sent. Please try again later.');}
   return json({id},200,{'set-cookie':setCookie(names.email,browser,600)});
@@ -88,11 +90,11 @@ async function handle(request,env){
   if(!row||row.code_hash!==await hash(id+code))throw fail(401,'Invalid or expired code.');
   const consumed=await env.DB.prepare('DELETE FROM email_codes WHERE id=? RETURNING email').bind(id).first();
   if(!consumed)throw fail(401,'This code has already been used.');
-  return json({ok:true},200,{'set-cookie':await login(env,'email',{subject:row.email,email:row.email,name:row.email.split('@')[0]})});
+  return json({ok:true,returnTo:safeDestination(row.return_to)},200,{'set-cookie':await login(env,'email',{subject:row.email,email:row.email,name:row.email.split('@')[0]})});
  }
  const user=await session(request,env);
  if(path==='/api/auth/me')return user?json({user:{id:user.id,name:user.name,email:user.email,role:user.role},csrf:user.csrf,expiresAt:user.expires_at}):json({user:null},401);
- if(!user)return path.startsWith('/api/')?json({error:'Sign in to continue.'},401):redirect('/login.html');
+ if(!user)return path.startsWith('/api/')?json({error:'Sign in to continue.'},401):redirect(loginLocation(url.pathname+url.search));
  if(request.headers.has('x-player-id')&&request.headers.get('x-player-id')!==user.id)throw fail(409,'The signed-in account changed. Reload before continuing.');
  if(path.startsWith('/api/')&&!['GET','HEAD'].includes(request.method)){
   sameOrigin(request,env);if(request.headers.get('x-csrf-token')!==user.csrf)throw fail(403,'Please reload before trying again.');

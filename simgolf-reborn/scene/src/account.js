@@ -1,3 +1,4 @@
+import {loginLocation} from './auth-destination.js';
 let current=null;
 export function signedInAccount(){return current;}
 export async function accountRequest(path,options={}){
@@ -14,7 +15,7 @@ export function playerStorage(){return accountStorage(localStorage,current?.user
 export async function requireAccount(){
  if(import.meta.env.DEV && import.meta.env.VITE_AUTH_REQUIRED!=='true')return null;
  const response=await fetch('/api/auth/me',{credentials:'same-origin',cache:'no-store'});
- if(response.status===401){location.replace('/login.html');await new Promise(()=>{});}
+ if(response.status===401){location.replace(loginLocation(location.pathname+location.search));await new Promise(()=>{});}
  if(!response.ok)throw Error('Account service unavailable. Reload to try again.');
  current=await response.json();if(!current.user?.id)throw Error('Please sign in again.');
  return current;
@@ -35,7 +36,7 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
  if(shared){for(const id of ['cloud-load','cloud-save'])dialog.querySelector('#'+id).hidden=true;dialog.querySelector('#account-import').closest('details').hidden=true;}
  if(current.user.role==='admin')import('./account-admin.js').then(({mountAdministration})=>mountAdministration(dialog,call,status)).catch(()=>status('Administration could not be loaded.'));
  fetch('/api/auth/providers').then(r=>r.json()).then(data=>{
-  for(const provider of data.providers||[]){if(provider.id==='email')continue;const link=document.createElement('button');link.textContent=`Connect ${provider.name}`;link.onclick=async()=>{try{const result=await call(`/api/auth/${provider.id}/link`,{method:'POST',body:'{}'});location.assign(result.url);}catch(e){status(e.message);}};dialog.querySelector('#account-links').append(link);}
+  for(const provider of data.providers||[]){if(provider.id==='email')continue;const link=document.createElement('button');link.textContent=`Connect ${provider.name}`;link.onclick=async()=>{try{const result=await call(`/api/auth/${provider.id}/link?returnTo=${encodeURIComponent(location.pathname+location.search)}`,{method:'POST',body:'{}'});location.assign(result.url);}catch(e){status(e.message);}};dialog.querySelector('#account-links').append(link);}
  }).catch(()=>status('Sign-in options could not be loaded.'));
  dialog.querySelector('#cloud-save').onclick=async()=>{try{
   const raw=storage.getItem(key);if(!raw)throw Error('Save your course from the club menu first.');
@@ -51,13 +52,13 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
   const raw=localStorage.getItem(key);if(!raw)throw Error('No older course was found in this browser.');
   const {restore,serialize}=await import('./simulation/game.js');const next=serialize(restore(raw));const prior=storage.getItem(key);if(prior)storage.setItem(key+".previous",prior);storage.setItem(key,next);location.assign(returnTo);
  }catch(e){status(e.message);}};
- dialog.querySelector('#account-logout').onclick=async()=>{try{await call('/api/auth/logout',{method:'POST',body:'{}'});location.replace('/login.html');}catch(e){status(e.message);}};
+ dialog.querySelector('#account-logout').onclick=async()=>{try{await call('/api/auth/logout',{method:'POST',body:'{}'});location.replace(loginLocation(location.pathname+location.search));}catch(e){status(e.message);}};
  dialog.querySelector('#delete-account').onclick=async()=>{try{
   if(dialog.querySelector('#delete-confirm').value!=='DELETE')throw Error('Type DELETE to confirm.');
   await call('/api/account',{method:'DELETE',body:JSON.stringify({confirm:'DELETE'})});
   const prefix=`simgolfer.player.${current.user.id}.`;for(const k of Object.keys(localStorage))if(k.startsWith(prefix))localStorage.removeItem(k);
-  location.replace('/login.html');
+  location.replace(loginLocation(location.pathname+location.search));
  }catch(e){status(e.message);}};
  // Fail closed on expiry, logout in another tab, or a change of account.
- setInterval(async()=>{try{const response=await fetch('/api/auth/me',{cache:'no-store'});if(!response.ok){location.replace('/login.html');return;}const result=await response.json();if(result.user?.id!==current.user.id)location.reload();}catch{location.replace('/login.html');}},60000);
+ setInterval(async()=>{try{const response=await fetch('/api/auth/me',{cache:'no-store'});if(!response.ok){location.replace(loginLocation(location.pathname+location.search));return;}const result=await response.json();if(result.user?.id!==current.user.id)location.reload();}catch{location.replace(loginLocation(location.pathname+location.search));}},60000);
 }

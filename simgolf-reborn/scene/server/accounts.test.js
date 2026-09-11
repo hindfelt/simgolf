@@ -33,7 +33,8 @@ test('daily cleanup removes expired records once without removing active session
  expect(await env.DB.prepare("SELECT key FROM rate_limits WHERE key='expired'").first()).toBeNull();
 });
 test('anonymous visitors cannot play or access cloud saves, including testing URLs',async()=>{
- for(const path of ['/','/?testing=1','/index.html']){const r=await request(path);expect(r.status).toBe(303);expect(r.headers.get('location')).toBe('/login.html');}
+ for(const path of ['/','/?testing=1','/index.html']){const r=await request(path);expect(r.status).toBe(303);expect(r.headers.get('location')).toBe(path==='/?testing=1'?'/login.html?returnTo=%2F%3Ftesting%3D1':'/login.html');}
+ for(const destination of ['/?shared=11111111-1111-4111-8111-111111111111','/?event=11111111-1111-4111-8111-111111111111','/?tournament=11111111-1111-4111-8111-111111111111&round=4']){const response=await request(destination);expect(response.status).toBe(303);expect(new URL(response.headers.get('location'),origin).searchParams.get('returnTo')).toBe(destination);}
  expect((await request('/api/saves/course')).status).toBe(401);
  expect((await request('/api/auth/me',{headers:{cookie:`${names.session}=forged`}})).status).toBe(401);
  // Workers Assets canonicalizes login.html to /login. Both must stay public.
@@ -111,8 +112,10 @@ test('GitHub uses PKCE and browser state, consumes callbacks once and never merg
 });
 test('connecting a provider requires a session and CSRF, then retains the player identity',async()=>{
  const a=await emailLogin();expect((await request('/api/auth/github/link',post({}))).status).toBe(403);
- const start=await request('/api/auth/github/link',post({},{cookie:a.cookie,'x-csrf-token':a.csrf})),url=new URL((await start.json()).url);
+ const destination='/?shared=11111111-1111-4111-8111-111111111111';
+ const start=await request('/api/auth/github/link?returnTo='+encodeURIComponent(destination),post({},{cookie:a.cookie,'x-csrf-token':a.csrf})),url=new URL((await start.json()).url);
  githubMocks();const callback=await request(`/api/auth/github/callback?state=${url.searchParams.get('state')}&code=test`,{headers:{cookie:cookieOf(start)}});
+ expect(callback.headers.get('location')).toBe(destination);
  const me=await request('/api/auth/me',{headers:{cookie:cookieOf(callback)}});expect((await me.json()).user.id).toBe(a.user.id);
 });
 test('oversized save bodies are rejected before persistence',async()=>{
@@ -164,17 +167,35 @@ test('Google, Microsoft and Apple tokens require signature, audience, issuer and
   const tokenUrl={google:'https://oauth2.googleapis.com/token',microsoft:'https://login.microsoftonline.com/common/oauth2/v2.0/token',apple:'https://appleid.apple.com/auth/token'}[id];
   const keysUrl={google:'https://www.googleapis.com/oauth2/v3/certs',microsoft:'https://login.microsoftonline.com/common/discovery/v2.0/keys',apple:'https://appleid.apple.com/auth/keys'}[id];
   for(const mode of ['valid','nonce','audience','issuer','expired']){
-   const start=await request(`/api/auth/${id}/start`,{},bindings),url=new URL(start.headers.get('location')),state=url.searchParams.get('state'),nonce=url.searchParams.get('nonce');
+   const destination='/?event=11111111-1111-4111-8111-111111111111';
+   const start=await request(`/api/auth/${id}/start`+(mode==='valid'?'?returnTo='+encodeURIComponent(destination):''),{},bindings),url=new URL(start.headers.get('location')),state=url.searchParams.get('state'),nonce=url.searchParams.get('nonce');
    if(id==='apple')expect(start.headers.get('set-cookie')).toContain('SameSite=None');
    const signed=await new SignJWT({email:`${id}@proton.me`,email_verified:true,nonce:mode==='nonce'?'wrong':nonce,...(id==='microsoft'?{tid:tenant}:{})}).setProtectedHeader({alg:'RS256',kid:'test-key'}).setIssuer(mode==='issuer'?'https://evil.example':issuer).setAudience(mode==='audience'?'wrong':bindings[id.toUpperCase()+'_CLIENT_ID']).setSubject('provider-player').setIssuedAt().setExpirationTime(mode==='expired'?'0s':'5m').sign(signing.privateKey);
    upstream.push({url:tokenUrl,data:{id_token:signed}});if(mode==='valid')upstream.push({url:keysUrl,data:{keys:[publicKey]}});
    const options={headers:{cookie:cookieOf(start)}};let path=`/api/auth/${id}/callback?state=${state}&code=test`;
    if(id==='apple'){path=`/api/auth/${id}/callback`;options.method='POST';options.headers['content-type']='application/x-www-form-urlencoded';options.body=new URLSearchParams({state,code:'test'}).toString();}
-   const result=await request(path,options,bindings);expect(result.headers.get('location')).toBe(mode==='valid'?'/':'/login.html?error=signin');
+   const result=await request(path,options,bindings);expect(result.headers.get('location')).toBe(mode==='valid'?destination:'/login.html?error=signin');
   }
  }
 });
 test('an old browser tab cannot load data after the signed-in player changes',async()=>{
  const a=await emailLogin('a@proton.me'),b=await emailLogin('b@proton.me');
  expect((await request('/api/saves/course',{headers:{cookie:b.cookie,'x-player-id':a.user.id}})).status).toBe(409);
+});
+
+test('email return destination is browser-bound and cannot be replaced at verification',async()=>{
+ const destination='/?tournament=11111111-1111-4111-8111-111111111111&round=2';
+ const start=await request('/api/auth/email/start',post({email:'invited@proton.me',returnTo:destination}),mailEnv()),{id}=await start.json(),code=mailbox[0].text.match(/\b\d{8}\b/)[0];
+ const result=await request('/api/auth/email/verify',post({id,code,returnTo:'https://evil.example'},{cookie:cookieOf(start)}),mailEnv());expect((await result.json()).returnTo).toBe(destination);
+});
+test('GitHub returns to a validated invitation and cancelled sign-in retains it for retry',async()=>{
+ const destination='/?event=11111111-1111-4111-8111-111111111111';
+ const begin=target=>request('/api/auth/github/start?returnTo='+encodeURIComponent(target));
+ let start=await begin(destination),state=new URL(start.headers.get('location')).searchParams.get('state');
+ const cancelled=await request(`/api/auth/github/callback?state=${state}&error=access_denied`,{headers:{cookie:cookieOf(start)}});
+ expect(new URL(cancelled.headers.get('location'),origin).searchParams.get('returnTo')).toBe(destination);
+ start=await begin(destination);state=new URL(start.headers.get('location')).searchParams.get('state');githubMocks();
+ expect((await request(`/api/auth/github/callback?state=${state}&code=test&returnTo=https://evil.example`,{headers:{cookie:cookieOf(start)}})).headers.get('location')).toBe(destination);
+ start=await begin('//evil.example');state=new URL(start.headers.get('location')).searchParams.get('state');githubMocks();
+ expect((await request(`/api/auth/github/callback?state=${state}&code=test`,{headers:{cookie:cookieOf(start)}})).headers.get('location')).toBe('/');
 });

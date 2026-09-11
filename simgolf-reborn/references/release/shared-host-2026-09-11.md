@@ -139,3 +139,14 @@ The migration gives pre-existing unfinished locked events a full seven days from
 Verification covers validation, one-time deadline assignment, exact-cutoff expiry through the lobby list, cancelled-action rejection after expiry, stale in-flight command rejection without changing stored state, finished-versus-unfinished ranking and stable final results on later reads. All 54 backend/transport tests pass. The browser registration flow chooses three days, sees its cutoff, and still completes the two-round event normally; phone withdrawal and final results remain covered.
 
 Final deadline verification: all seven real Worker/D1/DO browser integration cases pass in 1.4 minutes on a clean run, alongside the 54 backend tests. The phone result view was inspected with the deadline displayed. Build passes; no deployment was performed.
+
+
+## Invitation-aware registration — 12 September
+
+Previously, the hosted gate and successful provider callbacks always returned to `/`, losing the shared course or tournament URL. Migration 0009 stores a canonical return destination with each OAuth transaction/email challenge. The shared validator accepts only known root game modes and bounded IDs/rounds; external addresses, action paths and ambiguous modes fall back to `/`. Callback query parameters and email verification payloads cannot replace the stored destination. Verified provider cancellation can retain the invitation on the retry screen. Session expiry and explicit provider linking preserve the current game destination.
+
+The tournament lobby now exposes a copyable invitation URL, with a selectable fallback when clipboard access is unavailable. Visiting it opens the account/event panel, including a direct lookup for older events absent from the latest 100. It does not automatically enroll the recipient, create a shared-course permission grant or bypass server registration rules. No invitations are sent externally by the application in this change.
+
+Verification covers canonical/hostile destinations; protected deep-link redirects; GitHub success, cancellation and callback replacement attempts; Google/Microsoft/Apple signed-JWT callbacks; explicit provider linking; and browser-bound email return values. These provider tests mock upstream services and do not claim production activation. All 58 backend tests and six account browser tests pass. The new account browser journey follows an invitation through mocked email sign-in and verifies that joining remains explicit. The real two-account Worker/D1 integration obtains an invitation link, navigates the other browser to it and joins through the normal controls. Production provider configuration and multiplayer deployment remain open.
+
+Final invitation checks: all seven real multiplayer browser tests pass in 1.4 minutes; the phone invitation field and copy control were inspected. The production build passes. Migration 0009 and this release have not been deployed.

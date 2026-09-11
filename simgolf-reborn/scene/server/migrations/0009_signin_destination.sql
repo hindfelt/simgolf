@@ -1,0 +1,2 @@
+ALTER TABLE transactions ADD COLUMN return_to TEXT NOT NULL DEFAULT '/';
+ALTER TABLE email_codes ADD COLUMN return_to TEXT NOT NULL DEFAULT '/';

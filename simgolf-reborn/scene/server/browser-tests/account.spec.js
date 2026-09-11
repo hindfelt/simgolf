@@ -43,3 +43,16 @@ test('playtesting cloud saves use a separate slot and preserve the normal course
  await page.goto('/?testing=1');await page.waitForFunction(()=>window.__gameTest);await page.locator('#pause').click();await page.locator('#player-account').click();await page.locator('#cloud-save').click();await expect(page.locator('#account-status')).toContainText('Course saved');expect(written).toBe(true);
  expect(await page.evaluate(()=>localStorage.getItem('simgolfer.player.player-one.simgolf-reborn.course.v1'))).toBe(normal);
 });
+
+test('an invitation survives the sign-in screen and opens registration without auto-joining',async({page})=>{
+ const id='11111111-1111-4111-8111-111111111111',destination='/?event='+id;let signedIn=false,joins=0;
+ const event={id,title:'Invitation cup',ownerId:'other-player',courseDigest:'12345678',rounds:1,capacity:2,durationHours:24,endsAt:null,status:'registration',entrants:[]};
+ await page.route('**/api/auth/providers',r=>reply(r,available));await page.route('**/api/auth/me',r=>reply(r,signedIn?{user,csrf:'test',expiresAt:Date.now()+100000}:{user:null},signedIn?200:401));
+ await page.route('**/api/published-courses',r=>reply(r,{courses:[]}));await page.route('**/api/tournaments',r=>reply(r,{tournaments:[{...event,entrants:0}]}));await page.route('**/api/tournaments/'+id,r=>reply(r,event));await page.route('**/api/tournaments/'+id+'/join',r=>{joins++;return reply(r,event);});
+ await page.route('**/api/auth/email/start',r=>{expect(r.request().postDataJSON().returnTo).toBe(destination);return reply(r,{id:'invite-challenge'});});
+ await page.route('**/api/auth/email/verify',r=>{signedIn=true;return reply(r,{ok:true,returnTo:destination});});
+ await page.goto(destination);await expect(page).toHaveURL(/login.html/);expect(new URL(page.url()).searchParams.get('returnTo')).toBe(destination);
+ const provider=page.getByRole('link',{name:'Continue with Google',exact:true});await expect(provider).toBeVisible();expect(new URL(await provider.getAttribute('href'),page.url()).searchParams.get('returnTo')).toBe(destination);
+ await page.locator('#email').fill('invited@proton.me');await page.getByRole('button',{name:'Send sign-in code'}).click();await page.locator('#code').fill('12345678');await page.getByRole('button',{name:'Sign in and play'}).click();
+ await expect(page).toHaveURL(new RegExp('event='+id));await expect(page.locator('#account-dialog')).toBeVisible();await expect(page.getByRole('button',{name:'Join tournament',exact:true})).toBeVisible();expect(joins).toBe(0);
+});
