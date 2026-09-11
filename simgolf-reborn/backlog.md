@@ -1147,3 +1147,10 @@ post-remark counter changes. 3,000 native comparisons and fourteen related
 tests pass. Full remark effects and feature eligibility remain controlled call
 boundaries; preceding scenery sampling and live automatic planner composition
 remain unfinished.
+
+F09 connected automatic launch middle (2026-09-11): scenery, putt/elevation
+updates, primary reactions, shot reactions and club history now compose from
+one explicit state snapshot. 240 uninterrupted native runs (0x424988–0x425372)
+match complete modeled state, events, cache and RNG; twenty-two related tests
+pass. Target-selection/launch-tail composition, original remark effects and live
+state mapping remain unfinished. No deployment.

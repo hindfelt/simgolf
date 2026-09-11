@@ -2493,3 +2493,31 @@ and the type-7 exception. All 300 complete scenery loops still match native
 state and RNG with this lookup included. Ten related tests pass. The previous
 object-lookup-boundary limitation is superseded; full live record mapping,
 remark effects and automatic planner integration remain unfinished.
+
+### Connected automatic middle: 0x424988–0x425372
+
+`original-auto-launch-middle.js` captures the entry marker and composes the
+recovered non-putter scenery loop, common putt/elevation update, primary
+reaction selector, shot reactions and club history. The putter bypass skips
+scenery and preserves its hole counter. Shared seed/cache, actor/partner effects
+and scenery references flow through one cloned snapshot. Remark callbacks act
+synchronously on that shared state, including the final history stage.
+
+Scenery's sampled direction (stack +0x44) and the primary reaction's direction
+(stack +0x4c) are distinct values. Composition retains both rather than passing
+the last random sample's direction into the later reaction selector.
+
+`verify-original-auto-launch-middle.py` initializes controlled map/profile/object
+records and executes every original instruction from entry through 0x425372
+without replacing intermediate stages. It reuses the scenery verifier's emulator
+initialization, but does not execute its fixture loop. Original RNG, projection,
+object scan, strength cache search and profile/condition classification all run
+natively. Only height values and remark effects are controlled boundaries.
+
+All 240 runs match modeled actor/partner fields, speed, cache, seed, diagnostics,
+hole counter, reference values, ordered events, sample count and random draws.
+Fixtures include putters, non-putters, active reactions, changed markers and
+paired exchanges. Twenty-two related tests pass. This is stronger than chained
+isolated oracles but still stops before the common launch tail; target setup,
+full original remark effects and live original-state mapping remain unfinished.
+No production integration or deployment is claimed.
