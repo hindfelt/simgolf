@@ -1,3 +1,4 @@
+import {facilityLighting} from './facility-lighting.js';
 import {coastalPreview} from './coastal-preview.js';
 import { boundaryEdges } from "./boundary-outline.js";
 import { housing } from "./housing.js";
@@ -12,11 +13,11 @@ import { snackBar } from "./snack-bar.js";
 import { resortHotel } from "./hotel.js";
 import { flowerbed } from "./flowerbed.js";
 import { bridgeEdges, bridgeDeckHeights, bridgeWalkHeight } from "./bridge-layout.js";
-import { connectedPathCells } from "../simulation/game.js";
+import { connectedPathCells, connected } from "../simulation/game.js";
 import { plantedTrees } from "./planted-trees.js";
 import { tennisCourt } from "./tennis-court.js";
 import { trainingFacility } from "./training-facilities.js";
-import { TRAINING_FACILITIES } from "../simulation/facilities.js";
+import { TRAINING_FACILITIES, FACILITIES } from "../simulation/facilities.js";
 import { lighthouse } from "./lighthouse.js";
 import { church } from "./church.js";
 import { buildHazardView } from "./hazards.js";
@@ -439,10 +440,13 @@ export function buildCourseView(scene) {
       }
     }
     for (const f of g.facilities) {
-      if (facilityMap.has(f.id)) continue;
-      const group = makeFacility(f);
-      group.userData.facilityType = f.type;
-      facilityMap.set(f.id, group);
+      let group=facilityMap.get(f.id);
+      if(!group){
+        group=makeFacility(f);
+        group.userData.facilityType=f.type;
+        facilityMap.set(f.id,group);
+      }
+      facilityLighting(group,FACILITIES[f.type]?.scenery ? 'scenery' : connected(g,f) ? 'connected' : 'disconnected');
     }
   }
   function makeFacility(f) {
