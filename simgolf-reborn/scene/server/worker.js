@@ -1,7 +1,7 @@
 import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
-import {createSharedCourse,getSharedCourse,listSharedCourses,setCourseMember,executeSharedCommand} from './shared-courses.js';
+import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
 export {CourseScheduler} from './course-scheduler.js';
 const TTL=30*24*60*60;
 async function session(request,env){
@@ -139,13 +139,15 @@ async function handle(request,env){
   const [,id,action]=shared;
   if(!action&&request.method==='GET'){
    await rateLimit(env.DB,'course-read:'+user.id,120,60);
-   const course=await getSharedCourse(env.DB,id,user.id);
-   if(!(await env.COURSE_SCHEDULERS.getByName(id).start(id)).ok)throw fail(503,'Course scheduling is unavailable.');
-   return json(course);
+   const reply=await env.COURSE_SCHEDULERS.getByName(id).read(id,user.id);
+   if(!reply.ok)throw fail(reply.status,reply.error);
+   return json(reply.value);
   }
   if(action==='commands'&&request.method==='POST'){
    await rateLimit(env.DB,'course-command:'+user.id,120,60);
-   return json(await executeSharedCommand(env.DB,id,user.id,await readJson(request,20000)));
+   const reply=await env.COURSE_SCHEDULERS.getByName(id).command(id,user.id,await readJson(request,20000));
+   if(!reply.ok)throw fail(reply.status,reply.error);
+   return json(reply.value);
   }
   if(action==='members'&&request.method==='PUT'){
    const body=await readJson(request,1000);

@@ -1,8 +1,27 @@
 import {DurableObject} from 'cloudflare:workers';
-import {getSharedCourse} from './shared-courses.js';
+import {getSharedCourse,executeSharedCommand} from './shared-courses.js';
 
 // One persistent alarm per course; no global timer or client-supplied clock.
 export class CourseScheduler extends DurableObject {
+ async read(courseId,playerId){return this.#request(courseId,playerId);}
+ async command(courseId,playerId,command){return this.#request(courseId,playerId,command);}
+ async #request(courseId,playerId,command){
+  try{
+   const current=await this.ctx.storage.get('courseId');
+   if(current&&current!==courseId)return {ok:false,status:400,error:'Course host mismatch.'};
+   // The HTTP Worker supplies the authenticated player. The shared host still
+   // reloads permissions and persisted state before any simulation or edit.
+   const value=command===undefined
+    ? await getSharedCourse(this.env.DB,courseId,playerId)
+    : await executeSharedCommand(this.env.DB,courseId,playerId,command);
+   if(!(await this.start(courseId)).ok)return {ok:false,status:503,error:'Course scheduling is unavailable.'};
+   return {ok:true,value};
+  }catch(error){
+   // Explicit errors survive RPC without exposing database/runtime internals.
+   const status=Number.isInteger(error.status)&&error.status>=400&&error.status<500?error.status:503;
+   return {ok:false,status,error:status===503?'The shared course is temporarily unavailable. Retry the same edit.':error.message};
+  }
+ }
  async start(courseId){
   if(typeof courseId!=='string'||!/^[-a-f0-9]{36}$/.test(courseId))return {ok:false,error:'Invalid course ID.'};
   const accepted=await this.ctx.storage.transaction(async storage=>{

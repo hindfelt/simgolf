@@ -41,3 +41,15 @@ Next required work:
 5. Build server-validated earnings competitions and independent tournament round hosts on immutable course revisions. The shared construction service is not a trusted tournament scoring host.
 
 Regression follow-up: the full game run reported 951/952 passing, with the maintenance browser test unable to find its staff details panel. The complete five-test maintenance file passed on an isolated rerun; the failing case was then repeated separately. No simulation defect has yet been reproduced, and this is not recorded as a clean full-suite pass. Backend/transport tests (31) and the real two-browser integration tests (2) passed again after the final testing-mode link correction.
+
+## Populated-course assessment and RPC host — 12 September
+
+The repeat full game suite passed all 952 tests in 5.9 minutes. The earlier isolated maintenance-panel failure did not recur, including three focused repeats. No game simulation changes were made during that rerun.
+
+The expanded benchmark builds 18 legal holes and hires 16 employees, then samples each minute through 25 simulated minutes. It reaches 12 live visitors, 24 completed rounds at minute 21, and a largest snapshot of 222,218 bytes. The worst median restore + 120 ticks + serialization sample was 83.01 ms; the highest p95 was 92.46 ms. These are local Node elapsed-time measurements taken alongside browser tests, not hosted CPU accounting. The saved measurements are in `shared-large-course-2026-09-12.json`. Reproduce with `npm run benchmark:shared -- --large` from `scene/`.
+
+A separate 14-minute breakdown puts restoration near 1.5 ms and serialization near 0.4 ms; advancing 120 ticks averaged 78.1 ms. Five ticks can already include a roughly 23 ms simulation burst, so simply shrinking the fixed batch is insufficient evidence of safety.
+
+Shared read/command routes now authenticate and rate-limit in the HTTP Worker, then invoke the existing per-course Durable Object using RPC. The Durable Object performs permission lookup, simulation, persistence and receipt replay. This places simulation alongside the background alarm, under the [Durable Object execution limits](https://developers.cloudflare.com/durable-objects/platform/limits/), rather than executing course catch-up in the ordinary HTTP handler. No client clock or authority was introduced; D1 compare-and-swap still protects concurrent work. RPC errors preserve intended permission statuses and hide runtime/database details.
+
+All 33 backend/transport tests and both real two-browser integration tests pass with the RPC path. Hosted latency, daily storage/request consumption and multi-course capacity still need measurement before deploying shared construction. The existing account-only production release remains unchanged.
