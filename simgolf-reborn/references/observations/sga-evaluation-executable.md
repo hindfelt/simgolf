@@ -2043,3 +2043,24 @@ candidate tests. It remains chained rather than one uninterrupted native candida
 execution, and it does not establish combined nonflat planning/flight behavior.
 Original state restoration across the full planner call, shared trial scheduling,
 search integration and live gameplay use remain unfinished. No deployment.
+
+### Shared nonflat map for planning and flight (2026-09-11)
+
+The shared-map candidate verifier now accepts `--nonflat`. Both planner raw
+height samples and candidate physics use the same 51×51 vertex field, with the
+planner's 50×50 raw array extracted from those vertices. The original candidate
+harness executes its recovered nonflat height/slope routines. Browser planning
+uses raw heights through originalShotMap.planning; flight uses interpolated
+height/slope from the same adapter, whose directional corner data is built with
+originalDirectionalHeightStage. This retains the original difference between
+raw planner samples and physics interpolation without using different terrain.
+
+All 60 nonflat chained cases match full launch/cache and terminal flight state;
+flat mode was rerun and all 60 cases still match. Both fixtures retain their
+vertex field. Ten map/shared-candidate tests pass, including serialized midflight
+replay for each mode. The reused individual planner and flight oracles also pass.
+
+This closes the separate nonflat-map evidence gap. It is still two chained native
+executions, not one uninterrupted 0x421b50 call through the planner and flight.
+Contiguous actor restoration/global-state verification, search scheduler/state
+integration and live gameplay remain unfinished. No deployment is included.

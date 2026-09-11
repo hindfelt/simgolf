@@ -1016,3 +1016,9 @@ verified through originalShotMap on identical terrain and markings for 60 chaine
 original cases; 11 shared-map/trial tests pass. This closes separate-environment
 evidence for flat courses. Nonflat combined mapping, contiguous original candidate
 execution, search shared-state scheduling and live integration remain open.
+
+F09 shared nonflat-map candidate evidence (2026-09-11): extended the common-map
+planner/flight oracle to a shared nonzero height field and derived corner data.
+Sixty flat plus sixty nonflat original chains match; ten map tests pass, including
+midflight replay in both modes. Contiguous original candidate execution, shared
+search scheduling/state propagation and live integration remain unfinished.
