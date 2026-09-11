@@ -36,7 +36,9 @@ export function buyLand(g) {
         local = r - start;
       // Flat seams join successive purchases; stepped half-level heights remain editable.
       const envelope = Math.sin((local / (PARCEL_ROWS - 1)) * Math.PI);
-      const h = Math.round(4 * Math.sin(c / 6 + phase) * envelope) / 2;
+      const h = g.landscapeStyle === 'coast'
+        ? 2.5 + Math.round(Math.max(0,2 * Math.sin(c / 6 + phase) * envelope)) / 2
+        : Math.round(4 * Math.sin(c / 6 + phase) * envelope) / 2;
       if (h) g.elevation[k] = h;
       const pond =
         Math.abs(c - pondC) <= 3 &&

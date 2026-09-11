@@ -4,6 +4,10 @@
 
 The owner requested a feedback testing simulation first, followed by original-engine integration, career progression, resort behavior, worlds/presentation, then a final stability assessment. The isolated testing copy and prepared two-hole/helicopter scenario are implemented. The four feature areas remain incomplete; a baseline test run does not close them. See [the checkpoint and acceptance gates](references/release/playtesting-2026-09-11.md).
 
+## Coastal shoreline correction — 11 September 2026
+
+Unowned parcels now render the same seeded coastline and elevation they receive on purchase, without changing ownership or saves. Decorative sea continues the coastline beyond the grid, removing the straight outer grass/ocean seam. New coastal terrain uses deeper bays, smaller inlets and raised shores; gray faceted rock faces follow editable banks. Existing owned terrain remains saved as built. Nineteen targeted coast, purchase and generation checks pass. The full approved composition and richer foliage/water detailing remain unfinished.
+
 ## Coastal implementation update — 9 September 2026
 
 The approved coastal concept is preserved in `graphics/samples/coastal-concept-v2.png`. The playable renderer now has slate-blue water, terrain-following rock banks and layered coastal conifers. New coastal properties contain editable island chains continuing into purchased parcels. A lighthouse can be built, removed, saved and shared; its $2,000 cost and 3×3 footprint are provisional. The coastal example verifies island access, bridge requirements and paid rounds. The full approved composition, richer cliff/foliage detail and selectable planted conifers remain unfinished.

@@ -1,3 +1,4 @@
+import {coastalWater} from '../simulation/coast.js';
 import * as THREE from "three";
 import { GRID } from "../simulation/world.js";
 import { height, courseHeight } from "../landscape.js";
@@ -39,10 +40,31 @@ export function buildOcean(scene) {
   ocean.name = "offshore-ocean";
   ocean.receiveShadow = true;
   scene.add(ocean);
+  const continuation=new THREE.Mesh(new THREE.BufferGeometry(),material);
+  continuation.name='coast-beyond-map';continuation.receiveShadow=true;scene.add(continuation);
+  let coastSeed;
+  function rebuildContinuation(seed){
+    const vertices=[],uv=[];
+    for(let r=-100;r<150;r++){
+      if(r>=0 && r<GRID.height)continue;
+      for(let c=0;c<GRID.width;c++){
+        if(!coastalWater(seed,c,r))continue;
+        const x=GRID.minX+c*GRID.size,z=GRID.minZ+r*GRID.size;
+        for(const [dx,dz] of [[0,0],[0,2],[2,0],[2,0],[0,2],[2,2]]){
+          vertices.push(x+dx,height(x+dx,z+dz)+0.047,z+dz);
+          uv.push((x+dx-edge)/260,(z+dz+230)/460);
+        }
+      }
+    }
+    continuation.geometry.dispose();const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.computeVertexNormals();
+    continuation.geometry=geo;
+  }
   // Small faceted stone banks follow editable water, rather than fixed scenery.
   const stones = new THREE.InstancedMesh(
-    new THREE.IcosahedronGeometry(1, 0),
-    new THREE.MeshStandardMaterial({ color: 0x929184, roughness: 1 }),
+    new THREE.CylinderGeometry(0.85, 1, 2, 5, 1),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }),
     GRID.width * GRID.height * 12,
   );
   stones.name = "coastal-stone-banks";
@@ -58,6 +80,10 @@ export function buildOcean(scene) {
     update(g) {
       ocean.visible = g.landscapeStyle === "coast";
       stones.visible = ocean.visible;
+      continuation.visible=ocean.visible;
+      if(ocean.visible && coastSeed!==(g.landSeed??2002)){
+        coastSeed=g.landSeed??2002;rebuildContinuation(coastSeed);
+      }
       if (currentGame === g && revision === g.revision) return;
       currentGame = g;
       revision = g.revision;
@@ -69,21 +95,21 @@ export function buildOcean(scene) {
           const x = GRID.minX + (c + 0.5) * GRID.size + dc * 0.75 + dr * along;
           const z = GRID.minZ + (r + 0.5) * GRID.size + dr * 0.75 + dc * along;
           const waterY = courseHeight(g, x - dc * 0.75, z - dr * 0.75);
-          const landY = courseHeight(g, x, z);
+          const landY = courseHeight(g, x + dc * 0.75, z + dr * 0.75);
           const bankRise = Math.max(0, landY - waterY);
           const rockHeight = 0.12 + jitter * 0.08 + bankRise * 0.5;
           dummy.position.set(x, waterY + bankRise * 0.5 - 0.05, z);
           dummy.scale.set(
-            0.36 + jitter * 0.12,
+            0.43 + jitter * 0.12,
             rockHeight,
-            0.36 + jitter * 0.1,
+            0.43 + jitter * 0.1,
           );
           // Tall faces remain upright so their top follows the grass lip and
           // their base stays at the water even after repeated terrain edits.
           dummy.rotation.set(0, jitter * Math.PI, 0);
           dummy.updateMatrix();
           stones.setMatrixAt(count, dummy.matrix);
-          shade.setHSL(0.13, 0.06, 0.42 + jitter * 0.18);
+          shade.setHSL(0.58, 0.035, 0.38 + jitter * 0.2);
           stones.setColorAt(count++, shade);
         }
       }

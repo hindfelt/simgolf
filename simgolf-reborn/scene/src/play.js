@@ -1,3 +1,4 @@
+import {coastalPreview} from './rendering/coastal-preview.js';
 import {testingStorage,testingHref,mountTestingFeedback} from './ui/testing-mode.js';
 import { settleCareerChallenge } from "./simulation/challenge-career.js";
 import { originalChallengeOfferStakes } from "./simulation/pro-challenge.js";
@@ -342,13 +343,13 @@ scene.add(sun, sun.target);
 const fill = new THREE.DirectionalLight(0xc8d9e5, 0.4);
 fill.position.set(50, 35, 80);
 scene.add(fill);
-setLandscapeState(game);
+setLandscapeState(coastalPreview(game));
 const landscape = buildLandscape(scene, () => {});
 buildClubhouse(scene).scale.setScalar(0.65);
 const startingBridge = buildBridge(scene);
 const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast" });
 const ocean = buildOcean(scene);
-ocean.update(game);
+ocean.update(coastalPreview(game));
 const view = buildCourseView(scene);
 const helicopter = helicopterView(scene, height);
 const coverage = staffCoverage(scene, height);
@@ -2380,10 +2381,10 @@ function frame(now) {
   controls.update();
   purchasedBoundary.visible = mode === "build" && now < purchaseHighlightUntil;
   if (landscapeRevision !== game.revision) {
-    setLandscapeState(game);
+    setLandscapeState(coastalPreview(game));
     landscape.reshape();
-    flora.update(game);
-    ocean.update(game);
+    flora.update(coastalPreview(game));
+    ocean.update(coastalPreview(game));
     boundary.geometry.dispose();
     boundary.geometry = new THREE.BufferGeometry().setFromPoints(
       propertyBoundaryPoints(),

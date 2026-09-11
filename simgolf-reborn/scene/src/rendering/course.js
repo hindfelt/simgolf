@@ -1,3 +1,4 @@
+import {coastalPreview} from './coastal-preview.js';
 import { boundaryEdges } from "./boundary-outline.js";
 import { housing } from "./housing.js";
 import { COAST_WATER } from "./coastal-style.js";
@@ -578,7 +579,7 @@ export function buildCourseView(scene) {
       trees.update(g);
       if (revision !== g.revision) {
         revision = g.revision;
-        rebuild(g);
+        rebuild(coastalPreview(g));
       }
       if (weedRevision !== g.weedRevision) {
         weedRevision = g.weedRevision;

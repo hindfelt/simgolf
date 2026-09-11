@@ -1,3 +1,4 @@
+import {coastalWater} from './simulation/coast.js';
 import { key, GRID, inBounds } from "./simulation/world.js";
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -381,15 +382,11 @@ export function buildFlora(
             t.p[2],
           );
           dummy.rotation.set(...(t.r || [0, 0, 0]));
-          dummy.scale.set(
-            ...(g.removedTrees?.[tree.k] &&
-            inBounds(
-              Math.floor((tree.x - GRID.minX) / 2),
-              Math.floor((tree.z - GRID.minZ) / 2),
-            )
-              ? [0, 0, 0]
-              : t.s || [1, 1, 1]),
-          );
+          const c=Math.floor((tree.x-GRID.minX)/2),r=Math.floor((tree.z-GRID.minZ)/2);
+          const flooded=g.landscapeStyle==='coast' && (inBounds(c,r)
+            ? g.tiles[tree.k]?.type==='water' : coastalWater(g.landSeed,c,r));
+          const removed=g.removedTrees?.[tree.k] && inBounds(c,r);
+          dummy.scale.set(...(flooded || removed ? [0,0,0] : t.s || [1,1,1]));
           dummy.updateMatrix();
           mesh.setMatrixAt(i, dummy.matrix);
         });

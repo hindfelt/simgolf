@@ -6,7 +6,7 @@ export function coastColumn(seed, row) {
     2;
   return (
     32 +
-    Math.round(3 * Math.sin(row / 8 + phase) + 2 * Math.sin(row / 17 - phase))
+    Math.round(4 * Math.sin(row / 8 + phase) + 3 * Math.sin(row / 17 - phase) + 1.5 * Math.sin(row / 2.3 + phase))
   );
 }
 

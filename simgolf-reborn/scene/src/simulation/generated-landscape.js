@@ -97,7 +97,9 @@ export function generateLandscape(seed, style) {
         shore *
         edge *
         approach;
-      const h = Math.round(value * 2) / 2;
+      const h = style === 'coast'
+        ? Math.round((2.5 + Math.max(0,value)) * 2) / 2
+        : Math.round(value * 2) / 2;
       if (h) elevation[k] = h;
     }
   for (let r = 10; r <= 14; r++) tiles[key(7, r)] = { type: "path" };
