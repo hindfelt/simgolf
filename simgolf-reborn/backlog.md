@@ -834,3 +834,10 @@ F09 target-neighborhood assessment (2026-09-11): recovered the original eight
 neighbor terrain vote, edge/unavailable penalty, dominant code/direction and
 rating byte. 1,000 executable comparisons and eight targeted tests pass.
 Preceding ray scan, full target selection and live integration remain unfinished.
+
+F09 target ray (2026-09-11): recovered center/side terrain sampling, original RNG
+ordering, obstacle heights and marked/water fields; composed with neighborhood
+assessment. 1,000 ray and continued assessment comparisons match original x86;
+12 targeted tests pass. This supersedes the preceding ray-scan TODO above.
+Earlier target selection, automatic planner middle branch and live integration
+remain unfinished; no deployment of these isolated original helpers yet.

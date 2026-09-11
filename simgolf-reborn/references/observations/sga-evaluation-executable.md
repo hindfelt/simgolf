@@ -1370,3 +1370,38 @@ Thirty fixtures and four focused tests pass, alongside four elevation tests.
 Inputs retain the preceding ray scan's totals, directions, obstacle count and
 accumulator. That scan, full target selection and live integration remain open;
 this isolated block is not a completed or deployed original planner.
+
+### Target ray and combined assessment (2026-09-11)
+
+Recovered 0x423b66–0x423dd7 in `original-target-ray.js` and composed it with the
+neighborhood block through 0x423ee1. The scan uses trunc(distance/25) samples,
+starting 512 fixed units from the ball and advancing 1024 each iteration.
+Heading quantization supplies the reverse direction for terrain votes. Center
+samples contribute class × index × 2 to the accumulator and class × (index+1)
+× 2 to per-terrain votes. The original unavailable-cell helper ends the scan
+before height reads or random consumption. Kind 13 after the first sample adds
+an obstacle; height exceeding reference height +1 adds two. The reference is
+the origin through the midpoint and the target afterward. Tile mark 0x100
+records the latest terrain code. Terrain 17 records the original zero-sentinel
+water index, including its first-sample ambiguity.
+
+Each accepted center sample consumes one original bounded RNG draw and samples
+a side ray at heading ±0x0aaaaaaa (the actual negative constant is 0xf5555556).
+That side contributes class × (index+1) only to the accumulator. Side terrain
+reads are raw flattened-map reads without the center sample's bounds check;
+callers must preserve this original map behavior. The helper returns the updated
+seed explicitly and does not mutate input arrays. `originalTargetAssessment`
+composes the ray with the neighborhood vote and rating-byte calculation.
+
+`verify-original-target-ray.py` runs SHA-checked original instructions, including
+original projections, initialized x87 sine table, RNG and bounds helper. Only
+0x40be60 raw height reads are supplied by the fixture. 1,000 ray outputs and
+1,000 continued neighborhood outputs matched, including RNG state, marked cells,
+negative classes, short distances and early map-edge termination. Twenty saved
+fixtures and twelve ray/neighborhood/elevation tests pass. A test caught JS
+negative zero in the sample count; it is now normalized to the original int32.
+
+This closes the previously missing assessment ray, not target selection or full
+live integration. Upstream 0x4235c0–0x423b66 is still only partially recovered,
+and automatic planner argument -1 still requires its middle branch. Raw map and
+height adapters must be integrated coherently before replacing the live planner.
