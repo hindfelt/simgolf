@@ -39,3 +39,7 @@ Useful checks: add and open a hole; buy land until funds are insufficient; inspe
 ## Final checkpoint regression result
 
 892 tests passed; 0 failed, 0 skipped and 0 flaky results reported by Playwright. The complete rerun took 330.5 seconds in desktop Chrome. This includes the recovered-module comparison tests as well as preview gameplay/UI tests; it does not mean the recovered engine is used in live play.
+
+## Hosted checkpoint
+
+Published to https://simgolfer.0x4d.in/?testing=1 from source commit `9b2fbaa`. Cloudflare version `086d5dc4-7432-4771-b87e-d3ecff2b6acc`. A fresh Chrome context at 390×844 received HTTP 200, started the two-hole simulation, downloaded feedback and reported no page errors. This checks the hosted build without accessing the owner's browser save.
