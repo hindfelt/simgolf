@@ -862,3 +862,9 @@ ten tests pass. Exact coordinate semantics supersede any interpretation of the
 third planner argument as an identifier. Automatic -1 target search/middle
 branches, entry global effects, coherent live integration and deployment remain
 unfinished.
+
+F09 planner entry (2026-09-11): recovered range-before-metadata-write ordering,
+explicit terrain 17/20 class patches, global obstacle index and origin lookup.
+All 5,000 original entry/range cases match; twelve targeted tests pass. Compose
+and persist entry state patches before later assessment, then finish automatic
+target branches and live integration. The full planner remains unfinished.

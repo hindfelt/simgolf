@@ -1480,3 +1480,28 @@ fixtures plus geometry/assessment tests pass (ten tests total). Inputs remain
 immutable. Initial range lookup and pre-target global side effects remain
 caller-owned. The automatic -1 path still requires its target-search and middle
 planning branches and is rejected by this composed entry point. No live deploy.
+
+### Planner entry, range and explicit state patches (2026-09-11)
+
+`original-planner-setup.js` recovers entry 0x4235c0–0x42365d, composing the
+previously recovered 0x4219e0 range calculation. The range lookup uses effective
+lie metadata (special actors >=152 use terrain 0 on shot zero, otherwise 2),
+while the planner's later origin terrain remains the actual map terrain.
+After range returns, actor flag 1 writes 32 to metadata shot-class bytes for
+terrain 17 (0x5770f2) and terrain 20 (0x577182). These are global metadata changes,
+not actor fields. The helper returns explicit patches without mutating the map.
+They must be applied after range and before subsequent assessment/launch reads.
+
+The entry also resets global 0x4c1fbc to -1, then sets count-1 only if world flag
+0x20 is enabled and signed global count 0x53ce64 is positive. Origin tile/index
+and actual terrain are returned. Range inputs are nested because range difficulty
+comes from 0x820344 and range level from actor +0xc2, unlike similarly named
+values used later by launch calculations.
+
+`verify-original-planner-setup.py` executes the actual entry and range routine,
+substituting only the range surface lookup. All 5,000 generated cases match,
+including original metadata writes, range, origin locals and global index.
+Forty fixtures and twelve setup/range/target tests pass. This recovers entry
+semantics but still requires composition/persistence of the explicit patches
+in the full planner. Automatic target-search branches and live integration remain
+open. No deployment or complete original-planner claim follows from this helper.

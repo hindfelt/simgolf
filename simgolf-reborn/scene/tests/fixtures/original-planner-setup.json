@@ -1,0 +1,2511 @@
+[
+  [
+    {
+      "actorId": 0,
+      "skillMask": 5,
+      "difficulty": 0,
+      "level": -1,
+      "surface": 4,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 8,
+      "longDrive": 9,
+      "boost": -1,
+      "lengthBonus": 0,
+      "shotClass": 3,
+      "x": 50690,
+      "z": 23788,
+      "actorFlags": 2,
+      "worldFlags": 13,
+      "obstacleCount": 13,
+      "classes": [
+        -2,
+        0,
+        4,
+        3,
+        4,
+        -2,
+        5,
+        -2,
+        2,
+        3,
+        5,
+        -2,
+        3,
+        2,
+        4,
+        3,
+        5,
+        -2,
+        -1,
+        2,
+        4,
+        4,
+        5
+      ]
+    },
+    {
+      "range": 120,
+      "originTile": {
+        "x": 49,
+        "z": 23
+      },
+      "originIndex": 2473,
+      "terrainCode": 4,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 1,
+      "difficulty": 1,
+      "level": -2,
+      "surface": 2,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 4,
+      "longDrive": 5,
+      "boost": 1,
+      "lengthBonus": 4,
+      "shotClass": 3,
+      "x": 17689,
+      "z": 1604,
+      "actorFlags": 1,
+      "worldFlags": 20,
+      "obstacleCount": 0,
+      "classes": [
+        1,
+        3,
+        3,
+        3,
+        4,
+        -2,
+        0,
+        -1,
+        -2,
+        1,
+        -2,
+        5,
+        3,
+        5,
+        4,
+        5,
+        4,
+        2,
+        3,
+        -2,
+        5,
+        -1,
+        2
+      ]
+    },
+    {
+      "range": 117,
+      "originTile": {
+        "x": 17,
+        "z": 1
+      },
+      "originIndex": 851,
+      "terrainCode": 2,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 2,
+      "level": 0,
+      "surface": 4,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 3,
+      "longDrive": 11,
+      "boost": 2,
+      "lengthBonus": 1,
+      "shotClass": 4,
+      "x": 15992,
+      "z": 12185,
+      "actorFlags": 1,
+      "worldFlags": 201,
+      "obstacleCount": 5,
+      "classes": [
+        5,
+        1,
+        5,
+        3,
+        0,
+        3,
+        3,
+        1,
+        -2,
+        1,
+        0,
+        0,
+        3,
+        -2,
+        3,
+        4,
+        5,
+        0,
+        3,
+        4,
+        0,
+        -1,
+        -2
+      ]
+    },
+    {
+      "range": 130,
+      "originTile": {
+        "x": 15,
+        "z": 11
+      },
+      "originIndex": 761,
+      "terrainCode": 4,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 5,
+      "difficulty": 1,
+      "level": 7,
+      "surface": 7,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 8,
+      "longDrive": 0,
+      "boost": 0,
+      "lengthBonus": 2,
+      "shotClass": 2,
+      "x": 9203,
+      "z": 24104,
+      "actorFlags": 2,
+      "worldFlags": 108,
+      "obstacleCount": 6,
+      "classes": [
+        2,
+        2,
+        -2,
+        5,
+        0,
+        4,
+        -1,
+        4,
+        -2,
+        5,
+        -2,
+        0,
+        -2,
+        1,
+        -1,
+        3,
+        -1,
+        2,
+        0,
+        0,
+        3,
+        -2,
+        5
+      ]
+    },
+    {
+      "range": 277,
+      "originTile": {
+        "x": 8,
+        "z": 23
+      },
+      "originIndex": 423,
+      "terrainCode": 7,
+      "obstacleIndex": 5,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 5,
+      "difficulty": 2,
+      "level": -5,
+      "surface": 9,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 1,
+      "longDrive": 4,
+      "boost": 0,
+      "lengthBonus": 4,
+      "shotClass": -2,
+      "x": 15291,
+      "z": 11043,
+      "actorFlags": 0,
+      "worldFlags": 58,
+      "obstacleCount": 12,
+      "classes": [
+        4,
+        1,
+        2,
+        -1,
+        -1,
+        -2,
+        0,
+        5,
+        3,
+        0,
+        4,
+        -2,
+        0,
+        1,
+        0,
+        1,
+        -1,
+        -1,
+        4,
+        5,
+        3,
+        0,
+        -1
+      ]
+    },
+    {
+      "range": 142,
+      "originTile": {
+        "x": 14,
+        "z": 10
+      },
+      "originIndex": 710,
+      "terrainCode": 9,
+      "obstacleIndex": 11,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 3,
+      "level": 8,
+      "surface": 6,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 14,
+      "longDrive": 13,
+      "boost": 4,
+      "lengthBonus": 4,
+      "shotClass": 3,
+      "x": 33722,
+      "z": 48806,
+      "actorFlags": 3,
+      "worldFlags": 68,
+      "obstacleCount": 0,
+      "classes": [
+        3,
+        3,
+        1,
+        0,
+        4,
+        -2,
+        1,
+        0,
+        4,
+        3,
+        -1,
+        1,
+        0,
+        -2,
+        0,
+        5,
+        3,
+        -1,
+        4,
+        0,
+        0,
+        2,
+        -2
+      ]
+    },
+    {
+      "range": 199,
+      "originTile": {
+        "x": 32,
+        "z": 47
+      },
+      "originIndex": 1647,
+      "terrainCode": 6,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 7,
+      "difficulty": 2,
+      "level": 3,
+      "surface": 7,
+      "shot": 3,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 10,
+      "longDrive": 12,
+      "boost": 4,
+      "lengthBonus": 0,
+      "shotClass": -2,
+      "x": 8862,
+      "z": 4065,
+      "actorFlags": 0,
+      "worldFlags": 78,
+      "obstacleCount": 12,
+      "classes": [
+        3,
+        2,
+        4,
+        2,
+        1,
+        1,
+        5,
+        -1,
+        2,
+        -2,
+        -2,
+        2,
+        5,
+        1,
+        5,
+        -1,
+        0,
+        3,
+        -1,
+        -2,
+        1,
+        5,
+        2
+      ]
+    },
+    {
+      "range": 225,
+      "originTile": {
+        "x": 8,
+        "z": 3
+      },
+      "originIndex": 403,
+      "terrainCode": 7,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 6,
+      "difficulty": 1,
+      "level": 2,
+      "surface": 7,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 15,
+      "longDrive": 4,
+      "boost": -2,
+      "lengthBonus": 3,
+      "shotClass": 2,
+      "x": 45516,
+      "z": 49401,
+      "actorFlags": 2,
+      "worldFlags": 132,
+      "obstacleCount": 11,
+      "classes": [
+        4,
+        1,
+        3,
+        1,
+        5,
+        2,
+        3,
+        4,
+        2,
+        -1,
+        5,
+        3,
+        4,
+        3,
+        4,
+        -1,
+        2,
+        5,
+        2,
+        4,
+        5,
+        4,
+        2
+      ]
+    },
+    {
+      "range": 92,
+      "originTile": {
+        "x": 44,
+        "z": 48
+      },
+      "originIndex": 2248,
+      "terrainCode": 7,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 3,
+      "difficulty": 2,
+      "level": 2,
+      "surface": 9,
+      "shot": 2,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 10,
+      "longDrive": 8,
+      "boost": 5,
+      "lengthBonus": 1,
+      "shotClass": 2,
+      "x": 2990,
+      "z": 4451,
+      "actorFlags": 3,
+      "worldFlags": 252,
+      "obstacleCount": 14,
+      "classes": [
+        4,
+        4,
+        5,
+        -1,
+        5,
+        2,
+        -2,
+        -1,
+        5,
+        3,
+        5,
+        1,
+        5,
+        1,
+        4,
+        -1,
+        1,
+        -1,
+        -1,
+        -1,
+        5,
+        5,
+        -1
+      ]
+    },
+    {
+      "range": 140,
+      "originTile": {
+        "x": 2,
+        "z": 4
+      },
+      "originIndex": 104,
+      "terrainCode": 9,
+      "obstacleIndex": 13,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 7,
+      "difficulty": 1,
+      "level": 3,
+      "surface": 7,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 15,
+      "longDrive": 4,
+      "boost": 4,
+      "lengthBonus": 4,
+      "shotClass": 1,
+      "x": 41556,
+      "z": 1979,
+      "actorFlags": 2,
+      "worldFlags": 40,
+      "obstacleCount": 14,
+      "classes": [
+        -1,
+        2,
+        -2,
+        4,
+        -1,
+        -1,
+        4,
+        -1,
+        0,
+        5,
+        2,
+        2,
+        1,
+        5,
+        -1,
+        3,
+        1,
+        1,
+        -1,
+        -2,
+        4,
+        0,
+        -2
+      ]
+    },
+    {
+      "range": 273,
+      "originTile": {
+        "x": 40,
+        "z": 1
+      },
+      "originIndex": 2001,
+      "terrainCode": 7,
+      "obstacleIndex": 13,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 1,
+      "difficulty": 1,
+      "level": -2,
+      "surface": 3,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 8,
+      "longDrive": 12,
+      "boost": 0,
+      "lengthBonus": 0,
+      "shotClass": 4,
+      "x": 24515,
+      "z": 38731,
+      "actorFlags": 0,
+      "worldFlags": 33,
+      "obstacleCount": 16,
+      "classes": [
+        -1,
+        2,
+        -1,
+        5,
+        1,
+        0,
+        4,
+        4,
+        0,
+        -1,
+        4,
+        1,
+        -1,
+        -2,
+        0,
+        1,
+        5,
+        0,
+        3,
+        3,
+        -2,
+        -1,
+        0
+      ]
+    },
+    {
+      "range": 134,
+      "originTile": {
+        "x": 23,
+        "z": 37
+      },
+      "originIndex": 1187,
+      "terrainCode": 3,
+      "obstacleIndex": 15,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 4,
+      "difficulty": 1,
+      "level": 6,
+      "surface": 5,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 10,
+      "longDrive": 13,
+      "boost": -1,
+      "lengthBonus": 0,
+      "shotClass": 3,
+      "x": 50706,
+      "z": 43917,
+      "actorFlags": 1,
+      "worldFlags": 55,
+      "obstacleCount": 9,
+      "classes": [
+        1,
+        4,
+        4,
+        -2,
+        -1,
+        2,
+        -1,
+        5,
+        0,
+        1,
+        -2,
+        5,
+        4,
+        -2,
+        -2,
+        -2,
+        -2,
+        -1,
+        5,
+        -1,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "range": 151,
+      "originTile": {
+        "x": 49,
+        "z": 42
+      },
+      "originIndex": 2492,
+      "terrainCode": 5,
+      "obstacleIndex": 8,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 3,
+      "difficulty": 2,
+      "level": -1,
+      "surface": 6,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 1,
+      "power": 11,
+      "longDrive": 0,
+      "boost": 0,
+      "lengthBonus": 1,
+      "shotClass": 1,
+      "x": 29282,
+      "z": 19343,
+      "actorFlags": 1,
+      "worldFlags": 192,
+      "obstacleCount": 10,
+      "classes": [
+        5,
+        -2,
+        0,
+        2,
+        0,
+        3,
+        -1,
+        5,
+        1,
+        1,
+        2,
+        2,
+        0,
+        0,
+        4,
+        3,
+        0,
+        4,
+        -2,
+        4,
+        2,
+        1,
+        3
+      ]
+    },
+    {
+      "range": 179,
+      "originTile": {
+        "x": 28,
+        "z": 18
+      },
+      "originIndex": 1418,
+      "terrainCode": 6,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 1,
+      "difficulty": 2,
+      "level": 3,
+      "surface": 9,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 3,
+      "longDrive": 4,
+      "boost": -2,
+      "lengthBonus": 2,
+      "shotClass": 3,
+      "x": 16923,
+      "z": 23062,
+      "actorFlags": 2,
+      "worldFlags": 56,
+      "obstacleCount": 6,
+      "classes": [
+        5,
+        0,
+        -1,
+        5,
+        4,
+        0,
+        5,
+        -2,
+        0,
+        1,
+        -1,
+        -1,
+        1,
+        -1,
+        2,
+        3,
+        3,
+        0,
+        0,
+        0,
+        5,
+        5,
+        3
+      ]
+    },
+    {
+      "range": 172,
+      "originTile": {
+        "x": 16,
+        "z": 22
+      },
+      "originIndex": 822,
+      "terrainCode": 9,
+      "obstacleIndex": 5,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 3,
+      "difficulty": 1,
+      "level": 1,
+      "surface": 7,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 8,
+      "longDrive": 12,
+      "boost": -1,
+      "lengthBonus": 3,
+      "shotClass": 3,
+      "x": 202,
+      "z": 31578,
+      "actorFlags": 3,
+      "worldFlags": 230,
+      "obstacleCount": 5,
+      "classes": [
+        1,
+        0,
+        2,
+        5,
+        0,
+        2,
+        -2,
+        3,
+        4,
+        3,
+        -2,
+        5,
+        2,
+        2,
+        -1,
+        3,
+        2,
+        -1,
+        0,
+        4,
+        0,
+        0,
+        5
+      ]
+    },
+    {
+      "range": 132,
+      "originTile": {
+        "x": 0,
+        "z": 30
+      },
+      "originIndex": 30,
+      "terrainCode": 7,
+      "obstacleIndex": 4,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 0,
+      "difficulty": 2,
+      "level": -1,
+      "surface": 4,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 11,
+      "longDrive": 3,
+      "boost": 1,
+      "lengthBonus": 4,
+      "shotClass": -1,
+      "x": 14805,
+      "z": 36813,
+      "actorFlags": 2,
+      "worldFlags": 59,
+      "obstacleCount": 7,
+      "classes": [
+        1,
+        3,
+        1,
+        0,
+        2,
+        0,
+        3,
+        0,
+        2,
+        1,
+        3,
+        3,
+        3,
+        5,
+        5,
+        3,
+        3,
+        -1,
+        -2,
+        1,
+        5,
+        -1,
+        -2
+      ]
+    },
+    {
+      "range": 84,
+      "originTile": {
+        "x": 14,
+        "z": 35
+      },
+      "originIndex": 735,
+      "terrainCode": 4,
+      "obstacleIndex": 6,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 5,
+      "difficulty": 2,
+      "level": 0,
+      "surface": 6,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 8,
+      "longDrive": 8,
+      "boost": 0,
+      "lengthBonus": 3,
+      "shotClass": 1,
+      "x": 13402,
+      "z": 33189,
+      "actorFlags": 1,
+      "worldFlags": 35,
+      "obstacleCount": 15,
+      "classes": [
+        5,
+        1,
+        3,
+        4,
+        -1,
+        0,
+        -2,
+        0,
+        5,
+        0,
+        5,
+        5,
+        3,
+        1,
+        2,
+        2,
+        3,
+        3,
+        4,
+        1,
+        1,
+        4,
+        1
+      ]
+    },
+    {
+      "range": 196,
+      "originTile": {
+        "x": 13,
+        "z": 32
+      },
+      "originIndex": 682,
+      "terrainCode": 6,
+      "obstacleIndex": 14,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 5,
+      "difficulty": 1,
+      "level": -1,
+      "surface": 2,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 6,
+      "longDrive": 3,
+      "boost": 3,
+      "lengthBonus": 0,
+      "shotClass": 2,
+      "x": 32683,
+      "z": 38882,
+      "actorFlags": 2,
+      "worldFlags": 203,
+      "obstacleCount": 9,
+      "classes": [
+        -1,
+        4,
+        -2,
+        2,
+        5,
+        5,
+        4,
+        0,
+        4,
+        2,
+        -1,
+        1,
+        0,
+        3,
+        5,
+        5,
+        5,
+        5,
+        -1,
+        3,
+        -1,
+        -2,
+        -1
+      ]
+    },
+    {
+      "range": 166,
+      "originTile": {
+        "x": 31,
+        "z": 37
+      },
+      "originIndex": 1587,
+      "terrainCode": 2,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 6,
+      "difficulty": 3,
+      "level": -5,
+      "surface": 6,
+      "shot": 3,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 4,
+      "longDrive": 14,
+      "boost": 0,
+      "lengthBonus": 3,
+      "shotClass": 4,
+      "x": 18326,
+      "z": 27415,
+      "actorFlags": 1,
+      "worldFlags": 246,
+      "obstacleCount": 13,
+      "classes": [
+        2,
+        3,
+        0,
+        1,
+        3,
+        4,
+        4,
+        0,
+        1,
+        -2,
+        0,
+        -2,
+        1,
+        1,
+        1,
+        -1,
+        4,
+        0,
+        1,
+        1,
+        0,
+        -2,
+        4
+      ]
+    },
+    {
+      "range": 34,
+      "originTile": {
+        "x": 17,
+        "z": 26
+      },
+      "originIndex": 876,
+      "terrainCode": 6,
+      "obstacleIndex": 12,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 3,
+      "level": -3,
+      "surface": 2,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 10,
+      "longDrive": 5,
+      "boost": 5,
+      "lengthBonus": 0,
+      "shotClass": 1,
+      "x": 48881,
+      "z": 8383,
+      "actorFlags": 2,
+      "worldFlags": 205,
+      "obstacleCount": 8,
+      "classes": [
+        3,
+        0,
+        -1,
+        1,
+        5,
+        3,
+        4,
+        5,
+        5,
+        1,
+        4,
+        -1,
+        3,
+        -2,
+        1,
+        3,
+        -2,
+        -1,
+        0,
+        2,
+        4,
+        0,
+        5
+      ]
+    },
+    {
+      "range": 90,
+      "originTile": {
+        "x": 47,
+        "z": 8
+      },
+      "originIndex": 2358,
+      "terrainCode": 2,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 154,
+      "skillMask": 4,
+      "difficulty": 3,
+      "level": 3,
+      "surface": 7,
+      "shot": 0,
+      "professional": false,
+      "abilityFlags": 3,
+      "power": 15,
+      "longDrive": 2,
+      "boost": 4,
+      "lengthBonus": 3,
+      "shotClass": 0,
+      "x": 17056,
+      "z": 22354,
+      "actorFlags": 3,
+      "worldFlags": 230,
+      "obstacleCount": 4,
+      "classes": [
+        5,
+        3,
+        -1,
+        0,
+        1,
+        -1,
+        0,
+        1,
+        0,
+        3,
+        4,
+        -1,
+        -2,
+        0,
+        5,
+        3,
+        2,
+        0,
+        5,
+        0,
+        0,
+        0,
+        3
+      ]
+    },
+    {
+      "range": 141,
+      "originTile": {
+        "x": 16,
+        "z": 21
+      },
+      "originIndex": 821,
+      "terrainCode": 7,
+      "obstacleIndex": 3,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 1,
+      "difficulty": 3,
+      "level": 8,
+      "surface": 5,
+      "shot": 2,
+      "professional": true,
+      "abilityFlags": 1,
+      "power": 2,
+      "longDrive": 0,
+      "boost": 4,
+      "lengthBonus": 2,
+      "shotClass": -2,
+      "x": 30334,
+      "z": 5330,
+      "actorFlags": 1,
+      "worldFlags": 103,
+      "obstacleCount": 13,
+      "classes": [
+        -2,
+        4,
+        4,
+        5,
+        5,
+        -1,
+        4,
+        0,
+        4,
+        3,
+        4,
+        0,
+        4,
+        5,
+        4,
+        -2,
+        -1,
+        -1,
+        1,
+        -2,
+        1,
+        -1,
+        1
+      ]
+    },
+    {
+      "range": 196,
+      "originTile": {
+        "x": 29,
+        "z": 5
+      },
+      "originIndex": 1455,
+      "terrainCode": 5,
+      "obstacleIndex": 12,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 4,
+      "difficulty": 3,
+      "level": 1,
+      "surface": 2,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 4,
+      "longDrive": 1,
+      "boost": 2,
+      "lengthBonus": 0,
+      "shotClass": 3,
+      "x": 8474,
+      "z": 2241,
+      "actorFlags": 1,
+      "worldFlags": 7,
+      "obstacleCount": 19,
+      "classes": [
+        5,
+        3,
+        1,
+        5,
+        4,
+        4,
+        1,
+        2,
+        5,
+        1,
+        1,
+        3,
+        4,
+        3,
+        0,
+        5,
+        0,
+        1,
+        2,
+        3,
+        5,
+        5,
+        5
+      ]
+    },
+    {
+      "range": 126,
+      "originTile": {
+        "x": 8,
+        "z": 2
+      },
+      "originIndex": 402,
+      "terrainCode": 2,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 7,
+      "difficulty": 2,
+      "level": -3,
+      "surface": 8,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 6,
+      "longDrive": 14,
+      "boost": 1,
+      "lengthBonus": 3,
+      "shotClass": 1,
+      "x": 16771,
+      "z": 36044,
+      "actorFlags": 0,
+      "worldFlags": 212,
+      "obstacleCount": 19,
+      "classes": [
+        -1,
+        2,
+        -2,
+        4,
+        0,
+        -1,
+        -1,
+        0,
+        -1,
+        3,
+        -2,
+        1,
+        1,
+        3,
+        -1,
+        5,
+        -1,
+        5,
+        -2,
+        4,
+        1,
+        4,
+        -2
+      ]
+    },
+    {
+      "range": 161,
+      "originTile": {
+        "x": 16,
+        "z": 35
+      },
+      "originIndex": 835,
+      "terrainCode": 8,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 6,
+      "difficulty": 3,
+      "level": 0,
+      "surface": 3,
+      "shot": 0,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 2,
+      "longDrive": 12,
+      "boost": 3,
+      "lengthBonus": 1,
+      "shotClass": 4,
+      "x": 37169,
+      "z": 13039,
+      "actorFlags": 3,
+      "worldFlags": 162,
+      "obstacleCount": -2,
+      "classes": [
+        5,
+        -2,
+        5,
+        4,
+        3,
+        1,
+        5,
+        4,
+        5,
+        1,
+        -2,
+        -2,
+        1,
+        4,
+        1,
+        1,
+        5,
+        3,
+        5,
+        1,
+        2,
+        4,
+        4
+      ]
+    },
+    {
+      "range": 105,
+      "originTile": {
+        "x": 36,
+        "z": 12
+      },
+      "originIndex": 1812,
+      "terrainCode": 3,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 0,
+      "difficulty": 1,
+      "level": -3,
+      "surface": 6,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 1,
+      "longDrive": 6,
+      "boost": -1,
+      "lengthBonus": 4,
+      "shotClass": -2,
+      "x": 25498,
+      "z": 36756,
+      "actorFlags": 3,
+      "worldFlags": 40,
+      "obstacleCount": 12,
+      "classes": [
+        3,
+        -2,
+        -1,
+        3,
+        5,
+        4,
+        0,
+        3,
+        5,
+        4,
+        4,
+        2,
+        1,
+        -2,
+        3,
+        1,
+        4,
+        3,
+        2,
+        2,
+        1,
+        4,
+        -1
+      ]
+    },
+    {
+      "range": 80,
+      "originTile": {
+        "x": 24,
+        "z": 35
+      },
+      "originIndex": 1235,
+      "terrainCode": 6,
+      "obstacleIndex": 11,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 5,
+      "difficulty": 2,
+      "level": 1,
+      "surface": 4,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 6,
+      "longDrive": 12,
+      "boost": -1,
+      "lengthBonus": 3,
+      "shotClass": 3,
+      "x": 44011,
+      "z": 44996,
+      "actorFlags": 1,
+      "worldFlags": 253,
+      "obstacleCount": 0,
+      "classes": [
+        2,
+        -2,
+        2,
+        2,
+        1,
+        4,
+        3,
+        3,
+        4,
+        1,
+        5,
+        5,
+        5,
+        -1,
+        5,
+        -2,
+        -1,
+        3,
+        1,
+        2,
+        0,
+        1,
+        -2
+      ]
+    },
+    {
+      "range": 184,
+      "originTile": {
+        "x": 42,
+        "z": 43
+      },
+      "originIndex": 2143,
+      "terrainCode": 4,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 0,
+      "difficulty": 1,
+      "level": 1,
+      "surface": 0,
+      "shot": 5,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 1,
+      "longDrive": 13,
+      "boost": 5,
+      "lengthBonus": 3,
+      "shotClass": 3,
+      "x": 11894,
+      "z": 47471,
+      "actorFlags": 1,
+      "worldFlags": 68,
+      "obstacleCount": 4,
+      "classes": [
+        1,
+        2,
+        4,
+        -2,
+        5,
+        1,
+        1,
+        5,
+        4,
+        4,
+        3,
+        0,
+        0,
+        -1,
+        5,
+        -1,
+        1,
+        1,
+        0,
+        3,
+        3,
+        2,
+        -2
+      ]
+    },
+    {
+      "range": 163,
+      "originTile": {
+        "x": 11,
+        "z": 46
+      },
+      "originIndex": 596,
+      "terrainCode": 0,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 7,
+      "difficulty": 0,
+      "level": -2,
+      "surface": 3,
+      "shot": 5,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 2,
+      "longDrive": 9,
+      "boost": 2,
+      "lengthBonus": 4,
+      "shotClass": 0,
+      "x": 7234,
+      "z": 13167,
+      "actorFlags": 0,
+      "worldFlags": 177,
+      "obstacleCount": 6,
+      "classes": [
+        0,
+        -2,
+        4,
+        -1,
+        3,
+        0,
+        5,
+        1,
+        2,
+        -2,
+        5,
+        -2,
+        1,
+        3,
+        -1,
+        0,
+        2,
+        0,
+        3,
+        1,
+        3,
+        5,
+        3
+      ]
+    },
+    {
+      "range": 256,
+      "originTile": {
+        "x": 7,
+        "z": 12
+      },
+      "originIndex": 362,
+      "terrainCode": 3,
+      "obstacleIndex": 5,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 1,
+      "difficulty": 0,
+      "level": 2,
+      "surface": 1,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 12,
+      "longDrive": 2,
+      "boost": 1,
+      "lengthBonus": 3,
+      "shotClass": 0,
+      "x": 40755,
+      "z": 21500,
+      "actorFlags": 2,
+      "worldFlags": 213,
+      "obstacleCount": 0,
+      "classes": [
+        0,
+        2,
+        0,
+        4,
+        4,
+        5,
+        4,
+        -1,
+        5,
+        -2,
+        2,
+        -1,
+        -2,
+        0,
+        5,
+        2,
+        3,
+        5,
+        4,
+        -1,
+        -2,
+        2,
+        1
+      ]
+    },
+    {
+      "range": 236,
+      "originTile": {
+        "x": 39,
+        "z": 20
+      },
+      "originIndex": 1970,
+      "terrainCode": 1,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 1,
+      "level": -1,
+      "surface": 6,
+      "shot": 4,
+      "professional": true,
+      "abilityFlags": 1,
+      "power": 12,
+      "longDrive": 1,
+      "boost": 4,
+      "lengthBonus": 4,
+      "shotClass": 2,
+      "x": 39312,
+      "z": 24270,
+      "actorFlags": 0,
+      "worldFlags": 196,
+      "obstacleCount": 16,
+      "classes": [
+        3,
+        1,
+        -2,
+        -2,
+        5,
+        4,
+        -2,
+        2,
+        2,
+        5,
+        3,
+        -1,
+        5,
+        5,
+        1,
+        1,
+        2,
+        1,
+        3,
+        4,
+        3,
+        0,
+        0
+      ]
+    },
+    {
+      "range": 146,
+      "originTile": {
+        "x": 38,
+        "z": 23
+      },
+      "originIndex": 1923,
+      "terrainCode": 6,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 7,
+      "difficulty": 0,
+      "level": 0,
+      "surface": 2,
+      "shot": 3,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 11,
+      "longDrive": 11,
+      "boost": 1,
+      "lengthBonus": 3,
+      "shotClass": 5,
+      "x": 20573,
+      "z": 51063,
+      "actorFlags": 0,
+      "worldFlags": 171,
+      "obstacleCount": 17,
+      "classes": [
+        5,
+        2,
+        2,
+        1,
+        0,
+        4,
+        5,
+        4,
+        0,
+        1,
+        0,
+        0,
+        2,
+        0,
+        4,
+        1,
+        -2,
+        -1,
+        0,
+        -2,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "range": 178,
+      "originTile": {
+        "x": 20,
+        "z": 49
+      },
+      "originIndex": 1049,
+      "terrainCode": 2,
+      "obstacleIndex": 16,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 4,
+      "surface": 9,
+      "shot": 1,
+      "professional": true,
+      "abilityFlags": 0,
+      "power": 6,
+      "longDrive": 12,
+      "boost": 3,
+      "lengthBonus": 0,
+      "shotClass": 1,
+      "x": 28915,
+      "z": 45919,
+      "actorFlags": 0,
+      "worldFlags": 219,
+      "obstacleCount": -1,
+      "classes": [
+        4,
+        4,
+        -1,
+        0,
+        3,
+        5,
+        3,
+        3,
+        -2,
+        0,
+        5,
+        5,
+        2,
+        4,
+        2,
+        5,
+        -2,
+        1,
+        0,
+        1,
+        4,
+        -1,
+        3
+      ]
+    },
+    {
+      "range": 157,
+      "originTile": {
+        "x": 28,
+        "z": 44
+      },
+      "originIndex": 1444,
+      "terrainCode": 9,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 3,
+      "level": -1,
+      "surface": 0,
+      "shot": 0,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 12,
+      "longDrive": 6,
+      "boost": -2,
+      "lengthBonus": 2,
+      "shotClass": -1,
+      "x": 28186,
+      "z": 47586,
+      "actorFlags": 3,
+      "worldFlags": 102,
+      "obstacleCount": 2,
+      "classes": [
+        -2,
+        1,
+        2,
+        0,
+        3,
+        5,
+        0,
+        -2,
+        -2,
+        5,
+        0,
+        4,
+        0,
+        3,
+        3,
+        2,
+        -1,
+        3,
+        1,
+        0,
+        4,
+        0,
+        3
+      ]
+    },
+    {
+      "range": 140,
+      "originTile": {
+        "x": 27,
+        "z": 46
+      },
+      "originIndex": 1396,
+      "terrainCode": 0,
+      "obstacleIndex": 1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 0,
+      "surface": 8,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 1,
+      "power": 9,
+      "longDrive": 9,
+      "boost": 4,
+      "lengthBonus": 2,
+      "shotClass": 0,
+      "x": 26224,
+      "z": 5634,
+      "actorFlags": 0,
+      "worldFlags": 142,
+      "obstacleCount": 7,
+      "classes": [
+        -2,
+        4,
+        0,
+        2,
+        3,
+        5,
+        2,
+        2,
+        1,
+        0,
+        2,
+        1,
+        -1,
+        -2,
+        -2,
+        -2,
+        5,
+        0,
+        2,
+        1,
+        0,
+        -2,
+        1
+      ]
+    },
+    {
+      "range": 138,
+      "originTile": {
+        "x": 25,
+        "z": 5
+      },
+      "originIndex": 1255,
+      "terrainCode": 8,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 0,
+      "difficulty": 3,
+      "level": 4,
+      "surface": 1,
+      "shot": 1,
+      "professional": false,
+      "abilityFlags": 2,
+      "power": 14,
+      "longDrive": 12,
+      "boost": -2,
+      "lengthBonus": 2,
+      "shotClass": -2,
+      "x": 36452,
+      "z": 16308,
+      "actorFlags": 1,
+      "worldFlags": 136,
+      "obstacleCount": 14,
+      "classes": [
+        -2,
+        0,
+        3,
+        3,
+        0,
+        -2,
+        -1,
+        3,
+        5,
+        -2,
+        1,
+        4,
+        5,
+        -1,
+        5,
+        3,
+        4,
+        4,
+        3,
+        2,
+        -1,
+        -1,
+        -2
+      ]
+    },
+    {
+      "range": 108,
+      "originTile": {
+        "x": 35,
+        "z": 15
+      },
+      "originIndex": 1765,
+      "terrainCode": 1,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "skillMask": 3,
+      "difficulty": 1,
+      "level": -1,
+      "surface": 1,
+      "shot": 4,
+      "professional": false,
+      "abilityFlags": 0,
+      "power": 2,
+      "longDrive": 14,
+      "boost": -1,
+      "lengthBonus": 1,
+      "shotClass": 1,
+      "x": 44384,
+      "z": 50187,
+      "actorFlags": 3,
+      "worldFlags": 167,
+      "obstacleCount": 12,
+      "classes": [
+        -2,
+        2,
+        0,
+        2,
+        -2,
+        0,
+        1,
+        4,
+        -1,
+        3,
+        4,
+        5,
+        2,
+        1,
+        4,
+        5,
+        1,
+        5,
+        2,
+        -2,
+        -2,
+        5,
+        0
+      ]
+    },
+    {
+      "range": 160,
+      "originTile": {
+        "x": 43,
+        "z": 49
+      },
+      "originIndex": 2199,
+      "terrainCode": 1,
+      "obstacleIndex": 11,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 0,
+      "difficulty": 1,
+      "level": -5,
+      "surface": 6,
+      "shot": 3,
+      "professional": true,
+      "abilityFlags": 1,
+      "power": 0,
+      "longDrive": 6,
+      "boost": 5,
+      "lengthBonus": 2,
+      "shotClass": -2,
+      "x": 46864,
+      "z": 35642,
+      "actorFlags": 2,
+      "worldFlags": 89,
+      "obstacleCount": 11,
+      "classes": [
+        3,
+        1,
+        0,
+        1,
+        5,
+        2,
+        -2,
+        0,
+        -2,
+        4,
+        5,
+        5,
+        -1,
+        -2,
+        -1,
+        2,
+        2,
+        -2,
+        -1,
+        2,
+        2,
+        0,
+        4
+      ]
+    },
+    {
+      "range": 42,
+      "originTile": {
+        "x": 45,
+        "z": 34
+      },
+      "originIndex": 2284,
+      "terrainCode": 6,
+      "obstacleIndex": -1,
+      "shotClassOverrides": []
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "skillMask": 2,
+      "difficulty": 0,
+      "level": 6,
+      "surface": 2,
+      "shot": 2,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 4,
+      "longDrive": 11,
+      "boost": 3,
+      "lengthBonus": 2,
+      "shotClass": 2,
+      "x": 31841,
+      "z": 13866,
+      "actorFlags": 3,
+      "worldFlags": 37,
+      "obstacleCount": -2,
+      "classes": [
+        -1,
+        4,
+        3,
+        4,
+        3,
+        2,
+        4,
+        1,
+        -2,
+        4,
+        4,
+        2,
+        -1,
+        -2,
+        1,
+        0,
+        5,
+        -2,
+        -2,
+        2,
+        5,
+        -1,
+        4
+      ]
+    },
+    {
+      "range": 99,
+      "originTile": {
+        "x": 31,
+        "z": 13
+      },
+      "originIndex": 1563,
+      "terrainCode": 2,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "skillMask": 7,
+      "difficulty": 1,
+      "level": -2,
+      "surface": 6,
+      "shot": 5,
+      "professional": true,
+      "abilityFlags": 2,
+      "power": 12,
+      "longDrive": 3,
+      "boost": 3,
+      "lengthBonus": 1,
+      "shotClass": 2,
+      "x": 9134,
+      "z": 22289,
+      "actorFlags": 1,
+      "worldFlags": 208,
+      "obstacleCount": 18,
+      "classes": [
+        1,
+        1,
+        3,
+        2,
+        5,
+        4,
+        5,
+        -2,
+        0,
+        4,
+        2,
+        4,
+        1,
+        1,
+        -1,
+        5,
+        2,
+        5,
+        3,
+        -2,
+        5,
+        -1,
+        2
+      ]
+    },
+    {
+      "range": 102,
+      "originTile": {
+        "x": 8,
+        "z": 21
+      },
+      "originIndex": 421,
+      "terrainCode": 6,
+      "obstacleIndex": -1,
+      "shotClassOverrides": [
+        {
+          "code": 17,
+          "shotClass": 32
+        },
+        {
+          "code": 20,
+          "shotClass": 32
+        }
+      ]
+    }
+  ]
+]
