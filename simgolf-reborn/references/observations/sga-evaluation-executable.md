@@ -1875,3 +1875,27 @@ This starts after the original entry initialization and initial range query;
 those responsibilities, actual physics and follow-up assessment callbacks,
 automatic planner integration and live use remain unfinished. Nothing in this
 change is evidence of deployed full shot-planner fidelity.
+
+### Route entry and first range-query context (2026-09-11)
+
+`original-route-entry.js` recovers 0x42245e–0x42252c after native stack
+allocation. It clears all 441×6 candidate scores, enables world flag 0x800000,
+copies the actor skill byte to the candidate skill mask, sets globals 0x59a188
+and 0x5a872c to one, clears corner selection, initializes winner X to -1 and
+curve to zero. The initial range callback sees that context before subsequent
+mode/target normalization. The entry then records the previous target and
+origin tile, and looks up the raw terrain code. Fields the original leaves
+uninitialized are deliberately not claimed as initialized here.
+
+`verify-original-route-entry.py` runs this contiguous original entry with only
+the initial range return supplied, using a nonzero-filled stack to verify that
+the score table is actually cleared. All 500 cases match entry state and query
+context across actor IDs 0–255 and skill bytes 0–255. Eight retained fixtures
+and six entry/combined-search tests pass; tests also check callback/terrain-read
+order, input immutability and independently allocated score rows.
+
+The helper exposes the initial range callback explicitly. It is not yet
+composed into the full search body or connected to real range/physical candidate
+callbacks. Original allocation mechanics and incidental register/stack state are
+not browser behavior. Live shot-planning integration remains unfinished and
+this change has not been deployed.

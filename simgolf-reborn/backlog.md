@@ -971,3 +971,9 @@ original searches match complete tables, result and callback ordering, including
 no-candidate cup fallback. Fourteen targeted tests pass. Initial entry/range
 state, actual candidate physics and follow-up cost callbacks, and live wiring
 remain unfinished.
+
+F09 route entry initialization (2026-09-11): recovered cleared score grid,
+search flags, first range-query context, previous target and origin tile lookup.
+500 contiguous original entries and six targeted tests pass. Entry-to-body
+composition, actual range/physics/assessment callbacks and live integration
+remain unfinished.
