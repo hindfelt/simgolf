@@ -1234,3 +1234,11 @@ match; seven related tests pass. This replaces synthetic-only handoff evidence.
 The outer caller stack is still supplied at the search boundary, heights are
 flat, and remark effects are controlled. Full outer orchestration, broader
 combined-world coverage, original effects and live integration remain open.
+
+F09 unified automatic planner (2026-09-11): added one entry point choosing
+direct/short launch or actual physical search plus launch from current actor
+state. All 240 direct native cases still match; long-path replay and stale
+scratch-state tests pass alongside the six native search/launch scenarios
+(five tests total). Candidate recovery and global shot flags are explicitly
+transferred. Full long outer native coverage, scratch provenance, worker/live
+integration and original remark behavior remain unfinished.

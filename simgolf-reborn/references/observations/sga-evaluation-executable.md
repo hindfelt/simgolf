@@ -2743,3 +2743,23 @@ translated blocks spanning that checkpoint; relying on the emulator's end
 address alone executed past it. The committed fixture records the actual native
 outputs. Tests recompute physical search before launch rather than injecting
 stored search results, and verify serialized replay and input preservation.
+
+### Unified automatic planner orchestration (2026-09-11)
+
+`originalAutomaticPlanner` owns entry setup, target selection and either direct
+launch or real physical target search followed by launch. Its input actor/state
+supplies current target, flags, skills, shot counter, recovery value, seed and
+cache. Search scratch records cannot override actor identity/position, cup,
+hole, condition level or mode. Temporary setup metadata applies to both paths.
+Candidate launch receives the global shot flags under its `stateFlags` field.
+
+The direct branch matches all 240 native entry-through-restoration fixtures.
+Long-path tests run physical search and launch from fresh initial state on two
+native course snapshots and verify deterministic replay, caller preservation,
+and rejection of stale actor copies in scratch context. Existing six-scenario
+native search/launch chain tests remain intact. This is not yet native proof
+of the complete long outer planner: the scratch buffer provenance and original
+entry-to-search return wiring still require continuous native coverage.
+`searchState.candidateLanding` and the separate spatial `scoreAt` reader are
+explicit requirements rather than invented defaults. Live game mapping and
+worker integration remain open.
