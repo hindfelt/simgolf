@@ -1099,3 +1099,10 @@ strength recalculation and elevation counter update at 0x424c46–0x424cc3.
 nine related tests pass. Scenery sampling before this stage, golfer reactions
 and subsequent automatic launch adjustments remain open. Still isolated from
 live gameplay; no deployment.
+
+F09 automatic launch history (2026-09-11): recovered 0x425239–0x425372
+club-use memory and final remark gates, with synchronous reaction effects
+explicitly returned by the caller. 1,500 native comparisons and six related
+tests pass. Verification controls the remark routine at its call boundary;
+full remark effects, earlier scenery/reaction stages and live integration
+remain unfinished.

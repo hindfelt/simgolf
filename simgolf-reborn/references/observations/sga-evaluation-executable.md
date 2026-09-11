@@ -2334,3 +2334,28 @@ compares speed, counter and all cache entries across 1,000 sequential cases.
 Nine targeted tests pass, including original cache reuse after a coefficient
 change, unchanged non-putter speed and byte wrap. Scenery sampling, reactions,
 later launch adjustments, outer composition and live integration remain open.
+
+### Automatic club history and final remarks: 0x425239–0x425372
+
+`original-auto-launch-history.js` recovers the last automatic-only stage before
+the common launch tail. A nonzero actor byte +0x84 invalidates the saved
+comparison marker. With unchanged marker, later holes and an unused non-putter
+club, the game requests remark 0x36 with the club index. The club bit is then
+recorded regardless of whether a remark was requested. Matching marker gates
+downhill/uphill remarks 0x2e/0x2d. Both height pairs are read separately, including
+after a downhill remark. The final green remark 0x3e requires matching marker,
+zero actor class and reaction byte, and the actor/hole/shot sum divisible by four.
+
+The synchronous `emit` boundary returns updated actor state. Later conditions
+reread it because 0x4672d0 is not merely UI output. Raw marker/reaction names
+avoid claiming fully understood mood semantics. Caller input is cloned before
+any effect; events and resulting state can be committed together later.
+
+`verify-original-auto-launch-history.py` executes the complete stage, records
+remark arguments and compares actor fields, club-use mask and comparison marker.
+It supplies controlled height reads and remark effects (none, marker increment,
+reaction activation) in 1,500 cases. The 90 committed fixtures cover all four
+remark requests. Six related tests pass, including suppression of later terrain
+reads after marker changes. This proves the calling stage with those controlled
+effects, not the full original remark routine. Earlier automatic scenery and
+reaction stages, actual remark effects and live planner integration remain open.
