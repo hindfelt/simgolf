@@ -1274,3 +1274,9 @@ resolvers and ignored cancellation cannot commit. Ten tests pass, including
 a real browser worker/coordinator applying the native fixture exactly once.
 Live snapshot mapping, original effects and authoritative state application
 remain unfinished. No deployment occurred.
+
+### Golfer happiness inspection (2026-09-11)
+
+The live Golfer panel now groups saved visitor reactions into Enjoyed/Disliked experiences, including scenery flowers, approaches, maintenance, uphill paths, queues, penalties and services. Repeated experiences are counted without pretending those counts reconstruct a starting balance or unclamped fee changes. Existing saves require no migration. Two focused tests cover reaction grouping and restored-game phone UI; production build passes.
+
+Still required for original fidelity: map the recovered automatic scenery sampler to authentic live map/object records, implement its original reaction state effects, unify legacy mood with the recovered happiness model, and validate against original execution. Coastal beauty and general course aesthetics are not granted invented bonuses by this UI change. Multiplayer authority remains responsible for recording reactions and fees; the renderer only describes authoritative state.

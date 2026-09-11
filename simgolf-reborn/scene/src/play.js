@@ -7,6 +7,7 @@ import { facilityContains } from "./simulation/facilities.js";
 import { helicopterView } from "./rendering/helicopter.js";
 import { shotPreview } from "./simulation/shot-preview.js";
 import { greenFee, airstripFeeBonus } from "./simulation/happiness.js";
+import { happinessSummary } from "./ui/happiness-summary.js";
 import { buildOcean } from "./rendering/ocean.js";
 import { renderHousingReport } from "./ui/housing-report.js";
 import { facilityExtents } from "./simulation/facilities.js";
@@ -1352,7 +1353,7 @@ function refresh() {
           Object.keys(p.trained || {})
             .filter((k) => p.trained[k])
             .join(", ") || "none"
-        }. “${p.comment}”`
+        }. “${p.comment}” ${happinessSummary(p)}`
       : "No visitors yet. Open your completed hole to welcome the first pair.";
   }
   if (mode === "reports")
