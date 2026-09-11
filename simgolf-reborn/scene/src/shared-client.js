@@ -1,7 +1,7 @@
 import {PROTOCOL_VERSION} from './simulation/protocol.js';
 
 export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult,onStatus}){
- let current=snapshot,pending=null,inFlight=false,stopped=false,timer=null;
+ let current=snapshot,pending=null,inFlight=false,stopped=false,timer=null,generation=0;
  const endpoint=`/api/courses/${snapshot.id}`;
  function accept(course){
   if(course.id!==current.id||course.revision<current.revision)return;
@@ -17,14 +17,14 @@ export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult
     if(reply.result.code==='catching-up'){onStatus('Catching up with the server…');return;}
     const completed=pending;pending=null;onResult(reply.result,completed);
    }else accept(await request(endpoint));
-   onStatus(current.pendingTicks?'Catching up with the server…':`Shared course · ${current.role}`);
+   onStatus(current.pendingTicks?'Catching up with the server…':`Shared course · ${current.role}${current.role==='spectator'?' · Read only':''}`);
   }catch(error){
    if(pending&&[400,401,403,404,405,413].includes(error.status)){const rejected=pending;pending=null;onResult({ok:false,message:error.message},rejected);}
    onStatus(`Connection interrupted. ${pending?'Your pending edit will be retried. ':''}${error.message}`);
   }
   finally{inFlight=false;}
  }
- function schedule(){if(stopped)return;timer=setTimeout(async()=>{await synchronize();schedule();},1000);}
+ function schedule(run){if(stopped||run!==generation)return;timer=setTimeout(async()=>{await synchronize();schedule(run);},1000);}
  return {
   get role(){return current.role;},
   nextCommand(id,type,payload={}){return {version:PROTOCOL_VERSION,actorId:id,sequence:(current.state.protocol.clients.find(c=>c.id===id)?.sequence||0)+1,expectedRevision:current.state.protocol.revision,type,payload};},
@@ -37,8 +37,8 @@ export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult
   },
   // The browser renders snapshots. Only the server advances simulation time.
   stepTicks(){},
-  start(){if(timer!==null)return;stopped=false;void synchronize();schedule();},
-  stop(){stopped=true;clearTimeout(timer);timer=null;},
+  start(){if(timer!==null)return;stopped=false;generation++;void synchronize();schedule(generation);},
+  stop(){stopped=true;generation++;clearTimeout(timer);timer=null;},
   synchronize,
  };
 }

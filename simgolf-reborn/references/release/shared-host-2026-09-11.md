@@ -53,3 +53,11 @@ A separate 14-minute breakdown puts restoration near 1.5 ms and serialization ne
 Shared read/command routes now authenticate and rate-limit in the HTTP Worker, then invoke the existing per-course Durable Object using RPC. The Durable Object performs permission lookup, simulation, persistence and receipt replay. This places simulation alongside the background alarm, under the [Durable Object execution limits](https://developers.cloudflare.com/durable-objects/platform/limits/), rather than executing course catch-up in the ordinary HTTP handler. No client clock or authority was introduced; D1 compare-and-swap still protects concurrent work. RPC errors preserve intended permission statuses and hide runtime/database details.
 
 All 33 backend/transport tests and both real two-browser integration tests pass with the RPC path. Hosted latency, daily storage/request consumption and multi-course capacity still need measurement before deploying shared construction. The existing account-only production release remains unchanged.
+
+## Spectator controls and browser history — 12 September
+
+Spectator snapshots now hide construction/staff tabs and hole editing controls. A live downgrade closes pending land/removal/hole dialogs and returns to golfer viewing; a later editor grant restores the controls without reloading. Spectators loading a shared link start in golfer viewing. Server permission checks remain authoritative.
+
+Returning to a cached page restarts shared polling. Polling generations prevent a poll from the previous page lifecycle from creating a second refresh loop after resumption; retained edits still retry their exact original command. The transport test exercises stop/resume while a poll and edit are pending and verifies a single subsequent loop.
+
+Verification: 34 backend/transport tests, two real Worker/D1 browser tests (including live downgrade, reload, upgrade and Back navigation), and 15 local gameplay/maintenance tests pass. The first navigation test reversed direction before account loading completed and observed its aborted fetch; it now waits for the destination Account button before navigating Back, retaining the no-JavaScript-errors assertion. This check does not claim that rapid interrupted page initialization has been hardened. Shared construction remains undeployed pending hosted capacity work.

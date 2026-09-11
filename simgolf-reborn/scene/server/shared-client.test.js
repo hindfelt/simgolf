@@ -20,3 +20,22 @@ test('terminal rejection releases the pending edit and spectator snapshots preve
  const c=client(request);c.connection.execute(c.connection.nextCommand('player','bad-command'));await vi.waitFor(()=>expect(c.onResult).toHaveBeenCalled());await c.connection.synchronize();
  expect(c.connection.execute(c.connection.nextCommand('player','add-hole')).message).toContain('spectator');expect(request).toHaveBeenCalledTimes(2);
 });
+test('resuming during an old poll keeps one polling loop and retries a retained edit',async()=>{
+ vi.useFakeTimers();
+ let resolvePoll;const request=vi.fn().mockResolvedValue(snapshot());
+ const c=client(request);
+ try{
+  c.connection.start();await vi.advanceTimersByTimeAsync(0);
+  request.mockImplementationOnce(()=>new Promise(resolve=>{resolvePoll=resolve;}));
+  await vi.advanceTimersByTimeAsync(1000);
+  const edit=c.connection.nextCommand('player','add-hole');expect(c.connection.execute(edit).pending).toBe(true);
+  c.connection.stop();c.connection.start();
+  resolvePoll(snapshot());await vi.advanceTimersByTimeAsync(0);
+  request.mockResolvedValueOnce({course:{...snapshot(),revision:1},result:{ok:true}});
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(c.onResult).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(request.mock.calls.at(-1)[1].body)).toEqual(edit);
+  const before=request.mock.calls.length;await vi.advanceTimersByTimeAsync(3000);
+  expect(request.mock.calls.length-before).toBe(3);
+ }finally{c.connection.stop();vi.useRealTimers();}
+});

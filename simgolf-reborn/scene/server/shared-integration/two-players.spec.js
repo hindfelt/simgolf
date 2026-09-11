@@ -21,7 +21,16 @@ test('two authenticated browsers share edits, reconnect and enforce spectator ac
   await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(beforeBench);await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(beforeBench);
   await b.page.reload();await expect(b.page.locator('#shared-status')).toContainText('editor');expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
   await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByLabel('Player ID',{exact:true}).fill(editor.id);await a.page.getByLabel('Course access',{exact:true}).selectOption('spectator');await a.page.getByRole('button',{name:'Update access',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Course access updated.');
-  await expect(b.page.locator('#shared-status')).toContainText('spectator');await b.page.getByRole('button',{name:'＋ Add hole',exact:true}).click();await expect(b.page.locator('#toast')).toContainText('spectator');expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
+  await expect(b.page.locator('#shared-status')).toContainText('spectator · Read only');
+  await expect(b.page.locator('[data-mode="build"]')).toBeHidden();await expect(b.page.locator('[data-mode="staff"]')).toBeHidden();await expect(b.page.locator('#add-hole')).toBeHidden();
+  await b.page.reload();await expect(b.page.locator('#shared-status')).toContainText('Read only');await expect(b.page.locator('[data-mode="build"]')).toBeHidden();
+  await a.page.getByLabel('Course access',{exact:true}).selectOption('editor');await a.page.getByRole('button',{name:'Update access',exact:true}).click();
+  await expect(b.page.locator('[data-mode="build"]')).toBeVisible();await b.page.locator('[data-mode="build"]').click();await expect(b.page.locator('#add-hole')).toBeVisible();
+  await b.page.getByRole('button',{name:'Club menu',exact:false}).click();await b.page.getByRole('link',{name:'Return to my resort',exact:true}).click();await expect(b.page.getByRole('button',{name:'Account',exact:true})).toBeVisible();await b.page.goBack();
+  await expect(b.page.locator('#shared-status')).toContainText('editor');
+  const tick=await b.page.evaluate(()=>window.__gameTest.getState().protocol.tick);
+  await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().protocol.tick),{timeout:10000}).toBeGreaterThan(tick);
+  expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
   expect(await a.page.evaluate(()=>localStorage.getItem(Object.keys(localStorage).find(k=>k.endsWith('.simgolf-reborn.course.v1'))))).toBe(original);
   expect(errors).toEqual([]);
  }catch(error){console.log('Shared integration failure:',error.message);throw error;}finally{await Promise.allSettled([a.context.close(),b.context.close()]);}

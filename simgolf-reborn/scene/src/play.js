@@ -236,11 +236,18 @@ try {
   loadWarning =
     "The saved course could not be read. It has been kept intact. Import a valid save or start a new course from the club menu.";
 }
+let sharedRole=sharedSnapshot?.role;
 const remote=sharedSnapshot?createSharedClient({snapshot:sharedSnapshot,actorId:signedInAccount().user.id,request:accountRequest,
  onSnapshot:course=>{
   game=restore(JSON.stringify(course.state));
   if(!getHole(game,selectedHoleId))selectedHoleId=game.holes[0].id;
-  if(course.role==='spectator')tool='inspect';
+  if(course.role!==sharedRole){
+   sharedRole=course.role;
+   if(course.role==='spectator'){
+    pendingRemoval=null;landDialog.close();$('#hole-editor').close();$('#remove-dialog').close();
+    setMode('guests');
+   }else renderPanel();
+  }
   refresh();
  },
  onStatus:message=>{$('#save-status').textContent=message;$('#shared-status').textContent=message;},
@@ -540,6 +547,7 @@ const names = {
   "putting-green": "Putting Green",
 };
 function setMode(next) {
+  if(remote?.role==='spectator'&&['build','staff','play'].includes(next))next='guests';
   if(remote&&next==="play"){toast("Shared golf rounds are not available yet.");return;}
   mode = next;
   boundaryCorners = null;
@@ -564,7 +572,7 @@ function syncControls() {
     mode === "play" ||
     (mode === "staff" && movingStaff);
   controls.mouseButtons.LEFT = placing && !spacePanning ? null : THREE.MOUSE.PAN;
-  controls.mouseButtons.RIGHT = mode === "build" ? null : THREE.MOUSE.PAN;
+  controls.mouseButtons.RIGHT = mode === "build" && remote?.role!=='spectator' ? null : THREE.MOUSE.PAN;
   controls.touches.ONE = placing ? null : THREE.TOUCH.PAN;
   renderer.domElement.style.cursor = placing && !spacePanning ? "crosshair" : "grab";
   boundary.visible = mode === "build";
@@ -774,6 +782,7 @@ function renderProSkills() {
     );
 }
 function renderPanel() {
+  if(remote?.role==='spectator'&&['build','staff','play'].includes(mode))mode='guests';
   view.previewFacility(null);
   $("#modes")
     .querySelectorAll("button")
@@ -1137,7 +1146,8 @@ function refresh() {
   }
 
   for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
-    $(id).hidden = mode !== "build" || !!coursePackage;
+    $(id).hidden = mode !== "build" || !!coursePackage || remote?.role==='spectator';
+  if(remote)for(const id of ['build','staff'])$(`[data-mode="${id}"]`).hidden=remote.role==='spectator';
   if (coursePackage) {
     $("#cash").textContent = "Course practice";
     for (const id of [
@@ -2489,4 +2499,5 @@ if(remote){
  for(const id of ['pause','speed'])$("#"+id).hidden=true;
  $('[data-mode="play"]').hidden=true;
  remote.start();addEventListener('pagehide',()=>remote.stop());
+ addEventListener('pageshow',event=>{if(event.persisted)remote.start();});
 }
