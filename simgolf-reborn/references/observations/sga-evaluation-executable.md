@@ -1849,3 +1849,29 @@ the new verifier was corrected before rerunning and saving both fixture sets.
 The actual initial range query and entry flags/table initialization before
 0x42252c, final search publication, physical candidate callbacks and live wiring
 remain unfinished; this isolated preparation is not a deployed gameplay change.
+
+### Combined route search body (2026-09-11)
+
+`original-route-search.js` connects prepared search, repeated passes and final
+publication. Preparation supplies the anchor, curve mask, cup distance, mode,
+two-shot reach, sample count, work reset and distance divisor to evaluation.
+Publication uses the final winner's corner flag and pre-publication diagnostics.
+The interface returns both search tables/state and the published target/result,
+without mutating the supplied snapshot. Range, physical candidate outcomes and
+follow-up assessment remain explicit callbacks.
+
+`verify-original-route-search.py` executes 0x42252c through 0x423582,
+including original result publication and fallback. It captures search state
+before publication separately so a fallback's corner reset cannot overwrite the
+recorded pre-publication winner. The observer actor ID is -1, so observer UI
+branches are skipped; the UI yield is a return stub. Range, candidate and
+assessment routines receive supplied results, and their ordered calls are
+compared. Thirty cases match complete grids, winner, shared flags, diagnostic
+state and published result. They include an excluded grid with no valid winner,
+which publishes the cup and clears curve/corner selection. Fourteen targeted
+tests pass, covering immutability and serialized replay too.
+
+This starts after the original entry initialization and initial range query;
+those responsibilities, actual physics and follow-up assessment callbacks,
+automatic planner integration and live use remain unfinished. Nothing in this
+change is evidence of deployed full shot-planner fidelity.

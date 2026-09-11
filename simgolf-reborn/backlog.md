@@ -964,3 +964,10 @@ query. 5,000 anchor and 5,000 contiguous prepared-search cases match the origina
 11 targeted tests pass. Preserves original tile-index/fixed-point weighting
 quirk. Initial entry state, final publication, physical callbacks and live
 integration remain open.
+
+F09 combined route search (2026-09-11): connected preparation, repeated passes,
+pruning diagnostics and result publication in one pure interface. 30 contiguous
+original searches match complete tables, result and callback ordering, including
+no-candidate cup fallback. Fourteen targeted tests pass. Initial entry/range
+state, actual candidate physics and follow-up cost callbacks, and live wiring
+remain unfinished.
