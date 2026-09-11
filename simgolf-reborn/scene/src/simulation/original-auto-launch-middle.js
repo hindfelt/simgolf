@@ -26,7 +26,7 @@ export function originalAutoLaunchMiddle(q,map,effects) {
   scannedTile:state.scannedTile,sceneryTile:state.sceneryTile,namedReference:state.namedReference},api);
  const {events:primaryEvents,randomDraws:primaryDraws,...primaryState}=primary;
  state=primaryState;events.push(...primaryEvents);randomDraws+=primaryDraws;
- const reactions=originalAutoShotReactions({...q,state,previousMarker},api);
+ const reactions=originalAutoShotReactions({...q,state,previousMarker,sceneryTile:state.sceneryTile},api);
  state=reactions.state;events.push(...reactions.events);
  const history=originalAutoLaunchHistory({...q,actor:state.actor,previousMarker},map,(event,actor)=>{
   state=effects.emit(event,{...state,actor});return state.actor;

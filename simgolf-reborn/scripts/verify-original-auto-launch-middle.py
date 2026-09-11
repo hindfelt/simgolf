@@ -3,15 +3,17 @@ from pathlib import Path
 # Reuse emulator initialization and height/RNG hooks; do not run its fixture loop.
 setup=Path(__file__).with_name('verify-original-auto-scenery.py')
 exec(compile(setup.read_text().split('rng=random.Random(2002);rows=[]')[0],str(setup),'exec'))
-with_tail='--with-tail' in sys.argv
-for a,n in [(0x424988,0x118b),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50)]:
+from_assessment='--from-assessment' in sys.argv
+with_tail='--with-tail' in sys.argv or from_assessment
+for a,n in [(0x423b66,0x1fad),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50),(0x405710,0x4e)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 u.mem_write(0x4672d0,b'\xc3')
 events=[];middle_references={}
 byte_fields={'marker':0x577f82,'reaction':0x577f8c,'actorClass':0x577f20,'hole':0x577f29,'shotCounter':0x577f2a,'skillMask':0x577f21,'club':0x577f24,'elevationCounter':0x577f23}
 word_fields={'stateCode':0x577fb4,'profileIndex':0x577fbe,'conditionFlags':0x577f90,'usedClubs':0x577fa8}
 def remarks(u,a,size,data):
- global middle_references
+ global middle_references,draws
+ if from_assessment and a==0x424988:draws=0
  if a==0x425372:
   sp=u.reg_read(UC_X86_REG_ESP)
   middle_references=dict(scannedTile=read(sp+0x38),sceneryTile=read(sp+0x48),namedReference=read(sp+0x1c),pathHeading=read(sp+0x44))
@@ -52,6 +54,7 @@ def run_middle(q):
    (0x5a4440,0 if q['activeActor'] else 999),(0x5a3228,q['stateFlags']),(0x5a870c,q['driftMode'])]:write(a,v)
   u.mem_write(0x5a1f30,bytes([q['variant']]));u.mem_write(0x578000,bytes([actor['recoveryValue']]))
  u.mem_write(0x570d38,bytes([terrain(x,z,actor['target'],q['targetTerrainCode']) for x in range(50) for z in range(50)]))
+ if 'originTerrainCode' in q:u.mem_write(0x570d38+q['origin']['x']*50+q['origin']['z'],bytes([q['originTerrainCode']]))
  marks=[0x100 if (x+z)%6==0 else 0 for x in range(50) for z in range(50)];marks[q['origin']['x']*50+q['origin']['z']]=q['originFlags']
  u.mem_write(0x53ba00,struct.pack('<2500H',*marks))
  for code in [0,1,2,3,19,21,22]:
@@ -61,9 +64,18 @@ def run_middle(q):
  for code,size in [(4,2),(5,3),(6,1),(7,2)]:u.mem_write(0x4c16b8+code*20,bytes([size]));write(0x5a7680+code*4,3 if code==6 else 9)
  records=[dict(type=-1 if i%5==0 else q['record']['type'] if i%3==0 else 6 if i%2 else 7,x=(i%16)*3,z=(i//16)*3,value=q['record']['value']) for i in range(256)]
  for index,r in [(-1,dict(q['missingRecord'],x=0,z=0)),*enumerate(records)]:u.mem_write(0x58a708+index*16,struct.pack('<hhh',r['type'],r['x'],r['z']));write(0x58a710+index*16,r['value'])
+ if from_assessment:
+  p=q['planning']
+  for a,v in [(sp+0x30,p['range']),(sp+0xb24,int(p['explicitTarget'])),(0x58dd80,p['mode']),
+   (0x577fdc,p['x']),(0x577fe0,p['z']),(0x59d208,p['worldFlags']),(0x542bc8,p['difficulty']),(0x542bd0,p['accuracySetting']),
+   (0x574518+actor['hole']*520,actor['target']['x']),(0x57451c+actor['hole']*520,actor['target']['z']),
+   (sp+0x3c,p['dominantCode']),(sp+0x4c,p['dominantDirection']),(sp+0x44,p['sampleX'])]:write(a,v)
+  for off,key in [(0x3e,'attitude'),(0x1e,'abilityFlags'),(0xfc,'abilityValue'),(0xfa,'driverValue'),(0xfb,'ironValue'),(0xfd,'drawValue'),(0xfe,'fadeValue'),(0xff,'backspinValue')]:u.mem_write(0x577f00+off,bytes([p[key]&255]))
+  u.mem_write(0x5682dc+actor['target']['x']*50+actor['target']['z'],bytes([p['targetFlags']]))
+  for index,value in enumerate(p['directions']):write(sp+0xd8+index*4,value)
  u.reg_write(UC_X86_REG_ESI,0);u.reg_write(UC_X86_REG_ESP,sp)
  stop=0x425aca if with_tail else 0x425372
- u.emu_start(0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
+ u.emu_start(0x423b66 if from_assessment else 0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
  result_actor={name:u.mem_read(a,1)[0] for name,a in byte_fields.items()}
  result_actor.update({name:struct.unpack('<H',u.mem_read(a,2))[0] for name,a in word_fields.items()})
  result_actor.update(actorFlags=read(0x577f18)&0xffffffff,angularOffset=read(0x577ff4),target=actor['target'])
@@ -74,6 +86,9 @@ def run_middle(q):
   result_actor['stateCode']=struct.unpack('<h',u.mem_read(0x577fb4,2))[0]
   state.update(middle_references,verticalSpeed=read(0x577ff0),heading=read(0x577fe8)&0xffffffff,lie=read(sp+0x14))
  result=dict(state=state,events=events,randomDraws=draws,samples=read(sp+0x20))
+ if from_assessment:
+  result['postPreparationDraws']=result.pop('randomDraws')
+  if result_actor['club']==13:result['samples']=0
  if with_tail:result['shotClassOverrides']=[dict(code=code,shotClass=u.mem_read(0x576dc2+code*48,1)[0]) for code in [17,20]]
  return result
 rng=random.Random(2002);rows=[]
@@ -91,14 +106,23 @@ for i in range(240):
   q['state'].update(verticalSpeed=500,heading=q['heading'])
   q.update(referenceSpeed=1800,modifier=i%20-5,activeActor=bool(i%2),variant=i%4,stateFlags=i%4,driftMode=i%4)
   q['restorationClasses']=[i%7,32]
+ if from_assessment:
+  q['mode']=0
+  if i%12==0:q['originTerrainCode']=q['terrainCode']=1;actor['actorFlags']&=~1
+  q['planning']=dict(plannerArgument=-1,x=position['x'],z=position['z'],distance=q['distance'],range=200,explicitTarget=False,mode=0,
+   heading=q['heading'],curve=q['curveArgument'],globalFlags=q['stateFlags'],worldFlags=0,difficulty=1,accuracySetting=1,level=q['conditionLevel'],
+   driftMode=q['driftMode'],activeActor=q['activeActor'],variant=q['variant'],attitude=0,abilityFlags=0,abilityValue=2,
+   driverValue=3,ironValue=3,drawValue=2,fadeValue=2,backspinValue=4,targetFlags=0,directions=[0]*32,dominantCode=0,dominantDirection=0,sampleX=0,sampleZ=0)
  rows.append([q,run_middle(q)])
 name='original-auto-launch-finish' if with_tail else 'original-auto-launch-middle'
+if from_assessment:name='original-assessed-automatic-launch'
 module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()
 adapter=(root/'simgolf-reborn/scene/tests/helpers/original-auto-middle-map.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalAssessedAutomaticLaunch??module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
 for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){const a=run(q,middleMap(q),middleEffects(q));if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q,a,e}));}
 console.log('240 uninterrupted '+LABEL+' runs match complete state, events, cache and RNG.');
 """.replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps(name))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
- (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(rows[:60],separators=(',',':'))+'\n')
+ fixtures=rows if from_assessment else rows[:60]
+ (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(fixtures,separators=(',',':'))+'\n')

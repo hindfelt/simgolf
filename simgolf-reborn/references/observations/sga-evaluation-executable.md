@@ -2603,3 +2603,28 @@ seed, speed, counter and reference values. This is boundary-composition evidence
 not yet one uninterrupted oracle from assessment through final launch. That wider
 comparison, initial target selection, full remark effects and live gameplay
 integration remain unfinished; no deployment is included.
+
+### Uninterrupted assessed automatic launch: 0x423b66–0x425aca
+
+`original-assessed-automatic-launch.js` now composes shared preparation with
+the automatic handoff, middle, final tail and metadata restoration. Mutable
+actor fields and seed come from the current state rather than duplicated
+planning inputs. Exact-coordinate requests are rejected before map access.
+The returned `postPreparationDraws` is explicitly scoped instrumentation;
+the final seed includes random consumption from all stages.
+
+`verify-original-auto-launch-middle.py --from-assessment` executes the entire
+native span without substituting intermediate results. It initializes original
+profile, terrain, object and actor data and uses the original assessment,
+strength-cache, classifier, scenery, reaction-selection and launch routines.
+Height values and remark effects remain controlled external boundaries.
+
+All 240 cases match modeled final actor/partner state, ordered events, velocity,
+cache, seed and restoration writes. This broader oracle exposed a composition
+bug: the later shot-reaction stage received stale top-level scenery instead of
+the updated shared scenery reference. The handoff now supplies current state,
+and all 240 fixtures are retained to cover that failure. Seventeen related tests
+pass, including stale planning inputs and the exact-coordinate guard. The earlier
+assessment-to-final verification gap is closed for these controlled scenarios;
+initial target/range search, full remark behavior and live state mapping remain
+unfinished. No deployment is included.

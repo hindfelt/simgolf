@@ -1181,3 +1181,10 @@ locals. 1,000 native handoff snapshots match. Added prepared-launch wrapper;
 seven related tests pass, including replacing stale fields while retaining
 persistent actor/partner state. One uninterrupted assessment-to-final oracle,
 initial target search, full remark effects and live mapping remain open.
+
+F09 assessed automatic launch (2026-09-11): connected terrain assessment and
+club/launch preparation through automatic reactions, final velocity and metadata
+restoration. All 240 uninterrupted native runs from 0x423b66 match final state,
+events, cache and seed; seventeen related tests pass. Wider verification found
+and fixed a stale scenery value passed to later reactions. Initial target search,
+complete remark behavior and live owning-state integration remain unfinished.
