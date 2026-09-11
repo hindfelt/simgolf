@@ -2310,3 +2310,27 @@ distance, shared landing and diagnostics in 5,000 seeded cases. The committed
 approach/request/result tests pass, including skipped reads and changing metadata.
 Automatic outer composition, subsequent launch logic and live integration are
 still unfinished; this work is not deployed.
+
+### Automatic launch ground state: 0x424c46–0x424cc3
+
+`original-auto-launch-ground.js` handles the putter branch and following common
+elevation update. Club 13 targeting terrain 1 replaces horizontal speed with
+the original strength search for distance+2, zero vertical speed and mode 1.
+The ten-entry cache remains shared, including the original omission of rolling
+coefficient from its key. Other clubs/target terrain retain the incoming speed.
+Non-putters enter the original common block at 0x424c7c, after scenery sampling;
+this module does not claim to implement or replace that sampling.
+
+The common block reads target height then origin height and adds the absolute
+difference to actor byte +0x1b (address 0x577f23 for actor zero), with byte wrap.
+Its behavioral interpretation is left open; the implementation calls it
+`elevationCounter`, not a calibrated stamina or happiness value. Later code
+reads this byte for golfer reactions and can reset it.
+
+`verify-original-auto-launch-ground.py` executes the complete branch and real
+0x4218e0 strength routine, supplying controlled signed-byte heights to the
+original height-query boundary. It checks the terminal instruction address and
+compares speed, counter and all cache entries across 1,000 sequential cases.
+Nine targeted tests pass, including original cache reuse after a coefficient
+change, unchanged non-putter speed and byte wrap. Scenery sampling, reactions,
+later launch adjustments, outer composition and live integration remain open.

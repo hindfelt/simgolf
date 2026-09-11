@@ -1092,3 +1092,10 @@ including shared landing publication, diagnostics reset and terrain-class-based
 distance adjustment. 5,000 executable comparisons and eleven related tests pass.
 This closes the short-approach branch in isolation; full automatic planner
 composition, later automatic launch logic and live state mapping remain open.
+
+F09 automatic launch ground state (2026-09-11): recovered putter-on-green
+strength recalculation and elevation counter update at 0x424c46–0x424cc3.
+1,000 original executions match complete shared caches and resulting state;
+nine related tests pass. Scenery sampling before this stage, golfer reactions
+and subsequent automatic launch adjustments remain open. Still isolated from
+live gameplay; no deployment.
