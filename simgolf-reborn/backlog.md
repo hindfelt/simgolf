@@ -1112,3 +1112,11 @@ curve flags, conditional remarks and paired-golfer reaction updates with explici
 state/effect boundaries. 2,000 executable comparisons and nine related tests
 pass. Original remark and pair-score routines remain supplied boundaries; earlier
 scenery/primary reactions and live automatic planner integration remain open.
+
+F09 paired profile classification (2026-09-11): inspection of 0x46c140 corrects
+the previous pair-score interpretation. It returns the inverted high bit of
+profile byte +0x21, selected by actor profile index +0xb6. Reactions now call
+the recovered lookup directly; profile/hole naming replaces course naming.
+2,000 reaction stages now run with the real native lookup, and all 256 byte
+values at four profile indices match (1,024 cases). Eight related tests pass.
+Remark effects, earlier automatic stages and live integration remain open.

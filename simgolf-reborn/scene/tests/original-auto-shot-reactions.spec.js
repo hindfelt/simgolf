@@ -1,9 +1,10 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {originalAutoShotReactions} from '../src/simulation/original-auto-shot-reactions.js';
+import {originalProfileGroup} from '../src/simulation/original-profile-group.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-auto-shot-reactions.json',import.meta.url),'utf8'));
-const apiFor=q=>({shotClassAt:()=>q.shotClass,courseMarkAt:()=>q.courseMark,
- scoreFor:id=>id===q.actorId?q.ownScore:q.otherScore,
+const apiFor=q=>({shotClassAt:()=>q.shotClass,profileHoleMarkAt:()=>q.profileHoleMark,
+ profileIndexFor:id=>id===q.actorId?q.state.actor.profileIndex:q.otherProfileIndex,profileByteAt:index=>q.profileBytes[index],
  emit:(event,state)=>{
   const actor=event.actorId===q.actorId?state.actor:state.partner;
   if(q.effect==='marker'&&event.actorId===q.actorId)actor.marker=(actor.marker+1)&255;
@@ -29,6 +30,20 @@ test('stale marker clears old curve flags without making reaction queries',()=>{
  const q=structuredClone(rows[0][0]);q.previousMarker=(q.state.actor.marker+1)&255;
  q.state.actor.actorFlags=0xffffffff;
  const fail=()=>{throw Error('Unexpected reaction query');};
- const result=originalAutoShotReactions(q,{emit:fail,shotClassAt:fail,courseMarkAt:fail,scoreFor:fail});
+ const result=originalAutoShotReactions(q,{emit:fail,shotClassAt:fail,profileHoleMarkAt:fail,profileIndexFor:fail,profileByteAt:fail});
  expect(result.events).toEqual([]);expect(result.state.actor.actorFlags).toBe(0xffffff9f);
+});
+test('profile classification uses the high bit, not byte equality',()=>{
+ for(let value=0;value<256;value++)expect(originalProfileGroup(3,{
+  profileIndexFor:id=>{expect(id).toBe(3);return 76;},
+  profileByteAt:index=>{expect(index).toBe(76);return value;}
+ })).toBe(value<128?1:0);
+});
+test('paired remarks require matching profile groups',()=>{
+ const q=structuredClone(rows.find(([,e])=>e.events.some(event=>event.kind===0x30))[0]);
+ q.state.actor.profileIndex=0;q.otherProfileIndex=1;
+ q.profileBytes=[12,100];
+ expect(originalAutoShotReactions(q,apiFor(q)).events.some(e=>e.kind===0x30)).toBe(true);
+ q.profileBytes[1]=128;
+ expect(originalAutoShotReactions(q,apiFor(q)).events.some(e=>e.kind===0x30)).toBe(false);
 });

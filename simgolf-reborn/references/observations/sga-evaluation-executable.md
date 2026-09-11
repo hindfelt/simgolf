@@ -2384,3 +2384,25 @@ course marks and paired score results. Nine related tests pass. Verification
 does not establish the implementation of 0x4672d0 or 0x46c140, which are controlled
 call boundaries. Earlier scenery/primary reactions, complete composition and
 live gameplay integration remain unfinished; no deployment is included.
+
+### Correction: 0x46c140 is profile classification, not score
+
+Direct disassembly shows the routine reads actor signed-word +0xb6, multiplies
+that profile index by 560, then reads profile byte +0x21 (base 0x4d5040).
+It returns `(~byte >> 7) & 1`. The earlier "pair-score" label above was an
+unverified interpretation and is superseded. No golf score is read. The same
+actor index used by the nearby 44-byte per-profile/per-hole table is now named
+`profileIndex`, and its accessor `profileHoleMarkAt`.
+
+`original-profile-group.js` supplies the actual classification to automatic
+reactions. Only original profile indices and raw bytes are supplied by the
+caller; a precomputed score/comparison result is no longer accepted. Its visual
+or demographic meaning is not inferred here. Equality compares the extracted
+binary groups, not equality of complete profile bytes.
+
+The reaction verifier now includes real 0x46c140 machine code rather than a
+stub. All 2,000 full-stage cases match with profile records in memory. A further
+1,024 direct executions cover every byte value at indices 0, 1, 76 and 83 and
+compare against the JavaScript lookup. Eight related tests pass, including equal
+groups from different bytes and unequal groups suppressing the paired exchange.
+The remark-effect boundary remains controlled and full live integration open.
