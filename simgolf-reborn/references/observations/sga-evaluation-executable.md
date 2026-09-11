@@ -1739,3 +1739,22 @@ remaining distances match. Forty fixtures and ten batch/scoring/winner tests
 pass. This verifies loop orchestration with supplied physics outputs, not a full
 original candidate simulation or multi-pass route search. Those, state ownership
 and live integration remain unfinished. No deployment.
+
+### Full six-option candidate loop (2026-09-11)
+
+`original-route-options.js` composes one admitted candidate's six shot options,
+0x422af8–0x42323d. Evaluation order is center draw/straight/fade, then corner
+draw/straight/fade. Positive origin terrain class skips the entire corner group
+without overwriting its scores or statistics. Option gates preserve existing
+exclusions, and each eligible batch updates score, planned-distance/flag slots,
+work, best candidate, search flag and persistent follow-up flag in sequence.
+The batch helper now also returns its final sample flags for that option table.
+
+`verify-original-route-options.py` executes the contiguous original loop for
+1,000 candidates. Simulation landing positions and follow-up assessment costs
+are supplied; both call types are independently captured in order. All six
+scores/distances/flag slots and shared state match, including skipped options.
+Forty fixtures and six option-loop/batch tests pass. The 1,000-case batch oracle
+also passes after exposing its flag output. Full physical candidate simulation,
+441-tile passes, pruning/statistics integration and live integration remain open.
+No deployment or complete-search claim.

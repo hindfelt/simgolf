@@ -12,5 +12,5 @@ export function originalRouteBatch(q,simulate) {
   ({score,goodLandings,followupFlag}=review);
  }
  const best=originalRouteBest({...q,sampleScore:score,goodLandings,landing,sampleFlags:review.sampleFlags});
- return {...best,work,sampleScore:score,goodLandings,followupFlag,plannedRemaining:review.plannedRemaining};
+ return {...best,work,sampleScore:score,goodLandings,followupFlag,plannedRemaining:review.plannedRemaining,sampleFlags:review.sampleFlags};
 }

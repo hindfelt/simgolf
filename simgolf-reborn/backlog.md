@@ -934,3 +934,8 @@ F09 eligible-option batch (2026-09-11): composed repeated trial dispatch, landin
 review, follow-up scoring and winner update with ordered state propagation.
 1,000 contiguous original batches and ten tests pass. Candidate physics/cost
 callbacks, multi-pass search orchestration and live integration remain unfinished.
+
+F09 six-option candidate loop (2026-09-11): composed option gates and batches
+in original center/corner and curve order with shared winner/follow-up state.
+1,000 candidate loops plus 1,000 batch regressions and six tests pass. Physical
+candidate callbacks, full-grid passes/pruning and live integration remain open.

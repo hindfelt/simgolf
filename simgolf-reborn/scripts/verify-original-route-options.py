@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier'
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32)
 u.mem_map(0x400000,0x200000);u.mem_map(0x820000,0x1000);u.mem_map(0x100000,0x10000)
-for a,n in [(0x422bb5,0x589),(0x40bc50,0x33),(0x40a9f0,0x81),(0x40c1a0,0x42),(0x4a57a0,0x27),(0x4c1870,64)]:
+for a,n in [(0x422af8,0x745),(0x40bc50,0x33),(0x40a9f0,0x81),(0x40c1a0,0x42),(0x4a57a0,0x27),(0x4c1870,64)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 def write(a,v,size=4):u.mem_write(a,(v&((1<<(size*8))-1)).to_bytes(size,'little'))
 def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
@@ -45,10 +45,13 @@ def run(q):
  w=q['winner']
  for off,v in [(0xbc,q['score']),(0x14,q['curve']),(0x7cc8,q['actorId']),(0x44,q['work']),(0x60,w['score']),(0x78,w['target']['x']),(0xa4,w['target']['z']),(0x6c,w['curve']),(0xac,w['landingFlag'])]:write(0x102000+off,v)
  for a,v in [(0x820344,q['level']),(0x5a872c,q['searchFlag']),(0x5a8730,w['cornerTarget']),(0x5a7270,w['landing']['x']),(0x5a7278,w['landing']['z'])]:write(a,v)
+ for i in range(6):
+  write(0x1020bc+i*4,q['scores'][i]);write(0x104a14+i*4,q['distances'][i]);write(0x10736c+i*4,q['flags'][i])
+ write(0x10207c,q['distance']);write(0x102094,0x400100);write(0x400100,11,1);write(0x576dc2+11*48,q['originClass'],1);write(0x4c1fb8,-1)
  u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_FPCW,0x37f)
- u.emu_start(0x422bb5,0x42313e,count=40000)
- assert u.reg_read(UC_X86_REG_EIP)==0x42313e
- return dict(score=read(0x1020bc),searchFlag=read(0x5a872c),winner=dict(score=read(0x102060),target=dict(x=read(0x102078),z=read(0x1020a4)),curve=read(0x10206c),cornerTarget=read(0x5a8730),landing=dict(x=read(0x5a7270),z=read(0x5a7278)),landingFlag=read(0x1020ac)),work=read(0x102044),sampleScore=read(0x10201c),goodLandings=read(0x102028),followupFlag=read(0x1020b4),plannedRemaining=read(0x104a14),sampleFlags=read(0x10736c)&0xffffffff)
+ u.emu_start(0x422af8,0x42323d,count=180000)
+ assert u.reg_read(UC_X86_REG_EIP)==0x42323d
+ return dict(scores=list(struct.unpack('<6i',u.mem_read(0x1020bc,24))),distances=list(struct.unpack('<6i',u.mem_read(0x104a14,24))),flags=list(struct.unpack('<6I',u.mem_read(0x10736c,24))),work=read(0x102044),winner=dict(score=read(0x102060),target=dict(x=read(0x102078),z=read(0x1020a4)),curve=read(0x10206c),cornerTarget=read(0x5a8730),landing=dict(x=read(0x5a7270),z=read(0x5a7278)),landingFlag=read(0x1020ac)),searchFlag=read(0x5a872c),followupFlag=read(0x1020b4))
 
 rng=random.Random(2002);rows=[]
 for _ in range(1000):
@@ -59,16 +62,18 @@ for _ in range(1000):
  q.update(target=dict(x=rng.randrange(20,31),z=rng.randrange(20,31)),cornerTarget=bool(rng.randrange(2)),heading=rng.randrange(2**32))
  q.update(samples=rng.choice([2,4,8]),mode=rng.randrange(3),beyondTwoShots=bool(rng.randrange(2)),range=rng.randrange(1,331),shapeMask=rng.randrange(4),followupFlag=rng.randrange(2),shot=rng.randrange(4),costs=[rng.randrange(100) for _ in range(3)])
  q.update(cornerTarget=rng.randrange(2),actorId=0,curve=rng.randrange(-1,2),work=rng.randrange(1000),level=rng.randrange(4),searchFlag=rng.randrange(2),landings=[dict(x=25600+rng.randrange(1024),z=25600+rng.randrange(1024)) for _ in range(q['samples'])],winner=dict(score=rng.randrange(-100,2000),target=dict(x=10,z=11),curve=0,cornerTarget=0,landing=dict(x=10000,z=11000),landingFlag=0))
+ q.update(distance=rng.randrange(401),originClass=rng.randrange(-1,3),scores=[rng.choice([0,99999,100000,rng.randrange(100)]) for _ in range(6)],distances=[rng.randrange(300) for _ in range(6)],flags=[rng.randrange(2**32) for _ in range(6)])
+ q['landings']*=6
  rows.append([q,run(q),calls])
-module=(root/'simgolf-reborn/scene/src/simulation/original-route-batch.js').as_uri()
-script='''import {readFileSync} from 'node:fs';const {originalRouteBatch}=await import(MODULE);
+module=(root/'simgolf-reborn/scene/src/simulation/original-route-options.js').as_uri()
+script='''import {readFileSync} from 'node:fs';const {originalRouteOptions}=await import(MODULE);
 const rows=JSON.parse(readFileSync(0,'utf8'));
 for(const [q,e,expectedCalls] of rows){const cells=new Map(q.cells.map(([x,z,code,shotClass,flags])=>[`${x},${z}`,{code,shotClass,flags}]));
- let index=0;const calls=[];const a=originalRouteBatch({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>cells.get(`${p.x},${p.z}`)},c=>{calls.push({type:"simulate",...c});return {landing:q.landings[index++]};});
+ let index=0;const calls=[];const a=originalRouteOptions({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>cells.get(`${p.x},${p.z}`)},c=>{calls.push({type:"simulate",...c});return {landing:q.landings[index++]};});
  if(JSON.stringify(a)!==JSON.stringify(e)||JSON.stringify(calls)!==JSON.stringify(expectedCalls))throw Error(JSON.stringify({q,a,e}));
-}console.log(`${rows.length} complete route batches and ordered calls match original x86.`);
+}console.log(`${rows.length} six-option candidate loops and ordered calls match original x86.`);
 '''.replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 
 if '--write-fixture' in __import__('sys').argv:
- (root/'simgolf-reborn/scene/tests/fixtures/original-route-batch.json').write_text(json.dumps(rows[:40],separators=(',',':'))+'\n')
+ (root/'simgolf-reborn/scene/tests/fixtures/original-route-options.json').write_text(json.dumps(rows[:40],separators=(',',':'))+'\n')
