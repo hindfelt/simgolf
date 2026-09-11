@@ -743,3 +743,8 @@ F09 non-putter drift modifiers (2026-09-11): recovered actor/club/draw/fade
 scaling and intermediate local modifier. All 5,000 x86 pairs and eight drift
 tests pass, including signed overflow. Later long-shot adjustment and final
 heading/shot-shape composition remain before live integration.
+
+F09 long-shot heading (2026-09-11): recovered miss check, reference/actual heading
+split, residual curvature and class-specific adjustment. 5,000 full x86 output
+comparisons and 12 drift/heading tests pass. Later planner stages and complete
+live launch integration remain open.

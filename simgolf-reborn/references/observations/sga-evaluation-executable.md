@@ -960,3 +960,30 @@ offsets and resulting overflow. Sixty original-output pairs retained. Eight
 club/initial-drift tests pass. Putting has its own previously recovered branch;
 this helper intentionally rejects club 13. The local modifier's later use,
 long-shot miss adjustment and heading/shot-shape composition remain unfinished.
+
+
+### Long-shot adjustment and initial heading application (2026-09-11)
+
+Recovered non-putter `0x424542–0x424697`, including shared jumps through
+0x42437b/0x42438c, in `original-launch-heading.js`. For distance >75 unless
+0x59d208 bit 0x800000 is set, consume speed-bounded uint16 RNG. A draw above
+(abs(offset)>>9)+512 sets actor flag 0x400000, adds four to the local modifier,
+and clears curvature for the active actor or halves it otherwise. The caller
+must perform the earlier flag clear at 0x424283. The helper preserves the
+signed INT_MIN absolute-value quirk; zero RNG bound still consumes a draw.
+
+The reference heading (EBX) receives curve ±0x15555554. Separately clamp drift
+to ±0x38e38e3, add three times that to the actual actor heading, and remove half
+of the clamped value from curvature. In mode zero, class masked by 0xe0 ==0x20
+further scales curvature by (distance-100)/256 with int32 product, then adds
+trunc((random(0x71c6)-0x38e38e3)/50). The unusual subtraction/bound constants
+are transcribed and verified rather than normalized into a symmetric estimate.
+
+`verify-original-launch-heading.py` executes original block, branching paths,
+clamp and RNG without stubs. All 5,000 outputs match heading, reference heading,
+curvature, local modifier, actor flags and seed. Cases mix full int32 and smaller
+incoming offsets to exercise both overflow and misses; sixty fixtures retained.
+Twelve heading/drift tests pass, explicitly covering misses, active actor,
+strict distance threshold, RNG bypass and reference/actual heading distinction.
+This excludes putters and still precedes further planning from 0x424697 onward.
+No live migration or deployment; full launch composition remains incomplete.
