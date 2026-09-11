@@ -2,6 +2,7 @@ import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
 import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
+import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
 export {CourseScheduler} from './course-scheduler.js';
 const TTL=30*24*60*60;
 async function session(request,env){
@@ -118,6 +119,7 @@ async function handle(request,env){
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
   await env.DB.batch([
+   env.DB.prepare('DELETE FROM published_courses WHERE author_id=?').bind(user.id),
    env.DB.prepare('DELETE FROM course_members WHERE player_id=? OR course_id IN (SELECT id FROM shared_courses WHERE owner_id=?)').bind(user.id,user.id),
    env.DB.prepare('DELETE FROM shared_courses WHERE owner_id=?').bind(user.id),
    ...['saves','sessions','identities'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE player_id=?`).bind(user.id)),env.DB.prepare('DELETE FROM players WHERE id=?').bind(user.id)
@@ -134,9 +136,20 @@ async function handle(request,env){
    return json(course,201);
   }
  }
- const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members))?$/);
+ if(path==='/api/published-courses'&&request.method==='GET')return json({courses:await listPublishedCourses(env.DB)});
+ const published=path.match(/^\/api\/published-courses\/([a-f0-9-]{36})$/);
+ if(published&&request.method==='GET')return json(await getPublishedCourse(env.DB,published[1]));
+ const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members|publish))?$/);
  if(shared){
   const [,id,action]=shared;
+  if(action==='publish'&&request.method==='POST'){
+   await rateLimit(env.DB,'course-publish:'+user.id,20,3600);
+   const body=await readJson(request,1000);
+   if(!body||Object.keys(body).some(key=>key!=='expectedRevision'))throw fail(400,'Only a design revision can be supplied.');
+   const reply=await env.COURSE_SCHEDULERS.getByName(id).publish(id,user.id,body.expectedRevision);
+   if(!reply.ok)throw fail(reply.status,reply.error);
+   return json(reply.value,201);
+  }
   if(!action&&request.method==='GET'){
    await rateLimit(env.DB,'course-read:'+user.id,120,60);
    const reply=await env.COURSE_SCHEDULERS.getByName(id).read(id,user.id);

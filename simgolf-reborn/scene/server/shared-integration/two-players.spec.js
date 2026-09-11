@@ -15,6 +15,7 @@ test('two authenticated browsers share edits, reconnect and enforce spectator ac
    await a.page.getByRole('button',{name:tool,exact:true}).click();const point=await a.page.evaluate(({x,z})=>window.__gameTest.project(x,z),{x,z});await a.page.mouse.click(point.x,point.y);
    await expect.poll(()=>a.page.evaluate(field=>!!window.__gameTest.getState().holes[0][field],field)).toBe(true);
   }
+  await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByRole('button',{name:'Publish course to all players',exact:true}).click();await expect(a.page.locator('#account-status')).toContainText('Published Two-player links');await a.page.getByRole('button',{name:'Close account',exact:true}).click();
   await a.page.getByRole('button',{name:'＋ Add hole',exact:true}).click();await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
   const beforeBench=await b.page.evaluate(()=>window.__gameTest.getState().cash);
   await b.page.getByRole('button',{name:'Bench',exact:true}).click();const point=await b.page.evaluate(()=>window.__gameTest.project(-19,-9));await b.page.mouse.click(point.x,point.y);
@@ -45,5 +46,17 @@ test('shared-course lobby remains usable on a phone',async({browser})=>{
   expect(await page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);
   await page.screenshot({path:'/tmp/simgolfer-shared-lobby-phone.png',fullPage:true});
   await page.getByRole('link',{name:'Two-player links · owner',exact:true}).click();await expect(page.locator('#shared-status')).toContainText('owner');expect(new URL(page.url()).searchParams.has('testing')).toBe(false);
+ }finally{await context.close();}
+});
+
+test('another registered player can practise an immutable published course',async({browser})=>{
+ const [,player]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ const context=await browser.newContext();await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);
+ const page=await context.newPage();try{
+  await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Shared courses',{exact:true}).click();await page.getByText('Published courses',{exact:true}).click();
+  await page.getByRole('button',{name:'Practise this version',exact:true}).click();await expect(page).toHaveURL(/practice=/);await page.waitForFunction(()=>window.__gameTest);
+  expect(await page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(1);
+  await expect(page.locator('[data-mode="build"]')).toBeHidden();
+  await expect(page.locator('#club-detail')).toContainText('Practice');
  }finally{await context.close();}
 });

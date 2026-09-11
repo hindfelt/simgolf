@@ -76,7 +76,7 @@ The owner explicitly added future multiplayer support. This supersedes the origi
 | M02 | Course-building / earnings competitions | Defined shared starting budget/property/rules/time window, server-derived eligible earnings, ranked standings and tie-breaks; no imported wealth or client cash submissions | F02–F08, A03–A06 |
 | M03 | Multiplayer tournaments on courses built by different users | Publish/select player courses; pin immutable revisions; multiple authenticated golfers complete the event, with server-validated shots, scorecards, standings, ties and results | F09, A02–A06 |
 | M04 | Tournament lobby, invitations, live/asynchronous scheduling and reconnect/forfeit rules | Multiple-device end-to-end event, disconnect recovery and recorded completion under explicit event rules | M03 |
-| M05 | Course discovery/version history and tournament course rotation | Author attribution and permissions; safe course validation; edits create new revisions without rewriting tournament history | A03, A05 |
+| M05 | Course discovery/version history and tournament course rotation | Author attribution and permissions; safe course validation; edits create new revisions without rewriting tournament history | A03, A05; server-authored immutable publication, authenticated author attribution, library and locked practice implemented locally. Event pins, pagination and version-management UI remain open |
 
 Live versus asynchronous tournament scheduling and exact competitive earnings metrics remain product decisions for those tickets. They do not block the required separation of course design, resort economy and authoritative round state now. Multiplayer is not an original-game fidelity claim.
 

@@ -1,19 +1,22 @@
 import {DurableObject} from 'cloudflare:workers';
 import {getSharedCourse,executeSharedCommand} from './shared-courses.js';
+import {publishCourse} from './published-courses.js';
 
 // One persistent alarm per course; no global timer or client-supplied clock.
 export class CourseScheduler extends DurableObject {
- async read(courseId,playerId){return this.#request(courseId,playerId);}
- async command(courseId,playerId,command){return this.#request(courseId,playerId,command);}
- async #request(courseId,playerId,command){
+ async read(courseId,playerId){return this.#request(courseId,playerId,'read');}
+ async command(courseId,playerId,command){return this.#request(courseId,playerId,'command',command);}
+ async publish(courseId,playerId,revision){return this.#request(courseId,playerId,'publish',revision);}
+ async #request(courseId,playerId,operation,payload){
   try{
    const current=await this.ctx.storage.get('courseId');
    if(current&&current!==courseId)return {ok:false,status:400,error:'Course host mismatch.'};
    // The HTTP Worker supplies the authenticated player. The shared host still
    // reloads permissions and persisted state before any simulation or edit.
-   const value=command===undefined
+   const value=operation==='read'
     ? await getSharedCourse(this.env.DB,courseId,playerId)
-    : await executeSharedCommand(this.env.DB,courseId,playerId,command);
+    : operation==='publish'?await publishCourse(this.env.DB,courseId,playerId,payload)
+    : await executeSharedCommand(this.env.DB,courseId,playerId,payload);
    if(!(await this.start(courseId)).ok)return {ok:false,status:503,error:'Course scheduling is unavailable.'};
    return {ok:true,value};
   }catch(error){
