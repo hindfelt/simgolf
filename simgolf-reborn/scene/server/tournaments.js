@@ -1,5 +1,6 @@
 import {getPublishedCourse} from './published-courses.js';
 import {fail} from './security.js';
+import {sealTournament,sealStatement} from './tournament-results.js';
 async function active(db,id){
  const player=await db.prepare('SELECT id,name FROM players WHERE id=? AND disabled_at IS NULL').bind(id).first();
  if(!player)throw fail(403,'Active player account required.');return player;
@@ -17,13 +18,13 @@ export async function createTournament(db,ownerId,{title,publicationId,rounds=1,
  return getTournament(db,id);
 }
 export async function getTournament(db,id){
- const row=await db.prepare('SELECT * FROM tournaments WHERE id=?').bind(id).first();
+ const row=await db.prepare('SELECT t.*,f.tournament_id AS sealed FROM tournaments t LEFT JOIN tournament_results f ON f.tournament_id=t.id WHERE t.id=?').bind(id).first();
  if(!row)throw fail(404,'Tournament not found.');
  const entries=await db.prepare('SELECT e.player_id AS playerId,e.player_name AS name,e.joined_at AS joinedAt,e.withdrawn,p.disabled_at IS NOT NULL AS suspended FROM tournament_entries e LEFT JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? ORDER BY e.joined_at,e.player_id').bind(id).all();
- return {id:row.id,ownerId:row.owner_id,title:row.title,publicationId:row.publication_id,courseDigest:row.course_digest,courseAuthorId:row.course_author_id,courseAuthorName:row.course_author_name,course:JSON.parse(row.course_package),rounds:row.rounds,capacity:row.capacity,status:row.status,createdAt:row.created_at,entrants:entries.results.map(e=>({...e,suspended:!!e.suspended,withdrawn:!!e.withdrawn}))};
+ return {id:row.id,ownerId:row.owner_id,title:row.title,publicationId:row.publication_id,courseDigest:row.course_digest,courseAuthorId:row.course_author_id,courseAuthorName:row.course_author_name,course:JSON.parse(row.course_package),rounds:row.rounds,capacity:row.capacity,status:row.sealed?'complete':row.status,createdAt:row.created_at,entrants:entries.results.map(e=>({...e,suspended:!!e.suspended,withdrawn:!!e.withdrawn}))};
 }
 export async function listTournaments(db){
- return (await db.prepare('SELECT t.id,t.title,t.owner_id AS ownerId,t.course_digest AS courseDigest,t.rounds,t.capacity,t.status,t.created_at AS createdAt,(SELECT count(*) FROM tournament_entries e WHERE e.tournament_id=t.id) AS entrants FROM tournaments t ORDER BY t.created_at DESC,t.id LIMIT 100').all()).results;
+ return (await db.prepare("SELECT t.id,t.title,t.owner_id AS ownerId,t.course_digest AS courseDigest,t.rounds,t.capacity,CASE WHEN EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=t.id) THEN 'complete' ELSE t.status END AS status,t.created_at AS createdAt,(SELECT count(*) FROM tournament_entries e WHERE e.tournament_id=t.id) AS entrants FROM tournaments t ORDER BY t.created_at DESC,t.id LIMIT 100").all()).results;
 }
 export async function joinTournament(db,id,playerId){
  const player=await active(db,playerId);
@@ -47,7 +48,8 @@ export async function withdrawTournament(db,id,playerId){
  if(entry.withdrawn)return event;
  // Compete with final-score writes in the same database. A completed player
  // cannot remove a result, and round commits already require withdrawn=0.
- const changed=await db.prepare("UPDATE tournament_entries SET withdrawn=1 WHERE tournament_id=? AND player_id=? AND withdrawn=0 AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND EXISTS(SELECT 1 FROM tournaments t WHERE t.id=? AND t.status='locked' AND (SELECT count(*) FROM tournament_rounds r WHERE r.tournament_id=t.id AND r.player_id=? AND r.result IS NOT NULL)<t.rounds) RETURNING player_id").bind(id,playerId,playerId,id,playerId).first();
+ const changed=await db.prepare("UPDATE tournament_entries SET withdrawn=1 WHERE tournament_id=? AND player_id=? AND withdrawn=0 AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND EXISTS(SELECT 1 FROM tournaments t WHERE t.id=? AND t.status='locked' AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=t.id) AND (SELECT count(*) FROM tournament_rounds r WHERE r.tournament_id=t.id AND r.player_id=? AND r.result IS NOT NULL)<t.rounds) RETURNING player_id").bind(id,playerId,playerId,id,playerId).first();
+ if(changed)await sealTournament(db,id);
  const current=await getTournament(db,id);
  if(!changed&&!current.entrants.find(p=>p.playerId===playerId)?.withdrawn)throw fail(409,'Only unfinished entries in a running tournament can withdraw.');
  return current;
@@ -55,9 +57,12 @@ export async function withdrawTournament(db,id,playerId){
 export async function setTournamentStatus(db,id,playerId,status){
  await active(db,playerId);
  if(!['locked','cancelled'].includes(status))throw fail(400,'Unknown tournament action.');
+ await sealTournament(db,id);
  const event=await getTournament(db,id);if(event.ownerId!==playerId)throw fail(403,'Only the organizer can change registration.');
  if(event.status===status)return event;
- const changed=await db.prepare("UPDATE tournaments SET status=? WHERE id=? AND owner_id=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND status!='cancelled' AND (?='cancelled' OR (status='registration' AND (SELECT count(*) FROM tournament_entries e JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? AND p.disabled_at IS NULL)>=2 AND NOT EXISTS(SELECT 1 FROM tournament_entries e JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? AND p.disabled_at IS NOT NULL))) RETURNING id").bind(status,id,playerId,playerId,status,id,id).first();
+ if(event.status==='complete')throw fail(409,'Completed tournament results are permanent.');
+ const [,updated]=await db.batch([sealStatement(db,{eventId:id}),db.prepare("UPDATE tournaments SET status=? WHERE id=? AND owner_id=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=tournaments.id) AND status!='cancelled' AND (?='cancelled' OR (status='registration' AND (SELECT count(*) FROM tournament_entries e JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? AND p.disabled_at IS NULL)>=2 AND NOT EXISTS(SELECT 1 FROM tournament_entries e JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? AND p.disabled_at IS NOT NULL))) RETURNING id").bind(status,id,playerId,playerId,status,id,id)]);
+ const changed=updated.results[0];
  if(!changed)throw fail(409,'At least two active entrants are needed. Cancelled events cannot reopen.');
  return getTournament(db,id);
 }

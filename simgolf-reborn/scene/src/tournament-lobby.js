@@ -16,10 +16,10 @@ export function mountTournamentLobby(dialog,request,player,status){
      try{
       const current=await request('/api/tournaments/'+event.id);body.replaceChildren();
       summary.textContent=`${current.title} · ${current.entrants.length}/${current.capacity} · ${current.status}`;
-      const info=document.createElement('p');info.textContent=`${current.rounds} ${current.rounds===1?'round':'rounds'} · course version ${current.courseDigest.slice(0,8)}. ${current.status==='locked'?'Registration closed. Entrants can play or resume their rounds.':current.status==='cancelled'?'This event is cancelled.':'Registration is open.'}`;body.append(info);
+      const info=document.createElement('p');info.textContent=`${current.rounds} ${current.rounds===1?'round':'rounds'} · course version ${current.courseDigest.slice(0,8)}. ${current.status==='complete'?'This event is complete. Results are permanent.':current.status==='locked'?'Registration closed. Entrants can play or resume their rounds.':current.status==='cancelled'?'This event is cancelled.':'Registration is open.'}`;body.append(info);
       const roster=document.createElement('ul');for(const entry of current.entrants){const li=document.createElement('li');li.textContent=entry.name+(entry.withdrawn?' · withdrawn':entry.suspended?' · suspended':'');roster.append(li);}body.append(roster);
       const entered=current.entrants.some(p=>p.playerId===player.id);
-      if(current.status==='locked'){
+      if(['locked','complete'].includes(current.status)){
        const scores=await request(`/api/tournaments/${event.id}/standings`),summary=document.createElement('p');summary.textContent=scores.status==='complete'?'Final results — equal totals share a place.':'Scores below cover completed rounds.';body.append(summary);
        for(const score of scores.standings){const line=document.createElement('p');line.textContent=`${score.rank?score.rank+'. ':''}${score.name}${score.withdrawn?' (withdrawn)':''}: ${score.roundsCompleted}/${scores.rounds} rounds · ${score.roundsCompleted?score.strokes:'—'} strokes`;body.append(line);}
        if(entered&&!scores.standings.find(p=>p.id===player.id)?.withdrawn){const score=scores.standings.find(p=>p.id===player.id),round=Math.min(current.rounds,score.roundsCompleted+1),play=document.createElement('button');play.textContent=score.roundsCompleted===current.rounds?'Review final round':`Play / resume round ${round}`;play.onclick=()=>location.assign(`/?tournament=${event.id}&round=${round}`);body.append(play);
@@ -35,7 +35,7 @@ export function mountTournamentLobby(dialog,request,player,status){
         }
        }
       }
-      const actions=current.ownerId===player.id?(current.status==='cancelled'?[]:current.status==='locked'?[['cancel','Cancel tournament']]:[['lock','Close registration'],['cancel','Cancel tournament']]):current.status==='registration'?[entered?['leave','Leave tournament']:['join','Join tournament']]:[];
+      const actions=current.ownerId===player.id?(['cancelled','complete'].includes(current.status)?[]:current.status==='locked'?[['cancel','Cancel tournament']]:[['lock','Close registration'],['cancel','Cancel tournament']]):current.status==='registration'?[entered?['leave','Leave tournament']:['join','Join tournament']]:[];
       for(const[action,label]of actions){const button=document.createElement('button');button.textContent=label;button.onclick=async()=>{button.disabled=true;try{await request(`/api/tournaments/${event.id}/${action}`,{method:'POST',body:'{}'});status('Tournament registration updated.');await view();}catch(error){status(error.message);button.disabled=false;}};body.append(button);}
      }catch(error){status(error.message);}
     }

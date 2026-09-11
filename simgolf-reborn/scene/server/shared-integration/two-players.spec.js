@@ -121,3 +121,15 @@ test('phone withdrawal is explicit, survives reload and leaves the other entrant
   expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.getByText('Owner · withdrawn',{exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-tournament-withdrawal-phone.png',fullPage:true});expect(errors).toEqual([]);
  }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
 });
+
+test('completed tournament lobby preserves final standings and removes cancellation controls',async({browser})=>{
+ const [player]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ const context=await browser.newContext({viewport:{width:390,height:844}});
+ try{
+  await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();
+  await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();
+  await page.getByText('Players cup · 2/2 · complete',{exact:true}).click();await expect(page.getByText('Final results — equal totals share a place.',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Cancel tournament',exact:true})).toBeHidden();await expect(page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeHidden();
+  const summary=page.getByText('Final results — equal totals share a place.',{exact:true});await summary.scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/simgolfer-sealed-results-phone.png',fullPage:true});
+ }finally{await context.close();}
+});

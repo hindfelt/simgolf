@@ -66,3 +66,6 @@ Tournament registration requires migration `0005_tournament_lobbies.sql` (local 
 
 
 In a running online tournament, an entrant can use Account → Tournament registration → Withdraw from tournament, then confirm. Withdrawal is permanent for that event: completed scorecards stay visible, the player receives no placing, and further round commands reject. The organizer may withdraw as a golfer without cancelling the tournament. Finished entrants cannot withdraw to remove their recorded result. Registration-time Leave tournament remains a separate action.
+
+
+Final tournament results require migration `0007_tournament_results.sql` (not applied remotely). Completion captures scorecards and places atomically in D1. Finished events cannot be cancelled or withdrawn from. Account deletion removes private round simulation state and anonymizes the final result name as “Former player”; final scorecards, opaque player IDs and placings remain, including when the organizer deletes their account. Unfinished organizer-owned events are still cancelled. The login privacy notice describes this retention.

@@ -3,6 +3,7 @@ import {createSession} from '../src/simulation/session.js';
 import {restore,serialize,startPractice,isPutting} from '../src/simulation/game.js';
 import {TICK_SECONDS} from '../src/simulation/protocol.js';
 import {fail} from './security.js';
+import {sealTournament,finalTournamentResults} from './tournament-results.js';
 const TICK_MS=TICK_SECONDS*1000,MAX_TICKS=120;
 const idle=game=>game.pro.phase==='finished'||(game.pro.phase==='address'&&!isPutting(game,game.pro));
 async function access(db,eventId,playerId,round){
@@ -13,7 +14,7 @@ async function access(db,eventId,playerId,round){
  if(round>1&&!await db.prepare('SELECT 1 FROM tournament_rounds WHERE tournament_id=? AND player_id=? AND round_number=? AND result IS NOT NULL').bind(eventId,playerId,round-1).first())throw fail(409,'Finish the preceding round first.');
  return event;
 }
-const commitGuard="EXISTS(SELECT 1 FROM tournaments t JOIN tournament_entries e ON e.tournament_id=t.id JOIN players p ON p.id=e.player_id JOIN players owner ON owner.id=t.owner_id WHERE t.id=? AND e.player_id=? AND t.status='locked' AND e.withdrawn=0 AND p.disabled_at IS NULL AND owner.disabled_at IS NULL)";
+const commitGuard="EXISTS(SELECT 1 FROM tournaments t JOIN tournament_entries e ON e.tournament_id=t.id JOIN players p ON p.id=e.player_id JOIN players owner ON owner.id=t.owner_id WHERE t.id=? AND e.player_id=? AND t.status='locked' AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=t.id) AND e.withdrawn=0 AND p.disabled_at IS NULL AND owner.disabled_at IS NULL)";
 function snapshot(row,event,playerId){
  const state=JSON.parse(row.state);
  return {id:`${event.id}:${playerId}:${row.round_number}`,eventId:event.id,name:event.title,round:row.round_number,totalRounds:event.rounds,role:'golfer',revision:row.revision,pendingTicks:idle(state)?0:Math.max(0,Math.floor((Date.now()-row.clock_ms)/TICK_MS)),state,course:JSON.parse(event.course_package),result:row.result?JSON.parse(row.result):null};
@@ -57,16 +58,15 @@ export async function tournamentRound(db,eventId,playerId,round,command){
   const state=serialize(game);
   if(state===row.state&&score===row.result&&clock===row.clock_ms)return {result,course:snapshot(row,event,playerId)};
   const changed=await db.prepare(`UPDATE tournament_rounds SET state=?,clock_ms=?,result=?,revision=revision+1 WHERE tournament_id=? AND player_id=? AND round_number=? AND revision=? AND ${commitGuard} RETURNING revision`).bind(state,clock,score,eventId,playerId,round,row.revision,eventId,playerId).first();
-  if(changed)return {result,course:snapshot({...row,state,clock_ms:clock,result:score,revision:changed.revision},event,playerId)};
+  if(changed){if(score)await sealTournament(db,eventId);return {result,course:snapshot({...row,state,clock_ms:clock,result:score,revision:changed.revision},event,playerId)};}
  }
  throw fail(409,'The round is busy. Retry the same command.');
 }
 export async function tournamentStandings(db,id){
+ await sealTournament(db,id);const final=await finalTournamentResults(db,id);if(final)return final;
  const event=await db.prepare('SELECT rounds,status FROM tournaments WHERE id=?').bind(id).first();if(!event)throw fail(404,'Tournament not found.');
  const entries=(await db.prepare('SELECT player_id AS id,player_name AS name,withdrawn FROM tournament_entries WHERE tournament_id=? ORDER BY player_id').bind(id).all()).results;
  const rows=(await db.prepare('SELECT player_id,result FROM tournament_rounds WHERE tournament_id=? AND result IS NOT NULL ORDER BY round_number').bind(id).all()).results;
  const standings=entries.map(player=>{const results=rows.filter(r=>r.player_id===player.id).map(r=>JSON.parse(r.result));return {...player,withdrawn:!!player.withdrawn,roundsCompleted:results.length,holesCompleted:results.reduce((n,r)=>n+r.scorecard.length,0),strokes:results.reduce((n,r)=>n+r.strokes,0),relativeToPar:results.reduce((n,r)=>n+r.relativeToPar,0),results,rank:null};});
- const complete=event.status==='locked'&&standings.length>=2&&standings.every(p=>p.withdrawn||p.roundsCompleted===event.rounds);
- if(complete){standings.sort((a,b)=>Number(a.withdrawn)-Number(b.withdrawn)||a.strokes-b.strokes||a.id.localeCompare(b.id));const eligible=standings.filter(p=>!p.withdrawn);eligible.forEach((p,i)=>p.rank=i&&p.strokes===eligible[i-1].strokes?eligible[i-1].rank:i+1);}
- return {id,status:event.status==='cancelled'?'cancelled':complete?'complete':event.status==='registration'?'registration':'playing',rounds:event.rounds,standings};
+ return {id,status:event.status==='cancelled'?'cancelled':event.status==='registration'?'registration':'playing',rounds:event.rounds,standings};
 }

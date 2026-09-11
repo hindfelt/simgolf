@@ -5,6 +5,7 @@ import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-cou
 import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
 import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {tournamentStandings} from './tournament-rounds.js';
+import {sealStatement,anonymizeFinalResults} from './tournament-results.js';
 export {CourseScheduler} from './course-scheduler.js';
 export {TournamentRoundHost} from './tournament-round-host.js';
 const TTL=30*24*60*60;
@@ -122,10 +123,13 @@ async function handle(request,env){
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
   await env.DB.batch([
-   env.DB.prepare("UPDATE tournament_entries SET withdrawn=1,player_name='Former player' WHERE player_id=? AND tournament_id IN (SELECT id FROM tournaments WHERE status='locked' AND owner_id!=?)").bind(user.id,user.id),
+   sealStatement(env.DB,{playerId:user.id}),
+   anonymizeFinalResults(env.DB,user.id),
+   env.DB.prepare("UPDATE tournament_entries SET player_name='Former player' WHERE player_id=? AND EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=tournament_entries.tournament_id)").bind(user.id),
+   env.DB.prepare("UPDATE tournament_entries SET withdrawn=1,player_name='Former player' WHERE player_id=? AND tournament_id IN (SELECT id FROM tournaments WHERE status='locked' AND owner_id!=? AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=tournaments.id))").bind(user.id,user.id),
    env.DB.prepare('DELETE FROM tournament_rounds WHERE player_id=?').bind(user.id),
-   env.DB.prepare('DELETE FROM tournament_entries WHERE player_id=? AND withdrawn=0').bind(user.id),
-   env.DB.prepare("UPDATE tournaments SET status='cancelled',owner_id=NULL WHERE owner_id=?").bind(user.id),
+   env.DB.prepare('DELETE FROM tournament_entries WHERE player_id=? AND withdrawn=0 AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=tournament_entries.tournament_id)').bind(user.id),
+   env.DB.prepare("UPDATE tournaments SET status=CASE WHEN EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=tournaments.id) THEN status ELSE 'cancelled' END,owner_id=NULL WHERE owner_id=?").bind(user.id),
    env.DB.prepare("UPDATE tournaments SET course_author_id=NULL,course_author_name='Former player' WHERE course_author_id=?").bind(user.id),
    env.DB.prepare('DELETE FROM published_courses WHERE author_id=?').bind(user.id),
    env.DB.prepare('DELETE FROM course_members WHERE player_id=? OR course_id IN (SELECT id FROM shared_courses WHERE owner_id=?)').bind(user.id,user.id),

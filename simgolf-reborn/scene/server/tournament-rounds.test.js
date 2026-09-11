@@ -1,13 +1,13 @@
 import {beforeEach,afterEach,test,expect,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSharedCourse} from './shared-courses.js';import {publishCourse} from './published-courses.js';
-import {createTournament,joinTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
+import {getTournament,listTournaments,createTournament,joinTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {tournamentRound,tournamentStandings} from './tournament-rounds.js';
 import {createGame,build,serialize,restore,isPutting} from '../src/simulation/game.js';import {createSession} from '../src/simulation/session.js';
 import worker from './worker.js';import {hash,names} from './security.js';
 const owner='77777777-7777-4777-8777-777777777777',other='88888888-8888-4888-8888-888888888888';
 beforeEach(async()=>{
- for(const table of ['tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
+ for(const table of ['sessions','tournament_results','tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
  for(const id of [owner,other])await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,id===owner?'Alice':'Bob',id+'@proton.me',Date.now()).run();
 });
 afterEach(()=>vi.restoreAllMocks());
@@ -58,12 +58,21 @@ test('two real simulated rounds produce server scorecards and tied rankings with
  }
  await expect(withdrawTournament(env.DB,event.id,other)).rejects.toMatchObject({status:409});
  const standings=await tournamentStandings(env.DB,event.id);expect(standings.status).toBe('complete');expect(standings.standings.map(p=>p.rank)).toEqual([1,1]);
+ expect(standings.standings.every(p=>p.results.map(r=>r.round).join(',')==='1,2')).toBe(true);
+ const repeated=await Promise.all([tournamentStandings(env.DB,event.id),tournamentStandings(env.DB,event.id)]);expect(repeated).toEqual([standings,standings]);
  for(const s of snapshots.values()){expect(s.result.scorecard).toHaveLength(1);expect(s.state.stats.fees).toBe(0);expect(s.result.strokes).toBe(s.result.scorecard[0].strokes);}
  const token=crypto.randomUUID(),csrf=crypto.randomUUID(),origin='https://simgolfer.example';
  await env.DB.prepare('INSERT INTO sessions(token_hash,player_id,csrf,expires_at) VALUES (?,?,?,?)').bind(await hash(token),other,csrf,now+60000).run();
  const deleted=await worker.fetch(new Request(origin+'/api/account',{method:'DELETE',headers:{origin,cookie:`${names.session}=${token}`,'x-csrf-token':csrf,'content-type':'application/json'},body:JSON.stringify({confirm:'DELETE'})}),env);expect(deleted.status).toBe(200);
- const after=await tournamentStandings(env.DB,event.id);expect(after.status).toBe('complete');expect(after.standings.find(p=>p.id===owner).rank).toBe(1);expect(after.standings.find(p=>p.id===other)).toMatchObject({withdrawn:true,name:'Former player',rank:null});
+ const after=await tournamentStandings(env.DB,event.id);expect(after.status).toBe('complete');expect(after.standings.find(p=>p.id===owner).rank).toBe(1);expect(after.standings.find(p=>p.id===other)).toMatchObject({withdrawn:false,name:'Former player',rank:1});
  expect(await env.DB.prepare('SELECT 1 FROM tournament_rounds WHERE player_id=?').bind(other).first()).toBeNull();
+ expect(after.standings.find(p=>p.id===other).results).toEqual(standings.standings.find(p=>p.id===other).results);
+ await expect(setTournamentStatus(env.DB,event.id,owner,'cancelled')).rejects.toMatchObject({status:409});
+ expect((await getTournament(env.DB,event.id)).status).toBe('complete');expect((await listTournaments(env.DB)).find(e=>e.id===event.id).status).toBe('complete');
+ const ownerToken=crypto.randomUUID(),ownerCsrf=crypto.randomUUID();await env.DB.prepare('INSERT INTO sessions(token_hash,player_id,csrf,expires_at) VALUES (?,?,?,?)').bind(await hash(ownerToken),owner,ownerCsrf,now+60000).run();
+ expect((await worker.fetch(new Request(origin+'/api/account',{method:'DELETE',headers:{origin,cookie:`${names.session}=${ownerToken}`,'x-csrf-token':ownerCsrf,'content-type':'application/json'},body:JSON.stringify({confirm:'DELETE'})}),env)).status).toBe(200);
+ const retained=await tournamentStandings(env.DB,event.id);expect(retained.standings.every(p=>p.name==='Former player'&&p.rank===1)).toBe(true);expect(retained.completedAt).toBe(standings.completedAt);expect((await getTournament(env.DB,event.id)).status).toBe('complete');
+
 },30000);
 test('the real Durable Object host preserves round identity and denies suspended entrants',async()=>{
  const event=await setup(),stub=env.TOURNAMENT_ROUNDS.getByName(`${event.id}:${owner}:1`);

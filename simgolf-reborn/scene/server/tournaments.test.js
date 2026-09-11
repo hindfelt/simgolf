@@ -10,7 +10,7 @@ import worker from './worker.js';
 import {hash,names} from './security.js';
 const ids=['11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333'];
 beforeEach(async()=>{
- for(const table of ['sessions','tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
+ for(const table of ['sessions','tournament_results','tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
  for(const id of ids)await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,'Player '+id[0],id+'@proton.me',Date.now()).run();
 });
 async function event(){
