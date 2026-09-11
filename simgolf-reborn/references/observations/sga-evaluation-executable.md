@@ -1704,3 +1704,19 @@ distances and the published sample flags. Forty fixtures and seven landing tests
 pass, including strict comparison boundaries and center/corner differences.
 Follow-up assessment, sample loop orchestration and live integration remain open;
 this does not establish a complete planner or deployed change.
+
+### Landing review through follow-up scoring (2026-09-11)
+
+`original-route-scored-landing.js` composes landing review with the existing
+follow-up orchestration. Effective lie, actual remaining distance and cumulative
+score feed follow-up selection; raw landing terrain class feeds its separate
+eligibility check. Good-landings count, intended distance and trial flags remain
+available alongside final score and updated follow-up flag.
+
+`verify-original-route-scored-landing.py` runs contiguous original instructions
+0x422c34–0x423098. The original map/distance helpers execute directly; only
+0x421450 assessment costs are supplied. Every assessor call's landing, cup,
+range, shape and flag is captured independently. All 1,000 score/state outputs
+and ordered call lists match. Forty fixtures and six combined-review tests pass.
+This validates orchestration and metadata propagation, not complete follow-up
+simulation or a full route-search loop. Those and live integration remain open.

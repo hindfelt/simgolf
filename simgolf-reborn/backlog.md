@@ -924,3 +924,8 @@ and actual landing progress flag with terrain scoring. 1,000 complete original
 block comparisons and seven tests pass. The flag means unexpectedly strong cup
 progress, not short-shot penalty. Follow-up/sample orchestration and live
 integration remain unfinished.
+
+F09 scored landing composition (2026-09-11): landing review and follow-up
+assessment now compose with cumulative score and trial metadata. 1,000 contiguous
+original cases including ordered assessor calls and six tests pass. Follow-up
+cost simulation, sample/pass orchestration and live integration remain unfinished.
