@@ -874,3 +874,8 @@ metadata patches, target setup and final launch now compose in one pure entry.
 1,000 original prologue-to-launch cases and thirteen tests pass, including patch
 persistence affecting the next shot's range. Automatic -1 search, owning-state
 persistence, live conversion and planning-to-rest verification remain open.
+
+F09 automatic targeting request (2026-09-11): recovered assessment/approach/search
+branch gates and initial range-limited waypoint projection. 5,000 original cases
+and nine tests pass. Route search 0x422450, result processing, later automatic
+launch branch and live integration remain unfinished.

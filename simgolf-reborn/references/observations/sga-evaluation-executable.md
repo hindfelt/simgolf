@@ -1530,3 +1530,21 @@ This closes composition of entry side effects for the exact-coordinate path.
 The owning simulation must still persist returned patches and the obstacle index.
 The automatic -1 path remains unsupported, as do full live-course/actor mapping
 and a unified original planning-to-ball-rest oracle. No live deployment yet.
+
+### Automatic target search request (2026-09-11)
+
+`original-auto-target-request.js` recovers 0x42376c–0x42381a. Explicit requests
+or exact-coordinate arguments bypass automatic targeting. Otherwise distance
+<=75 takes the approach branch, reduced to <=25 by actor flag 1 or skill bit 4.
+Terrain 1 also takes approach. Longer shots start a route search: clamp range-25
+to [0,distance], shift by 10 and add 512, divide by 25 with signed truncation,
+then use the original heading projection to select a waypoint tile. The helper
+returns branch classification and this initial waypoint, not a search result.
+
+`verify-original-auto-target-request.py` executes original branch/clamp/projection
+instructions and initializes the original x87 sine table; no helper stubs.
+5,000 cases match branch, clamp output, radius and projected tile. Sixty fixtures
+and nine automatic-request/exact-target tests pass. The next original operations
+measure the route segment and cup distance, then call 0x422450. That search and
+its postprocessing, plus the later automatic launch middle branch, remain open.
+No live integration or complete automatic targeting claim yet.
