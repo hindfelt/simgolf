@@ -1548,3 +1548,26 @@ and nine automatic-request/exact-target tests pass. The next original operations
 measure the route segment and cup distance, then call 0x422450. That search and
 its postprocessing, plus the later automatic launch middle branch, remain open.
 No live integration or complete automatic targeting claim yet.
+
+### Route-search result aim and score (2026-09-11)
+
+`original-auto-target-result.js` recovers 0x423863–0x4239cf. The search-result
+flag at 0x5a8730 selects a tile-corner aim point and sets actor bit 0x10000000;
+otherwise the planner adds 512 to both components and clears that bit. Skill
+bit 4 enables a signed score-map adjustment: start at the center score and take
+the minimum of each cardinal neighbor minus trunc((opposite-center)/4). The
+original direction table is stepped by eight bytes, so only four directions
+participate. Without the skill the previous score is retained without grid reads.
+
+Afterward each vector component is multiplied by 25 and arithmetic-shifted by
+10. BOTH heading and distance use this reduced vector, unlike initial target
+setup where heading uses the full fixed-point difference. This truncation can
+change aim and is retained. Target selection and the score grid themselves are
+inputs from the still-incomplete route-search implementation.
+
+`verify-original-auto-target-result.py` executes the actual block and original
+heading/x87 conversion, without helper stubs. All 5,000 map-domain cases match
+vectors, flags, adjusted score, heading and distance. Thirty fixtures and eight
+request/result tests pass, including read order and heading truncation. The
+following observer side effect at 0x4239cf onward, route search, automatic launch
+middle branch and live integration remain unfinished. Nothing deployed.

@@ -879,3 +879,9 @@ F09 automatic targeting request (2026-09-11): recovered assessment/approach/sear
 branch gates and initial range-limited waypoint projection. 5,000 original cases
 and nine tests pass. Route search 0x422450, result processing, later automatic
 launch branch and live integration remain unfinished.
+
+F09 route-result processing (2026-09-11): recovered tile-center/corner aim flags,
+cardinal score adjustment and rounded-vector heading/distance. 5,000 original
+cases and eight tests pass. Route-search production of targets/score grids,
+observer side effect, automatic launch middle branch and live integration remain
+unfinished.
