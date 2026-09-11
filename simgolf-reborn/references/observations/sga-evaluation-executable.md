@@ -636,3 +636,20 @@ original entire branch and clamp helper, stubbing only the directional slope
 helper outputs. All 5,000 randomized speed/heading outputs match. Seven focused
 ground/flight tests pass. Full simulator lifecycle and original slope/map adapter
 remain before candidate generation can replace live browser planning.
+
+### Candidate rebound coefficient overrides (2026-09-11)
+
+Implemented `originalCandidateBounce` from 0x422110–0x4221c9. Normal mode 0
+raises a sub-2 bounce coefficient to 2 at a terrain boundary, then overrides it
+to 4 when metadata bit 0x20 and the source centre test hold. The source tests
+subX >= 5 && subX < 11 && subZ >= 5, with no subZ upper-bound check. Other
+modes retain the original terrain coefficient. Rebound arithmetic matches the
+existing originalBounce helper, so the wrapper reuses it with the resolved
+coefficient and no further boundary override. Contact requires height <= 0 and
+negative vertical speed; it resets height and retains rebounds >= 128 only.
+
+`verify-original-candidate-bounce.py` executes the original coefficient/contact
+branch and clamp callee on 5,000 downward-contact cases. Every rebound matches.
+Eleven candidate bounce/ground/flight tests pass. Subsequent actor collision flags,
+random rebound changes, slope response and final stop/restore lifecycle remain
+outside this wrapper and are required for the complete candidate simulator.

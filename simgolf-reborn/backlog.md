@@ -658,3 +658,9 @@ resistance, skill-dependent slope steering, surface slowdowns and directional
 wall reflections. Matched 5,000 original x86 cases with supplied slope-helper
 outputs; seven ground/flight tests pass. Bounce/collision lifecycle and launch
 selection remain before full candidate simulation and live planner integration.
+
+F09 candidate bounce (2026-09-11): reconstructed mode-dependent coefficient
+overrides and reused original rebound arithmetic. Matched 5,000 original x86
+contact cases; eleven candidate bounce/ground/flight tests pass. Post-contact
+flags, random/slope responses and simulator lifecycle remain before full route
+planning can use these components in the live game.
