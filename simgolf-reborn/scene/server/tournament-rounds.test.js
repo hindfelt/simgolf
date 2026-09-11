@@ -90,3 +90,27 @@ test('withdrawal stops round commands and all-withdrawn events have no winner',a
  await withdrawTournament(env.DB,event.id,other);
  const standings=await tournamentStandings(env.DB,event.id);expect(standings.status).toBe('complete');expect(standings.standings.every(p=>p.withdrawn&&p.rank===null)).toBe(true);
 });
+
+test('deadline refuses an in-flight reconnect and stale shot without advancing stored play',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const event=await setup(),initial=(await tournamentRound(env.DB,event.id,owner,1)).course,command=shot(initial,owner);
+ await tournamentRound(env.DB,event.id,owner,1,command);
+ const before=await env.DB.prepare('SELECT state,revision FROM tournament_rounds WHERE tournament_id=? AND player_id=?').bind(event.id,owner).first();
+ now=(await getTournament(env.DB,event.id)).endsAt;
+ await expect(tournamentRound(env.DB,event.id,owner,1,command)).rejects.toMatchObject({status:403});
+ const after=await env.DB.prepare('SELECT state,revision FROM tournament_rounds WHERE tournament_id=? AND player_id=?').bind(event.id,owner).first();expect(after).toEqual(before);
+ const scores=await tournamentStandings(env.DB,event.id);expect(scores.status).toBe('complete');expect(scores.standings.every(p=>p.withdrawalReason==='deadline'&&p.rank===null)).toBe(true);
+});
+test('deadline ranks a finished entrant and retains unfinished entrants without a placing',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const event=await setup();let snapshot=(await tournamentRound(env.DB,event.id,owner,1)).course;
+ for(let i=0;i<500&&!snapshot.result;i++){
+  const game=restore(JSON.stringify(snapshot.state));if(game.pro.phase==='address'&&!isPutting(game,game.pro))snapshot=(await tournamentRound(env.DB,event.id,owner,1,shot(snapshot,owner))).course;
+  now+=6000;snapshot=(await tournamentRound(env.DB,event.id,owner,1)).course;
+ }
+ expect(snapshot.result).not.toBeNull();expect((await tournamentStandings(env.DB,event.id)).status).toBe('playing');
+ now=(await getTournament(env.DB,event.id)).endsAt+1;
+ const scores=await tournamentStandings(env.DB,event.id);expect(scores.status).toBe('complete');expect(scores.standings.find(p=>p.id===owner)).toMatchObject({rank:1,withdrawn:false,roundsCompleted:1,strokes:snapshot.result.strokes});
+ expect(scores.standings.find(p=>p.id===other)).toMatchObject({rank:null,withdrawn:true,withdrawalReason:'deadline',roundsCompleted:0});
+ now+=86400000;expect(await tournamentStandings(env.DB,event.id)).toEqual(scores);
+},30000);

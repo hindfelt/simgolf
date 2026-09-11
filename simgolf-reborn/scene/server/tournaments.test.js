@@ -1,8 +1,8 @@
-import {beforeEach,test,expect} from 'vitest';
+import {beforeEach,afterEach,test,expect,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSharedCourse} from './shared-courses.js';
 import {publishCourse} from './published-courses.js';
-import {createTournament,getTournament,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
+import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {createPlaytestCourse} from '../src/simulation/playtest-course.js';
 import {serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
@@ -13,6 +13,7 @@ beforeEach(async()=>{
  for(const table of ['sessions','tournament_results','tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
  for(const id of ids)await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,'Player '+id[0],id+'@proton.me',Date.now()).run();
 });
+afterEach(()=>vi.restoreAllMocks());
 async function event(){
  const course=await createSharedCourse(env.DB,ids[0],'Links'),game=createPlaytestCourse();createSession(game);
  await env.DB.prepare('UPDATE shared_courses SET state=? WHERE id=?').bind(serialize(game),course.id).run();
@@ -80,4 +81,15 @@ test('HTTP withdrawal requires the signed-in entrant and CSRF and rejects target
  expect((await post({playerId:ids[0]})).status).toBe(400);
  expect((await post()).status).toBe(200);expect((await post()).status).toBe(200);
  const current=await getTournament(env.DB,cup.id);expect(current.entrants.find(p=>p.playerId===ids[0]).withdrawn).toBe(false);expect(current.entrants.find(p=>p.playerId===ids[1]).withdrawn).toBe(true);
+});
+
+test('playing window starts once on registration closure and invalid windows reject',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const cup=await event();expect(cup.endsAt).toBeNull();expect(cup.durationHours).toBe(168);
+ for(const durationHours of [0,721,1.5,'24'])await expect(createTournament(env.DB,ids[0],{title:'Invalid',publicationId:cup.publicationId,durationHours})).rejects.toMatchObject({status:400});
+ await joinTournament(env.DB,cup.id,ids[1]);now+=60000;
+ const locked=await setTournamentStatus(env.DB,cup.id,ids[0],'locked');expect(locked.endsAt).toBe(now+168*3600000);
+ now+=60000;expect((await setTournamentStatus(env.DB,cup.id,ids[0],'locked')).endsAt).toBe(locked.endsAt);
+ now=locked.endsAt;expect((await listTournaments(env.DB)).find(e=>e.id===cup.id).status).toBe('complete');const expired=await getTournament(env.DB,cup.id);expect(expired.status).toBe('complete');expect(expired.entrants.every(p=>p.withdrawn&&p.withdrawalReason==='deadline')).toBe(true);
+ await expect(setTournamentStatus(env.DB,cup.id,ids[0],'cancelled')).rejects.toMatchObject({status:409});
 });

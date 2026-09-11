@@ -1550,7 +1550,7 @@ async function showStandings() {
     const tr = document.createElement("tr");
     for (const value of [
       p.rank ?? "—",
-      p.name+(p.withdrawn?' (withdrawn)':''),
+      p.name+(p.withdrawn?(p.withdrawalReason==='deadline'?' (deadline missed)':' (withdrawn)'):''),
       `${p.roundsCompleted}/${state.rounds}`,
       p.holesCompleted,
       p.strokes,

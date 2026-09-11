@@ -126,3 +126,16 @@ Account deletion finalizes eligible events before deleting private round state, 
 Backend verification plays two actual simulated rounds per entrant, checks ordered scorecards and shared ranks, repeats finalization, rejects cancellation, deletes each account through the authenticated HTTP route and verifies unchanged scores, ranks and completion timestamp. All-withdrawn events finish without a winner. The original test expected deletion to withdraw a finished entrant; it was updated for the new retained-results requirement. Migration 0007 remains local, and shared/tournament production deployment still awaits hosting verification. Deadline-driven forfeits, scheduling, awards, earnings competitions and the full original-game fidelity backlog remain open.
 
 Final verification: 51 backend/transport tests and all seven real Worker/D1/DO browser integration cases pass (1.3 minutes). The additional phone check opens the completed event, displays final standings and verifies cancellation/withdrawal controls are absent. The rendered phone result was inspected. Production build passes as part of that run; no deployment was performed.
+
+
+## Playing windows and deadline forfeits — 12 September
+
+Migration 0008 adds a fixed playing window, cutoff timestamp and withdrawal reason. The lobby offers 1/3/7/14 days (default seven); the authenticated creation API validates 1–720 integer hours and does not accept a client cutoff. Closing registration sets the deadline once. Repeated closure cannot extend it. The cutoff and requirement to finish/save every round are displayed to entrants.
+
+At or after the server cutoff, unfinished entries become “deadline missed”, retaining already-completed cards but receiving no place. Finished entrants retain their results and rank normally. Round creation and commits check the deadline independently of the UI. A disconnected in-flight round cannot advance or accept a stale shot past the cutoff. Event/standings access, the bounded lobby list, organizer actions and deletion settle expiry and final results through database batches. Finalization is lazy on server access; no alarm or always-open browser is required for enforcement. Future notifications and scheduled registration/start times remain open.
+
+The migration gives pre-existing unfinished locked events a full seven days from migration time, excluding sealed results. The original-game simulation is unchanged. This is a new multiplayer event rule, not a claim about original SimGolf tournament timing. No production migration or deployment was performed.
+
+Verification covers validation, one-time deadline assignment, exact-cutoff expiry through the lobby list, cancelled-action rejection after expiry, stale in-flight command rejection without changing stored state, finished-versus-unfinished ranking and stable final results on later reads. All 54 backend/transport tests pass. The browser registration flow chooses three days, sees its cutoff, and still completes the two-round event normally; phone withdrawal and final results remain covered.
+
+Final deadline verification: all seven real Worker/D1/DO browser integration cases pass in 1.4 minutes on a clean run, alongside the 54 backend tests. The phone result view was inspected with the deadline displayed. Build passes; no deployment was performed.

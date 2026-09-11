@@ -2,10 +2,10 @@
 // database snapshot. INSERT OR IGNORE makes competing finish/read requests safe.
 const sealSql=`WITH candidates AS (
  SELECT t.id,t.rounds FROM tournaments t WHERE t.status='locked'
- AND (t.id=? OR EXISTS(SELECT 1 FROM tournament_entries e WHERE e.tournament_id=t.id AND e.player_id=?))
+ AND (t.id=? OR EXISTS(SELECT 1 FROM tournament_entries e WHERE e.tournament_id=t.id AND e.player_id=?) OR (?=1 AND t.id IN (SELECT id FROM tournaments ORDER BY created_at DESC,id LIMIT 100)))
  AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=t.id)
 ), totals AS (
- SELECT e.tournament_id,e.player_id AS id,e.player_name AS name,e.withdrawn,
+ SELECT e.tournament_id,e.player_id AS id,e.player_name AS name,e.withdrawn,e.withdrawal_reason AS withdrawalReason,
  count(r.result) AS roundsCompleted,
  coalesce(sum(json_array_length(r.result,'$.scorecard')),0) AS holesCompleted,
  coalesce(sum(json_extract(r.result,'$.strokes')),0) AS strokes,
@@ -19,15 +19,22 @@ const sealSql=`WITH candidates AS (
 )
 INSERT OR IGNORE INTO tournament_results(tournament_id,completed_at,body)
 SELECT c.id,?,json_object('id',c.id,'status','complete','rounds',c.rounds,'standings',json(
- (SELECT json_group_array(json_object('id',id,'name',name,'withdrawn',json(CASE WHEN withdrawn=1 THEN 'true' ELSE 'false' END),'roundsCompleted',roundsCompleted,'holesCompleted',holesCompleted,'strokes',strokes,'relativeToPar',relativeToPar,'results',json(results),'rank',place))
+ (SELECT json_group_array(json_object('id',id,'name',name,'withdrawn',json(CASE WHEN withdrawn=1 THEN 'true' ELSE 'false' END),'withdrawalReason',withdrawalReason,'roundsCompleted',roundsCompleted,'holesCompleted',holesCompleted,'strokes',strokes,'relativeToPar',relativeToPar,'results',json(results),'rank',place))
  FROM (SELECT * FROM ranked WHERE tournament_id=c.id ORDER BY withdrawn,strokes,id))
 )) FROM candidates c
 WHERE (SELECT count(*) FROM totals WHERE tournament_id=c.id)>=2
 AND NOT EXISTS(SELECT 1 FROM totals WHERE tournament_id=c.id AND withdrawn=0 AND roundsCompleted!=c.rounds)`;
-export function sealStatement(db,{eventId=null,playerId=null}={}){
- return db.prepare(sealSql).bind(eventId,playerId,Date.now());
+export function sealStatement(db,{eventId=null,playerId=null,listed=false}={}){
+ return db.prepare(sealSql).bind(eventId,playerId,Number(listed),Date.now());
 }
-export async function sealTournament(db,id){await sealStatement(db,{eventId:id}).run();}
+export function expireStatement(db,{eventId=null,playerId=null,listed=false}={}){
+ return db.prepare(`UPDATE tournament_entries SET withdrawn=1,withdrawal_reason='deadline'
+ WHERE withdrawn=0 AND tournament_id IN (SELECT t.id FROM tournaments t WHERE t.status='locked' AND t.ends_at IS NOT NULL AND t.ends_at<=?
+ AND (t.id=? OR EXISTS(SELECT 1 FROM tournament_entries e WHERE e.tournament_id=t.id AND e.player_id=?) OR (?=1 AND t.id IN (SELECT id FROM tournaments ORDER BY created_at DESC,id LIMIT 100)))
+ AND NOT EXISTS(SELECT 1 FROM tournament_results f WHERE f.tournament_id=t.id)
+ AND (SELECT count(*) FROM tournament_rounds r WHERE r.tournament_id=t.id AND r.player_id=tournament_entries.player_id AND r.result IS NOT NULL)<t.rounds)`).bind(Date.now(),eventId,playerId,Number(listed));
+}
+export async function sealTournament(db,id){await db.batch([expireStatement(db,{eventId:id}),sealStatement(db,{eventId:id})]);}
 export async function finalTournamentResults(db,id){
  const row=await db.prepare('SELECT body,completed_at FROM tournament_results WHERE tournament_id=?').bind(id).first();
  return row?{...JSON.parse(row.body),completedAt:row.completed_at}:null;
