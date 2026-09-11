@@ -868,3 +868,9 @@ explicit terrain 17/20 class patches, global obstacle index and origin lookup.
 All 5,000 original entry/range cases match; twelve targeted tests pass. Compose
 and persist entry state patches before later assessment, then finish automatic
 target branches and live integration. The full planner remains unfinished.
+
+F09 exact planner composition (2026-09-11): entry state, computed range, ordered
+metadata patches, target setup and final launch now compose in one pure entry.
+1,000 original prologue-to-launch cases and thirteen tests pass, including patch
+persistence affecting the next shot's range. Automatic -1 search, owning-state
+persistence, live conversion and planning-to-rest verification remain open.

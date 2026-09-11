@@ -1505,3 +1505,28 @@ Forty fixtures and twelve setup/range/target tests pass. This recovers entry
 semantics but still requires composition/persistence of the explicit patches
 in the full planner. Automatic target-search branches and live integration remain
 open. No deployment or complete original-planner claim follows from this helper.
+
+### Composed exact-point planner entry through launch (2026-09-11)
+
+`original-exact-planner.js` runs entry setup before exact targeting, assessment
+and launch. It overlays the returned terrain-class patches for this shot only,
+leaving the backing map untouched and returning setup state for persistence by
+the owning simulation. Range therefore reads the pre-patch metadata, whereas
+assessment, recovery and final lie normalization read the patched values.
+Input range estimates are replaced by the original range calculation.
+
+`verify-original-exact-planner.py` starts at the actual function prologue
+0x4235c0 and follows exact-coordinate execution through 0x425ab9. It runs the
+original range code, heading/projection, RNG and strength cache. Only raw surface
+and raw height accessors are supplied. All 1,000 actor-zero cases match final
+launch, full assessment, corrected distance, entry setup/patches and cache;
+cache persists between cases while map/metadata fixture inputs reset per case.
+Special-actor range behavior remains covered separately by the entry oracle.
+Twenty saved fixtures and thirteen planner/setup/target tests pass. A two-shot
+persistence test verifies that committing class patches after shot one affects
+shot two's range (140 becomes 88 for the controlled terrain-17 case).
+
+This closes composition of entry side effects for the exact-coordinate path.
+The owning simulation must still persist returned patches and the obstacle index.
+The automatic -1 path remains unsupported, as do full live-course/actor mapping
+and a unified original planning-to-ball-rest oracle. No live deployment yet.
