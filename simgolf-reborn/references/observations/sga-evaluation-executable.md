@@ -1140,3 +1140,32 @@ stored curvature addition. Sixty fixtures retained. Seven shape/terrain tests
 pass, including exact 250/300 thresholds and active/backspin behavior. Supported
 speed/reference domain is 0..100000, strength 0..330. Conditional middle-planner
 section and later final lie/velocity effects still remain before live use.
+
+
+### Final lie dispatch and normalization (2026-09-11)
+
+Recovered `0x4256bf–0x425ab9` in `original-launch-finish.js`, including the
+original 24-entry lie dispatch at 0x425af8 and nine branch targets at 0x425ad4.
+It adds the stored curve offset, applies lie-specific random speed/curvature/
+heading effects (preserving uint16 RNG bounds and zero-bound consumption),
+zeros lift for club 13 in the green branch, and applies the final skill/flag,
+mode, speed-floor and local-modifier corrections. Curvature clamps to
+±0x15555555; actor flag 1 clears. The later original UI dirty-byte writes and
+stack epilogue are excluded from this pure state function.
+
+`verify-original-launch-finish.py` executes the original dispatch table and all
+reachable response/normalization instructions plus RNG/clamp code without stubs.
+5,000 seeded cases match final speed, vertical speed, heading, curvature, flags
+and RNG state. They include signed curvature overflow, wrapped uint16 bounds,
+all lie table entries plus fallback, and modes 0..3. One hundred fixtures are
+retained. Thirteen final-launch/putt-strength/shape regressions pass.
+
+Oracle precision note: explicitly sets x87 control word 0x37f on each call,
+consistent with the full candidate/projection harness. Unicorn's default
+precision produced a one-unit bounded-RNG discrepancy at a large bound; the
+port was not changed to reproduce that harness artifact. Earlier small-bound
+comparisons do not establish broad RNG precision behavior on their own.
+
+Inputs remain the original state after the preceding accuracy/recovery stage;
+that gap (0x425582–0x4256bf with side branches), conditional middle planning and
+upstream assessment still need composition before complete/live planner parity.

@@ -783,3 +783,9 @@ active-actor curvature handling, shot types and stored curvature additions.
 5,000 original outputs and seven focused tests pass. The conditional planner
 section before this block and final lie/velocity effects still need composition;
 no live integration or deployment in this change.
+
+F09 final lie dispatch (2026-09-11): recovered all final surface/random launch
+branches and normalization; 5,000 original outputs/seeds and 13 tests pass.
+Oracle now explicitly sets x87 precision for large RNG bounds. Preceding
+accuracy/recovery and conditional middle-planning gaps, upstream assessment
+and full live integration remain unfinished.
