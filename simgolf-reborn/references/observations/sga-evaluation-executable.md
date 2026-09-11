@@ -2430,3 +2430,19 @@ This closes the primary selector in isolation. It does not implement the
 eligibility or remark routines, preceding automatic scenery sampling, or live
 planner integration. Numeric condition/record fields are intentionally retained
 without assigning unsupported player-facing meanings. No deployment is included.
+
+### Actor condition classification: 0x466ea0–0x466ec1
+
+`original-condition-class.js` reads the meaning of actor word +0x88 without
+assigning a player-facing interpretation. Bit 0x8000 returns class 2, regardless
+of bit 0x4000. Otherwise the inverted bit 0x4000 gives class 0 or 1. Primary
+reaction selection tests that class for nonzero at an origin with mark 0x800,
+unless origin mark 0x4000 suppresses the request.
+
+The primary-stage verifier now executes real 0x466ea0, removing its eligibility
+stub. All 3,000 complete stage cases still match. It additionally executes the
+routine for all 65,536 possible words, rotating actor addresses, and compares
+every result against JavaScript. Sixteen related tests pass, including both
+nonzero classes, high-bit precedence and the origin-mark suppression. The
+earlier controlled-eligibility limitation is superseded; remark effects remain
+controlled, and scenery sampling/composition/live integration remain open.

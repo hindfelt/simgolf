@@ -972,6 +972,13 @@ no-candidate cup fallback. Fourteen targeted tests pass. Initial entry/range
 state, actual candidate physics and follow-up cost callbacks, and live wiring
 remain unfinished.
 
+F09 actor condition classification (2026-09-11): recovered 0x466ea0 and removed
+the supplied feature-eligibility result from primary reaction selection. The
+actor condition word's high bits produce classes 0/1/2. All 65,536 words match
+the native routine; 3,000 primary stages use the real classifier and sixteen
+related tests pass. Scenery sampling, remark effects and live integration remain
+unfinished.
+
 F09 route entry initialization (2026-09-11): recovered cleared score grid,
 search flags, first range-query context, previous target and origin tile lookup.
 500 contiguous original entries and six targeted tests pass. Entry-to-body

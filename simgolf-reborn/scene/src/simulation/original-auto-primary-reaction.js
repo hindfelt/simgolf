@@ -1,4 +1,5 @@
 import {originalRandom} from './original-rng.js';
+import {originalConditionClass} from './original-condition-class.js';
 // 0x424cc3–0x425001: select the first applicable primary reaction. Numeric
 // reaction IDs/record fields retain their native meaning without guessed text.
 export function originalAutoPrimaryReaction(q,api) {
@@ -16,7 +17,7 @@ export function originalAutoPrimaryReaction(q,api) {
     !q.mode&&!(state.actor.actorFlags&1)){emit(8);return result();}
  if(q.scannedTile&&!q.namedReference){emit(0x14,q.scannedTile);return result();}
  if(q.namedReference){emit(0x16,(q.namedReference-1)|0);return result();}
- if((q.originFlags&0x800)&&api.featureEligible(q.actorId)&&!(q.originFlags&0x4000)){
+ if((q.originFlags&0x800)&&originalConditionClass(state.actor.conditionFlags)&&!(q.originFlags&0x4000)){
   emit(0x18);return result();
  }
  if(q.distance<100||q.mode)state.diagnostics=(state.diagnostics&0xfffffffc)>>>0;
