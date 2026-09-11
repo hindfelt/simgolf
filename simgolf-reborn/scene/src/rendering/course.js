@@ -1,3 +1,4 @@
+import {tennisPose,updateTennisBall} from "./tennis-activity.js";
 import {facilityLighting} from './facility-lighting.js';
 import {coastalPreview} from './coastal-preview.js';
 import { boundaryEdges } from "./boundary-outline.js";
@@ -622,6 +623,9 @@ export function buildCourseView(scene) {
         weedHeads.computeBoundingSphere();
         weedLeaves.computeBoundingSphere();
       }
+      for(const f of g.facilities) if(f.type==='tennis-court'){
+        const group=facilityMap.get(f.id);if(group)updateTennisBall(group,g,f);
+      }
       const people = [
           ...g.guests,
           ...g.staff,
@@ -695,7 +699,7 @@ export function buildCourseView(scene) {
               0,
               a.arms[1],
             );
-            add(
+            const clubHead = add(
               new THREE.BoxGeometry(0.17, 0.08, 0.09),
               0xa5a49c,
               0,
@@ -703,6 +707,13 @@ export function buildCourseView(scene) {
               0,
               a.arms[1],
             );
+            a.golfEquipment=[club,clubHead];
+          }
+          if(p.ball){
+            a.racket=new THREE.Group();a.arms[1].add(a.racket);
+            add(new THREE.CylinderGeometry(.025,.025,.4,6),0x44494b,0,-.8,0,a.racket);
+            add(new THREE.TorusGeometry(.23,.035,5,12),0xe3ddd0,0,-1.15,0,a.racket);
+            for(const offset of [-.12,0,.12]) add(new THREE.BoxGeometry(.36,.012,.012),0xc1c8b9,0,-1.15+offset,0,a.racket);
           }
           if (p.role === "vendor") {
             add(
@@ -726,9 +737,11 @@ export function buildCourseView(scene) {
           a.appearanceKey = appearanceKey;
           avatarMap.set(actorId, a);
         }
-        const y = travelHeight(g, p.pos);
-        a.group.position.set(p.pos.x, y, p.pos.z);
-        a.group.rotation.y = p.heading || 0;
+        const tennis=tennisPose(g,p),display=tennis||p.pos;
+        const y = tennis ? travelHeight(g,p.pos)*(1-tennis.blend)+(height(tennis.center.x,tennis.center.z)+.25)*tennis.blend : travelHeight(g,p.pos);
+        a.group.position.set(display.x,y,display.z);
+        a.group.rotation.y=tennis?tennis.heading:p.heading||0;
+        if(a.racket){a.racket.visible=!!tennis;a.golfEquipment.forEach(mesh=>mesh.visible=!tennis);}
         const step =
           ["walking", "departing", "angry"].includes(p.phase) && p.path?.length
             ? Math.sin(time * 12 + p.id) * 0.5
@@ -761,6 +774,7 @@ export function buildCourseView(scene) {
           a.arms[1].rotation.x = -0.5 + Math.sin(time * 6) * 0.2;
         if (p.phase === "shot")
           a.arms[1].rotation.x = -Math.max(0, 1 - (p.shot?.time || 0)) * 1.4;
+        if(tennis){a.arms[1].rotation.x=tennis.swing;a.legs[0].rotation.x=Math.sin(g.time*5)*.1;a.legs[1].rotation.x=-a.legs[0].rotation.x;}
         if (a.ball) {
           a.ball.visible = !p.paid && p.phase !== "finished";
           a.ball.position.set(

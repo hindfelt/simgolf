@@ -1,5 +1,11 @@
 # Simulation architecture and future multiplayer
 
+## Post-round recreation
+
+Protocol 76 adds authoritative per-golfer tennis reservations and session times. The renderer samples the simulation clock for player and ball poses; it never awards a visit or changes finances. Session state survives resort saves. Disconnecting a court, removing it or losing a partner releases reservations without credit. One pair occupies a facility at a time.
+
+Golf physics are unchanged from protocol 75. Its course packages remain accepted with their original content digest. Its tournament saves replay with valid protocol-75 commands translated to 76, while formerly invalid future versions remain invalid. Replayed results must still match every recorded receipt; unknown rulesets remain rejected. Resort receipts migrate through the existing explicit protocol migration.
+
 ## Current executable boundary
 
 `scene/src/simulation/` is independent of the DOM, Three.js, storage, wall-clock time and network transport. `game.js` implements the currently available game rules, with seeded random streams. `session.js` is the command host used by the playable browser. `protocol.js` defines its version, fixed 50 ms tick and persisted receipt state. `rendering/` reads simulation state; `play.js` owns presentation, camera and the local host adapter.

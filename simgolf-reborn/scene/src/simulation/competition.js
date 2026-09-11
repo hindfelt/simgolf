@@ -1,6 +1,6 @@
 import { originalProfessionalSkills } from "./roster-opponent.js";
 import { validateAppearance } from "./appearance.js";
-import { canonical, RULESET_VERSION } from "./protocol.js";
+import { canonical, RULESET_VERSION, PROTOCOL_VERSION, PRE_TENNIS_RULESET, compatibleGolfRuleset } from "./protocol.js";
 import { importCourse, coursePractice } from "./course-package.js";
 import { validateGolferPackage, loadGolfer } from "./golfer-package.js";
 import { startPractice } from "./game.js";
@@ -263,7 +263,7 @@ export async function restoreCompetition(raw) {
     !exact(data, ["format", "version", "ruleset", "config", "journal"]) ||
     data.format !== "simgolf-reborn-competition" ||
     data.version !== 1 ||
-    data.ruleset !== RULESET_VERSION ||
+    !compatibleGolfRuleset(data.ruleset) ||
     !exact(data.config, ["id", "course", "rounds", "seed", "entrants"]) ||
     !Array.isArray(data.journal) ||
     data.journal.length > 10000
@@ -286,6 +286,14 @@ export async function restoreCompetition(raw) {
       canonical(row.request).length > 4096
     )
       throw Error("Invalid competition command record.");
+  }
+  if(data.ruleset===PRE_TENNIS_RULESET){
+    for(const row of data.journal) if(row.type==='command' && row.request?.command){
+      const c=row.request.command;
+      // Translate only the formerly valid version. A formerly rejected future
+      // version must stay rejected, rather than becoming valid on upgrade.
+      c.version=c.version===75?PROTOCOL_VERSION:c.version===PROTOCOL_VERSION?-1:c.version;
+    }
   }
   const host = await createCompetition(data.config);
   for (const row of data.journal) {

@@ -1,5 +1,14 @@
 # SimGolf Reborn 1.0.0 — major browser rebuild
 
+## Tennis activity — 11 September 2026
+
+- Golfing partners can reserve a connected tennis court after completing their round, walk over, wait for each other, play and depart. One pair uses a facility at a time.
+- Actual visitors appear on court with rackets and an animated ball. Animation follows the saved simulation clock, including pause and reload. The inspector reports approaching players and completed visits.
+- Disconnection, demolition, unreachable access and lost partners cancel visits without awarding completion credit. Tennis does not invent additional fees or alter completed golf scores.
+- Protocol 76 migrates resort saves. Pre-tennis course packages retain their content hashes, and existing tournament records replay under compatible golf rules.
+- The 24-second session and post-round selection are browser adaptations. This closes the static-tennis limitation, not the original-engine or full resort-fidelity backlog.
+- Validation: **944 tests passed in 5.8 minutes** on a clean run; production build and deployment dry run passed. The long-session check completed 25 rounds and 9 helicopter visits across 12 exact save/reload cycles. The initial broad run had a staff-panel UI failure while source was changing; its focused rerun and the complete frozen-source rerun passed.
+
 ## Tree physics update — 9 September 2026
 
 - Airborne shots now collide with natural scenery trees as well as planted trees; tree removal and terrain edits affect the result.

@@ -1,5 +1,8 @@
-export const PROTOCOL_VERSION = 75;
-export const RULESET_VERSION = "prototype-boundary-regions-2026-09-10";
+export const PROTOCOL_VERSION = 76;
+export const RULESET_VERSION = "prototype-tennis-visits-2026-09-11";
+// Golf-only packages/replays from before post-round tennis use identical shot rules.
+export const PRE_TENNIS_RULESET = "prototype-boundary-regions-2026-09-10";
+export const compatibleGolfRuleset = value => value===RULESET_VERSION || value===PRE_TENNIS_RULESET;
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -65,6 +68,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 75 && p.ruleset === "prototype-boundary-regions-2026-09-10") ||
     (p?.version === 74 && p.ruleset === "prototype-dogleg-routing-2026-09-10") ||
     (p?.version === 73 && p.ruleset === "prototype-boundary-entry-2026-09-09") ||
     (p?.version === 72 && p.ruleset === "prototype-helicopter-visits-2026-09-09") ||

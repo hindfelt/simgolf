@@ -4,6 +4,14 @@ This checkpoint is a preview of the existing playable simulation. It is not the 
 
 ## Latest verification after release-completion request
 
+### Live tennis follow-through
+
+The later frozen-source run passed **944 tests in 5.8 minutes**. This includes actual post-round tennis visits, disconnect/removal handling, partner reservations, pause/rendering, mid-visit save continuation and pre-tennis tournament compatibility. Production build and Wrangler dry run pass. The long-session test still completes 25 rounds, 9 helicopter visits and 12 exact save/reload cycles. The earlier 940/941 run had a staff-panel UI failure during active source edits; its five-test focused rerun and the clean 944-test run both pass.
+
+Tennis is now part of the live simulation rather than an isolated native module. Timings and visit selection remain provisional. This does not close the original-engine, career, marina or full 1.0 acceptance gates below.
+
+### Earlier native integration checkpoint
+
 - Full current regression run: **933 passed**, 5.5 minutes, exit code 0. Log: `/tmp/simgolf-release-tests.log` (local temporary artifact).
 - Added integration coverage: three new tests for projected sound and audible reactions; all nine focused new/existing tests passed.
 - Production build: passed. Vite still reports a main play chunk above 500 kB; physical-phone load/performance acceptance remains open.

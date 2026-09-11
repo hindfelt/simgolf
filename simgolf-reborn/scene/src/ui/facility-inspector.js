@@ -22,7 +22,12 @@ export function facilityDetails(g, f) {
     lighthouse: 'A coastal scenery landmark.',
   };
   if (benefits[f.type]) lines.push(benefits[f.type]);
-  if (definition.recreation) lines.push('Improves the starting attitude of arriving golfers. No individual visits are required.');
+  if(f.type==='tennis-court'){
+    const users=g.guests.filter(v=>v.tennis?.facilityId===f.id);
+    lines.push(`${f.served||0} completed visits · ${users.length} golfers using or approaching the courts.`);
+    lines.push('Golfing partners can play tennis together after completing their round. One pair at a time.');
+  }
+  if (definition.recreation) lines.push('Improves the starting attitude of arriving golfers.');
   if (f.type === 'helipad') {
     const h = g.helicopter;
     lines.push('$200 per landing; at most one helicopter on the property.');

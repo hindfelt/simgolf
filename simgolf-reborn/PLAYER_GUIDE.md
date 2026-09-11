@@ -48,6 +48,7 @@ Golfers' reactions and scorecards reveal how the course performs. Fees are calcu
 
 - **Staff:** hire, select, rename, reposition, upgrade or dismiss employees. Groundskeepers handle weeds; more advanced staff become available as the course grows. Staff cost money over time.
 - **Amenities:** benches, refreshments, training facilities and other resort buildings have different purposes. Follow each tool's placement hint and check path access.
+- **Tennis courts:** golfing partners can stop for tennis after both finish their round, provided both are still on the property. Connect a court to the clubhouse path. One pair reserves the facility at a time; they walk over, wait for each other, play and then leave. Inspect the court to see approaching players and completed visits. Pausing stops the rally, and saves preserve visits in progress.
 - **Dandelions and turf:** maintenance is part of running the course. Neglected turf can accumulate wear and crabgrass.
 - **Golfers:** use the membership roster to inspect persistent visitors, rename them and manage available pairing or membership options.
 - **Homes:** place a Building Lot and connect it to the clubhouse path. Eligible golfers who have completed a round can buy it; it becomes a home and produces a recorded sale. Reports → **Homes and building lots** shows buyers, estimates and receipts.

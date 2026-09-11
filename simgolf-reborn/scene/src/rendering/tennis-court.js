@@ -55,5 +55,7 @@ export function tennisCourt(scene, x, z) {
     group.add(mesh);
     for (const geometry of geometries) geometry.dispose();
   }
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.13,8,6),new THREE.MeshStandardMaterial({color:0xe8ed63}));
+  ball.visible=false;group.add(ball);group.userData.tennisBall=ball;
   return group;
 }

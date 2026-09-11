@@ -2,6 +2,8 @@
 
 ## Current delivery sequence — 11 September 2026
 
+Live resort follow-through: tennis courts now receive actual post-round golfing pairs, with shared reservations, partner arrival, a saved 24-second session, visible players/rackets/ball, completion counters and onward departure. Disconnection, removal, missing partners and unreachable access cancel without credit. The existing arrival-mood benefit remains; no tennis fee is invented. Timings and visit selection are browser adaptations, not verified original constants. Protocol 76 migrates resorts; the unchanged golf rules allow pre-tennis course packages and tournament replays to retain their pinned content. Marina activity and other resort fidelity work remain open.
+
 Latest verification: the current 933-test regression suite passed in 5.5 minutes; production build passed. A 7,260-second simulation completed 25 rounds and 9 helicopter visits, with exact continuation through 12 save/reload cycles. Three additional projected-sound/reaction integration tests pass (nine focused tests including existing coverage). These checks establish a stable preview baseline, not original-game parity or release completion.
 
 The original reaction adjustment now executes real screen projection and positional speech before applying reaction outcomes, preserving shared RNG and queued sound state. 2,400 full projected-sound cases and 1,320 contiguous reaction cases match the supplied executable. Only playback and terrain helper outputs remain controlled in these comparisons. Earlier remark dispatch/history, later social effects, live map/actor adapters and authoritative application remain incomplete; this change does not alter the deployed game's behavior.

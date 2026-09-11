@@ -83,3 +83,22 @@ test("damaged receipts, clock budgets, rulesets and injected final scores reject
     "Unsupported",
   );
 });
+test('pre-tennis tournament saves preserve pinned course, shots and standings on upgrade',async()=>{
+ const {PRE_TENNIS_RULESET}=await import('../src/simulation/protocol.js');
+ const {courseDigest,importCourse}=await import('../src/simulation/course-package.js');
+ const host=await setup();shoot(host,'alice');shoot(host,'bob');host.stepTicks(12);
+ const legacy=JSON.parse(host.save());legacy.ruleset=PRE_TENNIS_RULESET;
+ legacy.config.course.content.ruleset=PRE_TENNIS_RULESET;
+ legacy.config.course.digest=await courseDigest(legacy.config.course.content);
+ for(const row of legacy.journal)if(row.type==='command')row.request.command.version=75;
+ const restored=await restoreCompetition(JSON.stringify(legacy));
+ expect(restored.snapshot().courseDigest).toBe(legacy.config.course.digest);
+ for(const id of ['alice','bob']){
+  expect(restored.roundSnapshot(id).pro.ball).toEqual(host.roundSnapshot(id).pro.ball);
+  expect(restored.roundSnapshot(id).pro.shot).toEqual(host.roundSnapshot(id).pro.shot);
+ }
+ expect((await restoreCompetition(restored.save())).snapshot()).toEqual(restored.snapshot());
+ expect((await importCourse(JSON.stringify(legacy.config.course))).digest).toBe(legacy.config.course.digest);
+ legacy.config.course.content.ruleset='unknown';legacy.config.course.digest=await courseDigest(legacy.config.course.content);
+ await expect(importCourse(JSON.stringify(legacy.config.course))).rejects.toThrow();
+});

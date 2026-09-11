@@ -1,3 +1,4 @@
+import {scheduleTennis, stepTennisVisit, validateTennis} from "./tennis-visits.js";
 import { stepChallengeCareer, validateChallengeCareer } from "./challenge-career.js";
 import { stepHelicopter, validateHelicopter } from "./helicopter.js";
 import { sceneryTreeAt } from "./scenery-trees.js";
@@ -1705,7 +1706,9 @@ export function update(g, dt, runResort = true) {
       if (v) hole.activePair = v.pair;
     }
   }
+  if (runResort) scheduleTennis(g, {connected, entrance: facilityEntrance, route});
   for (const v of [...g.guests, ...(g.pro ? [g.pro] : [])]) {
+    if (v.tennis && stepTennisVisit(g,v,{connected,leave:chooseService})) continue;
     if (runResort && !g.courseLocked && shouldBecomeAngry(v)) {
       for (const s of g.staff)
         if (isRefreshmentStaff(s) && s.target === v.id)
@@ -2107,6 +2110,7 @@ export function restore(raw) {
       throw Error("Invalid shot in save.");
   }
   for (const v of [...g.guests, ...(g.pro ? [g.pro] : [])]) {
+    validateTennis(g,v);
     if (
       v.wellRested !== undefined &&
       (typeof v.wellRested !== "boolean" || (v.pro && v.wellRested))
