@@ -2663,3 +2663,22 @@ uninterrupted outer-planner oracle: the caller stack setup and intervening
 return instructions are not executed. Both skill-bit-four score recalculation
 and score preservation are exercised. Full outer preparation, scratch-buffer
 provenance, observer effects and live application remain unfinished.
+
+### Direct target selection through automatic restoration (2026-09-11)
+
+`originalDirectAutomaticLaunch` extends the automatic launch boundary to target
+geometry (0x42365d). It uses current actor flags, skills and target; calculated
+heading, distance and curve replace stale planning copies. Short approaches
+publish the shared target landing and reset diagnostics; direct explicit
+targets retain those shared values. Long targets are rejected before launch
+effects because they require the physical route-search branch.
+
+`verify-original-auto-launch-middle.py --from-target --write-fixture` executes
+240 uninterrupted native cases through 0x425aca, with the existing controlled
+height and remark-effect boundaries. Final actor/partner state, seed, cache,
+landing, diagnostic fields, events and metadata writes match. The first fixture
+set inadvertently put every green-origin case far from its target; the putter
+coverage assertion caught that. Nearby green targets now exercise putts, while
+explicit long targets and non-green short approaches remain covered. Eleven
+related regression tests pass. This is not yet a complete outer planner: initial
+range/setup, long-shot composition, full remark behavior and live mapping remain.

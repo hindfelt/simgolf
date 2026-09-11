@@ -3,9 +3,11 @@ from pathlib import Path
 # Reuse emulator initialization and height/RNG hooks; do not run its fixture loop.
 setup=Path(__file__).with_name('verify-original-auto-scenery.py')
 exec(compile(setup.read_text().split('rng=random.Random(2002);rows=[]')[0],str(setup),'exec'))
-from_assessment='--from-assessment' in sys.argv
+from_target='--from-target' in sys.argv
+from_assessment='--from-assessment' in sys.argv or from_target
+from unicorn.x86_const import UC_X86_REG_EDI
 with_tail='--with-tail' in sys.argv or from_assessment
-for a,n in [(0x423b66,0x1fad),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50),(0x405710,0x4e)]:
+for a,n in [(0x42365d,0x24b6),(0x466ba0,0x10e),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50),(0x405710,0x4e)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 u.mem_write(0x4672d0,b'\xc3')
 events=[];middle_references={}
@@ -73,9 +75,12 @@ def run_middle(q):
   for off,key in [(0x3e,'attitude'),(0x1e,'abilityFlags'),(0xfc,'abilityValue'),(0xfa,'driverValue'),(0xfb,'ironValue'),(0xfd,'drawValue'),(0xfe,'fadeValue'),(0xff,'backspinValue')]:u.mem_write(0x577f00+off,bytes([p[key]&255]))
   u.mem_write(0x5682dc+actor['target']['x']*50+actor['target']['z'],bytes([p['targetFlags']]))
   for index,value in enumerate(p['directions']):write(sp+0xd8+index*4,value)
+ if from_target:
+  write(0x5a7270,s['landing']['x']);write(0x5a7278,s['landing']['z'])
+  u.reg_write(UC_X86_REG_EAX,int(p['explicitTarget']));u.reg_write(UC_X86_REG_EDI,actor['hole'])
  u.reg_write(UC_X86_REG_ESI,0);u.reg_write(UC_X86_REG_ESP,sp)
  stop=0x425aca if with_tail else 0x425372
- u.emu_start(0x423b66 if from_assessment else 0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
+ u.emu_start(0x42365d if from_target else 0x423b66 if from_assessment else 0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
  result_actor={name:u.mem_read(a,1)[0] for name,a in byte_fields.items()}
  result_actor.update({name:struct.unpack('<H',u.mem_read(a,2))[0] for name,a in word_fields.items()})
  result_actor.update(actorFlags=read(0x577f18)&0xffffffff,angularOffset=read(0x577ff4),target=actor['target'])
@@ -89,6 +94,7 @@ def run_middle(q):
  if from_assessment:
   result['postPreparationDraws']=result.pop('randomDraws')
   if result_actor['club']==13:result['samples']=0
+ if from_target:state['landing']=dict(x=read(0x5a7270),z=read(0x5a7278))
  if with_tail:result['shotClassOverrides']=[dict(code=code,shotClass=u.mem_read(0x576dc2+code*48,1)[0]) for code in [17,20]]
  return result
 rng=random.Random(2002);rows=[]
@@ -113,16 +119,24 @@ for i in range(240):
    heading=q['heading'],curve=q['curveArgument'],globalFlags=q['stateFlags'],worldFlags=0,difficulty=1,accuracySetting=1,level=q['conditionLevel'],
    driftMode=q['driftMode'],activeActor=q['activeActor'],variant=q['variant'],attitude=0,abilityFlags=0,abilityValue=2,
    driverValue=3,ironValue=3,drawValue=2,fadeValue=2,backspinValue=4,targetFlags=0,directions=[0]*32,dominantCode=0,dominantDirection=0,sampleX=0,sampleZ=0)
+ if from_target:
+  explicit=i%3==0
+  actor['actorFlags']=(actor['actorFlags']&~1)|0x10000000
+  actor['skillMask']&=~4
+  if not explicit or q.get('originTerrainCode')==1:actor['target']=dict(x=origin['x']+1+i%2,z=origin['z'])
+  q['planning'].update(explicitTarget=explicit,mode=i%4,cup=dict(actor['target']))
+  q['state']['landing']=dict(x=123,z=456)
  rows.append([q,run_middle(q)])
 name='original-auto-launch-finish' if with_tail else 'original-auto-launch-middle'
 if from_assessment:name='original-assessed-automatic-launch'
 module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()
 adapter=(root/'simgolf-reborn/scene/tests/helpers/original-auto-middle-map.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalAssessedAutomaticLaunch??module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=FROM_TARGET?module.originalDirectAutomaticLaunch:module.originalAssessedAutomaticLaunch??module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
 for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){const a=run(q,middleMap(q),middleEffects(q));if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q,a,e}));}
 console.log('240 uninterrupted '+LABEL+' runs match complete state, events, cache and RNG.');
-""".replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps(name))
+""".replace('FROM_TARGET',json.dumps(from_target)).replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps('original-direct-automatic-launch' if from_target else name))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
+ if from_target:name='original-direct-automatic-launch'
  fixtures=rows if from_assessment else rows[:60]
  (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(fixtures,separators=(',',':'))+'\n')

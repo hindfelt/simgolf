@@ -1203,3 +1203,11 @@ calculation, preserving shared seed/cache and metadata overrides. Six chained
 native scenarios (5,520 candidate trials) and ten related tests pass. The
 caller score buffer remains explicit scratch input; outer setup/provenance,
 full launch composition, observer effects and live integration remain open.
+
+F09 direct automatic launch (2026-09-11): connected target geometry and short
+approach directly through assessment, launch, reactions and final restoration.
+240 uninterrupted native runs from 0x42365d through 0x425aca match, including
+explicit targets, green-origin putts and shared landing/diagnostics behavior.
+Eleven related tests pass. Long targets explicitly require physical search;
+full long-shot composition, original remark effects and live integration remain
+unfinished. No deployment occurred.

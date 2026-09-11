@@ -1,5 +1,6 @@
 import {originalLaunchPreparation} from './original-launch-preparation.js';
 import {originalAutoPreparedLaunch} from './original-auto-prepared-launch.js';
+import {originalTargetSelection} from './original-target-selection.js';
 // From an already selected target/range through automatic launch restoration.
 // Planning settings are separate from current actor/shared state; the latter
 // supplies mutable fields so stale planning copies cannot replace them.
@@ -19,4 +20,20 @@ export function originalAssessedAutomaticLaunch(q,map,effects) {
  // This instrumentation counts the automatic middle/tail only. The final
  // seed, however, includes preparation and every later stage's random draws.
  return {...rest,postPreparationDraws:randomDraws};
+}
+
+// Start at target geometry for direct/short automatic shots. Long targets
+// require the physical route search before they can enter assessed launch.
+export function originalDirectAutomaticLaunch(q,map,effects) {
+ if(q.planning.plannerArgument!==-1)throw Error('Automatic launch requires the original automatic planner sentinel.');
+ const actor=q.state.actor;
+ const selected=originalTargetSelection({...q.planning,target:actor.target,
+  actorFlags:actor.actorFlags,skillMask:actor.skillMask,
+  terrainCode:map.terrainAt(q.planning.x>>10,q.planning.z>>10),
+  landing:q.state.landing,diagnostics:q.state.diagnostics},map);
+ if(selected.request.path==='search')throw Error('Long automatic target requires physical route search.');
+ return originalAssessedAutomaticLaunch({...q,
+  planning:{...q.planning,distance:selected.distance,heading:selected.heading,curve:selected.curve},
+  state:{...q.state,landing:selected.landing,diagnostics:selected.diagnostics,
+   actor:{...actor,target:selected.target,actorFlags:selected.actorFlags}}},map,effects);
 }
