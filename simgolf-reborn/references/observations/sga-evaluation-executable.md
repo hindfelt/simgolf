@@ -1275,3 +1275,33 @@ process or full planner call. Flight harness still supplies launch fields to
 the candidate loop; upstream assessment is explicit and the physical map can
 differ from launch assessment map. A unified map/actor adapter, target selection,
 -1 planner branch and live integration remain. No deployed behavior changes.
+
+
+### Shared original shot map access (2026-09-11)
+
+Added `original-shot-map.js` to expose one original terrain source to launch
+and physics callbacks: terrainAt, kindAt, shotClassAt, heightAt and slopeAt.
+Inputs are original 50×50 terrain/marker arrays, rebuilt directional/surface
+height caches and edge masks, original raw-height reader, runtime metadata
+reader and global flags. The adapter reuses originalCornerHeight with cache
+fallback and originalPhysicsHeight/Slope. Outside tile access reports terrain
+20; physics position validation remains in the original height helper.
+Metadata flags, painted tile flags and derived wall flags are kept separate.
+
+Startup metadata now exposes kind (signed byte +6) and shotClass (signed byte
++2), retaining the existing connectionSpread alias used for that same byte in
+map propagation. Tests verify these fields directly against all 23 executable
+records. Runtime metadata readers can still supply patched values.
+
+Six map/metadata tests pass: exact metadata bytes, marker/metadata separation,
+nonzero cached height/slope oracle samples, zero-cache raw-height fallback and
+all 150 saved nonflat original candidate trajectories through the shared map
+adapter. Cached-sample comparisons deliberately exclude zero cache values,
+whose original semantics are fallback rather than the fixture's stubbed zero.
+This is adapter integration evidence, not a newly executed whole-map rebuild
+oracle or live course mapping. Callers must rebuild derived arrays for the same
+map revision; the adapter does not guess invalidation or mutate course state.
+
+Launch/candidate map callbacks can now share original storage. Converting live
+browser courses/actor fields, target assessment, unresolved planner branch and
+full shared-map launch-to-flight verification remain before deployed parity.

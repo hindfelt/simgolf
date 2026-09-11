@@ -812,3 +812,9 @@ candidate motion with explicit cache/physical inputs. Sixty chained original
 launch-to-rest states match, alongside prior 1,000 launch/150 flight comparisons;
 nine regressions pass with midflight resume. Unified map/actor adapters, target
 selection, unresolved planning and live integration remain unfinished.
+
+F09 shared shot map (2026-09-11): added common launch/physics adapter using
+original metadata, directional height caches and edge masks. Six tests pass,
+including all 150 stored nonflat original trajectories and exact metadata bytes.
+Live browser map conversion, actor mapping, target assessment and unresolved
+planning remain open; caller must keep derived map data on the same revision.

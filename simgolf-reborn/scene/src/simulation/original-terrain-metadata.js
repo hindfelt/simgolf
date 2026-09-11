@@ -19,6 +19,8 @@ export function originalTerrainMetadata(code) {
     shape: rawMetadata[7],
     bounceCoefficient: (rawMetadata[0] << 24) >> 24,
     rollCoefficient: (rawMetadata[1] << 24) >> 24,
+    kind: (rawMetadata[6] << 24) >> 24,
+    shotClass: (rawMetadata[2] << 24) >> 24,
     connectionSpread: (rawMetadata[2] << 24) >> 24,
   };
 }

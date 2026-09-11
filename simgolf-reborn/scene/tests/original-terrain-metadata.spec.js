@@ -20,6 +20,8 @@ test("extracted terrain records match the supplied executable byte for byte", ()
     expect(entry.rawMetadata).toEqual(Array.from(raw.subarray(32)));
     expect(entry.clearanceCost).toBe(raw.readInt8(36));
     expect(entry.category).toBe(raw.readInt8(38));
+    expect(originalTerrainMetadata(entry.code).kind).toBe(raw.readInt8(38));
+    expect(originalTerrainMetadata(entry.code).shotClass).toBe(raw.readInt8(34));
     expect(entry.name).toBe(raw.subarray(0, raw.indexOf(0)).toString("ascii"));
   }
   expect(() => originalTerrainMetadata(23)).toThrow(/Unknown/);
