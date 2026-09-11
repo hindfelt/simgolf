@@ -32,5 +32,21 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COURSE_SCHEDULERS",
+        "class_name": "CourseScheduler"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "shared-course-scheduler-v1",
+      "new_sqlite_classes": [
+        "CourseScheduler"
+      ]
+    }
+  ]
 }

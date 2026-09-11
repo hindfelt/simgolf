@@ -2,6 +2,7 @@ import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
 import {createSharedCourse,getSharedCourse,listSharedCourses,setCourseMember,executeSharedCommand} from './shared-courses.js';
+export {CourseScheduler} from './course-scheduler.js';
 const TTL=30*24*60*60;
 async function session(request,env){
  const value=cookie(request,names.session);if(!value)return null;
@@ -128,7 +129,9 @@ async function handle(request,env){
   if(request.method==='POST'){
    await rateLimit(env.DB,'course-create:'+user.id,5,3600);
    const body=await readJson(request,1000);if(Object.keys(body).some(k=>k!=='name'))throw fail(400,'Only a course name can be supplied.');
-   return json(await createSharedCourse(env.DB,user.id,body.name),201);
+   const course=await createSharedCourse(env.DB,user.id,body.name);
+   if(!(await env.COURSE_SCHEDULERS.getByName(course.id).start(course.id)).ok)throw fail(503,'Course scheduling is unavailable.');
+   return json(course,201);
   }
  }
  const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members))?$/);
@@ -136,7 +139,9 @@ async function handle(request,env){
   const [,id,action]=shared;
   if(!action&&request.method==='GET'){
    await rateLimit(env.DB,'course-read:'+user.id,120,60);
-   return json(await getSharedCourse(env.DB,id,user.id));
+   const course=await getSharedCourse(env.DB,id,user.id);
+   if(!(await env.COURSE_SCHEDULERS.getByName(id).start(id)).ok)throw fail(503,'Course scheduling is unavailable.');
+   return json(course);
   }
   if(action==='commands'&&request.method==='POST'){
    await rateLimit(env.DB,'course-command:'+user.id,120,60);
