@@ -65,7 +65,7 @@ test('two accounts register once, view the roster and close registration on a ph
  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
  const [a,b]=clients;
  try{
-  await a.page.getByLabel('Tournament title',{exact:true}).fill('Players cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
+  await a.page.getByLabel('Tournament title',{exact:true}).fill('Players cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('combobox',{name:'Rounds',exact:true}).selectOption('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
   await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Players cup · 1/2 · registration',{exact:true}).click();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
   await a.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await a.page.getByText('Players cup · 2/2 · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Close registration',exact:true}).click();await expect(a.page.getByText('Players cup · 2/2 · locked',{exact:true})).toBeVisible();
   await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeVisible();
@@ -73,14 +73,35 @@ test('two accounts register once, view the roster and close registration on a ph
  }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
 });
 
-test('two browser entrants play isolated server rounds and resume an accepted shot',async({browser})=>{
+test('two browser entrants complete a tournament, resume shots and see final server standings',async({browser})=>{
+ test.setTimeout(240000);
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
  try{
-  for(const player of players){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();await page.getByText('Players cup · 2/2 · locked',{exact:true}).click();await page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(page.locator('#shared-status')).toContainText('Tournament · round 1/1');await expect(page.locator('[data-mode="build"]')).toBeHidden();}
+  for(const player of players){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();await page.getByText('Players cup · 2/2 · locked',{exact:true}).click();await page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(page.locator('#shared-status')).toContainText('Tournament · round 1/2');await expect(page.locator('[data-mode="build"]')).toBeHidden();}
   const [a,b]=clients,point=await a.page.evaluate(()=>{const g=window.__gameTest.getState(),green=g.holes[0].green;return window.__gameTest.project(green.x,green.z);});await a.page.mouse.click(point.x,point.y);
   await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBeGreaterThan(0);
   expect(await b.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBe(0);
   await a.page.reload();await expect(a.page.locator('#shared-status')).toContainText('Tournament');await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBeGreaterThan(0);
-  await a.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(a.page.locator('#standings-content')).toContainText('completed rounds');expect(errors).toEqual([]);
+  await a.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(a.page.locator('#standings-content')).toContainText('completed rounds');await a.page.getByRole('button',{name:'Close standings',exact:true}).click();
+  async function finish(page){
+   const deadline=Date.now()+180000;let lastAttempt='',attemptedAt=0;
+   while(Date.now()<deadline){
+    const state=await page.evaluate(()=>{const g=window.__gameTest.getState(),p=g.pro,h=g.holes.find(h=>h.id===p.holeId);return {phase:p.phase,strokes:p.strokes,ball:p.ball,target:window.__gameTest.project(h.green.x,h.green.z)};});
+    if(state.phase==='finished'){await expect(page.locator('#shared-status')).toContainText('Complete');return page.evaluate(()=>window.__gameTest.getState().pro.scorecard.reduce((n,h)=>n+h.strokes,0));}
+    const attempt=JSON.stringify([state.strokes,state.ball]);
+    if(state.phase==='address'&&(attempt!==lastAttempt||Date.now()-attemptedAt>3000)){await page.mouse.click(state.target.x,state.target.y);lastAttempt=attempt;attemptedAt=Date.now();}
+    await page.waitForTimeout(500);
+   }
+   throw Error('Tournament did not finish in three minutes: '+JSON.stringify(await page.evaluate(()=>window.__gameTest.getState().pro)));
+  }
+  const firstRound=await Promise.all(clients.map(c=>finish(c.page)));
+  for(const client of clients){
+   await client.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(client.page.locator('#standings-content')).toContainText('In progress');await client.page.getByRole('button',{name:'Close standings',exact:true}).click();
+   await client.page.getByRole('button',{name:'Next tournament round',exact:true}).click();await expect(client.page.locator('#shared-status')).toContainText('Tournament · round 2/2');
+   expect(await client.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBe(0);
+  }
+  const secondRound=await Promise.all(clients.map(c=>finish(c.page))),totals=firstRound.map((score,i)=>score+secondRound[i]);
+  for(const client of clients){await client.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(client.page.locator('#standings-content')).toContainText('Final results');const rows=client.page.locator('#standings-content table tr');await expect(rows).toHaveCount(3);for(let i=0;i<players.length;i++){const row=rows.filter({hasText:players[i].name});await expect(row.locator('td').nth(4)).toHaveText(String(totals[i]));await expect(row.locator('td').first()).not.toHaveText('—');}}
+  await a.page.setViewportSize({width:390,height:844});await a.page.screenshot({path:'/tmp/simgolfer-online-final-standings-phone.png',fullPage:true});expect(errors).toEqual([]);
  }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
 });

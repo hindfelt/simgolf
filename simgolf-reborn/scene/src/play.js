@@ -1285,7 +1285,7 @@ function refresh() {
         ? "Inspect / pan: click a building for status. Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
         : `${names[tool]} · ${RULES.costs[tool] ? `$${RULES.costs[tool]}${["tee", "green"].includes(tool) || isFacility(tool) ? " each" : " per tile"}` : "Free"} · Click to place${["fairway", "firm", "sand", "water", "path", "rough", ...EXTRA_TERRAIN].includes(tool) ? " or drag to paint" : ""}. Right-drag to pan; two fingers on touch.`
       : mode === "play"
-        ? "Click a landing target when Gary is ready. Balls bounce and roll; putting is automatic on the green."
+        ? `Click a landing target when ${game.pro?.name || "Gary"} is ready. Balls bounce and roll; putting is automatic on the green.`
         : mode === "staff"
           ? "Groundskeepers clear weeds; Turf Technicians repair turf. Soda Vendors walk to thirsty golfers and serve drinks."
           : mode === "guests"

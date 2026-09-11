@@ -779,7 +779,7 @@ dialog h2 {
   }
   #standings-content table {
     font-size: 12px;
-    table-layout: fixed;
+    table-layout: auto;
   }
   #standings-content th,
   #standings-content td {
@@ -788,6 +788,10 @@ dialog h2 {
   }
   #standings-content th:nth-child(2) {
     width: 25%;
+  }
+  #standings-content th {
+    overflow-wrap: normal;
+    white-space: nowrap;
   }
 }
 
