@@ -2198,3 +2198,27 @@ whole-search reproduction. Context/global-state mapping must be checked against
 an uninterrupted original route search, including all modes and boundary maps.
 The synchronous wrapper also needs integration with the game's execution model
 before live use. No deployment accompanies this change.
+
+### Complete physical route-search oracle (2026-09-11)
+
+`verify-original-full-physical-search.py` runs original 0x42245e through search
+publication with actual range arithmetic, prospective assessment and nested
+0x421b50 candidate calls through their planner and flight loops. Candidate
+landings and follow-up costs are no longer supplied. It retains shared RNG,
+strength cache and terrain metadata within each original search execution.
+
+Three controlled flat-course searches cover modes 2, 1 and 0 with 388, 1,564 and
+1,564 physical candidate calls respectively. The browser composition matches
+complete 441×6 score/distance/flag grids, winner, work, diagnostics, selected
+result and shared landing/RNG/cache/class state. Four physical-search/callback
+tests pass, including serialization replay and input immutability.
+
+The course here is uniform with an explicit original actor-0 launch profile;
+raw surface/height lookup and flat physics heights/slopes remain supplied.
+Observer/display records are disabled and UI yield is stubbed. Broader actors,
+terrain arrangements and boundary behavior are not established by these three
+cases. The full comparison takes seconds in the test environment, so the
+synchronous integration is not appropriate for the main UI loop without further
+scheduling/worker integration. Outer automatic shot planning and live gameplay
+use remain unfinished. This is a stronger integration check, not a declaration
+of complete game fidelity. No deployment is included.

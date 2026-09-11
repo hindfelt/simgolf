@@ -1059,3 +1059,10 @@ connected it to complete range/assessment search. Callback results match retaine
 original sequences; a complete mode-2 search runs/replays without supplied
 landings or costs. Seven tests pass. Whole-search original comparison, broader
 mode/map coverage and live integration remain unfinished.
+
+F09 complete physical-search oracle (2026-09-11): full original route search now
+executes range, candidate planning/flight, assessment, pruning and publication
+without supplied flight/cost results. Modes 2/1/0 match full tables and shared
+state over 388/1,564/1,564 candidate calls. Four targeted tests pass. More maps,
+boundaries and actors, responsive execution scheduling, outer automatic planner
+integration and live gameplay wiring remain unfinished.
