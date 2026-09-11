@@ -913,3 +913,26 @@ RNG with provided actor/target fields; 5,000 bounds, variations and resulting
 seeds match. Sixty output records retained; seven variation/base-launch tests
 pass, including zero-bound consumption and branch exclusions. Full application
 of variation, subsequent RNG/wind/shot-type effects and live composition remain.
+
+
+### Initial angular drift (2026-09-11)
+
+Recovered `0x424170–0x424283`, including random helper `0x405710`, in
+`original-launch-drift.js`. Modes below 2 draw uniform 0..100 minus 50, then
+reshape absolute magnitude: below 20 halve, below 40 subtract 10, otherwise
+double and subtract 50. Restore sign, multiply by five, shift left 16. Mode 1
+divides the result by three; modes 2/3 use zero without consuming RNG.
+Negative actor+0x3e amplifies by min(3,-attitude), divided by eight on terrain 1
+or three elsewhere. Accuracy reduction applies away from terrain 1 if actor
+class masked by 0xe0 is not 0x20 and skill bit 2 or actor flag 1 is present.
+Divide by (0x542bd0+2), then for 0x820344<2 subtract that quotient divided by
+(0x820344+2). Actor flag 0x4000000 further removes one third unless class-exempt.
+All divisions truncate toward zero; wrapped products match original operations.
+
+`verify-original-launch-drift.py` executes original block, random helper, sign/
+clamp and RNG code without stubs. 5,000 output offsets and seeds match; sixty
+fixtures retained. Eleven drift/variation/base-launch tests pass, including
+mode-based draw skipping, signed amplification saturation and class exemptions.
+Setting labels remain raw original fields rather than invented browser mappings.
+This precedes the club-specific overrides at 0x42429e and later launch effects;
+it is not the final angular offset and is not wired into deployed planning yet.

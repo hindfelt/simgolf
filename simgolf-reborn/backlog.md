@@ -733,3 +733,8 @@ F09 launch variation (2026-09-11): recovered initial modifier budget and seeded
 draw; 5,000 original comparisons and seven focused tests pass, preserving the
 zero-bound draw. Raw actor/map inputs remain explicit. Subsequent variation
 application, wind/special-shot effects and live planner composition remain open.
+
+F09 initial angular drift (2026-09-11): recovered original reshaped random offset
+and mode/actor/terrain reductions. All 5,000 x86 outputs and seeds match; 11
+launch tests pass. Club-specific drift overrides, later effects and full live
+planner composition remain before this can replace deployed launch behavior.
