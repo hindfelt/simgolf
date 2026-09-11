@@ -1154,3 +1154,9 @@ one explicit state snapshot. 240 uninterrupted native runs (0x424988–0x425372)
 match complete modeled state, events, cache and RNG; twenty-two related tests
 pass. Target-selection/launch-tail composition, original remark effects and live
 state mapping remain unfinished. No deployment.
+
+F09 automatic launch finish (2026-09-11): connected the automatic middle to
+shot shaping, recovery and final velocity normalization. 240 uninterrupted
+native runs through 0x425ab9 match state, events, cache and RNG; the 240 middle
+comparisons still pass, plus eight related tests. Target selection, epilogue
+state restoration, full remark effects and live mapping remain unfinished.

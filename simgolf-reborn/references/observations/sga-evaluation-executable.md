@@ -2521,3 +2521,24 @@ paired exchanges. Twenty-two related tests pass. This is stronger than chained
 isolated oracles but still stops before the common launch tail; target setup,
 full original remark effects and live original-state mapping remain unfinished.
 No production integration or deployment is claimed.
+
+### Automatic middle through final launch: 0x424988–0x425ab9
+
+`original-auto-launch-finish.js` feeds the connected automatic middle's current
+actor flags, angular offset, class, counter, club, reaction state and shared seed
+into the original shot-shape/recovery/normalization tail. The resulting velocity,
+heading, effective lie, flags, shot type and seed are returned alongside the
+middle's cache, actor/partner state and ordered events. Input remains immutable.
+
+`verify-original-auto-launch-middle.py --with-tail` now runs uninterrupted from
+the selected-club boundary to 0x425ab9, including the original out-of-line tail
+branches. It snapshots scenery references at 0x425372 before the native stack
+reuses the named-reference local for curve offset; the output preserves those
+earlier semantic references rather than mislabelling reused scratch memory.
+
+All 240 complete runs match across four final variation modes, three curve
+arguments, putters/non-putters and reaction effects. The original 240 middle-only
+comparisons still pass; eight related tests pass, including deterministic replay.
+This ends before metadata restoration and does not recover initial target/club
+selection or full remark effects. Those steps and live gameplay mapping remain
+unfinished. Nothing is deployed by this change.

@@ -3,13 +3,18 @@ from pathlib import Path
 # Reuse emulator initialization and height/RNG hooks; do not run its fixture loop.
 setup=Path(__file__).with_name('verify-original-auto-scenery.py')
 exec(compile(setup.read_text().split('rng=random.Random(2002);rows=[]')[0],str(setup),'exec'))
-for a,n in [(0x424988,0x9ea),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c)]:
+with_tail='--with-tail' in sys.argv
+for a,n in [(0x424988,0x118b),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 u.mem_write(0x4672d0,b'\xc3')
-events=[]
+events=[];middle_references={}
 byte_fields={'marker':0x577f82,'reaction':0x577f8c,'actorClass':0x577f20,'hole':0x577f29,'shotCounter':0x577f2a,'skillMask':0x577f21,'club':0x577f24,'elevationCounter':0x577f23}
 word_fields={'stateCode':0x577fb4,'profileIndex':0x577fbe,'conditionFlags':0x577f90,'usedClubs':0x577fa8}
 def remarks(u,a,size,data):
+ global middle_references
+ if a==0x425372:
+  sp=u.reg_read(UC_X86_REG_ESP)
+  middle_references=dict(scannedTile=read(sp+0x38),sceneryTile=read(sp+0x48),namedReference=read(sp+0x1c),pathHeading=read(sp+0x44))
  if a==0x4672d0:
   sp=u.reg_read(UC_X86_REG_ESP);who=read(sp+4);events.append(dict(actorId=who,kind=read(sp+8),value=read(sp+12)))
   if current['effect']=='marker':
@@ -42,6 +47,10 @@ def run_middle(q):
  for index,e in enumerate(s['cache']['entries']):
   write(0x5a3200+index*4,e['distance']);write(0x567278+index*4,e['verticalSpeed']);write(0x53ec30+index*4,e['speed'])
  write(0x5a8728,s['cache']['next']);u.mem_write(0x576df1,bytes([q['rollCoefficient']]))
+ if with_tail:
+  for a,v in [(0x577ff0,s['verticalSpeed']),(sp+0x2c,q['referenceSpeed']),(sp+0x18,q['modifier']),
+   (0x5a4440,0 if q['activeActor'] else 999),(0x5a3228,q['stateFlags']),(0x5a870c,q['driftMode'])]:write(a,v)
+  u.mem_write(0x5a1f30,bytes([q['variant']]));u.mem_write(0x578000,bytes([actor['recoveryValue']]))
  u.mem_write(0x570d38,bytes([terrain(x,z,actor['target'],q['targetTerrainCode']) for x in range(50) for z in range(50)]))
  marks=[0x100 if (x+z)%6==0 else 0 for x in range(50) for z in range(50)];marks[q['origin']['x']*50+q['origin']['z']]=q['originFlags']
  u.mem_write(0x53ba00,struct.pack('<2500H',*marks))
@@ -51,12 +60,17 @@ def run_middle(q):
  records=[dict(type=-1 if i%5==0 else q['record']['type'] if i%3==0 else 6 if i%2 else 7,x=(i%16)*3,z=(i//16)*3,value=q['record']['value']) for i in range(256)]
  for index,r in [(-1,dict(q['missingRecord'],x=0,z=0)),*enumerate(records)]:u.mem_write(0x58a708+index*16,struct.pack('<hhh',r['type'],r['x'],r['z']));write(0x58a710+index*16,r['value'])
  u.reg_write(UC_X86_REG_ESI,0);u.reg_write(UC_X86_REG_ESP,sp)
- u.emu_start(0x424988,0x425372,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==0x425372
+ stop=0x425ab9 if with_tail else 0x425372
+ u.emu_start(0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
  result_actor={name:u.mem_read(a,1)[0] for name,a in byte_fields.items()}
  result_actor.update({name:struct.unpack('<H',u.mem_read(a,2))[0] for name,a in word_fields.items()})
  result_actor.update(actorFlags=read(0x577f18)&0xffffffff,angularOffset=read(0x577ff4),target=actor['target'])
  cache=dict(next=read(0x5a8728),entries=[dict(distance=read(0x5a3200+i*4),verticalSpeed=read(0x567278+i*4),speed=read(0x53ec30+i*4)) for i in range(10)])
  state=dict(actor=result_actor,partner={name:u.mem_read(byte_fields[name]+256,1)[0] for name in ['actorClass','reaction']},seed=read(0x820454)&0xffffffff,cache=cache,speed=read(0x577fec),diagnostics=read(0x5a5b88)&0xffffffff,holeCounter=read(0x574524+actor['hole']*520),scannedTile=read(sp+0x38),sceneryTile=read(sp+0x48),namedReference=read(sp+0x1c),pathHeading=read(sp+0x44))
+ if with_tail:
+  result_actor['recoveryValue']=u.mem_read(0x578000,1)[0]
+  result_actor['stateCode']=struct.unpack('<h',u.mem_read(0x577fb4,2))[0]
+  state.update(middle_references,verticalSpeed=read(0x577ff0),heading=read(0x577fe8)&0xffffffff,lie=read(sp+0x14))
  return dict(state=state,events=events,randomDraws=draws,samples=read(sp+0x20))
 rng=random.Random(2002);rows=[]
 for i in range(240):
@@ -68,13 +82,18 @@ for i in range(240):
  if i%20==19:
   actor.update(hole=4,shotCounter=3,actorClass=0,reaction=0,profileIndex=0)
   q.update(otherProfileIndex=1,effect='none',heightBase=-4)
+ if with_tail:
+  actor['recoveryValue']=i%40
+  q['state'].update(verticalSpeed=500,heading=q['heading'])
+  q.update(referenceSpeed=1800,modifier=i%20-5,activeActor=bool(i%2),variant=i%4,stateFlags=i%4,driftMode=i%4)
  rows.append([q,run_middle(q)])
-module=(root/'simgolf-reborn/scene/src/simulation/original-auto-launch-middle.js').as_uri()
+name='original-auto-launch-finish' if with_tail else 'original-auto-launch-middle'
+module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()
 adapter=(root/'simgolf-reborn/scene/tests/helpers/original-auto-middle-map.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const {originalAutoLaunchMiddle}=await import(MODULE);const {middleMap,middleEffects}=await import(ADAPTER);
-for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){const a=originalAutoLaunchMiddle(q,middleMap(q),middleEffects(q));if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q,a,e}));}
-console.log('240 uninterrupted automatic launch middles match complete state, events, cache and RNG.');
-""".replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter))
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
+for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){const a=run(q,middleMap(q),middleEffects(q));if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q,a,e}));}
+console.log('240 uninterrupted '+LABEL+' runs match complete state, events, cache and RNG.');
+""".replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps(name))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
- (root/'simgolf-reborn/scene/tests/fixtures/original-auto-launch-middle.json').write_text(json.dumps(rows[:60],separators=(',',':'))+'\n')
+ (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(rows[:60],separators=(',',':'))+'\n')
