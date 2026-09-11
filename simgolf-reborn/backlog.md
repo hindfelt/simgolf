@@ -1010,3 +1010,9 @@ returned RNG/cache state. Sixty original chained cases replay in serialized
 seven-step slices; five tests pass. Zero-speed landing/RNG preservation verified
 against original code. Shared-map contiguous verification, search scheduling/
 shared-state integration and live wiring remain unfinished.
+
+F09 shared flat-map candidate evidence (2026-09-11): planner and full flight now
+verified through originalShotMap on identical terrain and markings for 60 chained
+original cases; 11 shared-map/trial tests pass. This closes separate-environment
+evidence for flat courses. Nonflat combined mapping, contiguous original candidate
+execution, search shared-state scheduling and live integration remain open.

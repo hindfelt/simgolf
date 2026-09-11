@@ -2022,3 +2022,24 @@ landing globals (12345,23456). All 150 trajectory comparisons and this check pas
 The owning search scheduler must still apply shared cache/RNG and metadata
 patches across trials. Shared-map contiguous planner/flight evidence and live
 search/gameplay integration remain unfinished. No deployment is included.
+
+### Shared flat map for exact planning and flight (2026-09-11)
+
+`verify-original-shared-map-candidate.py` chains the original exact planner and
+candidate loop with the same terrain grid and placement marks for both. Planner
+raw heights and candidate heights/slopes are flat zero; wall masks are zero.
+The browser comparison uses one originalShotMap instance: its planning interface
+feeds exact planning and its physics interface feeds every flight step. Original
+terrain kinds/classes remain the planner metadata, while bounce/roll coefficients
+are 3/0 for each terrain code in both flight implementations.
+
+All 60 chained cases match complete launch output/cache, final position, landing,
+RNG and step count. The reused harnesses also pass their 1,000 launch and 150
+mixed-flight comparisons plus the zero-speed preservation check. Eleven shared-map,
+map-adapter and resumable-trial tests pass, including serialized midflight replay.
+
+This closes the previously documented use of different environments for flat
+candidate tests. It remains chained rather than one uninterrupted native candidate
+execution, and it does not establish combined nonflat planning/flight behavior.
+Original state restoration across the full planner call, shared trial scheduling,
+search integration and live gameplay use remain unfinished. No deployment.
