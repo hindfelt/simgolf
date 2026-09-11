@@ -26,3 +26,11 @@ export function originalCandidateTrialResult(trial) {
   cache:{next:trial.launch.cache.next,entries:trial.launch.cache.entries.map(e=>({...e}))},
   shotClassOverrides:[{code:17,shotClass:8},{code:20,shotClass:8}]};
 }
+
+// Start the next speculative shot from shared results, not stale actor RNG or
+// terrain metadata. Keep the map itself unchanged for deterministic replay.
+export function originalSharedCandidateTrial(q,shared,map,physical) {
+ const classes=new Map(shared.shotClassOverrides.map(p=>[p.code,p.shotClass]));
+ const planning={...map,shotClassAt:code=>classes.has(code)?classes.get(code):map.shotClassAt(code)};
+ return originalCandidateTrial({...q,seed:shared.seed},shared.cache,planning,physical,shared.landing);
+}

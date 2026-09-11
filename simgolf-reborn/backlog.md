@@ -1034,3 +1034,9 @@ landing, final RNG, independent cache snapshot and original planner epilogue
 class changes (17/20 → 8). Thirty uninterrupted original calls verify those
 metadata outputs; five targeted tests pass. Applying this state across search
 trials and live integration remain unfinished.
+
+F09 sequential candidate shared-state input (2026-09-11): next trials now consume
+prior landing, RNG, cache and terrain-class overrides through a nonmutating
+planning view. Thirty sequential full original candidate calls match; six tests
+pass with serialization between slices/trials. Full search callback integration,
+nonflat contiguous execution and live wiring remain unfinished.

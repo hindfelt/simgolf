@@ -2107,3 +2107,26 @@ This defines completed cross-trial outputs; the owning search still must apply
 them before evaluating its next candidate and refresh metadata access accordingly.
 Contiguous nonflat verification, search scheduling/state integration and live
 use remain unfinished. No deployment is included.
+
+### Sequential candidate state propagation (2026-09-11)
+
+`originalSharedCandidateTrial` starts a trial from completed shared state. It
+uses the shared random seed rather than the caller's stale launch seed, supplies
+the shared cache and previous landing, and overlays terrain-class updates for
+planner reads without altering the map's metadata source. This ensures the next
+range calculation sees the previous planner's final metadata before any new
+setup overrides. The golfer inputs remain isolated from speculative movement.
+
+`verify-original-shared-candidate-trials.py` reuses the uninterrupted original
+candidate harness for 30 sequential calls. It carries actual returned RNG,
+landing, cache and class overrides into each following call while changing the
+supplied shot inputs. The original cache remains in emulator memory; the other
+shared fields are explicitly restored to their prior returned values during
+harness input setup. All shared outputs match. This verifies controlled shared
+state propagation, not an uninterrupted whole route-search invocation.
+
+Six targeted trial tests pass, including retained sequential original fixtures
+run in serialized seven-step slices with shared state serialized between trials,
+input isolation and unchanged map metadata. Integrating this callback with the
+complete search, contiguous nonflat verification and live use remain unfinished.
+No deployment is included.
