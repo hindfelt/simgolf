@@ -2901,3 +2901,11 @@ One native comparison corrected a low-byte instruction detail: the flag0x20000 b
 The next voice-lookup boundary is now identified directly:0x46c140 reads the signed profile index from actor offset0xb6, selects the560-byte record, then returns the complement of bit7 in profile byte at0x4d5061+index*560. It does not itself mutate the actor. Current comparison fixtures deliberately retain explicit voice-call behavior; integrate the recovered query only after supplying those original profile bytes in the shared state schema and updating contiguous comparisons to execute the real helper.
 
 The full routine still needs entry/display/history composition, remaining helpers and post-outcome social/display processing. Live browser reactions and fee mapping are not certified by this contiguous subrange.
+
+### Voice lookup integrated into adjustment selection (2026-09-11)
+
+`original-voice-variant.js` implements the complete0x46c140 helper with signed profile indexing and complement-bit7 selection from the original profile byte. The selection stage reads explicit `profileVoiceBytes` instead of asking an effect resolver for a made-up lookup result. Missing metadata rejects. Lookup events remain in the ordered trace, but the read-only query cannot mutate speculative actor state through a resolver.
+
+`verify-original-voice-variant.py` executes768 cases: every possible byte for profile indices-1,0,1. The selection and contiguous adjustment verifiers now load and execute the real helper, populate original profile bytes, and no longer overwrite its return or actor state. Both1320-case comparisons still match; regenerated fixtures contain the required metadata. Ten combined tests pass, including read-only query behavior, nonzero typed-array offsets and missing-byte rejection.
+
+This replaces the prior controlled voice boundary in the selection/adjustment pipeline. Sound/presentation and secondary actions remain explicit unresolved state effects. Original profile data still needs to be supplied by the general live snapshot adapter; no browser avatar-to-original-profile equivalence is assumed.

@@ -22,9 +22,10 @@ test('required calls and original profile records cannot be silently omitted',()
  q.kind=18;new DataView(q.state.actor.buffer).setInt16(0xa6,8,true);q.state.profiles={};
  expect(()=>originalRemarkSelection(q,resolve(q))).toThrow('Missing original profile');
 });
-test('presentation coordinates are captured before the voice call changes speculative state',()=>{
+test('voice lookup reads original profile data without invoking a mutable resolver',()=>{
  const q=decode(rows[6][0]);q.mutate=true;
- const got=originalRemarkSelection(q,resolve(q));
+ const calls=[];const got=originalRemarkSelection(q,(event,state)=>{calls.push(event.address);return resolve(q)(event,state);});
+ expect(calls).not.toContain(0x46c140);
  expect(got.events[1].args.slice(1,3)).toEqual([1024,3072]);
- expect(new DataView(got.state.actor.buffer).getInt32(0,true)).toBe(2048);
+ expect(new DataView(got.state.actor.buffer).getInt32(0,true)).toBe(1024);
 });

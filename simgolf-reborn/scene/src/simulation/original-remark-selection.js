@@ -1,3 +1,4 @@
+import {originalVoiceVariant} from './original-voice-variant.js';
 // Original per-request dispatch at 0x467502–0x467d72. Calls remain explicit
 // speculative-state boundaries; no guessed presentation-only implementations.
 export function originalRemarkSelection(q,resolve){
@@ -14,7 +15,8 @@ export function originalRemarkSelection(q,resolve){
  const flag=mask=>!!(view().getUint32(0x10,true)&mask);
  const speak=(base,range=0,transform)=>{
   const x=view().getInt32(0,true),z=view().getInt32(4,true);
-  const voice=call(0x46c140,[q.actorId]);
+  events.push({address:0x46c140,args:[q.actorId]});
+  const voice=originalVoiceVariant(state.actor,state.profileVoiceBytes);
   call(0x40c1f0,[transform?transform(voice):(voice+base)|0,x,z,range]);
  };
  const fixedSpeak=(id,range=0)=>call(0x40c1f0,[id|0,view().getInt32(0,true),view().getInt32(4,true),range]);

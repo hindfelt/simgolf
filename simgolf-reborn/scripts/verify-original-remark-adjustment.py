@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier'
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32)
 u.mem_map(0x400000,0x200000);u.mem_map(0x100000,0x4000);u.mem_map(0x820000,0x1000)
-for a,n in [(0x467502,0xb68),(0x469080,0xdd),(0x466a20,0x19),(0x466a00,0x20),(0x45ba70,0x60),(0x4b9800,8),(0x4a57a0,0x27)]:
+for a,n in [(0x467502,0xb68),(0x469080,0xdd),(0x46c140,0x2c),(0x466a20,0x19),(0x466a00,0x20),(0x45ba70,0x60),(0x4b9800,8),(0x4a57a0,0x27)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 def put(a,v,fmt='<I'):u.mem_write(a,struct.pack(fmt,v))
 def get(a,fmt='<I'):return struct.unpack(fmt,u.mem_read(a,struct.calcsize(fmt)))[0]
@@ -16,13 +16,13 @@ def invalid(u,access,address,size,value,data):
  print('invalid',hex(address),'at',hex(u.reg_read(UC_X86_REG_EIP)),flush=True);return False
 u.hook_add(UC_HOOK_MEM_INVALID,invalid)
 events=[];effectMutation=False
-for address in (0x447a30,0x46c140,0x40c1f0,0x4a0000):u.mem_write(address,b'\xc3')
+for address in (0x447a30,0x40c1f0,0x4a0000):u.mem_write(address,b'\xc3')
 def hook(u,a,size,data):
  if a in (0x46c140,0x40c1f0,0x4a0000):
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[get(sp+4+j*4,'<i') for j in range(4 if a==0x40c1f0 else 1)]))
   if effectMutation and a==0x40c1f0:put(0x577fbe,1,'<h');put(0x577f25,99,'<B')
   if effectMutation and a==0x4a0000:put(0x577f26,88,'<B')
-  u.reg_write(UC_X86_REG_EAX,q['voice'] if a==0x46c140 else 0)
+  if a!=0x46c140:u.reg_write(UC_X86_REG_EAX,0)
  if a==0x469075:u.emu_stop()
  if a==0x447a30:
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[get(sp+4+j*4) for j in range(5)]))
@@ -39,6 +39,7 @@ for i in range(1320):
  struct.pack_into('<h',a,0xb6,0);q['state']['actor']=list(a)
  q['voice']=i%2;q['voiceBase']=rng.randrange(16)
  q['state']['profiles']={'0':rng.randrange(8),'1':rng.randrange(8)};q['state']['holeBytes']={'0:1':i%2}
+ q['state']['profileVoiceBytes']={'0':rng.randrange(256),'1':rng.randrange(256)}
  q['actorId']=0;q['selectedActorId']=i%2;q['effectMutation']=i%3==0
  before=bytearray(a);before[0x18]=rng.choice([0,1,0x40]);q['before']=list(before)
  s=q['state']
@@ -48,6 +49,7 @@ for i in range(1320):
  u.mem_write(0x577f08,bytes(a))
  put(0x583434,i%2,'<B')
  for k,v in s['profiles'].items():put(0x4d5060+int(k)*560,v,'<B')
+ for k,v in q['state']['profileVoiceBytes'].items():put(0x4d5061+int(k)*560,v,'<B')
  for address,value in [(sp+0x128,kind),(sp+0x12c,q['value']&0xffffffff),(sp+0x18,q['delta']&0xffffffff),(0x542c04,q['reactionMode']),(0x820344,q['difficulty']),(0x59d208,q['globalFlags']),(0x820454,s['seed']),(0x542c14,s['worldDirty'])]:put(address,value)
  for address,value in [(0x574658+h,s['holeTotal']&65535),(0x5745d8+h+kind*2,s['remarkCount']),(0x57466c+h+kind*2,s['remarkValue']),(0x53ba00+idx*2,s['tileFlags'])]:put(address,value,'<H')
  for address,value in [(0x570d38+idx,q['terrainCode']),(0x577254+idx,s['tileGrowth']),(0x5a4dc0+idx,s['positive']),(0x56b234+idx,s['negative'])]:put(address,value,'<B')
@@ -57,7 +59,7 @@ for i in range(1320):
  u.emu_start(0x467502,0x46806a,count=2500);end=u.reg_read(UC_X86_REG_EIP);assert end in (0x46806a,0x469075)
  delta=u.reg_read(UC_X86_REG_EBX);delta=delta if delta<2**31 else delta-2**32
  result=dict(state=dict(actor=list(u.mem_read(0x577f08,256)),seed=get(0x820454),holeTotal=get(0x574658+h,'<h'),remarkCount=get(0x5745d8+h+kind*2,'<H'),remarkValue=get(0x57466c+h+kind*2,'<H'),tileFlags=get(0x53ba00+idx*2,'<H'),tileGrowth=get(0x577254+idx,'<B'),worldDirty=get(0x542c14,'<i'),positive=get(0x5a4dc0+idx,'<B'),negative=get(0x56b234+idx,'<B')),delta=delta,randomDraws=0 if end==0x469075 else 1,next='return' if end==0x469075 else 'continue',events=events)
- result['state']['profiles']=s['profiles'];result['state']['holeBytes']=s['holeBytes']
+ result['state']['profileVoiceBytes']=s['profileVoiceBytes'];result['state']['profiles']=s['profiles'];result['state']['holeBytes']=s['holeBytes']
  result['selectedDelta']=get(sp+0x18,'<i') if end!=0x469075 else 0
  rows.append([q,result])
 module=(root/'simgolf-reborn/scene/src/simulation/original-remark-adjustment.js').as_uri()
