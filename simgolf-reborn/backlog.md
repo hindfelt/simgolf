@@ -1079,3 +1079,10 @@ results and disposal. Six original search fixtures survive the snapshot boundary
 Chrome tests verify continued animation frames, cancellation and error recovery.
 Three tests and production build pass. Live caller integration and final worker
 production-bundle verification remain open; planner is not yet used by gameplay.
+
+F09 worker result application guard (2026-09-11): added coordinator that rejects
+stale input/results and cancelled/superseded work before synchronous application.
+Seven coordinator/real-worker tests pass, covering course/ball/RNG changes,
+late cancelled responses and error recovery. Live game still uses the provisional
+planner; original coordinate/actor adapter and authoritative revision/application
+wiring remain unfinished.

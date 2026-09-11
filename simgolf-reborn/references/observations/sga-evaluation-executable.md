@@ -2265,3 +2265,25 @@ The live app does not import this client yet, so that build is not evidence that
 the final production worker chunk has been wired or exercised. Gameplay caller,
 production worker integration and outer automatic planner remain unfinished.
 No deployment is included.
+
+### Worker result application guard (2026-09-11)
+
+`original-search-coordinator.js` adds the owning asynchronous boundary around the
+worker client. It rejects stale snapshots before dispatch, checks both request
+generation and authoritative revision after completion, and synchronously calls
+apply only after those checks. Cancellation/disposal invalidates generations so
+even an uncooperative late result cannot commit. Worker errors propagate without
+applying a partial target or shared-state update.
+
+The caller's revision token must represent all search inputs, including course,
+actor/ball and shared RNG/cache, not just the existing game construction revision.
+The coordinator deliberately does not guess that token or mutate the live game.
+Inspection confirms chooseTarget still calls the provisional planShotWith with
+browser-native positions and rules; native original-state mapping remains needed.
+
+Seven tests pass: coordinator cases cover course, ball and RNG token changes,
+stale initial input, response tag mismatch, out-of-order cancelled completion,
+disposal and errors; real Chrome worker tests retain original results while
+animation frames continue and verify cancellation/recovery. Actual live revision
+construction, coordinate/actor snapshot adapter, result application and outer
+original planner remain unfinished. No deployment is included.
