@@ -45,6 +45,6 @@ export function originalDesignPass({tee,green,teeHeight,greenHeight,flags=0,plan
   const reachedCup=last.x===green.x && last.z===green.z;
   const routeMeasure=segments.reduce((sum,s)=>sum+originalRouteSegment(s.origin,s.targetTile),0);
   return {firstLanding,landings,segments,last,stop,reachedCup,suggestedPar,routeMeasure,
-    length:reachedCup?Math.trunc(routeMeasure/4):0,
+    length:reachedCup?(routeMeasure<<16)>>16:0,
     geometry:originalDesignGeometry({tee,green,firstLanding,routeMeasure,teeHeight,greenHeight,flags})};
 }

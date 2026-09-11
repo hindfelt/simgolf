@@ -561,3 +561,33 @@ vectors. All match; 97 oracle vectors are committed for ordinary regression
 runs. Ten projection/follow-up/landing-score tests pass. This verifies isolated
 initialized-table behavior, not a full original process snapshot. Next step is
 the complete terrain-sampling route assessment using these projections.
+
+### Complete prospective-route assessor and conversion correction (2026-09-11)
+
+Reconstructed 0x421450–0x42186f as `originalRouteAssessment`, using original
+heading, distance and projection helpers. It samples straight/draw/fade paths,
+near-target terrain, obstacle-kind 13 costs, excluded terrain, adjacent classes
+near tile edges, and a separate straight midpoint obstacle count. Green terrain
+code 1 has its class temporarily treated as zero without mutating shared metadata.
+The assessor now supplies actual costs to the reconstructed follow-up selector
+in an integration regression; the browser planner remains unchanged.
+
+`verify-original-route-assessment.py` executes the complete original routine and
+all math/bounds callees, with the original initialized projection table and a
+supplied terrain map. No part of the assessment is stubbed. All 1,000 randomized
+straight/curved assessments match. Forty original outputs plus their map are
+committed as a normal regression fixture. Fourteen assessment/design/follow-up
+tests pass. Border/padded-map behavior still requires caller-supplied original
+terrain data; this is not an adapter for browser terrain IDs.
+
+**Correction to earlier design-pass length notes:** 0x51eb851f high-product with
+arithmetic shift 3 implements division by 25, not 100. Thus 0x4135f7 multiplies
+routeMeasure by 25 and divides by 25, storing the low signed 16-bit result; it
+does NOT divide routeMeasure by four. Corrected the helper and tests (a route
+measure of 250 stores length 250). Independently executed that conversion on
+10,005 values, including signed-word boundaries. This supersedes the earlier
+trunc(routeMeasure / 4) claim. In the assessor, the reachable sample count is
+min(rounded tile distance, trunc(range / 25) + 1), also using this divisor.
+
+Full candidate-shot simulator 0x421b50, search orchestration, spread flags and
+live original-map adapters remain required before replacing the browser planner.

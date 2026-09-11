@@ -638,3 +638,10 @@ table initializer, reconstructed integer projection/interpolation and verified
 10,081 original x86 vectors. Ten projection/follow-up/landing tests pass. This
 supplies the projection dependency for original route assessment; the complete
 assessment and full live planner integration remain unfinished.
+
+F09 complete route assessment (2026-09-11): implemented original straight/curved
+terrain sampling and connected it to follow-up selection in regression coverage.
+Matched 1,000 complete original x86 assessments. This exposed and corrected the
+earlier design-length conversion (/25, not /100); verified 10,005 original length
+stores. Fourteen focused checks pass. Candidate-shot simulation and full search/
+map integration still remain before changing the deployed planner.

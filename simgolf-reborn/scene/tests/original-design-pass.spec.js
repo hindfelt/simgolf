@@ -12,7 +12,7 @@ test('first landing pass is separate; full-skill segments use snapped tile centr
  expect(calls.map(q=>[q.actorId,q.skillMask,q.shot])).toEqual([[154,3,0],[154,7,0],[154,7,1]]);
  expect(calls[2].from).toEqual(fixed(15,10));
  expect(result.firstLanding).toEqual({x:15,z:15});expect(result.stop).toBe('cup');
- expect(result.routeMeasure).toBe(250);expect(result.length).toBe(62);expect(result.suggestedPar).toBe(4);
+ expect(result.routeMeasure).toBe(250);expect(result.length).toBe(250);expect(result.suggestedPar).toBe(4);
 });
 test('unplayable landing stops before counting its segment',()=>{
  const {result,calls}=run([fixed(15,10)],()=>({code:20,shotClass:2}));
@@ -40,11 +40,11 @@ test('cached redraw rejects an exhausted cache rather than inventing a landing',
 });
 test('the fifth shot can still reach the cup and produce length',()=>{
  const {result}=run([fixed(12,10),fixed(14,10),fixed(16,10),fixed(18,10),fixed(20,10)]);
- expect(result.reachedCup).toBe(true);expect(result.length).toBe(62);
+ expect(result.reachedCup).toBe(true);expect(result.length).toBe(250);
  expect(result.suggestedPar).toBe(7);expect(result.segments).toHaveLength(5);
 });
 test('final coordinate check runs even when cup tile has unplayable terrain',()=>{
  const {result}=run([fixed(15,10),fixed(20,10)],p=>({code:0,shotClass:p.x===20?2:1}));
  expect(result.stop).toBe('unplayable');expect(result.reachedCup).toBe(true);
- expect(result.segments).toHaveLength(1);expect(result.length).toBe(31);
+ expect(result.segments).toHaveLength(1);expect(result.length).toBe(125);
 });
