@@ -929,3 +929,8 @@ F09 scored landing composition (2026-09-11): landing review and follow-up
 assessment now compose with cumulative score and trial metadata. 1,000 contiguous
 original cases including ordered assessor calls and six tests pass. Follow-up
 cost simulation, sample/pass orchestration and live integration remain unfinished.
+
+F09 eligible-option batch (2026-09-11): composed repeated trial dispatch, landing
+review, follow-up scoring and winner update with ordered state propagation.
+1,000 contiguous original batches and ten tests pass. Candidate physics/cost
+callbacks, multi-pass search orchestration and live integration remain unfinished.

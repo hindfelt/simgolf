@@ -1720,3 +1720,22 @@ range, shape and flag is captured independently. All 1,000 score/state outputs
 and ordered call lists match. Forty fixtures and six combined-review tests pass.
 This validates orchestration and metadata propagation, not complete follow-up
 simulation or a full route-search loop. Those and live integration remain open.
+
+### Complete eligible-option trial batch (2026-09-11)
+
+`original-route-batch.js` composes dispatch, landing review, follow-up scoring and
+winner updates for one eligible option, 0x422bb5–0x42313e. Each batch starts its
+sample score and good-landings count at zero, carries follow-up state between
+trials, preserves center-only work increments, and adds the completed batch to
+the option's prior score. Winning metadata uses the final trial landing/flags,
+as the original block does. Simulation and assessment callbacks execute in order
+so their owning RNG/cache state can be propagated deterministically.
+
+`verify-original-route-batch.py` runs this contiguous original loop for 1,000
+batches of two/four/eight trials. Candidate simulation supplies varying landings;
+follow-up assessment supplies costs. Every simulation/assessment call is captured
+in order, and all output scores, winner fields, work, counters, flags and intended
+remaining distances match. Forty fixtures and ten batch/scoring/winner tests
+pass. This verifies loop orchestration with supplied physics outputs, not a full
+original candidate simulation or multi-pass route search. Those, state ownership
+and live integration remain unfinished. No deployment.
