@@ -653,3 +653,27 @@ branch and clamp callee on 5,000 downward-contact cases. Every rebound matches.
 Eleven candidate bounce/ground/flight tests pass. Subsequent actor collision flags,
 random rebound changes, slope response and final stop/restore lifecycle remain
 outside this wrapper and are required for the complete candidate simulator.
+
+### Candidate post-bounce flags, slopes and randomness (2026-09-11)
+
+Reconstructed 0x4221d7–0x4223e4 as `originalCandidateImpact`. Pending bit 0x100
+reverses heading, clears itself and randomizes speed; professional golfers scale
+that variation by unsigned luck byte +0x101 plus five. Bit 0x80 halves speed,
+clears itself and sets 0x100 for the next contact. Imagination adjusts heading
+from a cross slope and adjusts horizontal/vertical speed from two clamped forward
+samples. Terrain 17 stops motion except at boundaries or its normal-mode marked
+centre exception. Terrain 12 at speed > 256 away from boundaries applies a
+seeded angular deflection.
+
+The helper uses the existing original RNG and returns its updated state/draw
+count explicitly. Zero-bound randomization still advances the LCG. Its currently
+validated entering speed domain is 0–32767; broader signed/16-bit-bound cases
+must be handled if reached by the complete simulator. Slope inputs are original
+helper outputs, not browser gradients.
+
+`verify-original-candidate-impact.py` executes the complete original block,
+original clamp, RNG and float conversion instructions with supplied slope-helper
+results. All 5,000 speed/heading/vertical/flag outputs and RNG states match.
+Nine impact/bounce tests pass. Airborne obstacle detection, launch selection,
+map/slope adapters and the full save/simulate/restore lifecycle remain before
+integrating complete original candidate simulation.

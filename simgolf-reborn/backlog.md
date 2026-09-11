@@ -664,3 +664,10 @@ overrides and reused original rebound arithmetic. Matched 5,000 original x86
 contact cases; eleven candidate bounce/ground/flight tests pass. Post-contact
 flags, random/slope responses and simulator lifecycle remain before full route
 planning can use these components in the live game.
+
+F09 candidate post-bounce response (2026-09-11): reconstructed collision-flag
+transitions, professional luck scaling, slope effects and terrain stopping/random
+turns with explicit original RNG state. Matched 5,000 original x86 outputs and
+RNG states; nine impact/bounce checks pass. Full simulator lifecycle, airborne
+obstacles and launch/map adapters remain open. Explicit randomness supports the
+future authoritative multiplayer/replay architecture tracked under A01–A05.
