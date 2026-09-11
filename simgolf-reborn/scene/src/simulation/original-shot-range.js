@@ -5,7 +5,7 @@ export function originalShotRange({actorId,skillMask,difficulty,level,surface,
   shot,professional,abilityFlags,power,longDrive,boost,lengthBonus,shotClass}) {
   const integer=(n,min,max)=>Number.isInteger(n)&&n>=min&&n<=max;
   if(!integer(actorId,0,255)||!integer(skillMask,0,255)||!integer(difficulty,0,3)||
-    !integer(level,-128,127)||!integer(surface,0,127)||!integer(shot,0,127)||
+    !integer(level,-128,127)||!integer(surface,0,127)||!integer(shot,0,255)||
     typeof professional!=='boolean'||!integer(abilityFlags,0,65535)||
     !integer(power,0,255)||!integer(longDrive,0,255)||!integer(boost,-128,127)||
     !integer(lengthBonus,0,100)||!integer(shotClass,-128,127))

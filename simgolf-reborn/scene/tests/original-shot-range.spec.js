@@ -18,3 +18,7 @@ test('professional long-drive bonus applies only on the effective zero lie',()=>
  expect(originalShotRange({...pro,shot:1})).toBe(205);
  expect(originalShotRange({...pro,lengthBonus:4})).toBe(330);
 });
+test('range accepts the whole original shot-counter byte',()=>{
+ expect(originalShotRange({...input,shot:255})).toBe(originalShotRange({...input,shot:1}));
+ expect(()=>originalShotRange({...input,shot:256})).toThrow();
+});

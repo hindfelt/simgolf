@@ -28,7 +28,7 @@ def run(q):
  return struct.unpack('<i',struct.pack('<I',u.reg_read(UC_X86_REG_EAX)))[0]
 rng=random.Random(2002);rows=[]
 for _ in range(5000):
- q=dict(actorId=rng.choice([0,151,152,154]),skillMask=rng.randrange(8),difficulty=rng.randrange(4),level=rng.randrange(-5,9),surface=rng.randrange(10),shot=rng.randrange(6),professional=bool(rng.randrange(2)),abilityFlags=rng.randrange(4),power=rng.randrange(16),longDrive=rng.randrange(16),boost=rng.randrange(-2,6),lengthBonus=rng.randrange(5),shotClass=rng.randrange(-2,6))
+ q=dict(actorId=rng.choice([0,151,152,154]),skillMask=rng.randrange(8),difficulty=rng.randrange(4),level=rng.randrange(-5,9),surface=rng.randrange(10),shot=rng.randrange(256),professional=bool(rng.randrange(2)),abilityFlags=rng.randrange(4),power=rng.randrange(16),longDrive=rng.randrange(16),boost=rng.randrange(-2,6),lengthBonus=rng.randrange(5),shotClass=rng.randrange(-2,6))
  rows.append([q,run(q)])
 if '--write-fixture' in __import__('sys').argv:
  fixture=root/'simgolf-reborn/scene/tests/fixtures/original-shot-range.json'

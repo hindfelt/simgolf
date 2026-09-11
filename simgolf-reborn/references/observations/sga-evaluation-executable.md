@@ -1925,3 +1925,30 @@ These runs still supply range returns, candidate landings and follow-up costs.
 Observer UI is disabled and the UI yield is stubbed as documented for the search
 body. Actual range/physical/assessment composition, complete automatic shot
 planning and live use remain open. No deployment is included.
+
+### Real range arithmetic in route search (2026-09-11)
+
+`originalRangedRouteSearch` replaces both supplied range results with
+`originalShotRange`. It derives surface from the origin tile, resolves effective
+lie metadata (including special-actor surface override), and uses the actor
+skill mask, professional status and ability flags alongside explicit range
+attributes. The next calculation uses the temporary counter from preparation;
+subsequent search follow-up logic receives the original counter. Range-specific
+level/difficulty inputs remain explicit because the original planner uses
+several differently located level/difficulty values.
+
+`verify-original-ranged-route-search.py` executes the original entry-to-result
+search with real 0x4219e0 range arithmetic, supplying only its terrain lookup
+at 0x40bc90. Candidate outcomes and assessment costs remain supplied. Thirty
+whole searches with actor 0 match full tables, final result and ordered candidate/
+assessment calls; the first retained fixture starts at shot 255 and exercises
+next-shot wrap to zero. Broader actor IDs remain covered by the independent
+range oracle rather than this whole-search oracle.
+
+The range validator previously rejected counters above 127 despite the original
+unsigned byte usage. It now accepts 0–255. The 5,000-case range oracle was
+expanded to that whole domain and its saved fixtures regenerated; all match.
+Ten targeted range/search tests pass, and the three integrated tests pass again
+after retaining the counter-wrap search case. Physical candidate trajectories,
+follow-up cost composition and automatic planner/live gameplay integration
+remain unfinished. This work is not deployed.

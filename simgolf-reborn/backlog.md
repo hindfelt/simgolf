@@ -984,3 +984,10 @@ passes and publication; derives origin class from the supplied terrain.
 Thirty full contiguous searches and nine targeted tests pass, including both
 range-query contexts and fully excluded terrain. Actual range/physics/assessment
 callbacks and live integration remain unfinished.
+
+F09 real range integration (2026-09-11): originalRangedRouteSearch now computes
+both current and next-shot ranges with recovered arithmetic and effective lie
+metadata. Thirty full original searches match with real range code, including
+shot-counter wrap; 5,000 range comparisons cover the full byte domain. Ten tests
+pass, with three integrated tests rerun after retaining the wrap fixture.
+Candidate flight/assessment callbacks and live planner integration remain open.
