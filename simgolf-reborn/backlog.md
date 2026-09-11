@@ -824,3 +824,8 @@ and motion, preserving independent candidate mask and full ability word. Fixed
 signed late-shot counter handling; expanded 5,000-case oracle and 12 tests pass.
 Live guest-to-original conversion, target assessment, unresolved planning and
 coherent full-course integration remain unfinished.
+
+F09 pre-club elevation correction (2026-09-11): recovered raw-height distance
+adjustment with original skill gate/asymmetric divisors. All 5,000 x86 outputs/
+read sequences and eight tests pass. Earlier target/terrain assessment, raw
+live-course mapping and full deployment integration remain unfinished.

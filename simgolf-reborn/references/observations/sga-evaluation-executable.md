@@ -1329,3 +1329,22 @@ The adapter reads supplied original records; it does not create original actors
 from browser guest profiles or claim all actor runtime fields are mapped. Live
 profile conversion, target assessment, unresolved middle planning and coherent
 full-course launch/motion integration remain before deployment.
+
+
+### Pre-club elevation distance correction (2026-09-11)
+
+Recovered `0x423ee1–0x423f48` in `original-elevation-distance.js`. If actor
+skill bit 4 is unset, skip both height reads. Otherwise read raw target height,
+then raw origin tile height via 0x40be60. Signed difference and multiplication
+by 25 retain int32 wrap; divide by eight when the difference is positive and
+ten otherwise, truncating toward zero, then add to prior adjusted distance.
+These are raw tile/vertex heights, not bilinearly interpolated physics heights.
+The correction precedes club selection's clamping to range.
+
+`verify-original-elevation-distance.py` executes original correction instructions,
+stubbing only the two raw-height reads with provided values. All 5,000 corrected
+distances and exact read sequences match, including signed overflow and ordinary
+height values. Sixty fixtures retained; eight elevation/club tests pass, including
+asymmetric slopes, skipped reads and resulting club changes. Raw-height adapters
+were separately recovered; complete upstream assessment and live composition
+remain unverified. The helper is not connected to deployed shot planning yet.
