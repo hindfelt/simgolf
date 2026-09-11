@@ -890,3 +890,9 @@ F09 route-search setup (2026-09-11): recovered mode normalization, skill/ability
 curve mask, cup aim and temporary next-shot range query. 5,000 original cases
 and eight tests pass. Initial search globals, full range-query composition,
 candidate loops, automatic launch branch and live integration remain unfinished.
+
+F09 route candidate preparation (2026-09-11): recovered 21×21 trial geometry,
+whole-candidate score sentinel and six-score initialization; composed fresh trials
+with original admission. 5,000 original cases and nine tests pass. Six-way
+simulation, repeated search passes, winner selection and live integration remain
+unfinished.

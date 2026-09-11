@@ -1590,3 +1590,22 @@ cases match outputs and query state. Sixty fixtures and eight search/result test
 pass, including counter wrap and exact two-shot reach boundary. The initial
 search globals, range-query integration, candidate loops and live integration
 remain open; this is not a complete route search or deployed feature.
+
+### Route candidate preparation and admission composition (2026-09-11)
+
+`original-route-trial.js` recovers 0x4227db–0x422921, stopping at the existing
+admission stage. A 21×21 search-grid entry uses its second score as the whole-
+candidate sentinel: >99999 skips it; zero marks a fresh candidate and initializes
+all six scores to 100000; other values reuse previous scores without admission.
+Candidate coordinates add grid offsets to the search anchor. Distance and heading
+use the yard-scaled tile-center vector, with the original truncation order.
+`originalPreparedRouteCandidate` feeds this geometry to the previously recovered
+admission helper only for fresh entries; reused/excluded entries avoid map reads.
+
+`verify-original-route-trial.py` runs original instructions, heading and x87
+conversion without helper stubs. It reads every initialized score directly after
+the final sentinel write. All 5,000 cases match sentinel branch, geometry and
+score arrays. Sixty fixtures and nine trial/admission tests pass. Composition
+has focused integration tests; this is not a contiguous oracle for the entire
+candidate-search loop. Six-way shot simulation, repeated search passes, winner
+selection and live integration remain unfinished.
