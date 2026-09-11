@@ -2242,3 +2242,26 @@ Candidate-level uneven terrain has separate evidence, but uninterrupted uneven
 whole-search behavior, boundary maps and broader actor IDs remain unverified.
 Responsive execution and integration into the surrounding automatic planner/live
 game are still required. No deployment is included.
+
+### Off-main-thread original search execution (2026-09-11)
+
+`original-search-job.js` reconstructs the shared original map from a serializable
+search/launch/physical/shared-state snapshot plus terrain, marks, vertex heights,
+metadata and optional derived data. Missing raw memory outside the map must be
+provided explicitly; the job does not invent original terrain. The job invokes
+the same physical search verified against the executable.
+
+`original-search.worker.js` executes the job in a module worker. The client owns
+one active job, terminates superseded/cancelled workers, rejects cancelled promises,
+tags results with the caller's revision, terminates workers on result/error, and
+rejects use after disposal. It does not apply a result to course state; the owning
+caller must check its current revision and apply outputs atomically.
+
+Three tests pass: all six original full-search fixtures match through the job
+snapshot; a real Chrome worker returns the original result while main-thread
+animation frames continue; superseded jobs reject and worker failures recover on
+a following job. Production build passes (existing large-chunk warning remains).
+The live app does not import this client yet, so that build is not evidence that
+the final production worker chunk has been wired or exercised. Gameplay caller,
+production worker integration and outer automatic planner remain unfinished.
+No deployment is included.

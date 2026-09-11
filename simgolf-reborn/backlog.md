@@ -1072,3 +1072,10 @@ original comparisons to water/obstacle/rough bands and a professional with
 range and curve abilities. Six searches covering 5,520 actual candidates match;
 five targeted tests pass. Uneven whole-search/boundary coverage, responsive
 execution and outer-planner/live integration remain unfinished.
+
+F09 off-main-thread search (2026-09-11): added serializable original-search job,
+module worker and single-active-job client with cancellation, revision-tagged
+results and disposal. Six original search fixtures survive the snapshot boundary;
+Chrome tests verify continued animation frames, cancellation and error recovery.
+Three tests and production build pass. Live caller integration and final worker
+production-bundle verification remain open; planner is not yet used by gameplay.

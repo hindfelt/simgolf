@@ -1,0 +1,5 @@
+import {originalSearchJob} from '../simulation/original-search-job.js';
+self.onmessage=({data:{id,revision,snapshot}})=>{
+ try{self.postMessage({id,revision,result:originalSearchJob(snapshot)});}
+ catch(error){self.postMessage({id,revision,error:error instanceof Error?error.message:String(error)});}
+};
