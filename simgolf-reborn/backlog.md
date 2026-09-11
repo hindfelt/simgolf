@@ -683,3 +683,9 @@ height-band decision and integrated it with airborne collision response, preserv
 RNG consumption even before the design-mode bypass. Matched 5,000 original x86
 decisions/RNG states; eight focused tests pass. Launch selection, original map/
 variant adapters and full candidate lifecycle remain before live integration.
+
+F09 candidate integration (2026-09-11): composed recovered physics into resumable
+candidate steps and verified 100 complete original x86 trajectories with supplied
+launch and flat-map helpers, including landing, RNG, step count and original actor
+restoration. All 27 candidate tests pass. Varied original terrain validation,
+launch selection/map adapters and full search integration remain before live use.

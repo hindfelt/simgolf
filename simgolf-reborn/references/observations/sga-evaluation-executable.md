@@ -711,3 +711,27 @@ mode still consumes any obstacle-height RNG draw. This ordering is covered by
 an integration regression. Eight height/collision tests pass. Launch generation,
 terrain/variant adapters and the full candidate lifecycle remain open before
 this original simulation replaces browser planning.
+
+### Integrated candidate simulation step (2026-09-11)
+
+Added originalCandidateStart/Step to compose the recovered movement, terrain-edge
+checks, ground/air responses, bounce, impact and stopping in source order.
+Launch angular offset is halved once; subsequent steps preserve explicit RNG
+state and counters. Old-tile terrain/metadata drives response while new-position
+subcells determine boundary proximity. Airborne ground-height correction,
+pre-response facing, original slope sample order and post-response stop testing
+are retained. Steps are pure with respect to the caller's launch/state/map.
+
+`verify-original-candidate-step.py` executes the complete original 0x421b50
+candidate loop with supplied launch fields and flat terrain-height/slope helpers.
+Original movement, bounce, collision, RNG and terrain routines run unchanged.
+All 100 trajectories over uniform terrain 2 or 13 match final position, iteration
+count and RNG state; the original actor's saved bytes are restored after each
+run. This proves the tested flat-map integration, not arbitrary terrain or launch
+selection. Twenty-seven candidate-component/integration tests pass, including
+serialized midflight resume and stopped-state behavior.
+
+Remaining before live use: original launch selection, terrain-height/slope and
+variant adapters, varied-terrain/boundary trajectory validation, wider intermediate
+state domains, and full search orchestration. No live browser routing replacement
+or deployment is part of this change.
