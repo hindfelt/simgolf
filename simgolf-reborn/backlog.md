@@ -766,3 +766,8 @@ F09 low-shot branch (2026-09-11): recovered nearby-obstacle gate and lower launc
 override. Response matches 1,000 original x86 outputs/full caches; seven focused
 tests pass. Gate currently verified by disassembly/tests only. Complete map gate
 oracle, alternate branch and full live planner composition remain open.
+
+F09 alternate approach (2026-09-11): recovered complete gate and higher/backspin
+launch override; 1,000 original x86 outputs/full caches and 12 focused tests pass.
+Must compose after low-shot rejection, then finish later launch stages and live
+map/planner integration. Current deployed play is unchanged.

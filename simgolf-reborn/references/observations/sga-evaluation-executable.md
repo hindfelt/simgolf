@@ -1066,3 +1066,28 @@ routines without stubs. 1,000 sequential velocity/type/curve/full-cache outputs
 match; sixty fixtures retained. Seven low-shot/search tests pass, including
 short-circuit gate behavior, projection positions and two-query state. Full gate
 oracle, following alternate shot branch and live planner composition remain.
+
+
+### Alternate approach/backspin branch (2026-09-11)
+
+Recovered full `0x424882–0x424988` in `original-approach-shot.js`. This branch
+is considered only when the preceding low-shot branch did not select. Requires
+skill bit 4, curve zero, terrain !=1, terrain shot class exactly zero, club >=4,
+and nominal strength strictly >25. Automatic target must be terrain 1; explicit
+target instead requires original mode 0x58dd80 ==3.
+
+Selection sets actor flag 0x80, raises vertical speed by trunc((strength+50)*
+verticalSpeed/400), reruns cached strength search for nominal strength, writes
+shot type 3, scales angular offset by 6/(actor byte +0xff +3), and adds that
+byte to the local modifier. Products retain signed int32 overflow. A bypass
+preserves incoming motion/cache and returns shot type zero, matching the prior
+original reset; it must not overwrite a low-shot selection.
+
+`verify-original-approach-shot.py` executes the full original gate/response,
+terrain lookup, and strength-search/cache helpers without stubs. All 1,000
+sequential outputs and full caches match, including gate bypasses and signed
+angular overflow; sixty fixtures retained. Twelve approach/low-shot/core tests
+pass, with explicit eligibility boundaries and mode-three override coverage.
+The target terrain code remains an explicit original-map input. Composition
+with preceding low-shot gate and later 0x424988+ stages, plus live integration,
+remain unfinished; no deployed behavior change is claimed.
