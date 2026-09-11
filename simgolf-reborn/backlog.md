@@ -912,3 +912,9 @@ F09 route search completion (2026-09-11): recovered pass diagnostics, winning
 target publication, cup fallback and cleanup of temporary search state. 5,000
 original cases and eight tests pass. Candidate simulation, pass orchestration,
 automatic launch branch and live integration remain unfinished.
+
+F09 trial dispatch (2026-09-11): recovered center/corner simulation arguments
+and asymmetric work count. 5,000 dispatch cases, 5,000 winner regressions and six
+tests pass. Corrected winner threshold input to goodLandings, confirmed by the
+original landing increment; previous bad/unsuccessful wording was incorrect.
+Full candidate simulation/scoring orchestration and live integration remain open.

@@ -12,8 +12,8 @@ test('ties retain the prior target and all associated winner fields',()=>{
 });
 test('sample threshold clears but never re-enables the original search flag',()=>{
  const q={...rows[0][0],level:0,samples:4,searchFlag:1};
- expect(originalRouteBest({...q,badSamples:1}).searchFlag).toBe(1);expect(originalRouteBest({...q,badSamples:2}).searchFlag).toBe(0);
- expect(originalRouteBest({...q,searchFlag:0,badSamples:0}).searchFlag).toBe(0);
+ expect(originalRouteBest({...q,goodLandings:1}).searchFlag).toBe(1);expect(originalRouteBest({...q,goodLandings:2}).searchFlag).toBe(0);
+ expect(originalRouteBest({...q,searchFlag:0,goodLandings:0}).searchFlag).toBe(0);
 });
 test('accumulated scores retain original signed integer overflow',()=>{
  const q={...rows[0][0],score:2147483600,sampleScore:1000};expect(originalRouteBest(q).score).toBe(-2147482696);

@@ -1663,3 +1663,24 @@ not implicit mutation of the caller's world.
 fallbacks and mode reset. Sixty fixtures and eight finish/winner tests pass.
 Observer UI calls between these blocks are excluded. Full candidate simulation,
 pass orchestration and live state integration remain incomplete. No deployment.
+
+### Trial dispatch and good-landing counter correction (2026-09-11)
+
+`original-route-sample.js` recovers 0x422bcf–0x422c34. Each trial calls candidate
+simulation with actor id, exact fixed-point target x/z and curve. Center trials
+add 512 to the tile origin and increment work once; corner trials use the tile
+vertex and leave that work counter unchanged. The simulator result is passed
+back untouched so its state/RNG can feed subsequent scoring.
+
+`verify-original-route-sample.py` executes both original dispatch branches with
+candidate simulation supplied, capturing actual arguments and work. All 5,000
+cases match; sixty fixtures and six dispatch/winner tests pass. This does not
+claim the candidate simulator itself is now fully integrated.
+
+Correction to earlier winner-update notes: stack local +0x28 counts GOOD
+landings (0x422d73–0x422d83 increments it when terrain shot class <=0), not bad
+or unsuccessful samples. Renamed `badSamples` to `goodLandings` in the original
+winner helper, oracle and fixtures. The threshold arithmetic is unchanged;
+all 5,000 winner comparisons still pass. Future loop composition must pass the
+landing scorer's goodLandings counter. Full simulation/scoring orchestration and
+live integration remain unfinished, with no deployment.
