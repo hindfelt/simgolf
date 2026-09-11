@@ -1250,3 +1250,28 @@ have been supplied. It does not yet choose targets or reconstruct the earlier
 and is not connected to live browser shot planning. Original UI dirty writes
 are outside pure simulation. Next integration can connect this resolved launch
 to candidate flight while preserving shared cache/RNG and actor state semantics.
+
+
+### Resolved launch through candidate flight (2026-09-11)
+
+`original-selected-candidate.js` bridges recovered selected launch to candidate
+initialization, preserving final heading, speed, lift, curvature, actor flags
+and seed; the candidate initializer performs the original once-only curvature
+halving. Shared launch cache remains explicit alongside candidate state. Physical
+actor inputs (professional/abilities/luck/skill mask) are supplied separately;
+this does not infer a browser or original actor-class mapping.
+
+`verify-original-selected-candidate.py` chains existing executable harnesses:
+original selected launch runs first, then its final values/seed enter the
+original candidate loop with mixed surfaces and flat height/slope. Both prior
+harnesses rerun their own comparisons. The selected-launch cache is reset to
+original zero state before the chained sequence. All sixty launch-to-terminal
+cases match terminal x/z, publication/landing, steps, RNG, club/type and full
+launch cache. Fixtures contain the mixed flight map and whole sequence. Nine
+selected/candidate regressions pass, including serialized midflight resume.
+
+Scope: these are chained original routines, not an unmodified complete game
+process or full planner call. Flight harness still supplies launch fields to
+the candidate loop; upstream assessment is explicit and the physical map can
+differ from launch assessment map. A unified map/actor adapter, target selection,
+-1 planner branch and live integration remain. No deployed behavior changes.

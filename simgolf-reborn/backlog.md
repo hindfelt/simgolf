@@ -806,3 +806,9 @@ selection through final state for its real resolved-argument path. All 1,000
 full executable states/caches and nine tests pass; -1 search sentinel explicitly
 rejected. Target selection/upstream assessment, unresolved middle branch and
 live integration remain unfinished. State stays serializable for later multiplayer.
+
+F09 launch-to-candidate bridge (2026-09-11): connected resolved launch to original
+candidate motion with explicit cache/physical inputs. Sixty chained original
+launch-to-rest states match, alongside prior 1,000 launch/150 flight comparisons;
+nine regressions pass with midflight resume. Unified map/actor adapters, target
+selection, unresolved planning and live integration remain unfinished.
