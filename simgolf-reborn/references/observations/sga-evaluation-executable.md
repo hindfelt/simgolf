@@ -1040,3 +1040,29 @@ match original x86. The normal fixture now includes this mixed sequence;
 24 core/putting/putt-strength regressions pass, including both straight and
 curving putts. No deployed behavior changes: later launch stages, upstream map
 assessment and live composition remain before a complete original planner.
+
+
+### Nearby-obstacle low-shot branch (2026-09-11)
+
+Recovered gate `0x4246b2–0x4247ae` and response `0x4247ae–0x42487d` in
+`original-low-shot.js`. Gate chooses index 1 for actor flag 1 with no explicit
+target, otherwise upstream first-water index. Requires skill 4 or actor flag 2,
+non-green terrain and index !=1. Explicit target requires mode 4. Otherwise
+sample at radii 128 then 1024 along reference heading, using original fixed-point
+projection; metadata kind 13 at either position triggers the branch. The gate
+currently has disassembly-based tests, not a full original map/projection oracle.
+Its callback must provide original metadata rather than visual tree intersections.
+
+Response clamps vertical speed to trunc(speed/12) in [0,256], searches horizontal
+speed for trunc(strength*3/4), then if index !=0 searches again using
+trunc(index*50/3). Both cache mutations matter even when the first result is
+overwritten. Original intermediate polynomial speed is also overwritten without
+being read by search. Finally curve becomes zero and shot type word +0xb4 is 4.
+Current supported index 0..19 keeps search distance within its verified 0..330
+domain; broader original map/runtime domains remain to be established.
+
+`verify-original-low-shot.py` runs original response plus full search/cache
+routines without stubs. 1,000 sequential velocity/type/curve/full-cache outputs
+match; sixty fixtures retained. Seven low-shot/search tests pass, including
+short-circuit gate behavior, projection positions and two-query state. Full gate
+oracle, following alternate shot branch and live planner composition remain.

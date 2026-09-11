@@ -761,3 +761,8 @@ state using extracted existing deviation logic; preserves intervening RNG draws
 and avoids resampling tolerance. All 1,000 mixed-club original outputs/caches
 match, and 24 putting/core tests pass. Final putt velocity and remaining later
 planner stages, upstream assessment and live integration remain unfinished.
+
+F09 low-shot branch (2026-09-11): recovered nearby-obstacle gate and lower launch
+override. Response matches 1,000 original x86 outputs/full caches; seven focused
+tests pass. Gate currently verified by disassembly/tests only. Complete map gate
+oracle, alternate branch and full live planner composition remain open.
