@@ -703,11 +703,17 @@ export function openHole(g, holeId = g.holes[0]?.id) {
       ok: false,
       message: "Give this hole at least 56 yards from tee to cup.",
     };
-  if (!route(g, entrance, hole.tee) || !route(g, hole.tee, hole.green))
+  if (!route(g, entrance, hole.tee))
     return {
       ok: false,
       message:
-        "Golfers need a walkable route from the clubhouse to the tee and green.",
+        "The tee is unreachable from the clubhouse. Connect it with walkable land or a complete bridge across water.",
+    };
+  if (!route(g, hole.tee, hole.green))
+    return {
+      ok: false,
+      message:
+        "The tee is reachable, but the green is not. Golfers need walkable land or a complete bridge to the green, even when hitting across water.",
     };
   hole.open = true;
   g.nextArrival = Math.min(g.nextArrival, g.time + 1);
