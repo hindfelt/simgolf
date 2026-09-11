@@ -7,13 +7,23 @@
     "dev": "vite --host 0.0.0.0 --port 4176 --strictPort",
     "build": "vite build --base=./",
     "preview": "vite preview --host 0.0.0.0 --port 4176 --strictPort",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:accounts": "vitest run --config server/vitest.config.js",
+    "dev:accounts": "../../node_modules/.bin/wrangler dev --port 8788 --var APP_ORIGIN:http://localhost:4176",
+    "test:account-browser": "playwright test --config server/browser.config.js"
   },
   "dependencies": {
+    "jose": "6.2.3",
     "three": "0.180.0"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
     "@playwright/test": "^1.61.1",
-    "vite": "7.3.6"
+    "vite": "7.3.6",
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "workerd": "1.20260911.1",
+    "sharp": "0.35.4"
   }
 }

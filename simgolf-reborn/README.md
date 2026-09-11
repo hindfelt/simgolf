@@ -4,6 +4,7 @@ The approved dimensional art direction and subsequent tile-based course/path ref
 
 - [Player guide](PLAYER_GUIDE.md): what the game is about and how to build, manage and play.
 - [Development guide](DEVELOPMENT.md): setup, tests and project structure.
+- [Player accounts and administration](ACCOUNT_SETUP.md): sign-in providers, private saves, account linking and operator setup.
 - [Build backlog](backlog.md): full-game completion and the requested future multiplayer features.
 - [Architecture](architecture.md): command authority, deterministic simulation and multiplayer boundaries.
 - [First playable milestone](playable.md): implemented behavior, controls, provisional rules and remaining work.

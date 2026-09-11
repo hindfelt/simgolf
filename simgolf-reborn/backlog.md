@@ -1,5 +1,19 @@
 # Build backlog
 
+## Updated owner requirements — accounts and multiplayer, 11 September 2026
+
+The owner now explicitly requests multiplayer implementation, user registration and administration. This expands the earlier requirement to prepare the architecture for later multiplayer; multiplayer is no longer only an optional future idea.
+
+- Require a signed-in player before entering the hosted game, including testing routes. Support Google, GitHub, Microsoft and Apple sign-in; support permanent Proton Mail addresses through email verification while a public Proton OAuth integration remains unverified.
+- Maintain stable player IDs, explicit provider linking, private account-owned saves, session revocation, account suspension and administrator access. Never merge accounts solely because providers return the same email.
+- Reject known disposable-email domains (including Temp Mail and Guerrilla Mail families), including subdomains and mixed-case variants, at email registration and provider sign-in. Pin and review the maintained blocklist; do not block ordinary Proton accounts. This reduces abuse but does not establish one-human-one-account or replace server-validated competition rules.
+- Implement authenticated cooperative course building with owner/editor/spectator permissions and a server-authoritative command host.
+- Implement course-building and earnings competitions using server-validated budgets, commands and time windows.
+- Implement multiplayer tournaments on immutable versions of courses built by different users, with verified scoring, standings, reconnect and invitation flows.
+- Retain the overall 1:1 SimGolf recreation goal and approved modern isometric graphics. Track incomplete original-game fidelity and gameplay separately from account/multiplayer delivery.
+
+Mandatory hosted sign-in, player-owned local/cloud saves, explicit provider linking, session revocation, account deletion and player administration are implemented. Google is enabled in the dedicated `simgolfer` project and real sign-in/cloud saving were verified. GitHub awaits owner verification; Apple/Microsoft credentials and email sending remain to activate. Fifteen account backend tests, five account browser tests and all 952 game regression tests passed. Cooperative building, server-validated earnings competitions and cross-course multiplayer tournaments remain open; accounts alone do not complete multiplayer.
+
 ## Current delivery sequence — 11 September 2026
 
 Transport visitor follow-through (user-directed browser feature): helipads, marinas and airstrips now attract separate additional visitor pairs. Boats arrive, remain moored through the passengers' golf/recreation visits and depart after both return. Hull clearance, blocked-channel status, occupied-marina demolition protection, saved phases and passenger exit routing are implemented. Airport transfers are simulated; plane flight animation remains open. Some golfers choose post-round driving-range or putting practice alongside paired tennis. Protocol 77 retains compatible protocol-75/76 golf packages. Frequencies and recreation choices are provisional. Broader original-engine, career and resort fidelity work remains open.
@@ -54,7 +68,7 @@ The owner explicitly added future multiplayer support. This supersedes the origi
 | A05 | Trusted server host, authentication/ownership, persistence, reconnect and spectators | Two real clients resume the same server state; unauthorized actions reject; no client-submitted balances/scores | Open; no server deployed |
 | A06 | Versioned rules/assets/seeds, replay records and migration policy | Match results reproducible on pinned versions; incompatible clients cannot silently diverge | Rules version, local competition replay records and restoration implemented; authenticated server records open |
 
-## Multiplayer features — explicitly requested for later
+## Multiplayer features — now explicitly requested for implementation
 
 | ID | Work | Acceptance evidence | Dependencies |
 |---|---|---|---|

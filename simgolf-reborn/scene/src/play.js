@@ -1,3 +1,4 @@
+import {playerStorage,mountAccount} from "./account.js";
 import {coastalPreview} from './rendering/coastal-preview.js';
 import {testingStorage,testingHref,mountTestingFeedback} from './ui/testing-mode.js';
 import { settleCareerChallenge } from "./simulation/challenge-career.js";
@@ -130,9 +131,9 @@ async function restoreEvent(raw) {
     : restoreCompetition(raw);
 }
 const testing=new URLSearchParams(location.search).get('testing')==='1';
-const playStorage=testingStorage(localStorage,testing);
+const playStorage=testingStorage(playerStorage(),testing);
 if(testing&&!playStorage.getItem('simgolf-reborn.course.v1')){
- const original=localStorage.getItem('simgolf-reborn.course.v1');
+ const original=playerStorage().getItem('simgolf-reborn.course.v1');
  if(original)playStorage.setItem('simgolf-reborn.course.v1',original);
 }
 const practiceId = new URLSearchParams(location.search).get("practice");
@@ -2451,3 +2452,5 @@ view.update(game, 0, opponentViews());
 $("#loading").remove();
 if (loadWarning) toast(loadWarning);
 requestAnimationFrame(frame);
+
+mountAccount({storage:playStorage,testing});
