@@ -777,3 +777,9 @@ and alternate approach with exact precedence/contact-flag handling. Complete
 1,000-case x86 comparison now includes original projections and both map gates;
 15 regressions pass. Later 0x424988+ effects, upstream mapping/assessment and
 live planner replacement remain unfinished.
+
+F09 later draw/fade setup (2026-09-11): recovered heading/strength changes,
+active-actor curvature handling, shot types and stored curvature additions.
+5,000 original outputs and seven focused tests pass. The conditional planner
+section before this block and final lie/velocity effects still need composition;
+no live integration or deployment in this change.

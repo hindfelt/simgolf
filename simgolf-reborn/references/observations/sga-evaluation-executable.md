@@ -1116,3 +1116,27 @@ Original metadata/actor/target values remain provided upstream inputs, not a
 live browser map adapter. This stops before the later planner effects at
 0x424988 and does not prove a complete original shot or live gameplay parity.
 Those later stages, upstream assessment and live integration remain open.
+
+
+### Later draw/fade setup (2026-09-11)
+
+Recovered `0x42536b–0x425582` in `original-shot-shape.js`. This is after a
+conditional planning section from 0x424988; it must not be concatenated across
+that section without honoring its sentinel/side effects. Clears actor flag 2.
+For curve ±1 adds/subtracts 0x15555554 heading, offset back toward the centre
+by 0x5555555 when backspin flag 0x80 is set. Active actor halves incoming
+curvature only when it has the same sign as the selected curve.
+
+Strength <250 adds trunc((speed<<4)/(330-strength)); strength 250..299 uses
+400-strength denominator; strength >=300 uses referenceSpeed plus its shifted
+increment/(400-strength). Curved shots get type ±1 and later curvature addition
+∓0x239a955, with speed cap 999999. Other curves preserve selected shot type,
+set curvature addition zero and cap speed at referenceSpeed. The curvature
+addition is returned separately; original applies it later at 0x4256bf.
+
+`verify-original-shot-shape.py` runs the full original block and clamp without
+stubs. 5,000 results match heading, curvature, clamped speed, flags, type and
+stored curvature addition. Sixty fixtures retained. Seven shape/terrain tests
+pass, including exact 250/300 thresholds and active/backspin behavior. Supported
+speed/reference domain is 0..100000, strength 0..330. Conditional middle-planner
+section and later final lie/velocity effects still remain before live use.
