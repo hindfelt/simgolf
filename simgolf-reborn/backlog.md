@@ -1250,3 +1250,11 @@ Six related tests pass. This closes the manually supplied return-stack gap
 for these cases. Search scratch is explicit observed input; flat height and
 remark effects remain controlled. Broader fidelity and worker/live integration
 remain open. Nothing deployed.
+
+F09 complete planner worker boundary (2026-09-11): serialized automatic jobs
+now run in a browser worker, pausing for explicit reaction-state replies rather
+than dropping effects. Browser verification reproduces a native long-planner
+fixture while animation frames continue. Ten distinct job/worker/coordinator
+tests pass across the relevant runs. Reaction replay currently recomputes search;
+original effect behavior, efficient resumption, live mapping/application and
+multiplayer authority remain open. No live wiring or deployment occurred.

@@ -1,6 +1,6 @@
 // One outstanding snapshot per client. Superseding work terminates its worker
 // immediately, so old course revisions cannot resolve a newer request.
-export function originalSearchClient() {
+export function originalSearchClient({workerUrl=new URL('./original-search.worker.js',import.meta.url)}={}) {
  let active=null,nextId=0,disposed=false;
  const cancel=()=>{
   if(!active)return;
@@ -11,7 +11,7 @@ export function originalSearchClient() {
   if(disposed)return Promise.reject(new Error('Search client has been disposed.'));
   cancel();
   return new Promise((resolve,reject)=>{
-   const id=++nextId,worker=new Worker(new URL('./original-search.worker.js',import.meta.url),{type:'module'});
+   const id=++nextId,worker=new Worker(workerUrl,{type:'module'});
    active={id,worker,reject};
    const finish=(error,result)=>{
     if(active?.id!==id)return;

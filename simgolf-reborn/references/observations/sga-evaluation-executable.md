@@ -2787,3 +2787,28 @@ address. The native search verifier now exposes a default-on `stop_search`
 switch so this harness can let the nested search actually return. Existing
 standalone behavior remains the default. Broader world/actor scenarios, original
 remark effects and browser/authoritative-state integration remain unfinished.
+
+### Serializable automatic planner worker (2026-09-11)
+
+`originalAutomaticJob` reconstructs the course through the shared
+`originalJobMap` adapter and runs the complete planner from a serialized
+snapshot. Object/social records and spatial scores are explicit indexed input;
+missing records fail instead of being silently replaced. The new automatic
+worker/client reuse the existing cancellation and revision-tagged transport.
+
+Reaction effects are an explicit replay boundary. An unresolved effect returns
+`status: effect`, its ordered index/event and the state at that point. The owner
+must supply the resulting state and replay the same snapshot with that reply
+appended. Mismatched events and surplus replies fail. A completed calculation
+returns `status: done`; a paused calculation must never be applied as a shot.
+No default no-op reaction implementation exists. Native fixture tests explicitly
+reply with the controlled no-op behavior used by that oracle.
+
+A real browser worker reproduces the native long-planner fixture through these
+pauses while animation frames continue. Existing search results, cancellation
+and error recovery remain covered. Replay currently recomputes prior search
+work for each reaction: this trades additional computation for a deterministic
+serializable boundary, and is not a performance-complete resumable engine.
+Course/actor revision changes require discarding prior reply history. Real
+original reaction effects, live snapshot mapping and authoritative application
+remain unfinished; this worker has not been connected to live play.
