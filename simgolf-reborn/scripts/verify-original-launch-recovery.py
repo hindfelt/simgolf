@@ -23,7 +23,7 @@ def run(q):
  return dict(heading=read(0x577fe8)&0xffffffff,angularOffset=read(0x577ff4),actorFlags=read(0x577f18)&0xffffffff,lie=read(0x102014),speed=read(0x577fec),seed=read(0x820454)&0xffffffff)
 rng=random.Random(2002);rows=[]
 for i in range(5000):
- q=dict(heading=rng.randrange(2**32),angularOffset=rng.randrange(-2147483648,2147483648),actorFlags=rng.randrange(256),lie=rng.randrange(23),strength=rng.randrange(331),level=rng.randrange(4),actorId=rng.choice([0,1,2,154]),targetArgument=rng.randrange(2),skillMask=rng.randrange(8),actorClass=rng.choice([0,1,32]),recoveryValue=rng.randrange(40),mode=rng.randrange(4),shotCounter=rng.randrange(10),baseSpeed=rng.randrange(100001),seed=rng.randrange(2**32),classes=[rng.randrange(-1,4) for _ in range(24)])
+ q=dict(heading=rng.randrange(2**32),angularOffset=rng.randrange(-2147483648,2147483648),actorFlags=rng.randrange(256),lie=rng.randrange(23),strength=rng.randrange(331),level=rng.randrange(4),actorId=rng.choice([0,1,2,154]),targetArgument=rng.randrange(2),skillMask=rng.randrange(8),actorClass=rng.choice([0,1,32]),recoveryValue=rng.randrange(40),mode=rng.randrange(4),shotCounter=rng.randrange(256),baseSpeed=rng.randrange(100001),seed=rng.randrange(2**32),classes=[rng.randrange(-1,4) for _ in range(24)])
  rows.append([q,run(q)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-launch-recovery.js').as_uri()
 script="""import {readFileSync} from 'node:fs';const {originalLaunchRecovery}=await import(MODULE);

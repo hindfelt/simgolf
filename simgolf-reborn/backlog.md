@@ -818,3 +818,9 @@ original metadata, directional height caches and edge masks. Six tests pass,
 including all 150 stored nonflat original trajectories and exact metadata bytes.
 Live browser map conversion, actor mapping, target assessment and unresolved
 planning remain open; caller must keep derived map data on the same revision.
+
+F09 original actor adapter (2026-09-11): decoded original shot fields for launch
+and motion, preserving independent candidate mask and full ability word. Fixed
+signed late-shot counter handling; expanded 5,000-case oracle and 12 tests pass.
+Live guest-to-original conversion, target assessment, unresolved planning and
+coherent full-course integration remain unfinished.

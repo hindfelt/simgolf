@@ -25,6 +25,6 @@ export function originalLaunchRecovery(q,terrainClass) {
   heading=(heading+Math.imul(Math.imul(sign,sample+0x1555555),shotClass))>>>0;
   angularOffset=Math.trunc(Math.imul(shotClass+2,angularOffset)/2);
  }
- if((actorFlags&1)&&shotCounter>6)lie=-1;
+ if((actorFlags&1)&&((shotCounter<<24)>>24)>6)lie=-1;
  return {heading,angularOffset,actorFlags:actorFlags>>>0,lie,speed:baseSpeed,seed:rng.state,draws:rng.draws};
 }

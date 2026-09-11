@@ -24,3 +24,8 @@ test('bypassed metadata and RNG remain untouched',()=>{
  const result=originalLaunchRecovery({...base,actorClass:0},()=>{throw Error('Unexpected terrain read');});
  expect(result.seed).toBe(base.seed);expect(result.draws).toBe(0);
 });
+test('late-shot comparison treats the original counter as a signed byte',()=>{
+ expect(originalLaunchRecovery({...base,actorFlags:1,shotCounter:127},()=>1).lie).toBe(-1);
+ expect(originalLaunchRecovery({...base,actorFlags:1,shotCounter:128},()=>1).lie).toBe(2);
+ expect(originalLaunchRecovery({...base,actorFlags:1,shotCounter:255},()=>1).lie).toBe(2);
+});

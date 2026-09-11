@@ -1305,3 +1305,27 @@ map revision; the adapter does not guess invalidation or mutate course state.
 Launch/candidate map callbacks can now share original storage. Converting live
 browser courses/actor fields, target assessment, unresolved planner branch and
 full shared-map launch-to-flight verification remain before deployed parity.
+
+
+### Original shot actor record adapter (2026-09-11)
+
+Added `original-shot-actor.js` decoding the 256-byte record copied from
+0x577f08+actorId*256 at 0x421b9c. Disassembly offsets are relative to 0x577f00,
+so reads subtract eight. Exposes launch skill/ability/attitude/club-skill fields,
+position/ball/target data and physical properties. The physical professional
+boolean means nonzero class byte here (0x421ea1/0x42220d), not a guessed UI
+profession. Ability word retains bit 0x200 and luck reads +0x101.
+Candidate skill mask is explicitly supplied from the original separate global
+0x4c1e0c; it must not silently be replaced by actor byte +0x21.
+
+Actor decoding also exposed signed counter handling at 0x4256a9–0x4256b0:
+byte +0x2a is compared signed to six. Corrected recovery to reinterpret the raw
+byte before the late-shot lie override. Extended its 5,000-case executable
+oracle to all byte values; all outputs/seeds match. Twelve actor/recovery/tail
+tests pass, including complete launch fixtures through decoded actor fields,
+full-word abilities, differing masks, buffer subarrays and high counter bytes.
+
+The adapter reads supplied original records; it does not create original actors
+from browser guest profiles or claim all actor runtime fields are mapped. Live
+profile conversion, target assessment, unresolved middle planning and coherent
+full-course launch/motion integration remain before deployment.
