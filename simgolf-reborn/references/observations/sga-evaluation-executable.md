@@ -2833,3 +2833,13 @@ This completes the worker-side transaction boundary, not live game integration.
 An actual course/actor snapshot adapter, faithful reaction state transitions
 and an authoritative atomic apply implementation remain to be connected.
 Replay still recomputes preceding calculation for each reaction.
+
+### Remark entry gates and remapping: 0x4672d0–0x46737d (2026-09-11)
+
+`original-remark-entry.js` reconstructs the beginning of the shared remark routine. It rejects a signed actor shot byte greater than nine, actor IDs at least152, or global flag0x02000000. Signed-byte semantics are retained: byte255 is not treated as a large positive shot counter.
+
+Request0x13 becomes0x17 when the actor status mask0xe0 is not0x20, the hole record at+0x20 is at least10, and either flag4 with signed stroke-minus-par above1, or flag8 with that difference below0. The input name `holeCompletions` denotes that +0x20 count; the gate itself is verified independently of broader field interpretation. Otherwise the request remains unchanged.
+
+`verify-original-remark-entry.py` executes original instructions with Unicorn, stops at the accepted continuation0x46737d or early-return destination0x469075, and compares1800 cases.120 committed native fixtures and two regression tests cover suppression, remapping, strict thresholds, status masks and signed bytes. Caller input is unchanged.
+
+This does not execute the remark dispatch0x469330, actor selection0x406b20, history, happiness/social effects or the remaining routine through0x469075. Those calls and state transitions must be reconstructed before connecting this entry stage to the automatic worker reaction resolver. No live gameplay behavior was replaced in this change.
