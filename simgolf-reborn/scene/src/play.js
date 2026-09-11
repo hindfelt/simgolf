@@ -347,7 +347,7 @@ setLandscapeState(coastalPreview(game));
 const landscape = buildLandscape(scene, () => {});
 buildClubhouse(scene).scale.setScalar(0.65);
 const startingBridge = buildBridge(scene);
-const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast" });
+const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast", environment: game.environment });
 const ocean = buildOcean(scene);
 ocean.update(coastalPreview(game));
 const view = buildCourseView(scene);

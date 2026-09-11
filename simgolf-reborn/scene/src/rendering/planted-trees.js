@@ -80,6 +80,16 @@ export function plantedTrees(scene) {
         }
         count++;
       }
+      leaves.material.color.set(g.environment==='desert' ? 0xb8b69a : 0xffffff);
+      if(g.environment==='desert'){
+        const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+        for(const [mesh,parts] of [[trunks,7],[leaves,64]])for(let i=0;i<count*parts;i++){
+          const base=positions[Math.floor(i/parts)];
+          mesh.getMatrixAt(i,matrix);matrix.decompose(position,rotation,scale);
+          position.set(base.x+(position.x-base.x)*.6,base.y+(position.y-base.y)*.6,base.z+(position.z-base.z)*.6);
+          scale.multiplyScalar(.6);matrix.compose(position,rotation,scale);mesh.setMatrixAt(i,matrix);
+        }
+      }
       trunks.count = count * 7;
       leaves.count = count * 64;
       for (const m of [trunks, leaves]) {

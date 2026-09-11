@@ -83,8 +83,10 @@ export function foliageTexture(pink = false) {
 
 export function buildFlora(
   scene,
-  { editableWater = false, coastal = false } = {},
+  { editableWater = false, coastal = false, environment = null } = {},
 ) {
+  const desert = environment === "desert";
+  const conifers = coastal && !desert;
   const rng = randomSource(117);
   const leaves = [],
     needles = [],
@@ -148,7 +150,7 @@ export function buildFlora(
         ),
       });
     }
-    if (coastal && !pink) {
+    if (conifers && !pink) {
       // Keep the original RNG consumption so scenery positions, ownership and
       // removal keys remain identical. Only replace this tree's visual crown.
       branches.length = starts[1];
@@ -171,6 +173,21 @@ export function buildFlora(
           });
         }
       }
+    }
+    if (desert) {
+      // Preserve RNG consumption and tree identity so existing removals and
+      // terrain edits still refer to the same plants after the visual change.
+      leaves.push(...pinkLeaves.splice(starts[3]));
+      const shrink=0.38 + Math.abs(Math.sin(x*7+z*3))*0.22;
+      arrays.forEach((a,index)=>{
+        for(let i=starts[index];i<a.length;i++){
+          const t=a[i];t.p=[x+(t.p[0]-x)*shrink,ground+(t.p[1]-ground)*shrink,z+(t.p[2]-z)*shrink];
+          t.s=t.s.map(v=>v*shrink);
+          if(index===2)t.c=new THREE.Color(0xb6b49b);
+        }
+      });
+      // Open canopies leave visible branches, instead of dense temperate crowns.
+      leaves.splice(starts[2],leaves.length-starts[2],...leaves.slice(starts[2]).filter((_,i)=>i%2===0));
     }
     arrays.forEach((a, index) => {
       for (let i = starts[index]; i < a.length; i++)
@@ -219,7 +236,7 @@ export function buildFlora(
     alphaTest: 0.45,
     side: THREE.DoubleSide,
     roughness: 1,
-    color: 0xe6e7c2,
+    color: desert ? 0xb8b69a : 0xe6e7c2,
     emissive: 0x293514,
     emissiveIntensity: 0.25,
   });
@@ -230,7 +247,7 @@ export function buildFlora(
     roughness: 1,
   });
   const treeMeshes = [];
-  if (coastal) {
+  if (conifers) {
     const crown = batch(
       scene,
       new THREE.PlaneGeometry(2.4, 2.4),
@@ -254,6 +271,7 @@ export function buildFlora(
   treeMeshes.push(
     batch(scene, new THREE.PlaneGeometry(2.4, 2.4), pinkMaterial, pinkLeaves),
   );
+  treeMeshes[conifers ? 1 : 0].name = desert ? "desert-scrub-canopies" : "broadleaf-canopies";
   const barkTex = makeTexture("bark");
   barkTex.repeat.set(1, 3);
   const bark = new THREE.MeshStandardMaterial({
