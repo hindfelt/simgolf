@@ -854,3 +854,11 @@ share backing data; original side-ray aliases and explicit external memory reads
 are preserved. Eleven tests pass, including assessed-launch fixtures and 150
 nonflat candidate trajectories. Unified assessment-to-rest oracle, live-course
 conversion/revision handling and automatic target planning remain unfinished.
+
+F09 original target setup (2026-09-11): recovered cup/exact-point target geometry,
+original heading/distance, curve reset and actor-flag clearing. 5,000 geometry
+cases and 1,000 contiguous setup-to-launch cases match the original executable;
+ten tests pass. Exact coordinate semantics supersede any interpretation of the
+third planner argument as an identifier. Automatic -1 target search/middle
+branches, entry global effects, coherent live integration and deployment remain
+unfinished.

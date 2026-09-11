@@ -1454,3 +1454,29 @@ candidate trajectories. Additional tests cover raw versus interpolated heights,
 shared marks, aliasing and explicit external terrain reads. These establish both
 interfaces against their existing oracle fixtures; they do not yet prove one
 contiguous original assessment-to-rest trajectory or live-course conversion.
+
+### Original target geometry and exact-point launch (2026-09-11)
+
+Recovered 0x42365d–0x423770 in `original-target-geometry.js`. With no explicit
+shot request, target tiles come from the current hole cup. An explicit request
+retains the actor target and sets curve to mode when mode <=1, otherwise zero.
+The third planner argument is an exact fixed-point x coordinate, NOT an actor
+or target identifier; its companion is fixed-point z. Value -1 retains the
+selected tile center. Exact coordinates override the selected tile and publish
+the containing tile back to the actor. Distance scales each signed component by
+25 before arithmetic shift 10, then truncates sqrt of their squared sum. Heading
+uses recovered 0x466ba0. Actor flag 0x10000000 is cleared before assessment.
+
+`verify-original-target-geometry.py` executes original target setup, heading and
+x87 conversion directly; all 5,000 map-domain cases match. Sixty saved fixtures
+cover exact versus tile targets, cup versus explicit selection and curve modes.
+
+`original-resolved-shot.js` composes this setup with assessed launch for exact
+coordinates. `verify-original-resolved-shot.py` runs contiguous original code
+0x42365d–0x425ab9, following its actual exact-coordinate branches, with shared
+strength cache and original RNG. Only raw height reads are substituted. All
+1,000 cases match final state, assessment, corrected distance and cache; twenty
+fixtures plus geometry/assessment tests pass (ten tests total). Inputs remain
+immutable. Initial range lookup and pre-target global side effects remain
+caller-owned. The automatic -1 path still requires its target-search and middle
+planning branches and is rejected by this composed entry point. No live deploy.
