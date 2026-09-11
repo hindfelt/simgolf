@@ -16,11 +16,12 @@ u.mem_map(0x839000,0x1000);u.reg_write(UC_X86_REG_FPCW,0x37f);u.reg_write(UC_X86
 def write(a,v,size=4):u.mem_write(a,(v&((1<<(size*8))-1)).to_bytes(size,'little'))
 def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
 with_target_result='--with-target-result' in sys.argv
+stop_search=True
 remaining=0;lie=0;calls=[];current={};sampleIndex=0;passes=[];searchDiagnostics=0;searchWinner={};assessmentCalls=0
 def hook(u,a,s,d):
  global remaining,lie,calls,sampleIndex,searchDiagnostics,searchWinner,assessmentCalls
  if a==0x4234eb:searchDiagnostics=read(0x5a5b88);searchWinner=dict(score=read(0x102060),target=dict(x=read(0x102078),z=read(0x1020a4)),curve=read(0x10206c),cornerTarget=read(0x5a8730),landing=dict(x=read(0x5a7270),z=read(0x5a7278)),landingFlag=read(0x1020ac))
- if a==0x423582:u.emu_stop()
+ if a==0x423582 and stop_search:u.emu_stop()
  if a==0x4227b1:passes.append(read(0x102038))
  if a==0x421b50:
   sp=u.reg_read(UC_X86_REG_ESP);ret,actor,x,z,curve=struct.unpack('<5i',u.mem_read(sp,20))

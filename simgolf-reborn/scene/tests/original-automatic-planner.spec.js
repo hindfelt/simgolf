@@ -49,3 +49,15 @@ test('long targets without search context fail before emitting launch effects',(
  expect(()=>originalAutomaticPlanner(q,{map:{planning:middleMap(q)}},{emit:()=>{throw Error('Premature launch');}}))
   .toThrow('require physical search state');
 });
+
+test('complete long outer planner matches uninterrupted native entry and nested search',()=>{
+ const rows=JSON.parse(readFileSync(new URL('./fixtures/original-automatic-planner.json',import.meta.url),'utf8'));
+ for(const [q,e] of rows){
+  const before=structuredClone(q);
+  const {searched,...result}=originalAutomaticPlanner(q.automatic,{map:searchLaunchMap(q),physical:{luck:5},
+   searchState:q.outerSearchState,score:0,scoreAt:(x,z)=>q.aimScores[x*50+z]}, {emit:(_event,state)=>state});
+  expect(searched).not.toBeNull();
+  expect(result).toEqual(e);
+  expect(q).toEqual(before);
+ }
+});

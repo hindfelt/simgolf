@@ -2763,3 +2763,27 @@ entry-to-search return wiring still require continuous native coverage.
 `searchState.candidateLanding` and the separate spatial `scoreAt` reader are
 explicit requirements rather than invented defaults. Live game mapping and
 worker integration remain open.
+
+### Uninterrupted outer automatic planner (2026-09-11)
+
+`verify-original-automatic-planner.py` starts at 0x4235c0 and executes the native
+outer function, including the real 0x422450 nested-search prologue, stack probe,
+return, target result calculation, assessment and final launch through 0x425aca.
+All six long-shot scenarios match `originalAutomaticPlanner` final state,
+setup, events, cache, seed and terrain restoration. The previous supplied
+caller-stack gap is closed for these scenarios.
+
+The search's initial scratch arrays and winner record are observed at native
+search entry and supplied as explicit input to the JavaScript counterpart.
+No native search target, candidate outcome or intermediate range is injected
+into the JavaScript run. The native caller's spatial-score buffer is initialized
+with the existing deterministic signed bytes. Surface lookup and flat height
+remain controlled; remark calls emit events without native remark state effects.
+This remains a bounded conformance oracle, not proof of all gameplay fidelity.
+
+The emulator must stop by outer-frame identity at final restoration. An end
+address at 0x425aca alone stops the first nested candidate that reaches that
+address. The native search verifier now exposes a default-on `stop_search`
+switch so this harness can let the nested search actually return. Existing
+standalone behavior remains the default. Broader world/actor scenarios, original
+remark effects and browser/authoritative-state integration remain unfinished.

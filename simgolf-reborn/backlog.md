@@ -1242,3 +1242,11 @@ scratch-state tests pass alongside the six native search/launch scenarios
 (five tests total). Candidate recovery and global shot flags are explicitly
 transferred. Full long outer native coverage, scratch provenance, worker/live
 integration and original remark behavior remain unfinished.
+
+F09 native outer planner (2026-09-11): the original automatic function now
+executes uninterrupted from entry through its real nested search and final
+launch in six long-shot scenarios, matching the unified JavaScript planner.
+Six related tests pass. This closes the manually supplied return-stack gap
+for these cases. Search scratch is explicit observed input; flat height and
+remark effects remain controlled. Broader fidelity and worker/live integration
+remain open. Nothing deployed.
