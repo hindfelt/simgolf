@@ -80,11 +80,19 @@ def run(q):
 rows=[]
 base=json.loads((root/'simgolf-reborn/scene/tests/fixtures/original-assessed-route-search.json').read_text())[0][0]
 launchBase=json.loads((root/'simgolf-reborn/scene/tests/fixtures/original-contiguous-candidate.json').read_text())[0][0]
-for mode in [2,1,0]:
+for mode,scenario in [(2,'clear'),(1,'clear'),(0,'clear'),(2,'mixed'),(1,'mixed'),(1,'mixed-pro')]:
  q={**base,'mode':mode,'seed':1234567,'shotCounter':1,'shot':1,'skillMask':3 if mode==2 else 7,'actorClass':0,'actorFlags':0,'abilityFlags':0}
+ q['scenario']=scenario
+ if scenario=='mixed-pro':q.update(actorClass=1,abilityFlags=0x63)
+ if scenario.startswith('mixed'):
+  q['cells']=[]
+  for x in range(50):
+   for z in range(50):
+    code,cls=(17,2) if x in [24,25] and 18<=z<=32 else (3,1) if x==27 and z%3 else (4,2) if (x+z)%11==0 else (2,0)
+    q['cells'].append([x,z,code,cls,0x82 if x==30 and z==25 else 0])
  q['launch']={**launchBase,'actorId':q['actorId'],'x':q['origin']['x'],'z':q['origin']['z'],'actorFlags':q['actorFlags'],'actorClass':q['actorClass'],'skillMask':q['skillMask'],'abilityFlags':q['abilityFlags'],'shotCounter':q['shotCounter'],'attitude':q['rangeInput']['boost'],'level':q['level'],'cup':q['cup']}
- q['launch']['rangeInput']={**q['rangeInput'],'skillMask':q['skillMask'],'shot':q['shotCounter'],'professional':False,'abilityFlags':q['abilityFlags']}
- e=run(q);rows.append([q,e]);print('Original full search finished',mode,len(calls),flush=True)
+ q['launch']['rangeInput']={**q['rangeInput'],'skillMask':q['skillMask'],'shot':q['shotCounter'],'professional':q['actorClass']!=0,'abilityFlags':q['abilityFlags']}
+ e=run(q);rows.append([q,e]);print('Original full search finished',scenario,mode,len(calls),flush=True)
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';
 const {originalPhysicalRouteSearch}=await import(PHYSICAL),{originalShotMap}=await import(MAP),{originalStrengthCache}=await import(CACHE);
 for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){

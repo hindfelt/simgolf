@@ -1066,3 +1066,9 @@ without supplied flight/cost results. Modes 2/1/0 match full tables and shared
 state over 388/1,564/1,564 candidate calls. Four targeted tests pass. More maps,
 boundaries and actors, responsive execution scheduling, outer automatic planner
 integration and live gameplay wiring remain unfinished.
+
+F09 mixed-course full-search coverage (2026-09-11): extended uninterrupted
+original comparisons to water/obstacle/rough bands and a professional with
+range and curve abilities. Six searches covering 5,520 actual candidates match;
+five targeted tests pass. Uneven whole-search/boundary coverage, responsive
+execution and outer-planner/live integration remain unfinished.

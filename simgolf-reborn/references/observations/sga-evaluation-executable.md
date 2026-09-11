@@ -2222,3 +2222,23 @@ synchronous integration is not appropriate for the main UI loop without further
 scheduling/worker integration. Outer automatic shot planning and live gameplay
 use remain unfinished. This is a stronger integration check, not a declaration
 of complete game fidelity. No deployment is included.
+
+### Mixed-course and professional full-search coverage (2026-09-11)
+
+The complete physical-search oracle now includes deterministic water bands
+(code 17), kind-13 obstacles (code 3), rough terrain (code 4), and a marked cup
+area alongside clear terrain. Mixed modes 2 and 1 execute 240 and 840 actual
+candidate calls. A professional actor-class case with ability mask 0x63 adds
+924 calls, exercising professional range and available curve handling. Its
+launch range profile now explicitly derives professional status from actor class.
+
+Together with the existing clear-mode cases, all six searches and 5,520 physical
+candidate calls match uninterrupted original execution in complete search tables,
+winner, result and shared state. Five full-search/callback tests pass; the fixture
+suite asserts that mixed terrain and the professional case remain represented.
+
+All these whole-search cases still use flat height/slope fields and actor ID 0.
+Candidate-level uneven terrain has separate evidence, but uninterrupted uneven
+whole-search behavior, boundary maps and broader actor IDs remain unverified.
+Responsive execution and integration into the surrounding automatic planner/live
+game are still required. No deployment is included.

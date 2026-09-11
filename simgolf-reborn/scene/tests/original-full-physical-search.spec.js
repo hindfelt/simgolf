@@ -16,3 +16,8 @@ test('complete physical searches match uninterrupted original tables, result and
 test('full search replays deterministically from serialized state',()=>{
  const q=rows[0][0];expect(run(JSON.parse(JSON.stringify(q)))).toEqual(run(q));
 });
+
+test('whole-search fixtures include water, obstacles and a professional golfer',()=>{
+ expect(rows.some(([q])=>q.scenario==='mixed'&&q.cells.some(c=>c[2]===17)&&q.cells.some(c=>c[2]===3))).toBe(true);
+ expect(rows.some(([q])=>q.scenario==='mixed-pro'&&q.actorClass!==0&&q.abilityFlags!==0)).toBe(true);
+});
