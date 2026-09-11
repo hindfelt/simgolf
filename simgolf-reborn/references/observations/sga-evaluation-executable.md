@@ -1091,3 +1091,28 @@ pass, with explicit eligibility boundaries and mode-three override coverage.
 The target terrain code remains an explicit original-map input. Composition
 with preceding low-shot gate and later 0x424988+ stages, plus live integration,
 remain unfinished; no deployed behavior change is claimed.
+
+
+### Terrain-dependent launch composition (2026-09-11)
+
+`original-launch-terrain.js` extends shared launch core through `0x424988`.
+It clears contact flags 0x180 as at 0x424697, evaluates the low-shot gate using
+the core's reference heading, and only evaluates the approach branch if that
+gate rejects. The selected branch updates speed, lift, curve, shot type and
+shared cache; approach retains/updates modifier and backspin flags. Initial
+heading and RNG remain those of the preceding core.
+
+`verify-original-launch-terrain.py` now executes the contiguous original
+`0x423f48–0x424988`, including original x87 projection-table initialization,
+fixed-point projection, mixed nearby terrain metadata, both gates, all strength
+queries and RNG. No helper stubs are used. All 1,000 complete output/cache
+records match. This closes the earlier low-shot gate's missing executable
+comparison for this sampled map/domain. Explicit mode-three approach and
+mode-four low-shot cases are injected to guarantee both branches; sixty
+sequential fixtures include normal/low/approach selections. Fifteen focused
+regressions pass, including branch precedence and contact-flag clearing.
+
+Original metadata/actor/target values remain provided upstream inputs, not a
+live browser map adapter. This stops before the later planner effects at
+0x424988 and does not prove a complete original shot or live gameplay parity.
+Those later stages, upstream assessment and live integration remain open.

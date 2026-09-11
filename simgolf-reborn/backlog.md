@@ -771,3 +771,9 @@ F09 alternate approach (2026-09-11): recovered complete gate and higher/backspin
 launch override; 1,000 original x86 outputs/full caches and 12 focused tests pass.
 Must compose after low-shot rejection, then finish later launch stages and live
 map/planner integration. Current deployed play is unchanged.
+
+F09 terrain launch composition (2026-09-11): joined core, original low-shot gate
+and alternate approach with exact precedence/contact-flag handling. Complete
+1,000-case x86 comparison now includes original projections and both map gates;
+15 regressions pass. Later 0x424988+ effects, upstream mapping/assessment and
+live planner replacement remain unfinished.
