@@ -671,3 +671,9 @@ turns with explicit original RNG state. Matched 5,000 original x86 outputs and
 RNG states; nine impact/bounce checks pass. Full simulator lifecycle, airborne
 obstacles and launch/map adapters remain open. Explicit randomness supports the
 future authoritative multiplayer/replay architecture tracked under A01–A05.
+
+F09 candidate airborne collision response (2026-09-11): reconstructed luck-aware
+collision chance, deflection, speed loss and exact RNG consumption, including
+16-bit speed bounds. Matched 5,000 original x86 results/RNG states; nine focused
+tests pass. Obstacle-height detection, launch selection and complete candidate
+lifecycle/map integration remain open.

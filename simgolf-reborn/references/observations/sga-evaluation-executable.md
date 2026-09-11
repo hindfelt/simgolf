@@ -677,3 +677,20 @@ results. All 5,000 speed/heading/vertical/flag outputs and RNG states match.
 Nine impact/bounce tests pass. Airborne obstacle detection, launch selection,
 map/slope adapters and the full save/simulate/restore lifecycle remain before
 integrating complete original candidate simulation.
+
+### Candidate airborne collision response (2026-09-11)
+
+Reconstructed 0x421e53–0x421f43 as `originalCandidateAirCollision`, taking the
+result of original obstacle-height test 0x406e80 explicitly. Mode 2 or no obstacle
+bypasses collision RNG. Otherwise distance from the old tile centre is compared
+with a draw below 768; professional luck ability 0x200 enlarges that distance
+by trunc(luck * distance / 4). A hit consumes a direction draw below 128,
+turns by (64 + draw) << 24, subtracts a speed draw, and sets actor flag bit 2.
+
+Original RNG masks bounds to 16 bits, including the speed bound. The helper
+preserves zero/wrapped-bound draw consumption and returns RNG state. The
+verification script executes the original branch, distance helper, RNG and float
+conversion without stubbing their arithmetic; obstruction is supplied at entry.
+All 5,000 motion/flag/RNG outputs match. Nine air-collision/impact tests pass.
+Original obstacle-height detection, launch generation, map/slope adapters and
+complete simulation lifecycle remain required before live planner replacement.
