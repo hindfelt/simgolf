@@ -867,3 +867,25 @@ not exhaustive proof for arbitrary signed overflow or nonconvergent terrain.
 The old `originalPuttStrength` remains explicitly a cold-cache helper. Live
 call sites have not been migrated; initial vertical-velocity construction,
 accuracy variation and the remaining launch planner still need composition.
+
+
+### Composed initial launch velocity (2026-09-11)
+
+`original-launch-base.js` composes club selection with the next original block,
+through `0x424083`. From nominal strength s, calculate a=trunc(s*20/25), then
+estimate=a*33-trunc(a²/48)+64 and verticalSpeed=trunc(estimate/8)+512. Search
+horizontal speed using distance=trunc(s*4/5), this vertical speed and mode zero,
+preserving the explicit shared cache. Do not confuse the first nominal strength
+with the searched horizontal speed or omit the second distance scaling.
+
+`verify-original-launch-base.py` executes the entire original `0x423f48–0x424083`
+block, including both range estimators, strength search and cache code without
+stubs. All 1,000 sequential randomized upstream inputs match club, horizontal
+speed, vertical speed and the full cache. Sixty sequential output records are
+retained. Fourteen combined launch/strength/club/candidate tests pass; an
+integration test feeds this base launch through candidate flight/bounce/roll.
+That integration is not a full original planner oracle: heading and remaining
+launch effects are supplied, and accuracy/random variation and special shots
+are not composed yet. In particular club 13 still has nonzero vertical speed
+at this original intermediate point; later putt code zeros it. No live planner
+migration or deployment is made by this change.

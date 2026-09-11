@@ -722,3 +722,9 @@ complete ten-entry strength cache with exact original cross-mode reuse. All
 1,000 sequential original x86 results/full caches match; 11 focused tests pass.
 Cache state is explicit and serializable for deterministic multiplayer sessions.
 Initial launch velocity, accuracy adjustments and live planner composition remain.
+
+F09 initial launch composition (2026-09-11): connected club/strength selection to
+original initial vertical velocity and cached horizontal-speed search. All 1,000
+combined x86 outputs/full caches match; 14 focused tests pass, including candidate
+flight integration. Remaining launch accuracy/random variation and special shot
+adjustments must be composed before live planner replacement.
