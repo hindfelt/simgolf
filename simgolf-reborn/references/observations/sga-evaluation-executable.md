@@ -1976,3 +1976,27 @@ Nine assessed/ranged-search and standalone-assessor tests pass, including input
 immutability, original cost fixtures and serialized replay. Candidate flight
 integration, complete automatic planning, and live use remain unfinished.
 No deployment accompanies this change.
+
+### Exact-point planner to candidate flight (2026-09-11)
+
+`original-exact-candidate.js` connects originalExactPlanner to candidate start,
+including the candidate routine's halving of angular offset. It returns both
+complete launch output (cache, range setup patches and assessment metadata) and
+resumable flight state. Candidate physical skill mask remains explicit and is
+not inferred from actor launch skills. The caller retains ownership of the
+original actor and must persist the separately returned shared state.
+
+Inspection of 0x421b9c/0x422431 confirms the native candidate copies and restores
+256 bytes starting at actor base +8. Landing globals and RNG/cache are outside
+that copy. The new pure bridge does not yet claim a complete native transaction
+or implement an owning search-state adapter.
+
+`verify-original-exact-candidate.py` chains the existing full exact-planner oracle
+and original mixed-terrain candidate loop. Sixty launches/complete trajectories
+match, including final position, landing, RNG, steps and all launch metadata.
+The harness also reruns 1,000 original exact launches and 150 mixed trajectories.
+Eight planner/candidate tests pass, including serialization during flight.
+These are chained executions with separate planner and flight environments;
+they do not establish contiguous shared-map equivalence. That verification,
+trial snapshot/shared-state handling, search callback integration and live use
+remain unfinished. No deployment is included.

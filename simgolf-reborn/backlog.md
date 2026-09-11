@@ -997,3 +997,9 @@ now uses recovered prospective-route costs alongside real range arithmetic.
 Thirty complete original searches match, exercising 5,784 real assessments;
 nine targeted tests pass. Candidate trajectory callback, automatic planner
 composition and live integration remain unfinished.
+
+F09 exact-point candidate bridge (2026-09-11): connected full exact planner
+output to resumable candidate flight, preserving launch metadata/cache and
+separate physical actor attributes. Sixty chained original planner/flight cases
+and eight targeted tests pass. Shared-map contiguous verification, candidate
+transaction/search-state integration and live wiring remain unfinished.
