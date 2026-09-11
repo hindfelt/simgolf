@@ -710,3 +710,9 @@ rejection of transient negative speed from slope impacts and preserved uint16
 RNG bounds. All 22 focused tests, 150 flat trajectories and both 5,000-case impact/
 air-collision oracles pass. Launch selection, live map adaptation and outer
 planner integration remain open; no live deployment change in this step.
+
+F09 launch club selection (2026-09-11): recovered club/nominal strength block;
+5,000 original executable cases and four regression tests pass. Covers range
+clamping, explicit-target mode override and short green shots. Upstream terrain
+assessment, velocity conversion, accuracy effects and live planner integration
+remain; this helper does not yet alter deployed play.

@@ -811,3 +811,27 @@ impact and 5,000-case airborne collision comparisons still match. All 22 focused
 candidate/terrain tests pass. Original launch selection is still supplied,
 metadata flattening combinations are covered by the separate sample oracle,
 and live browser map adaptation and outer planner integration remain open.
+
+
+### Launch club and nominal strength selection (2026-09-11)
+
+Recovered `0x423f48–0x423ff8` into `original-shot-club.js`. Inputs are the
+already approach/elevation-adjusted distance, previously calculated shot range,
+current terrain code, explicit-target flag, original mode and actor flags.
+Strength clamps to [0, range]. Club is trunc(60*(range-strength)/(3*range)),
+clamped to [terrainCode != 0, 11]. Explicit target in mode 3 with club < 5
+sets club 5 and strength trunc(13*range/18). Afterwards terrain 1 with strength
+strictly below 50 and no actor flag 1 selects club 13.
+
+The helper accepts positive ranges up to the recovered range cap 330; it does
+not silently supply a range for invalid/zero input. It returns nominal strength,
+not horizontal ball speed: conversion begins at 0x423ff8 and remains separate.
+No club-name mapping is inferred from numeric indices here.
+
+`verify-original-shot-club.py` executes the complete original block and clamp
+helper without instruction stubs, using provided upstream inputs. All 5,000
+seeded cases match both club and strength, including mode and terrain branches.
+Sixty output pairs are retained as regression fixtures. Four tests also cover
+clamp endpoints, special-mode threshold and the strict short-green boundary.
+Full upstream terrain assessment/elevation adjustment, velocity conversion,
+accuracy/random launch effects and outer planner integration remain unfinished.
