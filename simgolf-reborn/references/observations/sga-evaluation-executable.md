@@ -2843,3 +2843,13 @@ Request0x13 becomes0x17 when the actor status mask0xe0 is not0x20, the hole reco
 `verify-original-remark-entry.py` executes original instructions with Unicorn, stops at the accepted continuation0x46737d or early-return destination0x469075, and compares1800 cases.120 committed native fixtures and two regression tests cover suppression, remapping, strict thresholds, status masks and signed bytes. Caller input is unchanged.
 
 This does not execute the remark dispatch0x469330, actor selection0x406b20, history, happiness/social effects or the remaining routine through0x469075. Those calls and state transitions must be reconstructed before connecting this entry stage to the automatic worker reaction resolver. No live gameplay behavior was replaced in this change.
+
+### Packed remark history: 0x467448–0x4674c7 (2026-09-11)
+
+`original-remark-history.js` copies the complete256-byte actor record before shifting the ten history entries. Relative to actor base0x577f08, kind bytes begin at0x70, hole/shot bytes at0x7a, and little-endian value words at0x88. Entries9 through1 shift in descending order. The new entry truncates the request to a byte and value to a word; the hole/shot byte is11*hole+shot, incremented for signed request kinds>=4 and wrapped to eight bits.
+
+The helper preserves every unrelated byte and returns independent pre-reaction and changed records without mutating its input. Packed offsets are intentional: the live actor schema has not yet been mapped to these original fields.
+
+`verify-original-remark-history.py` executes the full block and compares both256-byte snapshots across1000 randomized native cases. Twenty complete native fixtures are committed. Four combined history/entry tests pass, including oldest-entry eviction, overflow, signed request comparison, little-endian truncation and input ownership. The comparison endpoint includes the conditional increment through0x4674c7.
+
+Remaining: preceding dispatch and actor-selection calls, active display/reference fields, kind0x23 duplicate handling, kind0x13 early return, reaction-specific state changes and final composition. This stage is not yet used by live golfers or the automatic-worker resolver.
