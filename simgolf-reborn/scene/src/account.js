@@ -31,6 +31,7 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
  const key='simgolf-reborn.course.v1',endpoint=testing?'/api/saves/testing-course':'/api/saves/course',returnTo=testing?'/?testing=1':'/';let revision=storage.getItem("simgolfer.cloud-revision");revision=revision===null?null:Number(revision);
  const call=accountRequest;
  import('./shared-lobby.js').then(({mountSharedLobby})=>mountSharedLobby(dialog,call,current.user,status)).catch(()=>status('Shared courses could not be loaded.'));
+ import('./tournament-lobby.js').then(({mountTournamentLobby})=>mountTournamentLobby(dialog,call,current.user,status)).catch(()=>status('Tournament registration could not be loaded.'));
  if(shared){for(const id of ['cloud-load','cloud-save'])dialog.querySelector('#'+id).hidden=true;dialog.querySelector('#account-import').closest('details').hidden=true;}
  if(current.user.role==='admin')import('./account-admin.js').then(({mountAdministration})=>mountAdministration(dialog,call,status)).catch(()=>status('Administration could not be loaded.'));
  fetch('/api/auth/providers').then(r=>r.json()).then(data=>{

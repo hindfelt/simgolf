@@ -60,3 +60,15 @@ test('another registered player can practise an immutable published course',asyn
   await expect(page.locator('#club-detail')).toContainText('Practice');
  }finally{await context.close();}
 });
+test('two accounts register once, view the roster and close registration on a phone',async({browser})=>{
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[];
+ for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+ const [a,b]=clients;
+ try{
+  await a.page.getByLabel('Tournament title',{exact:true}).fill('Players cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
+  await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Players cup · 1/2 · registration',{exact:true}).click();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await a.page.getByText('Players cup · 2/2 · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Close registration',exact:true}).click();await expect(a.page.getByText('Players cup · 2/2 · locked',{exact:true})).toBeVisible();
+  await expect(a.page.getByText(/Online rounds are not available yet/)).toBeVisible();
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.screenshot({path:'/tmp/simgolfer-tournament-registration-phone.png',fullPage:true});
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});

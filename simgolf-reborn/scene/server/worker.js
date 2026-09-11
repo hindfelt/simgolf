@@ -3,6 +3,7 @@ import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
 import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
 import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
+import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,setTournamentStatus} from './tournaments.js';
 export {CourseScheduler} from './course-scheduler.js';
 const TTL=30*24*60*60;
 async function session(request,env){
@@ -119,6 +120,9 @@ async function handle(request,env){
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
   await env.DB.batch([
+   env.DB.prepare('DELETE FROM tournament_entries WHERE player_id=?').bind(user.id),
+   env.DB.prepare("UPDATE tournaments SET status='cancelled',owner_id=NULL WHERE owner_id=?").bind(user.id),
+   env.DB.prepare("UPDATE tournaments SET course_author_id=NULL,course_author_name='Former player' WHERE course_author_id=?").bind(user.id),
    env.DB.prepare('DELETE FROM published_courses WHERE author_id=?').bind(user.id),
    env.DB.prepare('DELETE FROM course_members WHERE player_id=? OR course_id IN (SELECT id FROM shared_courses WHERE owner_id=?)').bind(user.id,user.id),
    env.DB.prepare('DELETE FROM shared_courses WHERE owner_id=?').bind(user.id),
@@ -134,6 +138,25 @@ async function handle(request,env){
    const course=await createSharedCourse(env.DB,user.id,body.name);
    if(!(await env.COURSE_SCHEDULERS.getByName(course.id).start(course.id)).ok)throw fail(503,'Course scheduling is unavailable.');
    return json(course,201);
+  }
+ }
+ if(path==='/api/tournaments'){
+  if(request.method==='GET')return json({tournaments:await listTournaments(env.DB)});
+  if(request.method==='POST'){
+   await rateLimit(env.DB,'tournament-create:'+user.id,5,3600);
+   const body=await readJson(request,2000);
+   if(!body||Object.keys(body).some(key=>!['title','publicationId','rounds','capacity'].includes(key)))throw fail(400,'Only tournament settings can be supplied.');
+   return json(await createTournament(env.DB,user.id,body),201);
+  }
+ }
+ const tournament=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})(?:\/(join|leave|lock|cancel))?$/);
+ if(tournament){
+  const [,id,action]=tournament;
+  if(!action&&request.method==='GET')return json(await getTournament(env.DB,id));
+  if(action&&request.method==='POST'){
+   await rateLimit(env.DB,'tournament-action:'+user.id,30,60);
+   const body=await readJson(request,1000);if(!body||Object.keys(body).length)throw fail(400,'Tournament actions do not accept player identities or scores.');
+   return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
   }
  }
  if(path==='/api/published-courses'&&request.method==='GET')return json({courses:await listPublishedCourses(env.DB)});
