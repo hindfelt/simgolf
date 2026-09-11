@@ -49,3 +49,18 @@ test('browser worker yields effect requests and finishes without blocking animat
  expect(output.answer.revision).toBe(4);
  const {searched,...result}=output.answer.result.result;expect(searched).not.toBeNull();expect(result).toEqual(expected);
 });
+
+test('browser coordinator resolves effects and applies the native result exactly once',async({page})=>{
+ await page.goto('/');
+ const output=await page.evaluate(async input=>{
+  const {originalAutomaticCoordinator}=await import('/src/workers/original-automatic-coordinator.js');
+  const applied=[];let reactions=0;
+  const coordinator=originalAutomaticCoordinator({revision:()=>12,
+   resolveEffect:request=>{reactions++;return request.state;},apply:result=>applied.push(result)});
+  try{return {status:await coordinator.plan(input,12),applied,reactions};}
+  finally{coordinator.dispose();}
+ },snapshot());
+ expect(output.status).toEqual({status:'applied'});expect(output.reactions).toBeGreaterThan(0);
+ expect(output.applied).toHaveLength(1);
+ const {searched,...result}=output.applied[0];expect(searched).not.toBeNull();expect(result).toEqual(expected);
+});

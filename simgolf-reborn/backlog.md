@@ -1258,3 +1258,11 @@ fixture while animation frames continue. Ten distinct job/worker/coordinator
 tests pass across the relevant runs. Reaction replay currently recomputes search;
 original effect behavior, efficient resumption, live mapping/application and
 multiplayer authority remain open. No live wiring or deployment occurred.
+
+F09 automatic worker coordination (2026-09-11): added a revision-checked
+coordinator that resolves reaction requests on speculative snapshots and applies
+only a complete result. Stale worker/effect replies, replacement plans, failed
+resolvers and ignored cancellation cannot commit. Ten tests pass, including
+a real browser worker/coordinator applying the native fixture exactly once.
+Live snapshot mapping, original effects and authoritative state application
+remain unfinished. No deployment occurred.

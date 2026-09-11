@@ -2812,3 +2812,24 @@ serializable boundary, and is not a performance-complete resumable engine.
 Course/actor revision changes require discarding prior reply history. Real
 original reaction effects, live snapshot mapping and authoritative application
 remain unfinished; this worker has not been connected to live play.
+
+### Automatic worker transaction coordinator (2026-09-11)
+
+`originalAutomaticCoordinator` owns a cloned immutable input snapshot and its
+reaction reply history. It checks the authoritative revision after each worker
+answer and asynchronous reaction resolution; course, golfer/ball, social state
+and shared RNG/cache must all be represented in that revision. Reaction
+resolvers operate on supplied speculative state. Only a `done` result reaches
+the synchronous apply callback, with no await after the final revision check.
+
+Starting a replacement plan aborts the old resolver and cancels its worker.
+Cancellation also settles if a resolver ignores its signal, and late rejection
+cannot commit state or cause an unhandled failure. Old reply histories, invalid
+effect indices, missing results and failed resolvers are rejected. The native
+fixture browser test explicitly uses its controlled no-op reaction semantics;
+the coordinator itself requires a resolver and invents none.
+
+This completes the worker-side transaction boundary, not live game integration.
+An actual course/actor snapshot adapter, faithful reaction state transitions
+and an authoritative atomic apply implementation remain to be connected.
+Replay still recomputes preceding calculation for each reaction.
