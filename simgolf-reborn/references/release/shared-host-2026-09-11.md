@@ -16,12 +16,14 @@ The outer snapshot `revision` is the D1 storage revision. The command envelopeâ€
 
 Persisted command receipts enforce sequence ordering and replay the last result without repeating its economic effect. A stale simultaneous edit receives a conflict; the client must resynchronize before issuing its next sequence. The host never interprets client-supplied tick, balance, score or replacement-state commands.
 
+Server-time advancement is implemented in migration `0003_shared_clock.sql`. Reads and commands calculate elapsed 50 ms ticks from a persisted server-clock cursor, advancing at most 120 ticks per request. Fractional ticks remain in the cursor. Compare-and-swap prevents concurrent readers or command requests from advancing time twice. A backward clock does not reverse simulation time. All unprocessed downtime remains pending; commands return `catching-up` without consuming their sequence until the host reaches the present. Clients must retry that same command after catch-up. Membership changes cannot reset the clock. Snapshots expose `pendingTicks` for honest catch-up feedback. This is not yet a background scheduler: long absences would require too many reads, so deployment remains gated on lifecycle scheduling.
+
 Verification uses actual Workerd/D1 with the real simulation: simultaneous purchases, reconnect/retry, owner/editor/spectator permissions, revoked memberships, suspended accounts, forged actors, rejected imports, route-level CSRF and identity, and account deletion cleanup. These tests do not substitute for two real browsers editing a hosted course.
 
 Next required work:
 
-1. Server-driven simulation time, lifecycle and bounded catch-up; do not accept a client tick count or award offline earnings from client time.
+1. Add background lifecycle scheduling to the tested server-clock advancement. Long downtime must drain without requiring repeated user requests; measure runtime/resource limits on populated courses.
 2. Browser shared-course lobby, member management and renderer/input adapter. Shared mode must not run a second authoritative local simulation.
 3. Snapshot updates, reconnect, conflict feedback and spectator controls; verify from two independently authenticated browsers.
-4. Apply `0002_shared_courses.sql` and deploy only with the above integration and resource-limit checks.
+4. Apply `0002_shared_courses.sql` and `0003_shared_clock.sql` and deploy only with the above integration and resource-limit checks.
 5. Build server-validated earnings competitions and independent tournament round hosts on immutable course revisions. The shared construction service is not a trusted tournament scoring host.

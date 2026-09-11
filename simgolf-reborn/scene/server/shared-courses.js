@@ -1,6 +1,9 @@
 import {createGame,restore,serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
 import {fail} from './security.js';
+import {TICK_SECONDS} from '../src/simulation/protocol.js';
+const TICK_MS=TICK_SECONDS*1000;
+const MAX_ADVANCE_TICKS=120;
 
 // Construction commands only. Personal golfer imports and client state are never
 // accepted by the shared host. Golf rounds will have their own trusted host.
@@ -18,7 +21,7 @@ async function access(db,id,playerId){
  if(!row)throw fail(404,'Shared course not found.');
  return row;
 }
-function snapshot(row){return {id:row.id,name:row.name,ownerId:row.owner_id,role:row.role,revision:row.revision,state:JSON.parse(row.state)};}
+function snapshot(row){return {id:row.id,name:row.name,ownerId:row.owner_id,role:row.role,revision:row.revision,pendingTicks:Math.max(0,Math.floor((Date.now()-row.clock_ms)/TICK_MS)),state:JSON.parse(row.state)};}
 export async function createSharedCourse(db,playerId,name){
  await active(db,playerId);
  if(typeof name!=='string'||!name.trim()||name.length>80)throw fail(400,'Enter a course name of 1–80 characters.');
@@ -26,10 +29,10 @@ export async function createSharedCourse(db,playerId,name){
  createSession(game);
  // Initial funds, seed and state come from the server, never an imported save.
  const state=serialize(game);
- await db.prepare('INSERT INTO shared_courses(id,owner_id,name,state,created_at,updated_at) VALUES (?,?,?,?,?,?)').bind(id,playerId,name.trim(),state,now,now).run();
- return snapshot({id,name:name.trim(),owner_id:playerId,role:'owner',state,revision:0});
+ await db.prepare('INSERT INTO shared_courses(id,owner_id,name,state,created_at,updated_at,clock_ms) VALUES (?,?,?,?,?,?,?)').bind(id,playerId,name.trim(),state,now,now,now).run();
+ return snapshot({id,name:name.trim(),owner_id:playerId,role:'owner',state,revision:0,clock_ms:now});
 }
-export async function getSharedCourse(db,id,playerId){return snapshot(await access(db,id,playerId));}
+export async function getSharedCourse(db,id,playerId){return (await mutateSharedCourse(db,id,playerId)).course;}
 export async function listSharedCourses(db,playerId){
  await active(db,playerId);
  const rows=await db.prepare("SELECT c.id,c.name,c.owner_id AS ownerId,c.revision,CASE WHEN c.owner_id=? THEN 'owner' ELSE m.role END AS role FROM shared_courses c LEFT JOIN course_members m ON m.course_id=c.id AND m.player_id=? WHERE c.owner_id=? OR m.player_id IS NOT NULL ORDER BY c.created_at DESC,c.id LIMIT 100").bind(playerId,playerId,playerId).all();
@@ -50,16 +53,27 @@ export async function setCourseMember(db,id,ownerId,playerId,role){
 }
 export async function executeSharedCommand(db,id,playerId,command){
  if(!command||!construction.has(command.type))throw fail(400,'Unsupported shared construction command.');
+ return mutateSharedCourse(db,id,playerId,command);
+}
+async function mutateSharedCourse(db,id,playerId,command){
+ const now=Date.now();
  // Compare-and-swap retries reload both state and membership. Session receipts
-// make a retransmitted action idempotent, including rule-rejected purchases.
+ // make a retransmitted action idempotent, including rule-rejected purchases.
  for(let attempt=0;attempt<5;attempt++){
   const row=await access(db,id,playerId);
   const game=restore(row.state),host=createSession(game);
-  const result=host.execute(command,{id:playerId,role:row.role});
+  const due=Math.max(0,Math.floor((now-row.clock_ms)/TICK_MS)),ticks=Math.min(due,MAX_ADVANCE_TICKS);
+  host.stepTicks(ticks);
+  // Persist all elapsed time in bounded pieces; never discard downtime or let
+  // a command run in the past ahead of overdue earnings/visitor simulation.
+  const result=command?(due>MAX_ADVANCE_TICKS
+   ? {ok:false,code:'catching-up',message:'The server is catching up. Retry this same command.',revision:game.protocol.revision}
+   : host.execute(command,{id:playerId,role:row.role})):null;
   const state=serialize(game);
-  if(state===row.state)return {result,course:snapshot(row)};
-  const changed=await db.prepare('UPDATE shared_courses SET state=?,revision=revision+1,updated_at=? WHERE id=? AND revision=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) RETURNING revision').bind(state,Date.now(),id,row.revision,playerId).first();
-  if(changed)return {result,course:snapshot({...row,state,revision:changed.revision})};
+  if(!ticks&&state===row.state)return {result,course:snapshot(row)};
+  const clock=row.clock_ms+ticks*TICK_MS;
+  const changed=await db.prepare('UPDATE shared_courses SET state=?,clock_ms=?,revision=revision+1,updated_at=? WHERE id=? AND revision=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) RETURNING revision').bind(state,clock,now,id,row.revision,playerId).first();
+  if(changed)return {result,course:snapshot({...row,state,clock_ms:clock,revision:changed.revision})};
  }
  throw fail(409,'The course is busy. Reload and retry the same command.');
 }

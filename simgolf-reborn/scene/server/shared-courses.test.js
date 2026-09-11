@@ -1,13 +1,43 @@
-import {beforeEach,expect,test} from 'vitest';
+import {afterEach,beforeEach,expect,test,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSession} from '../src/simulation/session.js';
-import {restore} from '../src/simulation/game.js';
+import {restore,serialize} from '../src/simulation/game.js';
 import {createSharedCourse,getSharedCourse,listSharedCourses,setCourseMember,executeSharedCommand} from './shared-courses.js';
 const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',editor='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',spectator='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const command=(course,actor,type='build',payload={tool:'bench',c:12,r:12,brush:1,holeId:'hole-1'})=>createSession(restore(JSON.stringify(course.state))).nextCommand(actor,type,payload);
 beforeEach(async()=>{
  for(const table of ['course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
  for(const id of [owner,editor,spectator])await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,'Golfer',id+'@proton.me',Date.now()).run();
+});
+afterEach(()=>vi.restoreAllMocks());
+test('concurrent readers advance server time once and reproduce exact simulation state',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const initial=await createSharedCourse(env.DB,owner,'Clock');
+ const expected=restore(JSON.stringify(initial.state));createSession(expected).stepTicks(20);
+ now+=1000;
+ await Promise.all([getSharedCourse(env.DB,initial.id,owner),getSharedCourse(env.DB,initial.id,owner)]);
+ const result=await getSharedCourse(env.DB,initial.id,owner);
+ expect(result.state.protocol.tick).toBe(20);expect(result.pendingTicks).toBe(0);
+ expect(result.state).toEqual(JSON.parse(serialize(expected)));
+});
+test('bounded catch-up retains downtime and defers commands until the server reaches the present',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const initial=await createSharedCourse(env.DB,owner,'Catch up'),purchase=command(initial,owner);
+ now+=20000;
+ const first=await executeSharedCommand(env.DB,initial.id,owner,purchase);
+ expect(first.result.code).toBe('catching-up');expect(first.course.pendingTicks).toBe(280);expect(first.course.state.protocol.clients).toHaveLength(0);
+ await getSharedCourse(env.DB,initial.id,owner);await getSharedCourse(env.DB,initial.id,owner);
+ const completed=await executeSharedCommand(env.DB,initial.id,owner,purchase);
+ expect(completed.result.ok).toBe(true);expect(completed.course.pendingTicks).toBe(0);expect(completed.course.state.protocol.tick).toBe(400);
+ const expected=restore(JSON.stringify(initial.state)),host=createSession(expected);host.stepTicks(400);host.execute(purchase,{id:owner,role:'owner'});
+ expect(completed.course.state).toEqual(JSON.parse(serialize(expected)));
+});
+test('fractional ticks survive membership changes and a backward wall clock never reverses time',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const initial=await createSharedCourse(env.DB,owner,'Remainder');now+=43;
+ await setCourseMember(env.DB,initial.id,owner,editor,'editor');expect((await getSharedCourse(env.DB,initial.id,owner)).state.protocol.tick).toBe(0);
+ now+=57;expect((await getSharedCourse(env.DB,initial.id,editor)).state.protocol.tick).toBe(2);
+ now-=5000;expect((await getSharedCourse(env.DB,initial.id,owner)).state.protocol.tick).toBe(2);
 });
 test('shared courses start with server funds and are private until explicitly shared',async()=>{
  const course=await createSharedCourse(env.DB,owner,'Shared links');

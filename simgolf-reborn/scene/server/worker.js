@@ -134,7 +134,10 @@ async function handle(request,env){
  const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members))?$/);
  if(shared){
   const [,id,action]=shared;
-  if(!action&&request.method==='GET')return json(await getSharedCourse(env.DB,id,user.id));
+  if(!action&&request.method==='GET'){
+   await rateLimit(env.DB,'course-read:'+user.id,120,60);
+   return json(await getSharedCourse(env.DB,id,user.id));
+  }
   if(action==='commands'&&request.method==='POST'){
    await rateLimit(env.DB,'course-command:'+user.id,120,60);
    return json(await executeSharedCommand(env.DB,id,user.id,await readJson(request,20000)));
