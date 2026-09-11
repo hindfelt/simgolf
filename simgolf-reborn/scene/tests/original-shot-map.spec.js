@@ -45,3 +45,26 @@ test('zero cached corners fall back to original vertex reads',()=>{
  expect(map.heightAt({x:10500,z:10500})).toBe(48);
  expect(map.slopeAt({x:10500,z:10500},2)).toBe(0);
 });
+
+test('planning and physics share terrain and marks but retain raw versus interpolated height',()=>{
+ const terrain=new Uint8Array(2500).fill(2),marks=new Uint16Array(2500);
+ const map=originalShotMap({terrain,marks,derived:empty(),readHeight:()=>6,metadata:originalTerrainMetadata,globalFlags:0});
+ marks[510]=256;terrain[510]=13;
+ expect(map.planning.terrainAt(10,10)).toBe(map.terrainAt({x:10,z:10}).code);
+ expect(map.planning.marksAt(10,10)).toBe(map.terrainAt({x:10,z:10}).flags);
+ expect(map.planning.kindAt(13)).toBe(map.kindAt({x:10,z:10}));
+ expect(map.planning.heightAt(10,10)).toBe(6);
+ // Height scaling belongs to physics, not the raw assessment height read.
+ terrain[510]=2;expect(map.heightAt({x:10500,z:10500})).toBe(48);
+});
+
+test('raw side-ray reads preserve flattened aliases and require explicit external memory',()=>{
+ const terrain=new Uint8Array(2500).fill(2);terrain[50]=17;
+ const options={terrain,marks:new Uint16Array(2500),derived:empty(),readHeight:()=>0,metadata:originalTerrainMetadata,globalFlags:0};
+ const map=originalShotMap(options);
+ expect(map.planning.terrainAt(0,50)).toBe(17);
+ expect(map.terrainAt({x:0,z:50}).code).toBe(20);
+ expect(()=>map.planning.terrainAt(-1,0)).toThrow('beyond the map array');
+ const reads=[];const extended=originalShotMap({...options,readRawTerrain:i=>{reads.push(i);return 3;}});
+ expect(extended.planning.terrainAt(-1,0)).toBe(3);expect(reads).toEqual([-50]);
+});

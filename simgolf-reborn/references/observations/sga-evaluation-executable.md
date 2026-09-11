@@ -1430,3 +1430,27 @@ distance. The -1 automatic branch is deliberately rejected before map access.
 The map callback interface here supplies raw tile codes/classes/marks/heights;
 it still needs coherent integration with the existing physics map adapter and
 live course representation, including the original side-ray boundary behavior.
+
+### Shared planning/physics map (2026-09-11)
+
+`originalShotMap` now exposes `planning`, the callback interface consumed by
+`originalAssessedLaunch`. Planning and physics share terrain, tile marks,
+metadata and the raw height provider. Planning uses raw height values; physics
+retains original corner caching/interpolation and height scaling. This removes
+the need to construct an independent assessment map with potentially different
+terrain or flags.
+
+The planner's unchecked side-ray terrain read uses the original flattened
+signed int32 index (x × 50 + z). Coordinates outside the rectangle can alias a
+valid array entry; this is preserved. An index outside the 2,500-byte terrain
+array requires an explicit `readRawTerrain(index)` provider. Missing backing
+memory throws rather than inventing a rough/unavailable cell. Normal physics
+queries still use their checked rectangle semantics. Caller-owned derived data
+must still be rebuilt with course edits; this adapter does not enforce revisions.
+
+Eleven targeted tests pass, including all twenty sequential assessed-launch
+fixtures through the shared adapter and the existing 150 original nonflat
+candidate trajectories. Additional tests cover raw versus interpolated heights,
+shared marks, aliasing and explicit external terrain reads. These establish both
+interfaces against their existing oracle fixtures; they do not yet prove one
+contiguous original assessment-to-rest trajectory or live-course conversion.

@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {originalAssessedLaunch} from '../src/simulation/original-assessed-launch.js';
+import {originalShotMap} from '../src/simulation/original-shot-map.js';
 import {originalStrengthCache} from '../src/simulation/original-strength-search.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-assessed-launch.json',import.meta.url),'utf8'));
 const mapFor=q=>({terrainAt:(x,z)=>q.terrain[x*50+z],kindAt:c=>q.kinds[c],shotClassAt:c=>q.classes[c+1],marksAt:(x,z)=>q.marks[x*50+z],heightAt:(x,z)=>q.heights[x*50+z]});
@@ -22,4 +23,14 @@ test('assessment launch can replay from serialized inputs without mutating share
 });
 test('automatic search sentinel fails before reading map or changing state',()=>{
  expect(()=>originalAssessedLaunch({...rows[0][0],plannerArgument:-1},originalStrengthCache(),new Proxy({},{get(){throw Error('Unexpected map read');}}))).toThrow('resolved planner argument');
+});
+
+test('shared physics map supplies the complete original assessed launch fixtures',()=>{
+ let cache=originalStrengthCache();
+ for(const [q,e] of rows){
+  const map=originalShotMap({terrain:new Uint8Array(q.terrain),marks:new Uint16Array(q.marks),
+   derived:{edgeMasks:new Uint8Array(2500),surfaceHeights:new Int8Array(2500),directionHeights:new Int8Array(20000)},
+   readHeight:(x,z)=>q.heights[x*50+z],metadata:c=>({kind:q.kinds[c],shotClass:q.classes[c+1]}),globalFlags:q.globalFlags});
+  const actual=originalAssessedLaunch(q,cache,map.planning);expect(actual).toEqual(e);cache=actual.cache;
+ }
 });

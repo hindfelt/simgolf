@@ -847,3 +847,10 @@ elevation correction and resolved-target launch using one raw map and sequential
 RNG/cache state. All 1,000 contiguous original-executable cases match; 11 targeted
 tests pass. Initial target/range selection, automatic -1 middle branch, shared
 live map/physics integration and deployment remain unfinished.
+
+F09 shared planning/physics map (2026-09-11): assessment now consumes a planning
+view of the existing physics map adapter. Terrain/marks/metadata/raw heights
+share backing data; original side-ray aliases and explicit external memory reads
+are preserved. Eleven tests pass, including assessed-launch fixtures and 150
+nonflat candidate trajectories. Unified assessment-to-rest oracle, live-course
+conversion/revision handling and automatic target planning remain unfinished.
