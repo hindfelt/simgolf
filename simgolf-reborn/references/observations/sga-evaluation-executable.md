@@ -591,3 +591,28 @@ min(rounded tile distance, trunc(range / 25) + 1), also using this divisor.
 
 Full candidate-shot simulator 0x421b50, search orchestration, spread flags and
 live original-map adapters remain required before replacing the browser planner.
+
+### Candidate-flight motion and shared projection (2026-09-11)
+
+Candidate simulator 0x421b50 first saves the actor, invokes planner 0x4235c0
+with an explicit target, halves angular offset, simulates until stopped, writes
+landing globals, then restores the saved actor. The explicit target prevents
+recursive route search. The whole simulator is not yet reconstructed.
+
+Implemented its position/gravity and airborne response as `originalCandidateMotion`
+using existing `originalBallPositionStep` / `originalGravityStep`: integrate fixed
+coordinates with speed/16 and height with vertical speed/32, apply gravity, then
+select the airborne branch if integrated height > 1. Only that branch adjusts
+height by old ground height minus new ground height, reduces speed by speed >> 5,
+and adds angular offset to heading. Branch selection precedes ground correction.
+The caller must still handle subsequent collision, ground, bounce and stopping
+logic. Terrain height inputs explicitly represent original 0x42f110 outputs.
+
+Found an older duplicate projection implementation in original-ball-position.js.
+Consolidated its default table onto the newly x86-generated immutable table and
+made originalProjection delegate to its originalSine implementation. Ball and
+route consumers now share arithmetic and data; explicit table overrides remain
+available for original runtime captures. Eighteen movement/bounce/projection/
+assessment tests pass. Re-ran original oracles: 10,081 projections, 1,000 complete
+assessments and 10,005 length conversions still match. New candidate integration
+has source-derived boundary tests; full candidate-flight x86 oracle remains open.

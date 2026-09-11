@@ -645,3 +645,10 @@ Matched 1,000 complete original x86 assessments. This exposed and corrected the
 earlier design-length conversion (/25, not /100); verified 10,005 original length
 stores. Fourteen focused checks pass. Candidate-shot simulation and full search/
 map integration still remain before changing the deployed planner.
+
+F09 candidate flight (2026-09-11): reused original position/gravity helpers for
+candidate airborne motion and consolidated ball/route projection onto one
+x86-generated table and arithmetic implementation. Eighteen focused tests pass;
+original projection and route-assessment oracles still match. Candidate ground
+response, collisions, launch selection and complete simulator lifecycle remain
+before connecting full original route selection to live gameplay.
