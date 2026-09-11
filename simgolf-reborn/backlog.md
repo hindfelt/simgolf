@@ -695,3 +695,11 @@ trajectories across mixed surfaces, wall/marker flags, skills and modes with fla
 height/slope helpers. Corrected distinction between loop termination and publishing
 a settled landing; added original-output and resume regressions. Six trajectory
 tests pass. Nonflat adapters, launch selection and outer planner integration remain.
+
+F09 terrain physics (2026-09-11): recovered original height interpolation and
+directional slope rules; 5,000 original x86 sample pairs match. Added source
+fixtures and rising/flat/falling candidate integration with deterministic resume;
+12 focused regressions pass. Full nonflat trajectory oracle, browser map adapters,
+launch selection and outer planner integration remain before live use. Multiplayer
+requirements A01–A05/M01–M05 remain open; resumable simulation remains independent
+of rendering and browser state.

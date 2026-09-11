@@ -757,3 +757,30 @@ Committed original-output fixtures for 20 ordinary cases plus the observed
 no-publication case. Six mixed/uniform trajectory and serialized-resume checks
 pass. Nonflat original height/slope adapters, launch generation and outer search
 integration remain unfinished. This validation changes no deployed gameplay.
+
+
+### Physics terrain height and slope (2026-09-11)
+
+Recovered `0x42f110–0x42f265` height interpolation and `0x40bfe0`,
+`0x40c090`, `0x40c140` directional slopes in `original-physics-terrain.js`.
+Height uses corners 5/7/1/3 with baseline three, signed 32-bit multiplication
+and overflow before two truncating divisions by 1024. Metadata bit 8 flattens;
+bits 2/4 select vertex minimum/maximum (bit 2 wins). Slope instead switches
+corner pairs strictly after the tile centre, clamps each component for odd
+headings, and bypasses terrain 7/9, metadata bits 1–3 and global bit 0.
+It must not be replaced with the derivative of bilinear height interpolation.
+
+`verify-original-physics-terrain.py` matched 5,000 seeded height/slope pairs
+against the supplied executable, including signed corner values and metadata
+branches. Original arithmetic, extrema and clamp instructions execute; corner
+and raw vertex reads are supplied callbacks. Forty original-output pairs are
+retained as normal regression fixtures. This does not establish correctness
+of a live browser map adapter.
+
+An integration regression composes existing `originalCornerHeight` with these
+samples and candidate stepping on rising, flat and falling vertex grids. The
+trajectories differ and serialize/resume identically. This is an integration
+and determinism check, not an original-executable oracle for nonflat complete
+trajectories. Twelve terrain/candidate tests pass. Full nonflat trajectory
+comparison, launch selection and outer planner integration remain unfinished;
+these helpers are not yet connected to the live browser planner.
