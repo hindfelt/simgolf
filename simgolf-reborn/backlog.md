@@ -755,3 +755,9 @@ variation, drift and heading stages with original cache/RNG ordering. Full
 query to use full range; state stays explicit for reproducible sessions.
 Putting integration, upstream assessment and remaining later planner stages
 still block full live replacement, not ongoing implementation work.
+
+F09 putting/core integration (2026-09-11): composed club 13 into shared launch
+state using extracted existing deviation logic; preserves intervening RNG draws
+and avoids resampling tolerance. All 1,000 mixed-club original outputs/caches
+match, and 24 putting/core tests pass. Final putt velocity and remaining later
+planner stages, upstream assessment and live integration remain unfinished.

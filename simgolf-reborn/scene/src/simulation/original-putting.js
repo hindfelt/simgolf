@@ -60,6 +60,17 @@ export function originalPuttingAim({
   // The original bounded draw consumes RNG even for bound zero.
   const draw = rng.next(Math.max(1, halfWindow));
   const toleranceYards = 4 + halfWindow + (halfWindow ? draw : 0);
+  const result = originalPuttingDeviation({distanceYards,toleranceYards,doubleDistanceFlag,seed:rng.state});
+  return { toleranceYards, ...result, draws:rng.draws+result.draws };
+}
+
+// 0x4242ac–0x42438c. Tolerance is already sampled; other launch stages
+// can consume RNG before this override, so it must not redraw tolerance.
+export function originalPuttingDeviation({distanceYards,toleranceYards,doubleDistanceFlag=false,seed}) {
+  if(!Number.isInteger(distanceYards)||distanceYards<0||distanceYards>10000||
+     !Number.isInteger(toleranceYards)||toleranceYards<0||typeof doubleDistanceFlag!=='boolean')
+    throw Error('Invalid original putting deviation inputs.');
+  const rng=originalRandom(seed);
   const deviates = distanceYards * (doubleDistanceFlag ? 2 : 1) > toleranceYards;
   let angularOffset = 0;
   if (deviates) {
@@ -70,7 +81,7 @@ export function originalPuttingAim({
     if (distanceYards > 25) angularOffset = Math.trunc(angularOffset / 2);
     if (distanceYards > 35) angularOffset = Math.trunc(angularOffset / 2);
   }
-  return { toleranceYards, angularOffset, deviates, rngState: rng.state, draws: rng.draws };
+  return { angularOffset, deviates, rngState: rng.state, draws: rng.draws };
 }
 
 // Ground-motion branch 0x42c230–0x42c275, after movement/friction/slope.

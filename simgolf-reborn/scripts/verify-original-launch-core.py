@@ -1,4 +1,4 @@
-"""Verify combined original club selection and non-putter launch core and state ordering."""
+"""Verify combined original club selection and mixed-club launch core and state ordering."""
 from pathlib import Path
 import hashlib,json,random,struct,subprocess,sys
 import pefile
@@ -28,14 +28,15 @@ def run(q):
 
 rng=random.Random(2002);rows=[]
 for i in range(1000):
- q=dict(distance=rng.randrange(-100,501),range=rng.randrange(1,331),terrainCode=rng.choice([0,2,3,7,13,17]),explicitTarget=bool(rng.randrange(2)),mode=rng.randrange(4),actorFlags=rng.randrange(2))
- q.update(assessmentSpan=max(0,q['distance']//25),curve=rng.choice([-1,0,1]),actorClass=rng.choice([0,1,32,33,64]),skillMask=rng.choice([0,3,7]),attitude=rng.randrange(-4,5),abilityFlags=rng.choice([0,16]),abilityValue=rng.randrange(10),shotCounter=rng.randrange(3),driverValue=rng.randrange(10),ironValue=rng.randrange(10),drawValue=rng.randrange(10),fadeValue=rng.randrange(10),heading=rng.randrange(2**32),targetFlags=rng.choice([0,128]),globalFlags=rng.randrange(2),worldFlags=rng.choice([0,0x800000]),difficulty=rng.randrange(4),accuracySetting=rng.randrange(4),level=rng.randrange(4),seed=rng.randrange(2**32),driftMode=rng.randrange(4),activeActor=bool(rng.randrange(2)))
+ q=dict(distance=rng.randrange(-100,501),range=rng.randrange(1,331),terrainCode=rng.choice([0,1,2,3,7,13,17]),explicitTarget=bool(rng.randrange(2)),mode=rng.randrange(4),actorFlags=rng.randrange(2))
+ q.update(assessmentSpan=max(0,q['distance']//25),curve=rng.choice([-1,0,1]),actorClass=rng.choice([0,1,32,33,64]),skillMask=rng.choice([0,3,7]),attitude=rng.randrange(-4,5),abilityFlags=rng.choice([0,16]),abilityValue=rng.randrange(10),shotCounter=rng.randrange(3),driverValue=rng.randrange(10),ironValue=rng.randrange(10),drawValue=rng.randrange(10),fadeValue=rng.randrange(10),heading=rng.randrange(2**32),targetFlags=rng.choice([0,128]),globalFlags=rng.randrange(2),worldFlags=rng.choice([0,0x200000,0x800000,0xa00000]),difficulty=rng.randrange(4),accuracySetting=rng.randrange(4),level=rng.randrange(4),seed=rng.randrange(2**32),driftMode=rng.randrange(4),activeActor=bool(rng.randrange(2)))
+ if i%4==0:q.update(terrainCode=1,distance=rng.randrange(50),actorFlags=0,explicitTarget=False)
  rows.append([q,run(q)])
 module=(root/'simgolf-reborn/scene/src/simulation/original-launch-core.js').as_uri()
 script="""import {readFileSync} from 'node:fs';const {originalLaunchCore}=await import(MODULE);
 const {originalStrengthCache}=await import(CACHE);let cache=originalStrengthCache();
 const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,e] of rows){const a=originalLaunchCore(q,cache);if(JSON.stringify(a)!==JSON.stringify(e))throw Error(JSON.stringify({q,a,e}));cache=a.cache;}
-console.log(`${rows.length} combined non-putter launch results and caches match original x86.`);
+console.log(`${rows.length} combined mixed-club launch results and caches match original x86.`);
 """.replace('MODULE',json.dumps(module)).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:

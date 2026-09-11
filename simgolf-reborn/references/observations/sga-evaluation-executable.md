@@ -1015,3 +1015,28 @@ tests pass, including immutable state/resume, full-range second search and the
 old miss-flag clear. Putters are explicitly rejected here; upstream assessment
 and later stages from 0x424697 remain outside this composition. This is not yet
 a complete shot planner and is not wired into the deployed browser game.
+
+
+### Putting branch in shared launch core (2026-09-11)
+
+Extended `original-launch-core.js` through the putter branch as well as the
+non-putter path. Extracted `originalPuttingDeviation` from the existing
+`originalPuttingAim`: the older convenience function still samples tolerance
+then calls deviation, while the launch core reuses its already-sampled tolerance
+and the seed after intervening initial drift. This avoids redrawing tolerance
+or skipping a random draw whose result the putter later overwrites.
+
+For club 13, world flag 0x200000 doubles the distance test. The original
+curvature branch replaces initial drift, preserves actual heading, leaves the
+local modifier -3, and updates reference heading for curve ±1. Initial vertical
+velocity is still nonzero at this intermediate stop; final putt launch remains
+later in the original planner. The extracted routine keeps existing public
+putting behavior and draw-count reporting intact.
+
+Extended the contiguous original launch-core oracle to 1,000 mixed-club
+sequential cases, with every fourth input targeting the putter branch and both
+double-distance flag states represented. All fields and full shared caches
+match original x86. The normal fixture now includes this mixed sequence;
+24 core/putting/putt-strength regressions pass, including both straight and
+curving putts. No deployed behavior changes: later launch stages, upstream map
+assessment and live composition remain before a complete original planner.

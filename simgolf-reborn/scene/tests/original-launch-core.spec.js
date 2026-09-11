@@ -21,7 +21,15 @@ test('earlier miss flag is cleared before evaluating the current shot',()=>{
  const q={...rows[0][0],distance:50,terrainCode:2,actorFlags:0x400000,worldFlags:0x800000};
  expect(originalLaunchCore(q,originalStrengthCache()).actorFlags&0x400000).toBe(0);
 });
-test('intermediate non-putter composition rejects putter branch',()=>{
- const q={...rows[0][0],distance:20,range:200,terrainCode:1,actorFlags:0,explicitTarget:false};
- expect(()=>originalLaunchCore(q,originalStrengthCache())).toThrow('Putter launch');
+test('putters keep heading while using their own deviation branch and shared RNG',()=>{
+ let cache=originalStrengthCache(),putts=0,curving=0;
+ for(const [q,expected] of rows){
+  const actual=originalLaunchCore(q,cache);cache=actual.cache;
+  if(actual.club===13){
+   putts++;curving+=Number(actual.angularOffset!==0);
+   expect(actual.heading).toBe(q.heading);expect(actual.modifier).toBe(-3);
+   expect(actual).toEqual(expected);
+  }
+ }
+ expect(putts).toBeGreaterThan(0);expect(curving).toBeGreaterThan(0);
 });
