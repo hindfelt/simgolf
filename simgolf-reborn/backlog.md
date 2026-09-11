@@ -1218,3 +1218,11 @@ runs from 0x4235c0 through 0x425aca match, with flagged terrain-17 origins
 exercising original class ordering; seventeen related tests pass. Range now
 comes from actor abilities/lie rather than caller estimates. Long-shot launch
 composition, original observer/remark behavior and live integration remain open.
+
+F09 searched launch handoff (2026-09-11): added transfer from physical target
+search output into automatic launch. Selected aim/curve, search mode/flags,
+diagnostics, winner landing, candidate RNG/cache and class overrides replace
+stale pre-search copies. All 240 native launch snapshots pass handoff checks;
+ten related tests pass. These handoff records are synthetic boundary inputs,
+not proof of uninterrupted search-to-launch fidelity. The continuous combined
+native oracle, full outer orchestration and live application remain open.

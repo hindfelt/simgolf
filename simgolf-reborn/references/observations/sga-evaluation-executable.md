@@ -2701,3 +2701,22 @@ to 8. The shared fixture map now exposes incoming classes 17/20 accurately.
 Seventeen related tests pass, including prior automatic stages and stale-input
 rejection by authoritative actor fields. Long-shot composition and live game
 state mapping remain unfinished.
+
+### Search result to automatic launch ownership (2026-09-11)
+
+`originalSearchedAutomaticLaunch` consumes the shape returned by
+`originalPhysicalTargetSearch`. The search result owns target, curve, mode,
+world flags and diagnostics; aim owns heading, distance and actor corner flags.
+`search.searchFlag` supplies the launch reaction gate at native 0x5a872c.
+Shared candidate RNG/cache and shot-class overrides feed final assessment,
+while the winner landing (0x5a7270/78) is carried separately from the last
+candidate landing retained in `searched.shared` (0x5691dc/e0). Caller objects
+and course metadata are not mutated.
+
+Tests reconstruct the 240 previously verified native assessment boundaries in
+search-result form and deliberately corrupt pre-search copies. Final output
+matches those native launch snapshots, with the carried winner landing added.
+This proves field ownership and adapter behavior; the synthetic handoff records
+are not actual route-search observations. Existing physical-search/aim tests
+also pass (ten related tests total). A continuous search-through-launch native
+comparison and authoritative live-state application are still required.
