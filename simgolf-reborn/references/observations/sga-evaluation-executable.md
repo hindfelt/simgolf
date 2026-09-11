@@ -936,3 +936,27 @@ mode-based draw skipping, signed amplification saturation and class exemptions.
 Setting labels remain raw original fields rather than invented browser mappings.
 This precedes the club-specific overrides at 0x42429e and later launch effects;
 it is not the final angular offset and is not wired into deployed planning yet.
+
+
+### Non-putter club and shot-shape drift modifiers (2026-09-11)
+
+Recovered `0x4243ad–0x424542` in `original-club-drift.js`. Actor class zero
+bypasses this block. Active actor identity takes priority over the class-0x20
+branch: active subtracts trunc((3-level)*offset/6), class-0x20 instead adds
+trunc((3-level)*offset/3). Other actors initialize local modifier to attitude-3;
+otherwise it retains -3. Products wrap signed int32 before division.
+
+Clubs >3 scale offset by 6/(ironValue+4) and add ironValue to the local
+modifier. Clubs <=3 do the same using driverValue only when actor shot counter
++0x2a is zero. Curve +1/-1 then scales by 6/(drawValue+3) or 6/(fadeValue+3)
+and adds that value. Straight curve zero outside mode 3 scales by 6/7 and
+adds three. Other curve values skip this final adjustment.
+Raw fields: driver +0xfa, iron +0xfb, draw +0xfd, fade +0xfe; mode here is
+0x58dd80, distinct from drift mode 0x5a870c. Browser mappings remain pending.
+
+`verify-original-club-drift.py` executes the original complete block without
+stubs: 5,000 offset/modifier pairs match, including full signed-int32 incoming
+offsets and resulting overflow. Sixty original-output pairs retained. Eight
+club/initial-drift tests pass. Putting has its own previously recovered branch;
+this helper intentionally rejects club 13. The local modifier's later use,
+long-shot miss adjustment and heading/shot-shape composition remain unfinished.

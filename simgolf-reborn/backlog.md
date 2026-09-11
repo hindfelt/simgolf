@@ -738,3 +738,8 @@ F09 initial angular drift (2026-09-11): recovered original reshaped random offse
 and mode/actor/terrain reductions. All 5,000 x86 outputs and seeds match; 11
 launch tests pass. Club-specific drift overrides, later effects and full live
 planner composition remain before this can replace deployed launch behavior.
+
+F09 non-putter drift modifiers (2026-09-11): recovered actor/club/draw/fade
+scaling and intermediate local modifier. All 5,000 x86 pairs and eight drift
+tests pass, including signed overflow. Later long-shot adjustment and final
+heading/shot-shape composition remain before live integration.
