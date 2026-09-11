@@ -987,3 +987,31 @@ Twelve heading/drift tests pass, explicitly covering misses, active actor,
 strict distance threshold, RNG bypass and reference/actual heading distinction.
 This excludes putters and still precedes further planning from 0x424697 onward.
 No live migration or deployment; full launch composition remains incomplete.
+
+
+### Combined non-putter launch core (2026-09-11)
+
+`original-launch-core.js` now composes the recovered stages from
+`0x423f48–0x424697`: club/base velocity, variation draw, second strength query,
+initial drift, actor miss-flag clear, club modifiers and heading application.
+The RNG seed flows in original order, and both strength queries share explicit
+cache state. It returns the intermediate reference speed, variation and local
+modifier needed by later original stages, as well as heading/curvature/flags.
+Mode 0x58dd80 and driftMode 0x5a870c remain distinct inputs; worldFlags 0x59d208
+is distinct from the variation global flag 0x5a3228.
+
+The combined oracle caught a stack interpretation mistake during composition:
+RNG callee removes its argument, so the second search reads full range from
++0x30, not the earlier assessment span. It queries trunc(range*4/5) with the
+same initial vertical velocity. This extra query can change subsequent cache
+replacement even when its result is not the current horizontal ball speed.
+
+`verify-original-launch-core.py` runs the complete contiguous block, all RNG,
+range estimates, search/cache, sign and clamp code without helper stubs. All
+1,000 sequential non-putter cases match club, speed, vertical speed, reference
+speed, variation, actual/reference headings, curvature, local modifier, flags,
+seed and full cache. Sixty sequential records retained. All 23 focused launch
+tests pass, including immutable state/resume, full-range second search and the
+old miss-flag clear. Putters are explicitly rejected here; upstream assessment
+and later stages from 0x424697 remain outside this composition. This is not yet
+a complete shot planner and is not wired into the deployed browser game.

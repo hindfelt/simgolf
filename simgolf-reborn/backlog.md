@@ -748,3 +748,10 @@ F09 long-shot heading (2026-09-11): recovered miss check, reference/actual headi
 split, residual curvature and class-specific adjustment. 5,000 full x86 output
 comparisons and 12 drift/heading tests pass. Later planner stages and complete
 live launch integration remain open.
+
+F09 launch-core composition (2026-09-11): joined non-putter club, velocity,
+variation, drift and heading stages with original cache/RNG ordering. Full
+1,000-case x86 comparison and 23 regressions pass. Corrected second strength
+query to use full range; state stays explicit for reproducible sessions.
+Putting integration, upstream assessment and remaining later planner stages
+still block full live replacement, not ongoing implementation work.
