@@ -2871,3 +2871,13 @@ A native comparison exposed an overlapping hole record: kind64's per-kind count 
 A selected actor with nonzero status, negative delta and actor flag0x40000 calls0x447a30 with arguments[48,100,0,0,0]. The implementation reports this as `next: effect`, retaining the updated actor, rather than assuming the call is presentation-only or continuing past unknown effects. Other paths distinguish the early return from outcome continuation.
 
 `verify-original-remark-preamble.py` executes1400 native cases with the real sign helper0x466a20. It stops before the unresolved effect call, at the early-return destination, or at the outcome entry.48 native fixtures and eleven combined reaction tests pass. This stage still needs contiguous composition with outcome processing after the external effect has a faithful implementation. Per-kind delta selection, dispatch and later reaction effects remain unfinished.
+
+### Contiguous common reaction response: 0x467d72–0x46806a (2026-09-11)
+
+`original-remark-response.js` composes the preamble and outcome stage. Early return preserves the seed and bypasses the effect handler. Otherwise the handler must explicitly return synchronous speculative state before the outcome reads it. Missing handlers and asynchronous replies reject; caller state is cloned, and ordered effect events are returned with the result.
+
+The external call0x447a30 indexes108-byte objects at0x80af00 and invokes the sound-object parameter/play methods. Adjacent setup code0x447aa0 onward loads `sounds\\Golf sfx\\...wav` resources into those same objects. The reaction invokes object48 with arguments[48,100,0,0,0]. The wrapper and called methods manipulate sound records and backend interfaces; full browser sound adaptation remains required rather than treating the original call as an implemented no-op.
+
+`verify-original-remark-response.py` executes the contiguous original block through restoration, preamble and outcome, with real sign/clamp/RNG helpers.1600 cases match complete actor/hole/tile/seed results. The sound-call boundary is controlled explicitly: fixtures either retain state or alter actor status/seed to prove later reads see resolved state. This controlled mutation is a test contract, not a claim that the sound routine changes gameplay RNG.48 full fixtures and ten focused tests pass, including resolver rejection, state ownership and zero-draw early exits.
+
+This closes composition of these two common stages only. Full remark dispatch, per-kind adjustment selection, earlier history/display processing, later social effects, audio adaptation and live authoritative actor mapping remain unfinished.
