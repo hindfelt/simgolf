@@ -1,5 +1,6 @@
 import {originalSharedCandidateTrial,advanceOriginalCandidateTrial,originalCandidateTrialResult} from './original-candidate-trial.js';
 import {originalAssessedRouteSearch} from './original-route-search.js';
+import {originalAutoTargetResult} from './original-auto-target-result.js';
 // Adapter for the route search's sequential simulator callback. All mutable
 // speculative state is owned here; the caller's golfer/map remain unchanged.
 export function originalPhysicalCandidates({launch,physical,map,shared}) {
@@ -30,4 +31,15 @@ export function originalPhysicalRouteSearch(q,{launch,physical,map,shared}) {
  const result=originalAssessedRouteSearch({...q,terrainAt:candidates.terrainAt,
   shotClassAt:candidates.shotClassAt},candidates.simulate);
  return {...result,shared:candidates.sharedState()};
+}
+
+// Carry the selected route into the outer planner's aim calculation. The
+// spatial score reader is caller-owned scratch state, not candidate scores.
+// Preserve the search's seed/cache/metadata changes for subsequent launch.
+export function originalPhysicalTargetSearch(q,dependencies,{score,scoreAt}) {
+ const searched=originalPhysicalRouteSearch(q,dependencies);
+ const aim=originalAutoTargetResult({x:q.origin.x,z:q.origin.z,
+  target:searched.result.target,cornerTarget:searched.result.cornerTarget,
+  actorFlags:q.actorFlags,skillMask:q.skillMask,score},scoreAt);
+ return {...searched,aim};
 }

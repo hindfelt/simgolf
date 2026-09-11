@@ -1,6 +1,6 @@
 """Verify full original route search with actual candidate planning and flight."""
 from pathlib import Path
-import hashlib,json,random,struct,subprocess
+import hashlib,json,random,struct,subprocess,sys
 import pefile
 from unicorn import Uc,UC_ARCH_X86,UC_MODE_32,UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EBP,UC_X86_REG_ESI,UC_X86_REG_EBX,UC_X86_REG_EIP,UC_X86_REG_FPCW,UC_X86_REG_EAX,UC_X86_REG_EDI,UC_X86_REG_ECX
@@ -15,6 +15,7 @@ for a in [0x42f110,0x40c140,0x40be60]:u.mem_write(a,b'\x31\xc0\xc3')
 u.mem_map(0x839000,0x1000);u.reg_write(UC_X86_REG_FPCW,0x37f);u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_start(0x491380,0x4913bc,count=20000)
 def write(a,v,size=4):u.mem_write(a,(v&((1<<(size*8))-1)).to_bytes(size,'little'))
 def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
+with_target_result='--with-target-result' in sys.argv
 remaining=0;lie=0;calls=[];current={};sampleIndex=0;passes=[];searchDiagnostics=0;searchWinner={};assessmentCalls=0
 def hook(u,a,s,d):
  global remaining,lie,calls,sampleIndex,searchDiagnostics,searchWinner,assessmentCalls
@@ -75,7 +76,20 @@ def run(q):
  search=dict(scores=[list(struct.unpack('<6i',u.mem_read(0x1020bc+i*24,24))) for i in range(441)],distances=[list(struct.unpack('<6i',u.mem_read(0x104a14+i*24,24))) for i in range(441)],flags=[list(struct.unpack('<6I',u.mem_read(0x10736c+i*24,24))) for i in range(441)],work=read(0x102044),winner=searchWinner,searchFlag=read(0x5a872c),followupFlag=read(0x1020b4),samples=read(0x102038),diagnostics=searchDiagnostics,passes=passes)
  cache=dict(next=read(0x5a8728),entries=[dict(distance=read(0x5a3200+i*4),verticalSpeed=read(0x567278+i*4),speed=read(0x53ec30+i*4)) for i in range(10)])
  shared=dict(seed=read(0x820454)&0xffffffff,landing=dict(x=read(0x5691dc),z=read(0x5691e0)),cache=cache,shotClassOverrides=[dict(code=c,shotClass=u.mem_read(0x576dc2+c*48,1)[0]) for c in [17,20]] if calls else [])
- return dict(search=search,shared=shared,result=dict(target=dict(x=read(0x577fd4),z=read(0x577fd8)),curve=struct.unpack('<i',struct.pack('<I',u.reg_read(UC_X86_REG_EAX)))[0],cornerTarget=read(0x5a8730),diagnostics=read(0x5a5b88),worldFlags=read(0x59d208)&0xffffffff,mode=read(0x5a870c),candidateSkillMask=read(0x4c1e0c)))
+ result=dict(search=search,shared=shared,result=dict(target=dict(x=read(0x577fd4),z=read(0x577fd8)),curve=struct.unpack('<i',struct.pack('<I',u.reg_read(UC_X86_REG_EAX)))[0],cornerTarget=read(0x5a8730),diagnostics=read(0x5a5b88),worldFlags=read(0x59d208)&0xffffffff,mode=read(0x5a870c),candidateSkillMask=read(0x4c1e0c)))
+
+ if with_target_result:
+  # Resume the actual caller result block with search-mutated actor/shared
+  # memory intact. Supply its separate caller scratch score buffer explicitly.
+  sp=0x10d000
+  write(sp+0x1c,q['aimScore']);u.mem_write(sp+0x158,bytes(v&255 for v in q['aimScores']))
+  u.reg_write(UC_X86_REG_ESI,q['actorId']<<8);u.reg_write(UC_X86_REG_ESP,sp)
+  u.reg_write(UC_X86_REG_EAX,result['result']['cornerTarget'])
+  u.emu_start(0x423863,0x4239cf,count=3000)
+  assert u.reg_read(UC_X86_REG_EIP)==0x4239cf
+  result['aim']=dict(dx=read(sp+0x38),dz=read(sp+0x28),actorFlags=read(0x577f18)&0xffffffff,
+   score=read(sp+0x1c),heading=read(0x577fe8)&0xffffffff,distance=read(sp+0x10))
+ return result
 
 rows=[]
 base=json.loads((root/'simgolf-reborn/scene/tests/fixtures/original-assessed-route-search.json').read_text())[0][0]
@@ -92,18 +106,20 @@ for mode,scenario in [(2,'clear'),(1,'clear'),(0,'clear'),(2,'mixed'),(1,'mixed'
     q['cells'].append([x,z,code,cls,0x82 if x==30 and z==25 else 0])
  q['launch']={**launchBase,'actorId':q['actorId'],'x':q['origin']['x'],'z':q['origin']['z'],'actorFlags':q['actorFlags'],'actorClass':q['actorClass'],'skillMask':q['skillMask'],'abilityFlags':q['abilityFlags'],'shotCounter':q['shotCounter'],'attitude':q['rangeInput']['boost'],'level':q['level'],'cup':q['cup']}
  q['launch']['rangeInput']={**q['rangeInput'],'skillMask':q['skillMask'],'shot':q['shotCounter'],'professional':q['actorClass']!=0,'abilityFlags':q['abilityFlags']}
+ if with_target_result:q.update(aimScore=93,aimScores=[((x*17+z*13)%256)-128 for x in range(50) for z in range(50)])
  e=run(q);rows.append([q,e]);print('Original full search finished',scenario,mode,len(calls),flush=True)
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';
-const {originalPhysicalRouteSearch}=await import(PHYSICAL),{originalShotMap}=await import(MAP),{originalStrengthCache}=await import(CACHE);
+const {originalPhysicalRouteSearch,originalPhysicalTargetSearch}=await import(PHYSICAL),{originalShotMap}=await import(MAP),{originalStrengthCache}=await import(CACHE);
 for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){
 const metadata=new Map(q.cells.map(c=>[c[2],{shotClass:c[3],kind:c[2]===3?13:0}]));if(!metadata.has(20))metadata.set(20,{shotClass:q.excludedClass,kind:0});
 const map=originalShotMap({terrain:Uint8Array.from(q.cells.map(c=>c[2])),marks:Uint16Array.from(q.cells.map(c=>c[4])),derived:{edgeMasks:new Uint8Array(2500),surfaceHeights:new Int8Array(2500),directionHeights:new Int8Array(20000)},readHeight:()=>0,globalFlags:0,readRawTerrain:()=>0,metadata:code=>({...metadata.get(code),flags:0,bounceCoefficient:3,rollCoefficient:0})});
 const shared={seed:q.seed,landing:q.landing,cache:originalStrengthCache(),shotClassOverrides:[]};
-const actual=originalPhysicalRouteSearch(q,{launch:q.launch,physical:{professional:q.actorClass!==0,abilityFlags:q.abilityFlags,luck:5},map,shared});
+const dependencies={launch:q.launch,physical:{professional:q.actorClass!==0,abilityFlags:q.abilityFlags,luck:5},map,shared};
+const actual=q.aimScores?originalPhysicalTargetSearch(q,dependencies,{score:q.aimScore,scoreAt:(x,z)=>q.aimScores[x*50+z]}):originalPhysicalRouteSearch(q,dependencies);
 if(!isDeepStrictEqual(actual,e)){
  const mismatches=[];function compare(a,b,path=''){if(isDeepStrictEqual(a,b))return;if(a&&b&&typeof a==='object'&&typeof b==='object')for(const k of new Set([...Object.keys(a),...Object.keys(b)]))compare(a[k],b[k],path+'.'+k);else if(mismatches.length<20)mismatches.push({path,a,b});}compare(actual,e);throw Error(JSON.stringify(mismatches));}
-}console.log('Full physical search matches uninterrupted original execution.');
+}console.log('Full physical search and requested caller handoff match original execution.');
 """.replace('PHYSICAL',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-physical-candidates.js').as_uri())).replace('MAP',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-shot-map.js').as_uri())).replace('CACHE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-strength-search.js').as_uri()))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in __import__('sys').argv:
- (root/'simgolf-reborn/scene/tests/fixtures/original-full-physical-search.json').write_text(json.dumps(rows,separators=(',',':'))+'\n')
+ (root/('simgolf-reborn/scene/tests/fixtures/original-full-physical-target-search.json' if with_target_result else 'simgolf-reborn/scene/tests/fixtures/original-full-physical-search.json')).write_text(json.dumps(rows,separators=(',',':'))+'\n')

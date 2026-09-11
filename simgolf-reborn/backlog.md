@@ -1196,3 +1196,10 @@ search requests. Ten related regression tests pass. Long shots retain their cup
 and shared landing/diagnostics while awaiting real route search; projected
 waypoints are not substituted for search results. Full search-to-assessment
 composition, remark behavior and live state integration remain open.
+
+F09 physical search aim handoff (2026-09-11): real physical search now passes
+its selected target/corner flag into caller heading, distance, flag and score
+calculation, preserving shared seed/cache and metadata overrides. Six chained
+native scenarios (5,520 candidate trials) and ten related tests pass. The
+caller score buffer remains explicit scratch input; outer setup/provenance,
+full launch composition, observer effects and live integration remain open.

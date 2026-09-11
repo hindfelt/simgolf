@@ -2644,3 +2644,22 @@ adjustments, and projected search waypoints distinct from the cup. Initial
 coverage used a range too large to distinguish these; varying range exposed
 and closed that test-data gap. Ten related tests pass. No route search is
 replaced with an approach, and this stage has not been wired into live play.
+
+### Physical route search to caller aim (2026-09-11)
+
+`originalPhysicalTargetSearch` runs the recovered physical route search and
+feeds its selected target/corner flag into 0x423863–0x4239cf aim processing.
+It returns the complete search result and shared seed/cache/metadata changes
+alongside the recalculated heading, distance, actor flags and approach score.
+The spatial score reader remains explicit caller scratch input; it is not
+substituted with the route candidate score table.
+
+`verify-original-full-physical-search.py --with-target-result` runs all six
+existing native physical-search scenarios (5,520 candidate trials), then
+resumes the native caller aim block with the resulting actor/shared memory.
+A separate outer stack and deterministic signed-byte score buffer are supplied
+at this handoff. This verifies the connected state transfer but is not an
+uninterrupted outer-planner oracle: the caller stack setup and intervening
+return instructions are not executed. Both skill-bit-four score recalculation
+and score preservation are exercised. Full outer preparation, scratch-buffer
+provenance, observer effects and live application remain unfinished.
