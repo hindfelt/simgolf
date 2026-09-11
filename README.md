@@ -11,6 +11,7 @@ The new **1.0.0 major rebuild** uses Three.js for a dimensional, isometric view 
 ## Start here
 
 - **[Player guide: what the game is about and how to play](simgolf-reborn/PLAYER_GUIDE.md)**
+- [Feedback testing: isolated resort copy and prepared two-hole simulation](simgolf-reborn/references/release/playtesting-2026-09-11.md)
 - **[Download the v1.0.0 playable preview](https://github.com/hindfelt/simgolf/releases/tag/v1.0.0)**
 - [Release notes and limitations](simgolf-reborn/RELEASE_NOTES.md)
 - [Technical documentation](simgolf-reborn/DEVELOPMENT.md)

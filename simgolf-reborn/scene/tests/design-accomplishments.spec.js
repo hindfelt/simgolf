@@ -9,7 +9,7 @@ import {
 } from "../src/simulation/game.js";
 import { createSession } from "../src/simulation/session.js";
 function course() {
-  const g = createGame(22);
+  const g = createGame(8);
   build(g, "tee", 7, 20);
   build(g, "green", 23, 17);
   for (let c = 9; c <= 21; c++) build(g, "fairway", c, 19);
@@ -25,7 +25,12 @@ function observations(g, advantages) {
       100 *
       (6 -
         advantages.reduce((sum, a, i) => sum + (mask & (1 << i) ? a : 0), 0));
+    // The live original report consumes integer score histograms, not just means.
+    const mean=strokes/100,low=Math.floor(mean),highCount=Math.round((mean-low)*100);
+    const scoreCounts={[low]:100-highCount};
+    if(highCount)scoreCounts[low+1]=highCount;
     h.stats.evaluation.cohorts[mask] = {
+      scoreCounts,
       count: 100,
       strokes,
       seconds: 1000,
@@ -62,7 +67,7 @@ test("all four supported design awards use cohort comparisons and remain earned 
     ["first-challenge", [0.75, 0.75, 0]],
     ["first-heroic", [0.75, 0, 0.75]],
     ["first-strategic", [0, 0.75, 0.75]],
-    ["first-classic", [1, 1, 1]],
+    ["first-classic", [1.25, 1.25, 1.25]],
   ]) {
     observations(g, ratings);
     update(g, 0.05);
@@ -77,7 +82,7 @@ test("all four supported design awards use cohort comparisons and remain earned 
   update(g, 0.05);
   expect(g.proProfile.points).toBe(22);
 });
-test("missing and ambiguous comparisons do not award; previous earned course milestones migrate intact", () => {
+test("missing comparisons do not award; original weakest-skill ties and milestone migration are preserved", () => {
   const g = course();
   g.holes[0].stats.evaluation.cohorts = {
     0: { count: 1, strokes: 6, seconds: 10, mood: 50 },
@@ -88,7 +93,7 @@ test("missing and ambiguous comparisons do not award; previous earned course mil
   expect(g.accomplishments).toEqual([]);
   observations(g, [0.75, 0.75, 0.75]);
   update(g, 0.05);
-  expect(g.accomplishments).toEqual([]);
+  expect(g.accomplishments.map(a=>a.id)).toEqual(["first-strategic"]);
   createSession(g);
   g.accomplishments = [{ id: "nine-holes", at: 0 }];
   g.proProfile.points = 13;

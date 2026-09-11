@@ -12,6 +12,10 @@ The approved dimensional art direction and subsequent tile-based course/path ref
 - [Example course save](graphics/samples/playable-example.json): import through the club menu to try the pictured layout. A new game otherwise starts with an empty property.
 - [Concept comparison](concepts.html), [art-test notes](graphics/art-test.md), and [original references](references/README.md).
 
+## Feedback testing
+
+Open the game with `?testing=1` or choose **Club menu → Open playtesting copy**. The testing copy has separate saves. Choose **Test & feedback → Start a prepared simulation** for two open holes and an early helicopter visit. Export feedback with the course state and send the file with your comments. [Testing instructions and release assessment](references/release/playtesting-2026-09-11.md).
+
 ## Release status
 
 Version 1.0.0 marks the major browser rebuild and is published as a **playable preview**. It is not a completed replica or a production multiplayer release. See [release notes](RELEASE_NOTES.md) for scope and limits. The repository-root application and deployment workflow are the earlier implementation; build this release from `simgolf-reborn/scene`.

@@ -1,3 +1,4 @@
+import {testingStorage,testingHref,mountTestingFeedback} from './ui/testing-mode.js';
 import { settleCareerChallenge } from "./simulation/challenge-career.js";
 import { originalChallengeOfferStakes } from "./simulation/pro-challenge.js";
 import { inspectFacility } from "./ui/facility-inspector.js";
@@ -126,6 +127,12 @@ async function restoreEvent(raw) {
     ? restoreProChallenge(raw)
     : restoreCompetition(raw);
 }
+const testing=new URLSearchParams(location.search).get('testing')==='1';
+const playStorage=testingStorage(localStorage,testing);
+if(testing&&!playStorage.getItem('simgolf-reborn.course.v1')){
+ const original=localStorage.getItem('simgolf-reborn.course.v1');
+ if(original)playStorage.setItem('simgolf-reborn.course.v1',original);
+}
 const practiceId = new URLSearchParams(location.search).get("practice");
 const championshipId = new URLSearchParams(location.search).get("championship");
 let competition = null;
@@ -135,7 +142,7 @@ if (championshipId) {
     if (!/^[a-zA-Z0-9_-]{1,64}$/.test(championshipId))
       throw Error("Invalid event reference.");
     competition = await restoreEvent(
-      localStorage.getItem(`simgolf-reborn.championship.${championshipId}`),
+      playStorage.getItem(`simgolf-reborn.championship.${championshipId}`),
     );
     if (competition.snapshot().id !== championshipId)
       throw Error("Event reference mismatch.");
@@ -167,7 +174,7 @@ if (practiceId) {
     if (!/^[a-f0-9]{64}$/.test(practiceId))
       throw Error("Invalid course reference.");
     coursePackage = await importCourse(
-      localStorage.getItem(`simgolf-reborn.package.${practiceId}`),
+      playStorage.getItem(`simgolf-reborn.package.${practiceId}`),
     );
     if (coursePackage.digest !== practiceId)
       throw Error("The saved course reference does not match.");
@@ -195,7 +202,7 @@ let game = competition
   saveAllowed = true,
   loadWarning = "";
 try {
-  const saved = competition ? null : localStorage.getItem(saveKey);
+  const saved = competition ? null : playStorage.getItem(saveKey);
   if (saved) {
     const candidate = restore(saved);
     if (coursePackage) {
@@ -218,6 +225,26 @@ try {
 }
 // The local adapter supplies identity; a future server supplies authenticated principals.
 const session = createSession(game, { courseLocked: !!coursePackage });
+if(testing){
+ mountTestingFeedback({getSave:()=>competition?competition.save():serialize(game),storage:playStorage,
+  startScenario:async()=>{
+   const {createPlaytestCourse}=await import('./simulation/playtest-course.js');
+   const raw=serialize(createPlaytestCourse());
+   const key='simgolf-reborn.course.v1';
+   const prior=playStorage.getItem(key);
+   if(prior)playStorage.setItem(`${key}.previous`,prior);
+   playStorage.setItem(key,raw);
+   saveAllowed=false; // Do not let pagehide overwrite the newly prepared course.
+   location.href='?testing=1';
+  }});
+ document.addEventListener('click',event=>{
+  const a=event.target.closest?.('a');
+  if(a&&a.id!=='testing-return'&&!a.download&&a.origin===location.origin)a.href=testingHref(a.href,true);
+ },true);
+}else{
+ const link=document.createElement('a');link.href='?testing=1';link.textContent='Open playtesting copy';
+ document.querySelector('.menu-actions').append(link);
+}
 let selectedHoleId = game.holes[0].id;
 let selectedStaffId = null,
   movingStaff = false;
@@ -426,7 +453,7 @@ function save() {
     return false;
   }
   try {
-    localStorage.setItem(
+    playStorage.setItem(
       saveKey,
       competition ? competition.save() : serialize(game),
     );
@@ -1494,7 +1521,7 @@ function showStandings() {
     total.textContent = `Match wager: ${state.matchAmount === null ? "pending" : money(state.matchAmount)} · Gary’s net: ${money(state.residentNet)}`;
     const note = document.createElement("p");
     let invited=false;
-    try { const career=JSON.parse(localStorage.getItem("simgolf-reborn.course.v1"))?.challengeCareer;
+    try { const career=JSON.parse(playStorage.getItem("simgolf-reborn.course.v1"))?.challengeCareer;
       invited=career?.offer?.eventId===state.id || career?.results?.some(r=>r.eventId===state.id);
     } catch {}
     note.id="challenge-accounting";
@@ -1600,15 +1627,15 @@ $("#start-championship").onclick = async () => {
             entrants,
           });
     const id = host.snapshot().id;
-    localStorage.setItem(`simgolf-reborn.championship.${id}`, host.save());
+    playStorage.setItem(`simgolf-reborn.championship.${id}`, host.save());
     if (invitation) {
       const accepted=command("accept-challenge",{id:invitation.id,eventId:id,courseDigest:course.digest});
       if (!accepted.ok) throw Error(accepted.message);
     }
     if (!save())
       throw Error("Save your resort before starting the championship.");
-    localStorage.setItem("simgolf-reborn.last-championship", id);
-    location.href = `?championship=${id}`;
+    playStorage.setItem("simgolf-reborn.last-championship", id);
+    location.href = testingHref(`?championship=${id}`,testing);
   } catch (error) {
     $("#championship-error").textContent = error.message;
     button.disabled = false;
@@ -1620,7 +1647,7 @@ document.body.append(invitationDialog);
 $("#career-challenge").onclick=()=>{
   const o=game.challengeCareer?.offer;
   if (!o) return;
-  if (o.status==='playing') { location.href=`?championship=${o.eventId}`; return; }
+  if (o.status==='playing') { location.href=testingHref(`?championship=${o.eventId}`,testing); return; }
   invitationDialog.replaceChildren();
   const add=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;invitationDialog.append(n);return n;};
   add('h2',`${o.professional} challenges Gary`);
@@ -1633,18 +1660,18 @@ $("#career-challenge").onclick=()=>{
 async function collectInvitedChallenge() {
   const o=game.challengeCareer?.offer;
   if (coursePackage || o?.status!=='playing') return;
-  const raw=localStorage.getItem(`simgolf-reborn.championship.${o.eventId}`);
+  const raw=playStorage.getItem(`simgolf-reborn.championship.${o.eventId}`);
   if (!raw) return;
   try { const result=await settleCareerChallenge(game,raw); if (result.ok) {save();toast(result.message);refresh();} }
   catch(error) {toast(`Challenge result kept pending: ${error.message}`);}
 }
 await collectInvitedChallenge();
-const lastChampionship = localStorage.getItem(
+const lastChampionship = playStorage.getItem(
   "simgolf-reborn.last-championship",
 );
 if (lastChampionship && /^[a-zA-Z0-9_-]{1,64}$/.test(lastChampionship)) {
   $("#resume-championship").hidden = false;
-  $("#resume-championship").href = `?championship=${lastChampionship}`;
+  $("#resume-championship").href = testingHref(`?championship=${lastChampionship}`,testing);
 }
 $("#import-championship").onchange = async (e) => {
   const file = e.target.files?.[0];
@@ -1663,10 +1690,10 @@ $("#import-championship").onchange = async (e) => {
     if (!save())
       throw Error("Save your current game before importing a championship.");
     const id = host.snapshot().id;
-    localStorage.setItem(`simgolf-reborn.championship.${id}`, host.save());
-    localStorage.setItem("simgolf-reborn.last-championship", id);
+    playStorage.setItem(`simgolf-reborn.championship.${id}`, host.save());
+    playStorage.setItem("simgolf-reborn.last-championship", id);
     saveAllowed = false;
-    location.href = `?championship=${id}`;
+    location.href = testingHref(`?championship=${id}`,testing);
   } catch (error) {
     toast(error.message);
   } finally {
@@ -1695,11 +1722,11 @@ $("#import-course").onchange = async (e) => {
   if (!file) return;
   try {
     const pkg = await importCourse(await file.text());
-    localStorage.setItem(
+    playStorage.setItem(
       `simgolf-reborn.package.${pkg.digest}`,
       JSON.stringify(pkg),
     );
-    location.assign(`?practice=${pkg.digest}`);
+    location.assign(testingHref(`?practice=${pkg.digest}`,testing));
   } catch (error) {
     toast(`Could not open course: ${error.message}`);
   }
@@ -1710,7 +1737,7 @@ $("#import").onchange = async (e) => {
   if (!file) return;
   try {
     const next = restore(await file.text());
-    localStorage.setItem(saveKey, serialize(next));
+    playStorage.setItem(saveKey, serialize(next));
     // Page-exit autosave must not replace the imported state with this old game.
     saveAllowed = false;
     location.reload();
@@ -1781,14 +1808,14 @@ $("#reroll-landscape").onclick = () => {
 };
 $("#new").onclick = () => {
   $("#reroll-landscape").click();
-  $("#restore-previous").hidden = !localStorage.getItem(`${saveKey}.previous`);
+  $("#restore-previous").hidden = !playStorage.getItem(`${saveKey}.previous`);
   $("#new-dialog").showModal();
 };
 $("#restore-previous").onclick = () => {
   try {
-    const previous = restore(localStorage.getItem(`${saveKey}.previous`));
-    localStorage.setItem(`${saveKey}.previous`, serialize(game));
-    localStorage.setItem(saveKey, serialize(previous));
+    const previous = restore(playStorage.getItem(`${saveKey}.previous`));
+    playStorage.setItem(`${saveKey}.previous`, serialize(game));
+    playStorage.setItem(saveKey, serialize(previous));
     saveAllowed = false;
     location.reload();
   } catch (error) {
@@ -1811,8 +1838,8 @@ $("#confirm-new").onclick = () => {
       $("#new-landscape").value,
       $("#new-environment").value,
     );
-    localStorage.setItem(`${saveKey}.previous`, serialize(game));
-    localStorage.setItem(saveKey, serialize(next));
+    playStorage.setItem(`${saveKey}.previous`, serialize(game));
+    playStorage.setItem(saveKey, serialize(next));
     saveAllowed = false;
     location.reload();
   } catch (error) {
@@ -2288,19 +2315,19 @@ async function syncLiveChallengeWagers() {
   careerSettlementBusy=true;
   const resortKey="simgolf-reborn.course.v1";
   try {
-    const before=localStorage.getItem(resortKey);
+    const before=playStorage.getItem(resortKey);
     if (!before) {careerSettlementCursor=cursor;return;}
     const resort=restore(before);
     if (resort.challengeCareer?.offer?.eventId!==state.id) {careerSettlementCursor=cursor;return;}
     const event=competition.save();
     // Persist the replay before its receipts so an interrupted tab can recover.
-    localStorage.setItem(saveKey,event);
+    playStorage.setItem(saveKey,event);
     const result=await settleCareerChallenge(resort,event);
     // Another local action may have saved the resort during replay. Retry from
     // that newer state instead of overwriting it with this snapshot.
-    if (localStorage.getItem(resortKey)!==before) return;
+    if (playStorage.getItem(resortKey)!==before) return;
     if (result.ok) {
-      localStorage.setItem(resortKey,serialize(resort));
+      playStorage.setItem(resortKey,serialize(resort));
       toast(result.message);
       const note=$("#challenge-accounting");
       if (note) note.textContent="Invited match. Completed wagers have been recorded in your resort account.";
