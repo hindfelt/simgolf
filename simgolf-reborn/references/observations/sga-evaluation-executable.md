@@ -616,3 +616,23 @@ available for original runtime captures. Eighteen movement/bounce/projection/
 assessment tests pass. Re-ran original oracles: 10,081 projections, 1,000 complete
 assessments and 10,005 length conversions still match. New candidate integration
 has source-derived boundary tests; full candidate-flight x86 oracle remains open.
+
+### Candidate ground response (2026-09-11)
+
+Reconstructed 0x421f48–0x4220f4 as `originalCandidateGround`. Imagination bit 4
+uses clamp(roll coefficient - forward slope, 0, 99) and cross-slope heading
+adjustment; other candidates use the raw coefficient without slope steering.
+A terrain boundary forces resistance to at least 2. Resistance < 5 reduces speed
+by trunc((speed >> resistance)/2); higher resistance uses speed - (speed >> 6)
++ 32. Terrain 17 away from boundaries and terrain 10 in the centre subcells
+halve speed. Crossing tile boundaries reflects heading only when the old tile's
+directional wall bit matches the signed movement component.
+
+These are candidate-simulator rules, kept distinct from the previously recovered
+live ball ground routine where source behavior differs. Slopes, terrain and wall
+bits are explicit original inputs. The helper does not perform bounce, obstacle
+collision or final stopping. `verify-original-candidate-ground.py` runs the
+original entire branch and clamp helper, stubbing only the directional slope
+helper outputs. All 5,000 randomized speed/heading outputs match. Seven focused
+ground/flight tests pass. Full simulator lifecycle and original slope/map adapter
+remain before candidate generation can replace live browser planning.

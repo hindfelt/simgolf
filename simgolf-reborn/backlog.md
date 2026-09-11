@@ -652,3 +652,9 @@ x86-generated table and arithmetic implementation. Eighteen focused tests pass;
 original projection and route-assessment oracles still match. Candidate ground
 response, collisions, launch selection and complete simulator lifecycle remain
 before connecting full original route selection to live gameplay.
+
+F09 candidate ground response (2026-09-11): reconstructed original rolling
+resistance, skill-dependent slope steering, surface slowdowns and directional
+wall reflections. Matched 5,000 original x86 cases with supplied slope-helper
+outputs; seven ground/flight tests pass. Bounce/collision lifecycle and launch
+selection remain before full candidate simulation and live planner integration.
