@@ -18,5 +18,6 @@ export function originalPreparedRouteCandidate(q,terrainAt) {
  const admission=originalRouteCandidate({candidate:trial.candidate,
   start:{x:q.origin.x>>10,z:q.origin.z>>10},cup:q.cup,previousTarget:q.previousTarget,
   actorFlags:q.actorFlags,range:q.range,shotDistance:trial.distance,cupDistance:q.cupDistance,terrainAt});
- return {...trial,admission};
+ // 0x422abc–0x422af2 clears all six sentinels once admission succeeds.
+ return {...trial,scores:admission.eligible?Array(6).fill(0):trial.scores,admission};
 }

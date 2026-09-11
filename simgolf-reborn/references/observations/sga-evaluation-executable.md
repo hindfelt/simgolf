@@ -1609,3 +1609,20 @@ score arrays. Sixty fixtures and nine trial/admission tests pass. Composition
 has focused integration tests; this is not a contiguous oracle for the entire
 candidate-search loop. Six-way shot simulation, repeated search passes, winner
 selection and live integration remain unfinished.
+
+### Route shot-option gate and admission reset correction (2026-09-11)
+
+Recovered 0x422b65–0x422bb5 in `original-route-option.js`. Existing scores
+>=99999 skip without mutation. Curve -1 requires mask bit 1, curve +1 requires
+bit 2, and either curve requires distance >75. Disallowed options become 100000;
+straight shots need neither curve bit nor the distance threshold.
+
+Corrected `originalPreparedRouteCandidate`: successful fresh admission must clear
+all six initialized 100000 scores to zero (0x422abc–0x422af2), otherwise the next
+stage skips every shot. Rejected candidates retain their exclusion values.
+`verify-original-route-option.py` executes the original reset block and asserts
+all six writes, then compares 5,000 original option gates/writes without stubs.
+Sixty fixtures and seven option/trial tests pass. The earlier trial oracle covered
+pre-admission initialization only; this correction closes its composition gap.
+Repeated simulations, option scoring, winner selection and live integration
+remain unfinished. These changes are not deployed.

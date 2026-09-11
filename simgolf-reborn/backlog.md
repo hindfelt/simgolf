@@ -896,3 +896,9 @@ whole-candidate score sentinel and six-score initialization; composed fresh tria
 with original admission. 5,000 original cases and nine tests pass. Six-way
 simulation, repeated search passes, winner selection and live integration remain
 unfinished.
+
+F09 route shot options (2026-09-11): recovered curve-mask/distance gates and score
+sentinels. Fixed successful fresh admission to clear all six scores before shot
+trials. Original reset instructions and 5,000 gate cases verified; seven tests
+pass. Repeated simulations, scoring, winner selection and live integration remain
+unfinished.

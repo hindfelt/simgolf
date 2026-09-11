@@ -14,7 +14,7 @@ test('only untested entries initialize six shot scores',()=>{
 test('fresh trial geometry feeds original admission and excludes current tile',()=>{
  const q={anchor:{x:25,z:20},offset:{x:0,z:0},origin:{x:20992,z:20992},scores:Array(6).fill(0),cup:{x:30,z:20},previousTarget:{x:20,z:20},actorFlags:0,range:150,cupDistance:250};
  const map=()=>({code:2,shotClass:0});
- const a=originalPreparedRouteCandidate(q,map);expect(a.distance).toBe(125);expect(a.admission.eligible).toBe(true);
+ const a=originalPreparedRouteCandidate(q,map);expect(a.distance).toBe(125);expect(a.admission.eligible).toBe(true);expect(a.scores).toEqual(Array(6).fill(0));
  expect(originalPreparedRouteCandidate({...q,anchor:{x:20,z:20},actorFlags:1},map).admission.eligible).toBe(false);
 });
 test('cached or excluded trials never rerun terrain admission',()=>{
