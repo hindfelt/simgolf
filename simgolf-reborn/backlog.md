@@ -632,3 +632,9 @@ imagination gate, lie-dependent weighting, first-shot range reduction and choice
 among straight/draw/fade assessments. Thirteen follow-up/landing/pruning checks
 pass. The underlying route assessment, its original projection table and incoming
 flag lifetime remain open; callback is explicit and no heuristic is substituted.
+
+F09 original projection (2026-09-11): recovered and executed the original trig
+table initializer, reconstructed integer projection/interpolation and verified
+10,081 original x86 vectors. Ten projection/follow-up/landing tests pass. This
+supplies the projection dependency for original route assessment; the complete
+assessment and full live planner integration remain unfinished.

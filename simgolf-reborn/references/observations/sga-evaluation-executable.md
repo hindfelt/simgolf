@@ -536,3 +536,28 @@ penalties. It uses original heading/distance and projection helpers 0x466b40 /
 0x466b80. Those delegate to 0x4913e0, which interpolates a runtime table at
 0x8390ac. Recover table initialization and fixed-point interpolation before
 reconstructing the complete assessment; do not silently use Math.sin/cos.
+
+### Original projection table and components (2026-09-11)
+
+Recovered runtime initializer 0x491380–0x4913bc. It writes 256 integers at
+0x8390ac: x87 fsin(index * double at 0x4baa50), multiplied by 65535.0 and
+converted through original truncating helper 0x4a57a0. The step constant is
+0.006159985596078431. Ran those original instructions to generate the committed
+immutable table; did not substitute JavaScript trigonometry. The interpolation
+reads an additional adjacent entry at index 256, zero in isolated initialized
+storage; no direct write to that address was found in the executable scan.
+
+Reconstructed 0x466b40/0x466b80 and the relevant core paths at 0x4913e0–0x4914ea.
+Heading uses the original full-turn uint32 convention. Sign and quadrant folding,
+22-bit table interval/fraction, signed 32-bit multiplication and shifts are
+preserved. Radius scaling branches at signed 65535 and 16777215, including
+negative-radius behavior. Cosine adds a wrapped quarter-turn before projection;
+map callers subtract this component from the z origin.
+
+`verify-original-projection.py` initializes the table by original x86 and checks
+10,081 vectors against original projection instructions. Includes all quadrant
+boundaries, positive/negative radii, scaling boundaries and 10,000 fixed-seed map
+vectors. All match; 97 oracle vectors are committed for ordinary regression
+runs. Ten projection/follow-up/landing-score tests pass. This verifies isolated
+initialized-table behavior, not a full original process snapshot. Next step is
+the complete terrain-sampling route assessment using these projections.
