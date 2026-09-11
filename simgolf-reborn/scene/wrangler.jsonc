@@ -38,6 +38,10 @@
       {
         "name": "COURSE_SCHEDULERS",
         "class_name": "CourseScheduler"
+      },
+      {
+        "name": "TOURNAMENT_ROUNDS",
+        "class_name": "TournamentRoundHost"
       }
     ]
   },
@@ -46,6 +50,12 @@
       "tag": "shared-course-scheduler-v1",
       "new_sqlite_classes": [
         "CourseScheduler"
+      ]
+    },
+    {
+      "tag": "tournament-round-host-v1",
+      "new_sqlite_classes": [
+        "TournamentRoundHost"
       ]
     }
   ]

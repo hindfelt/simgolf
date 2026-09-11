@@ -4,7 +4,9 @@ import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText
 import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
 import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
 import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,setTournamentStatus} from './tournaments.js';
+import {tournamentStandings} from './tournament-rounds.js';
 export {CourseScheduler} from './course-scheduler.js';
+export {TournamentRoundHost} from './tournament-round-host.js';
 const TTL=30*24*60*60;
 async function session(request,env){
  const value=cookie(request,names.session);if(!value)return null;
@@ -120,7 +122,9 @@ async function handle(request,env){
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
   await env.DB.batch([
-   env.DB.prepare('DELETE FROM tournament_entries WHERE player_id=?').bind(user.id),
+   env.DB.prepare("UPDATE tournament_entries SET withdrawn=1,player_name='Former player' WHERE player_id=? AND tournament_id IN (SELECT id FROM tournaments WHERE status='locked' AND owner_id!=?)").bind(user.id,user.id),
+   env.DB.prepare('DELETE FROM tournament_rounds WHERE player_id=?').bind(user.id),
+   env.DB.prepare('DELETE FROM tournament_entries WHERE player_id=? AND withdrawn=0').bind(user.id),
    env.DB.prepare("UPDATE tournaments SET status='cancelled',owner_id=NULL WHERE owner_id=?").bind(user.id),
    env.DB.prepare("UPDATE tournaments SET course_author_id=NULL,course_author_name='Former player' WHERE course_author_id=?").bind(user.id),
    env.DB.prepare('DELETE FROM published_courses WHERE author_id=?').bind(user.id),
@@ -149,6 +153,19 @@ async function handle(request,env){
    return json(await createTournament(env.DB,user.id,body),201);
   }
  }
+ const roundRoute=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})\/rounds\/([1-4])(?:\/(commands))?$/);
+ if(roundRoute){
+  const [,id,number,action]=roundRoute,round=Number(number);
+  if((!action&&request.method==='GET')||(action==='commands'&&request.method==='POST')){
+   await rateLimit(env.DB,'tournament-round:'+user.id,120,60);
+   const host=env.TOURNAMENT_ROUNDS.getByName(`${id}:${user.id}:${round}`);
+   const reply=action?await host.command(id,user.id,round,await readJson(request,20000)):await host.read(id,user.id,round);
+   if(!reply.ok)throw fail(reply.status,reply.error);
+   return json(action?reply.value:reply.value.course);
+  }
+ }
+ const standingsRoute=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})\/standings$/);
+ if(standingsRoute&&request.method==='GET')return json(await tournamentStandings(env.DB,standingsRoute[1]));
  const tournament=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})(?:\/(join|leave|lock|cancel))?$/);
  if(tournament){
   const [,id,action]=tournament;

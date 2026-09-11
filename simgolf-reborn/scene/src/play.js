@@ -194,11 +194,20 @@ if (practiceId) {
   }
 }
 const sharedId=new URLSearchParams(location.search).get('shared');
+const tournamentId=new URLSearchParams(location.search).get('tournament');
+const onlineRound=Number(new URLSearchParams(location.search).get('round')||1);
 let sharedSnapshot=null;
 if(sharedId){
  try{
   if(testing||competition||coursePackage||!/^[-a-f0-9]{36}$/.test(sharedId))throw Error('Open shared courses separately from local practice and playtesting.');
   sharedSnapshot=await accountRequest('/api/courses/'+sharedId);
+ }catch(error){document.body.textContent=error.message;throw error;}
+}
+if(tournamentId){
+ try{
+  if(sharedId||testing||competition||coursePackage||!/^[-a-f0-9]{36}$/.test(tournamentId)||!Number.isInteger(onlineRound)||onlineRound<1||onlineRound>4)throw Error('Open tournament rounds separately from other game modes.');
+  sharedSnapshot=await accountRequest(`/api/tournaments/${tournamentId}/rounds/${onlineRound}`);
+  coursePackage=await importCourse(JSON.stringify(sharedSnapshot.course));
  }catch(error){document.body.textContent=error.message;throw error;}
 }
 const saveKey = competition
@@ -211,7 +220,7 @@ let game = competition
     : coursePackage
       ? coursePractice(coursePackage)
       : createGame(),
-  saveAllowed = !sharedId,
+  saveAllowed = !sharedSnapshot,
   loadWarning = "";
 try {
   const saved = sharedSnapshot ? JSON.stringify(sharedSnapshot.state) : competition ? null : playStorage.getItem(saveKey);
@@ -220,8 +229,8 @@ try {
     if (coursePackage) {
       const design = await exportCourse(candidate, coursePackage.content.title);
       if (
-        candidate.courseDigest !== practiceId ||
-        design.digest !== practiceId ||
+        candidate.courseDigest !== coursePackage.digest ||
+        design.digest !== coursePackage.digest ||
         candidate.guests.length ||
         candidate.staff.length ||
         candidate.holes.some((h) => h.open)
@@ -231,15 +240,19 @@ try {
     game = candidate;
   }
 } catch (error) {
-  if(sharedId){document.body.textContent='The shared course could not be read. Your server save has not been changed.';throw error;}
+  if(sharedSnapshot){document.body.textContent='The server course could not be read. Your server save has not been changed.';throw error;}
   saveAllowed = false;
   loadWarning =
     "The saved course could not be read. It has been kept intact. Import a valid save or start a new course from the club menu.";
 }
 let sharedRole=sharedSnapshot?.role;
 const remote=sharedSnapshot?createSharedClient({snapshot:sharedSnapshot,actorId:signedInAccount().user.id,request:accountRequest,
+ ...(tournamentId?{endpoint:`/api/tournaments/${tournamentId}/rounds/${onlineRound}`} : {}),
  onSnapshot:course=>{
+  const completed=tournamentId&&!sharedSnapshot.result&&course.result;
+  if(tournamentId)sharedSnapshot=course;
   game=restore(JSON.stringify(course.state));
+  if(tournamentId)selectedHoleId=game.pro.holeId;
   if(!getHole(game,selectedHoleId))selectedHoleId=game.holes[0].id;
   if(course.role!==sharedRole){
    sharedRole=course.role;
@@ -249,6 +262,7 @@ const remote=sharedSnapshot?createSharedClient({snapshot:sharedSnapshot,actorId:
    }else renderPanel();
   }
   refresh();
+  if(completed){renderPanel();toast('Round complete. Your scorecard is saved on the server.');}
  },
  onStatus:message=>{$('#save-status').textContent=message;$('#shared-status').textContent=message;},
  onResult:(result,action)=>{
@@ -276,7 +290,7 @@ if(testing){
   const a=event.target.closest?.('a');
   if(a&&a.id!=='testing-return'&&!a.download&&a.origin===location.origin&&!new URL(a.href).searchParams.has('shared'))a.href=testingHref(a.href,true);
  },true);
-}else if(!sharedId){
+}else if(!sharedSnapshot){
  const link=document.createElement('a');link.href='?testing=1';link.textContent='Open playtesting copy';
  document.querySelector('.menu-actions').append(link);
 }
@@ -548,7 +562,7 @@ const names = {
 };
 function setMode(next) {
   if(remote?.role==='spectator'&&['build','staff','play'].includes(next))next='guests';
-  if(remote&&next==="play"){toast("Shared golf rounds are not available yet.");return;}
+  if(sharedId&&next==="play"){toast("Shared golf rounds are not available yet.");return;}
   mode = next;
   boundaryCorners = null;
   pickingAnalysis = false;
@@ -890,6 +904,11 @@ function renderPanel() {
         toast(command("start-practice").message);
       if (game.pro) focus(game.pro.pos, 1.6);
     };
+    if(tournamentId){
+     $('#standings').hidden=false;$('#pro-skills').hidden=true;
+     $('#practice').textContent=`Follow ${game.pro.name}`;$('#practice').onclick=()=>focus(game.pro.pos,1.6);
+     if(sharedSnapshot.result&&onlineRound<sharedSnapshot.totalRounds){const next=document.createElement('button');next.textContent='Next tournament round';next.onclick=()=>location.assign(`/?tournament=${tournamentId}&round=${onlineRound+1}`);panel.querySelector('.actions').append(next);}
+    }
     panel.querySelectorAll("[data-shot]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -1195,6 +1214,7 @@ function refresh() {
   if (coursePackage)
     $("#club-detail").textContent =
       `Practice · Hole ${game.holes.indexOf(selectedHole()) + 1} · Par ${par(game, selectedHoleId)}`;
+  if(tournamentId){$('#cash').textContent='Online tournament';$('#club-detail').textContent=`Round ${onlineRound}/${sharedSnapshot.totalRounds} · Hole ${game.pro.holeIndex+1}`;}
   if (competition) {
     const state = competition.snapshot(),
       p = state.standings.find((p) => p.id === localPlayer.id);
@@ -1232,7 +1252,7 @@ function refresh() {
           : "Shape the journey to the cup",
     guests: "A course with character",
     staff: "Your course staff",
-    play: competition
+    play: tournamentId ? (game.pro.phase==='finished'?'Tournament round complete':`${game.pro.name} plays the tournament`) : competition
       ? competition.snapshot().status === "complete"
         ? competition.snapshot().kind === "pro-challenge"
           ? "Challenge complete"
@@ -1500,16 +1520,16 @@ $("#export").onclick = () => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
-function showStandings() {
-  if (!competition) return;
-  const state = competition.snapshot(),
-    root = $("#standings-content");
+async function showStandings() {
+  if (!competition&&!tournamentId) return;
+  let state;try{state=tournamentId?await accountRequest(`/api/tournaments/${tournamentId}/standings`):competition.snapshot();}catch(error){toast(error.message);return;}
+  const root = $("#standings-content");
   root.replaceChildren();
   const note = document.createElement("p");
   note.textContent =
     state.status === "complete"
       ? "Final results · Equal totals share a place."
-      : "In progress · Totals cover completed holes only.";
+      : tournamentId?"In progress · Totals cover completed rounds only.":"In progress · Totals cover completed holes only.";
   root.append(note);
   const table = document.createElement("table");
   const header = document.createElement("tr");
@@ -1530,7 +1550,7 @@ function showStandings() {
     const tr = document.createElement("tr");
     for (const value of [
       p.rank ?? "—",
-      p.name,
+      p.name+(p.withdrawn?' (withdrawn)':''),
       `${p.roundsCompleted}/${state.rounds}`,
       p.holesCompleted,
       p.strokes,
@@ -2497,7 +2517,7 @@ if(remote){
  $('.menu-actions').hidden=true;
  const back=document.createElement('a');back.href='/';back.textContent='Return to my resort';$('#menu').append(back);
  for(const id of ['pause','speed'])$("#"+id).hidden=true;
- $('[data-mode="play"]').hidden=true;
+ if(sharedId)$('[data-mode="play"]').hidden=true;
  remote.start();addEventListener('pagehide',()=>remote.stop());
  addEventListener('pageshow',event=>{if(event.persisted)remote.start();});
 }

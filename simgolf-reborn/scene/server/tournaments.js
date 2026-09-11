@@ -19,8 +19,8 @@ export async function createTournament(db,ownerId,{title,publicationId,rounds=1,
 export async function getTournament(db,id){
  const row=await db.prepare('SELECT * FROM tournaments WHERE id=?').bind(id).first();
  if(!row)throw fail(404,'Tournament not found.');
- const entries=await db.prepare('SELECT e.player_id AS playerId,e.player_name AS name,e.joined_at AS joinedAt,p.disabled_at IS NOT NULL AS suspended FROM tournament_entries e JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? ORDER BY e.joined_at,e.player_id').bind(id).all();
- return {id:row.id,ownerId:row.owner_id,title:row.title,publicationId:row.publication_id,courseDigest:row.course_digest,courseAuthorId:row.course_author_id,courseAuthorName:row.course_author_name,course:JSON.parse(row.course_package),rounds:row.rounds,capacity:row.capacity,status:row.status,createdAt:row.created_at,entrants:entries.results.map(e=>({...e,suspended:!!e.suspended}))};
+ const entries=await db.prepare('SELECT e.player_id AS playerId,e.player_name AS name,e.joined_at AS joinedAt,e.withdrawn,p.disabled_at IS NOT NULL AS suspended FROM tournament_entries e LEFT JOIN players p ON p.id=e.player_id WHERE e.tournament_id=? ORDER BY e.joined_at,e.player_id').bind(id).all();
+ return {id:row.id,ownerId:row.owner_id,title:row.title,publicationId:row.publication_id,courseDigest:row.course_digest,courseAuthorId:row.course_author_id,courseAuthorName:row.course_author_name,course:JSON.parse(row.course_package),rounds:row.rounds,capacity:row.capacity,status:row.status,createdAt:row.created_at,entrants:entries.results.map(e=>({...e,suspended:!!e.suspended,withdrawn:!!e.withdrawn}))};
 }
 export async function listTournaments(db){
  return (await db.prepare('SELECT t.id,t.title,t.owner_id AS ownerId,t.course_digest AS courseDigest,t.rounds,t.capacity,t.status,t.created_at AS createdAt,(SELECT count(*) FROM tournament_entries e WHERE e.tournament_id=t.id) AS entrants FROM tournaments t ORDER BY t.created_at DESC,t.id LIMIT 100').all()).results;

@@ -1,8 +1,7 @@
 import {PROTOCOL_VERSION} from './simulation/protocol.js';
 
-export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult,onStatus}){
+export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult,onStatus,endpoint=`/api/courses/${snapshot.id}`}){
  let current=snapshot,pending=null,inFlight=false,stopped=false,timer=null,generation=0;
- const endpoint=`/api/courses/${snapshot.id}`;
  function accept(course){
   if(course.id!==current.id||course.revision<current.revision)return;
   current=course;onSnapshot(course);
@@ -17,7 +16,7 @@ export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult
     if(reply.result.code==='catching-up'){onStatus('Catching up with the server…');return;}
     const completed=pending;pending=null;onResult(reply.result,completed);
    }else accept(await request(endpoint));
-   onStatus(current.pendingTicks?'Catching up with the server…':`Shared course · ${current.role}${current.role==='spectator'?' · Read only':''}`);
+   onStatus(current.pendingTicks?'Catching up with the server…':current.eventId?`Tournament · round ${current.round}/${current.totalRounds}${current.result?' · Complete':''}`:`Shared course · ${current.role}${current.role==='spectator'?' · Read only':''}`);
   }catch(error){
    if(pending&&[400,401,403,404,405,413].includes(error.status)){const rejected=pending;pending=null;onResult({ok:false,message:error.message},rejected);}
    onStatus(`Connection interrupted. ${pending?'Your pending edit will be retried. ':''}${error.message}`);
