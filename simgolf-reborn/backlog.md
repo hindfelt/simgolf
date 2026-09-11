@@ -902,3 +902,8 @@ sentinels. Fixed successful fresh admission to clear all six scores before shot
 trials. Original reset instructions and 5,000 gate cases verified; seven tests
 pass. Repeated simulations, scoring, winner selection and live integration remain
 unfinished.
+
+F09 route winner updates (2026-09-11): recovered score accumulation, unsuccessful
+sample threshold and strict best-option replacement with all winner metadata.
+5,000 original cases and seven tests pass. Batch simulation, pass orchestration,
+search completion and live integration remain unfinished.

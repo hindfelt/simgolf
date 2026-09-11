@@ -1626,3 +1626,20 @@ Sixty fixtures and seven option/trial tests pass. The earlier trial oracle cover
 pre-admission initialization only; this correction closes its composition gap.
 Repeated simulations, option scoring, winner selection and live integration
 remain unfinished. These changes are not deployed.
+
+### Route option accumulation and strict winner updates (2026-09-11)
+
+`original-route-best.js` recovers 0x4230a7–0x42313e. A completed batch adds its
+sample score to the existing option score with signed int32 overflow. When its
+bad-sample counter reaches trunc((level+4)*samples/8), global search flag
+0x5a872c is cleared; this block never re-enables it. A strictly lower accumulated
+score replaces the winner, copying target tile, curve, center/corner mode,
+latest landing coordinates and the option sample flag's low bit. Ties retain
+all previous winner fields. The helper returns independent state for replay.
+
+`verify-original-route-best.py` executes the original block without stubs and
+compares 5,000 option/winner states, including ties and signed overflow. Sixty
+fixtures and seven winner/option tests pass. Inputs are completed batch scores
+and counters; their production by repeated shot simulation remains unfinished.
+Observer-only rendering after 0x42313e is excluded. Full pass orchestration,
+search completion and live integration remain open; no deployment.
