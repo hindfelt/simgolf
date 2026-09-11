@@ -835,3 +835,35 @@ Sixty output pairs are retained as regression fixtures. Four tests also cover
 clamp endpoints, special-mode threshold and the strict short-green boundary.
 Full upstream terrain assessment/elevation adjustment, velocity conversion,
 accuracy/random launch effects and outer planner integration remain unfinished.
+
+
+### Shared launch-strength search and cache (2026-09-11)
+
+Recovered complete `0x4218e0–0x4219d6` with airborne estimate
+`0x4218a0–0x4218df` into `original-strength-search.js`. The airborne estimate
+adds speed/8 and verticalSpeed/16 with truncation, subtracts 128 vertical speed,
+reduces horizontal speed by speed>>4, and loops while accumulated height > 0.
+This is a planning estimate, distinct from live or candidate ball integration.
+
+The search starts from scaled distance trunc(distance*20/25), estimate
+scaled*33-trunc(scaled²/48)+64, target trunc(distance*1024/25), and repeatedly
+adjusts by halving steps until step <= 2. Nonzero mode uses the previously
+recovered putt estimate; zero mode uses the airborne estimate.
+
+The original ten-entry ring cache keys only distance and vertical speed.
+Neither mode nor rolling coefficient is part of the key. Hits scan from index
+zero, do not advance the replacement index, and may reuse another mode's result.
+Initial zeroed entries mean the (0,0) key returns zero immediately. Explicit,
+immutable, serializable cache state preserves these behaviors without hidden
+module globals, suitable for deterministic sessions and later multiplayer.
+
+`verify-original-strength-search.py` executes both original estimates and the
+complete search/cache code with no helper stubs. All 1,000 sequential seeded
+queries, including deliberate cross-mode repeated keys and rolling-coefficient
+changes, match returned speed and every cache entry/replacement index. Sixty
+sequential outputs are retained as fixtures. Eleven strength/club/putt tests pass.
+Domain here is distance 0..330 and nonnegative bounded launch inputs; this is
+not exhaustive proof for arbitrary signed overflow or nonconvergent terrain.
+The old `originalPuttStrength` remains explicitly a cold-cache helper. Live
+call sites have not been migrated; initial vertical-velocity construction,
+accuracy variation and the remaining launch planner still need composition.

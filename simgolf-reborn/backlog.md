@@ -716,3 +716,9 @@ F09 launch club selection (2026-09-11): recovered club/nominal strength block;
 clamping, explicit-target mode override and short green shots. Upstream terrain
 assessment, velocity conversion, accuracy effects and live planner integration
 remain; this helper does not yet alter deployed play.
+
+F09 shared strength search (2026-09-11): recovered airborne range estimate and
+complete ten-entry strength cache with exact original cross-mode reuse. All
+1,000 sequential original x86 results/full caches match; 11 focused tests pass.
+Cache state is explicit and serializable for deterministic multiplayer sessions.
+Initial launch velocity, accuracy adjustments and live planner composition remain.
