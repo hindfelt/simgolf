@@ -9,7 +9,7 @@ import {originalCandidateAirObstacle} from './original-candidate-air-collision.j
 // callbacks must supply original terrain/height/slope data, not browser guesses.
 export function originalCandidateStart(launch) {
  if(!Number.isInteger(launch.angularOffset))throw Error('Invalid original candidate launch.');
- return {...launch,angularOffset:Math.trunc(launch.angularOffset/2),steps:0,randomDraws:0};
+ return {...launch,angularOffset:Math.trunc(launch.angularOffset/2),steps:0,randomDraws:0,landing:null};
 }
 export function originalCandidateStep(state,{terrainAt,heightAt,slopeAt,mode,variant}) {
  if(![terrainAt,heightAt,slopeAt].every(f=>typeof f==='function'))throw Error('Original candidate requires map callbacks.');
@@ -48,6 +48,6 @@ export function originalCandidateStep(state,{terrainAt,heightAt,slopeAt,mode,var
    draws+=impact.draws;
    next={...next,speed:impact.speed,heading:impact.heading,verticalSpeed:impact.verticalSpeed,flags:impact.flags,seed:impact.seed};
  }
- if(originalBallStopped(next))next.speed=0;
+ if(originalBallStopped(next)){next.speed=0;next.landing={x:next.x,z:next.z};}
  return {...next,steps:(state.steps??0)+1,randomDraws:(state.randomDraws??0)+draws};
 }

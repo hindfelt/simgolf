@@ -735,3 +735,25 @@ Remaining before live use: original launch selection, terrain-height/slope and
 variant adapters, varied-terrain/boundary trajectory validation, wider intermediate
 state domains, and full search orchestration. No live browser routing replacement
 or deployment is part of this change.
+
+### Mixed-terrain candidate validation and landing publication (2026-09-11)
+
+Extended full-loop original x86 verification to 150 trajectories across a supplied
+mixed map of terrain 2/10/12/13/17, marked cells, directional wall bits, skill and
+professional variants, collision flags, three modes and four obstacle variants.
+Height/slope helpers remain flat; launch remains supplied. All terminal positions,
+step counts, RNG states and landing-publication decisions match.
+
+This exposed a distinction hidden by the earlier uniform-map comparisons:
+0x422401 writes landing globals only when speed < 64, height == 0 and vertical
+speed == 0. The loop can also exit with speed exactly zero but remaining vertical
+motion; that exit does NOT update landing globals. Candidate state now includes
+`landing: null` until an actual publication, keeping termination separate from
+settling. The original's stale global value must remain an explicit concern when
+reconstructing the outer planner; it must not be replaced silently by the current
+terminal position. This helper reports the publication event without inventing it.
+
+Committed original-output fixtures for 20 ordinary cases plus the observed
+no-publication case. Six mixed/uniform trajectory and serialized-resume checks
+pass. Nonflat original height/slope adapters, launch generation and outer search
+integration remain unfinished. This validation changes no deployed gameplay.
