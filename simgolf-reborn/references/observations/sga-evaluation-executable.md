@@ -1348,3 +1348,25 @@ height values. Sixty fixtures retained; eight elevation/club tests pass, includi
 asymmetric slopes, skipped reads and resulting club changes. Raw-height adapters
 were separately recovered; complete upstream assessment and live composition
 remain unverified. The helper is not connected to deployed shot planning yet.
+
+### Target neighborhood assessment (2026-09-11)
+
+Recovered 0x423dd7–0x423ee1 in `original-target-neighborhood.js`. After the
+preceding ray scan, eight target neighbors add signed terrain-class contributions
+(truncated class × (span + 1) / 2) to the accumulator and per-code totals.
+Original 0x40bc50 rejects both coordinates outside 50 × 50 and terrain code 20;
+these add 4 × (span + 1) without a terrain vote. Strict maximum selection starts
+at -1, retains the first tied code and each code's last contributing direction,
+and preserves previous dominant fields if every total stays below zero.
+Accumulator / (span + 3) receives +4 for at least two obstacles, becomes zero
+when the ball starts on terrain 1, and caps at 10 for distances <=40. The actor
+stores the low byte; the helper deliberately exposes that byte without assigning
+an unverified signed interpretation.
+
+`verify-original-target-neighborhood.py` executes the actual block and original
+bounds helper from the SHA-checked executable: 1,000 randomized cases matched,
+including edges, unavailable cells, signed classes and negative-only totals.
+Thirty fixtures and four focused tests pass, alongside four elevation tests.
+Inputs retain the preceding ray scan's totals, directions, obstacle count and
+accumulator. That scan, full target selection and live integration remain open;
+this isolated block is not a completed or deployed original planner.

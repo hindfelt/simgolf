@@ -829,3 +829,8 @@ F09 pre-club elevation correction (2026-09-11): recovered raw-height distance
 adjustment with original skill gate/asymmetric divisors. All 5,000 x86 outputs/
 read sequences and eight tests pass. Earlier target/terrain assessment, raw
 live-course mapping and full deployment integration remain unfinished.
+
+F09 target-neighborhood assessment (2026-09-11): recovered the original eight
+neighbor terrain vote, edge/unavailable penalty, dominant code/direction and
+rating byte. 1,000 executable comparisons and eight targeted tests pass.
+Preceding ray scan, full target selection and live integration remain unfinished.
