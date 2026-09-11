@@ -1003,3 +1003,10 @@ output to resumable candidate flight, preserving launch metadata/cache and
 separate physical actor attributes. Sixty chained original planner/flight cases
 and eight targeted tests pass. Shared-map contiguous verification, candidate
 transaction/search-state integration and live wiring remain unfinished.
+
+F09 resumable candidate trial state (2026-09-11): added isolated trial ownership
+with explicit work slices, preserved prior landing until publication, and
+returned RNG/cache state. Sixty original chained cases replay in serialized
+seven-step slices; five tests pass. Zero-speed landing/RNG preservation verified
+against original code. Shared-map contiguous verification, search scheduling/
+shared-state integration and live wiring remain unfinished.

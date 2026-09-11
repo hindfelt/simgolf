@@ -2000,3 +2000,25 @@ These are chained executions with separate planner and flight environments;
 they do not establish contiguous shared-map equivalence. That verification,
 trial snapshot/shared-state handling, search callback integration and live use
 remain unfinished. No deployment is included.
+
+### Resumable candidate trial ownership (2026-09-11)
+
+`original-candidate-trial.js` adds an isolated trial record around the exact
+candidate bridge. Advance consumes an explicit finite step budget and reports
+running/complete from original speed termination; exhausting a work slice does
+not manufacture a landing. The previous published landing remains until the
+original candidate stopping condition supplies a new one. Launch metadata/cache
+and final candidate RNG remain separate from the unchanged caller actor inputs.
+The representation is serializable for future workers or multiplayer replay,
+not a network protocol or a completed multiplayer integration.
+
+Tests replay all 60 chained original planner/flight fixtures in seven-step slices,
+serializing between slices and checking input/prior-state immutability, final
+position, landing, steps, launch metadata and RNG. Five candidate/trial tests
+pass. The mixed-trajectory verifier now also tests original zero-speed execution:
+it runs zero steps, restores the actor, leaves RNG unchanged and retains seeded
+landing globals (12345,23456). All 150 trajectory comparisons and this check pass.
+
+The owning search scheduler must still apply shared cache/RNG and metadata
+patches across trials. Shared-map contiguous planner/flight evidence and live
+search/gameplay integration remain unfinished. No deployment is included.

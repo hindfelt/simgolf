@@ -90,3 +90,12 @@ console.log(`${rows.length} mixed-terrain trajectories and RNG states match orig
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(dict(world=world,rows=rows)),text=True,check=True)
 if '--write-fixture' in sys.argv:
  (root/('simgolf-reborn/scene/tests/fixtures/original-candidate-nonflat.json' if nonflat else 'simgolf-reborn/scene/tests/fixtures/original-candidate-mixed.json')).write_text(json.dumps(dict(world=world,rows=rows if nonflat else rows[:20]+[row for row in rows[20:] if row[3]['landing'] is None]),separators=(',',':'))+'\n')
+
+# 0x421bd7 skips the loop when launch speed is zero: restore actor only.
+# In particular, do not publish the current position as a new landing.
+write(0x5691dc,12345);write(0x5691e0,23456)
+zero=dict(rows[0][0],speed=0)
+end=run(zero,world)
+assert end['steps']==0 and end['landing'] is None and end['seed']==zero['seed']
+assert struct.unpack('<2i',u.mem_read(0x5691dc,8))==(12345,23456)
+print('Original zero-speed candidate preserves prior landing globals and RNG.')
