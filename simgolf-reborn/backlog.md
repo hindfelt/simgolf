@@ -800,3 +800,9 @@ normalization with original baseline/seed ordering. All 5,000 complete x86 tail
 outputs and 17 tests pass. Serializable input/output preserves deterministic
 session architecture. Conditional middle planning, upstream assessment and
 live map/planner integration remain before full gameplay parity.
+
+F09 resolved-target launch (2026-09-11): composed original launch from club
+selection through final state for its real resolved-argument path. All 1,000
+full executable states/caches and nine tests pass; -1 search sentinel explicitly
+rejected. Target selection/upstream assessment, unresolved middle branch and
+live integration remain unfinished. State stays serializable for later multiplayer.

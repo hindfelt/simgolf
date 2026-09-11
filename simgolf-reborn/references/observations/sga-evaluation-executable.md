@@ -1224,3 +1224,29 @@ This is the complete final arithmetic tail, not the whole original planner.
 The conditional middle section `0x424988–0x42536b`, upstream assessment and
 live browser mapping remain uncomposed. Original UI dirty flags/epilogue are
 outside the pure state implementation. No live deployment change in this step.
+
+
+### Resolved-target launch composition (2026-09-11)
+
+`original-selected-launch.js` joins terrain-dependent launch with the complete
+final tail for the original third planner argument != -1. At 0x424992–0x4249a0
+that argument bypasses the conditional middle section and jumps to 0x42536b.
+The API requires this argument explicitly and rejects -1; it does not simulate
+unresolved planning by silently skipping that branch. Recovered nominal strength,
+prepared type/curve/cache and full-range reference speed feed the final tail;
+mode 0x5a870c and raw second planner argument remain distinct where required.
+
+`verify-original-selected-launch.py` executes original `0x423f48–0x425ab9`
+with this actual branch condition, initialized projection routines/table and
+original metadata/actor inputs. No helper stubs are used. All 1,000 sequential
+cases match final ball speed/lift/heading/curvature, flags, seed, effective lie,
+shot type, club and complete shared cache. Includes putters, normal, low,
+approach, draw and fade cases. Sixty sequential fixtures retained; nine
+selected/terrain/tail tests pass with immutable serialization and sentinel rejection.
+
+This is full launch composition once the target and upstream terrain assessment
+have been supplied. It does not yet choose targets or reconstruct the earlier
+0x4235c0–0x423f48 assessment, does not cover third argument -1 middle planning,
+and is not connected to live browser shot planning. Original UI dirty writes
+are outside pure simulation. Next integration can connect this resolved launch
+to candidate flight while preserving shared cache/RNG and actor state semantics.
