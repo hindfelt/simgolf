@@ -979,6 +979,13 @@ the native routine; 3,000 primary stages use the real classifier and sixteen
 related tests pass. Scenery sampling, remark effects and live integration remain
 unfinished.
 
+F09 automatic scenery sampling (2026-09-11): recovered complete non-putter
+loop 0x4249b3–0x424c46, including original random projection, map-edge checks,
+scenery/object references and the per-hole counter. 300 native loops and thirteen
+related tests pass; fixtures cover each reference output. Original object lookup
+and height values remain supplied map boundaries. Full remark effects and
+automatic planner composition/live integration remain unfinished.
+
 F09 route entry initialization (2026-09-11): recovered cleared score grid,
 search flags, first range-query context, previous target and origin tile lookup.
 500 contiguous original entries and six targeted tests pass. Entry-to-body

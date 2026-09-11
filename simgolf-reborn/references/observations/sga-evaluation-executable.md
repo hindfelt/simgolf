@@ -2446,3 +2446,29 @@ every result against JavaScript. Sixteen related tests pass, including both
 nonzero classes, high-bit precedence and the origin-mark suppression. The
 earlier controlled-eligibility limitation is superseded; remark effects remain
 controlled, and scenery sampling/composition/live integration remain open.
+
+### Non-putter automatic scenery loop: 0x4249b3–0x424c46
+
+`original-auto-scenery.js` increments the hole counter and samples around the
+shot heading, using two original random draws per iteration. The iteration
+limit is recomputed from origin height and the condition level. Negative sampled
+distance skips projection; projected samples update the facing before map-bound
+rejection. In-bounds checks preserve metadata, marker, relative-height and
+behind-neighbor exclusions before selecting scenery, scanned or named references.
+Reference tiles use z*50+x, distinct from raw terrain's x*50+z indexing.
+
+The object-index lookup remains an explicit map boundary. For terrain 21,
+index -1 skips the object read. For the other category-16 branch the original
+reads that backing record, so the adapter must supply it explicitly. No fabricated
+default is introduced by this module. The putter bypass belongs to the outer
+caller and does not enter this non-putter function.
+
+`verify-original-auto-scenery.py` executes the entire loop, including native RNG,
+sine projection and bounds checking, with controlled height/object lookup and
+explicit terrain/metadata/record memory. 300 cases cover interior and near-edge
+positions, no-sample runs, record types 4/5 and index -1. State, sample count and
+RNG match. A coverage test exposed a fixture-map correlation that prevented
+named references; the lookup pattern was corrected and all native cases rerun.
+The committed fixtures now exercise changes to all three reference outputs.
+Thirteen related tests pass. Original object lookup, full remark effects and
+automatic planner composition/live integration remain unfinished; not deployed.
