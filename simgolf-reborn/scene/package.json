@@ -10,7 +10,9 @@
     "test": "playwright test",
     "test:accounts": "vitest run --config server/vitest.config.js",
     "dev:accounts": "../../node_modules/.bin/wrangler dev --port 8788 --var APP_ORIGIN:http://localhost:4176",
-    "test:account-browser": "playwright test --config server/browser.config.js"
+    "test:account-browser": "playwright test --config server/browser.config.js",
+    "test:shared-integration": "npm run build && playwright test --config server/shared-integration.config.js",
+    "benchmark:shared": "node server/benchmark-shared-host.mjs"
   },
   "dependencies": {
     "jose": "6.2.3",

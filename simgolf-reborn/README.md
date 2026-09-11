@@ -15,6 +15,8 @@ The approved dimensional art direction and subsequent tile-based course/path ref
 
 ## Feedback testing
 
+Signed-in players can open **Account → Shared courses** to create a shared club, grant editor or spectator access using another player's account ID, and open the same course together. Shared resorts use server time and continue running when browsers close. This is a shared-building preview; multiplayer golf tournaments are still in development. Normal local resorts and shared-course saves remain separate.
+
 Open the game with `?testing=1` or choose **Club menu → Open playtesting copy**. The testing copy has separate saves. Choose **Test & feedback → Start a prepared simulation** for two open holes and an early helicopter visit. Export feedback with the course state and send the file with your comments. [Testing instructions and release assessment](references/release/playtesting-2026-09-11.md).
 
 ## Release status

@@ -1,6 +1,6 @@
 # Shared construction host — 11 September 2026
 
-Implemented locally, not yet deployed or exposed in the game UI. This is the persistent construction portion of A05/M01, not completion of multiplayer or of the original-game recreation.
+Implemented locally, not yet deployed. This is the shared construction portion of A05/M01, not completion of multiplayer tournaments or of the original-game recreation.
 
 The account Worker now has authenticated shared-course endpoints. Creating a course accepts only its name; the server generates its seed, initial budget and game state. No imported save, submitted money balance, score or golfer package can become authoritative shared state. The original local game remains separate.
 
@@ -22,12 +22,22 @@ Server-time advancement is implemented in migration `0003_shared_clock.sql`. Rea
 
 All 28 backend tests pass, including real Durable Object alarm execution, earlier-alarm preservation, refusal to reassign a scheduler, deletion, suspension and a simulated database outage. Deployment dry run succeeds with the new binding/class migration. This is local verification; hosted lifecycle and populated-course resource measurements remain required.
 
+## Browser integration — 12 September
+
+Account → Shared courses now creates and lists shared clubs. Owners grant editor/spectator access using the other registered player's ID, displayed in that player's account panel. Opening a shared club uses `?shared=<course UUID>`. The browser submits versioned commands, retains the exact pending envelope after a lost response or catch-up reply, and updates from server snapshots every second. It does not run local simulation ticks or overwrite local resort saves. Shared mode excludes local practice/tournament/import controls; shared tournament play is still pending.
+
+The integration suite runs two independent Chrome contexts against a real local Worker, D1 database and Durable Object scheduler. Only authentication fixture sessions are seeded locally; course creation, access grants, edits, spending, snapshots and persistence use the real HTTP routes and simulation. It verifies owner/editor editing, reconnect, downgrade to spectator and preservation of local saves. A second test checks the phone lobby; its image was reviewed and form/link contrast improved. Separate transport tests cover lost-response retries, catch-up and terminal rejection. The backend/transport suite now has 31 passing tests.
+
+Run `npm run test:shared-integration` from `scene/`. Its fixture reset is confined to `.wrangler/shared-integration`; it never targets production or the normal local development DB. `npm run benchmark:shared` measures a local Node CPU proxy, excluding D1/network. The two-hole, 20-minute fixture measured a 1.56 ms median and 2.28 ms p95 for restore + 120 ticks + serialization across 30 samples, with a 53,707-byte snapshot. It had only one active visitor at sampling time: this is not evidence for busy 18-hole performance or hosted CPU limits.
+
 Verification uses actual Workerd/D1 with the real simulation: simultaneous purchases, reconnect/retry, owner/editor/spectator permissions, revoked memberships, suspended accounts, forged actors, rejected imports, route-level CSRF and identity, and account deletion cleanup. These tests do not substitute for two real browsers editing a hosted course.
 
 Next required work:
 
 1. Measure the background scheduler on populated courses and verify hosted lifecycle/recovery and resource limits before production use.
-2. Browser shared-course lobby, member management and renderer/input adapter. Shared mode must not run a second authoritative local simulation.
-3. Snapshot updates, reconnect, conflict feedback and spectator controls; verify from two independently authenticated browsers.
-4. Apply `0002_shared_courses.sql` and `0003_shared_clock.sql` and deploy only with the above integration and resource-limit checks.
+2. Refine shared-mode spectator controls and render-only movement interpolation between snapshots. No local simulation authority should be added.
+3. Verify the deployed flow with real registered accounts, including hosted scheduler recovery and useful error reporting under load.
+4. Migrations `0002_shared_courses.sql` and `0003_shared_clock.sql` were applied remotely on 12 September. Deploy the browser/Worker changes only after the above integration and resource-limit checks.
 5. Build server-validated earnings competitions and independent tournament round hosts on immutable course revisions. The shared construction service is not a trusted tournament scoring host.
+
+Regression follow-up: the full game run reported 951/952 passing, with the maintenance browser test unable to find its staff details panel. The complete five-test maintenance file passed on an isolated rerun; the failing case was then repeated separately. No simulation defect has yet been reproduced, and this is not recorded as a clean full-suite pass. Backend/transport tests (31) and the real two-browser integration tests (2) passed again after the final testing-mode link correction.

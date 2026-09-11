@@ -56,4 +56,6 @@ Verified on 11 September 2026: 15 Worker/D1 account tests, five account browser 
 
 Account-owned cloud saves are storage, not trusted competitive scores. Cooperative editing, server-authoritative competition and tournaments on other players' courses remain in [the multiplayer backlog](backlog.md).
 
+Shared-building preview: Account → Shared courses lists separately stored cooperative resorts. Owners grant editor/spectator access to existing player IDs; the server supplies ownership, starting funds, simulation time and command validation. Shared resorts continue running when browsers close. Creating or entering one does not replace the player's local resort or ordinary cloud-save slot. Shared golf rounds and competitive standings remain incomplete.
+
 Hosted rollout: Google sign-in is enabled for external users. Google currently displays the verified domain `0x4d.in` on its chooser; the dedicated project has SimGolfer branding and its own privacy URL. Real owner sign-in, sign-out and account-owned cloud saving were exercised in Chrome. The owner’s verified Google identity was provisioned as administrator. GitHub, Apple, Microsoft and email activation remain incomplete.

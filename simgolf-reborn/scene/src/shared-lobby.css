@@ -1,0 +1,12 @@
+#shared-courses { margin-top: 12px; }
+#shared-courses summary { cursor: pointer; min-height: 32px; }
+#shared-courses form, #shared-courses label { display: grid; gap: 8px; }
+#shared-courses form { margin: 14px 0; }
+#shared-courses input, #shared-courses select {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px;
+  border: 1px solid #82749e; border-radius: 8px; padding: 8px 10px;
+  color: #29243d; background: #fffbea; font: inherit;
+}
+#shared-courses button { min-height: 44px; padding: 8px 12px; }
+#shared-courses a { display: inline-block; color: #30294b; font-weight: 600; padding: 8px 0; }
+#shared-courses code { font-size: .85em; }

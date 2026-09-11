@@ -1,4 +1,5 @@
-import {playerStorage,mountAccount} from "./account.js";
+import {playerStorage,mountAccount,signedInAccount,accountRequest} from "./account.js";
+import {createSharedClient} from "./shared-client.js";
 import {coastalPreview} from './rendering/coastal-preview.js';
 import {testingStorage,testingHref,mountTestingFeedback} from './ui/testing-mode.js';
 import { settleCareerChallenge } from "./simulation/challenge-career.js";
@@ -192,6 +193,14 @@ if (practiceId) {
     throw error;
   }
 }
+const sharedId=new URLSearchParams(location.search).get('shared');
+let sharedSnapshot=null;
+if(sharedId){
+ try{
+  if(testing||competition||coursePackage||!/^[-a-f0-9]{36}$/.test(sharedId))throw Error('Open shared courses separately from local practice and playtesting.');
+  sharedSnapshot=await accountRequest('/api/courses/'+sharedId);
+ }catch(error){document.body.textContent=error.message;throw error;}
+}
 const saveKey = competition
   ? `simgolf-reborn.championship.${championshipId}`
   : coursePackage
@@ -202,10 +211,10 @@ let game = competition
     : coursePackage
       ? coursePractice(coursePackage)
       : createGame(),
-  saveAllowed = true,
+  saveAllowed = !sharedId,
   loadWarning = "";
 try {
-  const saved = competition ? null : playStorage.getItem(saveKey);
+  const saved = sharedSnapshot ? JSON.stringify(sharedSnapshot.state) : competition ? null : playStorage.getItem(saveKey);
   if (saved) {
     const candidate = restore(saved);
     if (coursePackage) {
@@ -222,12 +231,28 @@ try {
     game = candidate;
   }
 } catch (error) {
+  if(sharedId){document.body.textContent='The shared course could not be read. Your server save has not been changed.';throw error;}
   saveAllowed = false;
   loadWarning =
     "The saved course could not be read. It has been kept intact. Import a valid save or start a new course from the club menu.";
 }
-// The local adapter supplies identity; a future server supplies authenticated principals.
-const session = createSession(game, { courseLocked: !!coursePackage });
+const remote=sharedSnapshot?createSharedClient({snapshot:sharedSnapshot,actorId:signedInAccount().user.id,request:accountRequest,
+ onSnapshot:course=>{
+  game=restore(JSON.stringify(course.state));
+  if(!getHole(game,selectedHoleId))selectedHoleId=game.holes[0].id;
+  if(course.role==='spectator')tool='inspect';
+  refresh();
+ },
+ onStatus:message=>{$('#save-status').textContent=message;$('#shared-status').textContent=message;},
+ onResult:(result,action)=>{
+  toast(result.message||'Course updated.');
+  if(result.ok&&action.type==='add-hole'){selectedHoleId=result.holeId;tool='tee';setMode('build');}
+  if(result.ok&&action.type==='buy-land')purchaseHighlightUntil=performance.now()+10000;
+  renderPanel();syncControls();refresh();
+  if($('#hole-editor').open)renderHoleEditor();
+ }
+}):null;
+const session = remote || createSession(game, { courseLocked: !!coursePackage });
 if(testing){
  mountTestingFeedback({getSave:()=>competition?competition.save():serialize(game),storage:playStorage,
   startScenario:async()=>{
@@ -242,9 +267,9 @@ if(testing){
   }});
  document.addEventListener('click',event=>{
   const a=event.target.closest?.('a');
-  if(a&&a.id!=='testing-return'&&!a.download&&a.origin===location.origin)a.href=testingHref(a.href,true);
+  if(a&&a.id!=='testing-return'&&!a.download&&a.origin===location.origin&&!new URL(a.href).searchParams.has('shared'))a.href=testingHref(a.href,true);
  },true);
-}else{
+}else if(!sharedId){
  const link=document.createElement('a');link.href='?testing=1';link.textContent='Open playtesting copy';
  document.querySelector('.menu-actions').append(link);
 }
@@ -252,7 +277,7 @@ let selectedHoleId = game.holes[0].id;
 let selectedStaffId = null,
   movingStaff = false;
 const selectedHole = () => getHole(game, selectedHoleId);
-const localPlayer = Object.freeze({ id: "local-owner", role: "owner" });
+const localPlayer = Object.freeze(sharedSnapshot?{id:signedInAccount().user.id,role:sharedSnapshot.role}:{ id: "local-owner", role: "owner" });
 function command(type, payload = {}) {
   if (competition) {
     const result = competition.execute(
@@ -449,6 +474,7 @@ function toast(message) {
   toastUntil = performance.now() + 5000;
 }
 function save() {
+  if(remote){$("#save-status").textContent="Shared edits are saved by the server.";return false;}
   if (!saveAllowed) {
     toast(
       loadWarning || "Start a new course or import a valid save before saving.",
@@ -514,6 +540,7 @@ const names = {
   "putting-green": "Putting Green",
 };
 function setMode(next) {
+  if(remote&&next==="play"){toast("Shared golf rounds are not available yet.");return;}
   mode = next;
   boundaryCorners = null;
   pickingAnalysis = false;
@@ -1152,7 +1179,7 @@ function refresh() {
     : `${game.stats.rounds} rounds  ·  ${game.guests.length} guests`;
   if (!coursePackage)
     $(".club h1").textContent =
-      `Willow Brook ${courseCategory(game).abbreviation}`;
+      sharedSnapshot?sharedSnapshot.name:`Willow Brook ${courseCategory(game).abbreviation}`;
   $("#club-detail").textContent =
     `${selectedHole().open ? `Hole ${game.holes.indexOf(selectedHole()) + 1} open` : selectedHole().tee && selectedHole().green ? `Hole ${game.holes.indexOf(selectedHole()) + 1} under construction` : "Your first hole"}${par(game, selectedHoleId) ? ` · Par ${par(game, selectedHoleId)}` : ""}`;
   if (coursePackage)
@@ -2356,10 +2383,10 @@ let last = performance.now(),
   lastUI = 0,
   lastSave = last;
 function frame(now) {
-  void syncLiveChallengeWagers();
+  if(!remote)void syncLiveChallengeWagers();
   const dt = Math.min((now - last) / 1000, 0.15);
   last = now;
-  if (!paused && !document.hidden && !$("dialog[open]")) {
+  if (!remote && !paused && !document.hidden && !$("dialog[open]")) {
     accumulator += dt * speed;
     while (accumulator >= 0.05) {
       if (competition) {
@@ -2453,4 +2480,13 @@ $("#loading").remove();
 if (loadWarning) toast(loadWarning);
 requestAnimationFrame(frame);
 
-mountAccount({storage:playStorage,testing});
+mountAccount({storage:playStorage,testing,shared:!!remote});
+if(remote){
+ const status=document.createElement('p');status.id='shared-status';status.setAttribute('role','status');status.style.cssText='position:fixed;top:145px;left:18px;background:#263d30;color:#fff9df;padding:8px 12px;border-radius:12px;z-index:5;max-width:calc(100vw - 60px)';document.body.append(status);
+ $('#menu h2').textContent=sharedSnapshot.name;$('#menu p').textContent='Edits and simulation are saved and run by the server.';
+ $('.menu-actions').hidden=true;
+ const back=document.createElement('a');back.href='/';back.textContent='Return to my resort';$('#menu').append(back);
+ for(const id of ['pause','speed'])$("#"+id).hidden=true;
+ $('[data-mode="play"]').hidden=true;
+ remote.start();addEventListener('pagehide',()=>remote.stop());
+}

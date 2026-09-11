@@ -1,4 +1,10 @@
 let current=null;
+export function signedInAccount(){return current;}
+export async function accountRequest(path,options={}){
+ if(!current)throw Error('Sign in to use shared courses.');
+ const response=await fetch(path,{...options,headers:{'content-type':'application/json','x-csrf-token':current.csrf,'x-player-id':current.user.id,...options.headers}});
+ const body=await response.json();if(!response.ok){const error=Error(body.error||'Request failed.');error.status=response.status;throw error;}return body;
+}
 export function accountStorage(storage,id){
  if(!id)return storage;
  const prefix=`simgolfer.player.${id}.`;
@@ -13,7 +19,7 @@ export async function requireAccount(){
  current=await response.json();if(!current.user?.id)throw Error('Please sign in again.');
  return current;
 }
-export function mountAccount({storage=playerStorage(),testing=false}={}){
+export function mountAccount({storage=playerStorage(),testing=false,shared=false}={}){
  if(!current)return;
  const button=document.createElement('button');button.id='player-account';button.textContent='Account';
  document.querySelector('.top-actions')?.append(button);
@@ -23,10 +29,9 @@ export function mountAccount({storage=playerStorage(),testing=false}={}){
  if(testing)dialog.querySelector('h2').textContent='Your player account · Playtesting copy';
  button.onclick=()=>dialog.showModal();const status=message=>dialog.querySelector('#account-status').textContent=message;
  const key='simgolf-reborn.course.v1',endpoint=testing?'/api/saves/testing-course':'/api/saves/course',returnTo=testing?'/?testing=1':'/';let revision=storage.getItem("simgolfer.cloud-revision");revision=revision===null?null:Number(revision);
- const call=async(path,options={})=>{
-  const response=await fetch(path,{...options,headers:{'content-type':'application/json','x-csrf-token':current.csrf,'x-player-id':current.user.id,...options.headers}});
-  const body=await response.json();if(!response.ok)throw Error(body.error||'Request failed.');return body;
- };
+ const call=accountRequest;
+ import('./shared-lobby.js').then(({mountSharedLobby})=>mountSharedLobby(dialog,call,current.user,status)).catch(()=>status('Shared courses could not be loaded.'));
+ if(shared){for(const id of ['cloud-load','cloud-save'])dialog.querySelector('#'+id).hidden=true;dialog.querySelector('#account-import').closest('details').hidden=true;}
  if(current.user.role==='admin')import('./account-admin.js').then(({mountAdministration})=>mountAdministration(dialog,call,status)).catch(()=>status('Administration could not be loaded.'));
  fetch('/api/auth/providers').then(r=>r.json()).then(data=>{
   for(const provider of data.providers||[]){if(provider.id==='email')continue;const link=document.createElement('button');link.textContent=`Connect ${provider.name}`;link.onclick=async()=>{try{const result=await call(`/api/auth/${provider.id}/link`,{method:'POST',body:'{}'});location.assign(result.url);}catch(e){status(e.message);}};dialog.querySelector('#account-links').append(link);}
