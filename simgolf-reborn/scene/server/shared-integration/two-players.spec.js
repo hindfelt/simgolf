@@ -105,3 +105,19 @@ test('two browser entrants complete a tournament, resume shots and see final ser
   await a.page.setViewportSize({width:390,height:844});await a.page.screenshot({path:'/tmp/simgolfer-online-final-standings-phone.png',fullPage:true});expect(errors).toEqual([]);
  }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
 });
+
+test('phone withdrawal is explicit, survives reload and leaves the other entrant able to play',async({browser})=>{
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
+ try{
+  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+  const [a,b]=clients;
+  await a.page.getByLabel('Tournament title',{exact:true}).fill('Withdrawal cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
+  await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Withdrawal cup · 1/2 · registration',{exact:true}).click();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
+  await a.page.getByText('Withdrawal cup · 1/2 · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Close registration',exact:true}).click();await expect(a.page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Withdraw from tournament',exact:true}).click();await a.page.getByRole('button',{name:'Keep playing',exact:true}).click();await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Withdraw from tournament',exact:true}).click();await a.page.getByRole('button',{name:'Confirm withdrawal',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('You withdrew from the tournament.');await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeHidden();
+  await a.page.reload();await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByText('Tournament registration',{exact:true}).click();await a.page.getByText('Withdrawal cup · 2/2 · locked',{exact:true}).click();await expect(a.page.getByText('Owner · withdrawn',{exact:true})).toBeVisible();await expect(a.page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeHidden();
+  await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Withdrawal cup · 2/2 · locked',{exact:true}).click();await b.page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(b.page.locator('#shared-status')).toContainText('Tournament');
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.getByText('Owner · withdrawn',{exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-tournament-withdrawal-phone.png',fullPage:true});expect(errors).toEqual([]);
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});

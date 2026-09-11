@@ -106,3 +106,12 @@ Two independent authenticated Chrome contexts now each finish two rounds on a pu
 All five shared-browser integration cases pass (1.3 minutes), including this 53.4-second event. The first expanded attempt used the wrong selector for the Rounds dropdown and timed out before creating the event; selecting its accessible combobox corrected the test. A premature rerun encountered the still-running test server; the successful run began after that process exited. No game timeout or simulation rule was relaxed.
 
 The final phone standings were inspected at 390×844. Headings no longer split inside words; the play instruction uses the authenticated golfer's name. This establishes two-round browser completion on a one-hole course, not hosted 18-hole capacity or complete multiplayer delivery. Provider activation, hosting measurements, event sealing/deadlines/forfeits, earnings competitions and original-game fidelity remain open. Production was not deployed in this step.
+
+
+## Explicit tournament withdrawal — 12 September
+
+Entrants can permanently withdraw from an unfinished locked event through the account lobby, with an inline explanation and Confirm withdrawal / Keep playing choice. Their roster name and completed scorecards remain; withdrawn entrants have no placing and cannot resume a round. The organizer can withdraw as a golfer while retaining event management. Registration-time leaving and whole-event cancellation remain distinct.
+
+The new authenticated `/api/tournaments/:id/withdraw` action accepts no target identity or scores, requires the session's CSRF token, and updates only that entrant. A single conditional D1 update checks active membership, locked event and unfinished rounds. It races safely against final score writes: final completion prevents withdrawal, while withdrawal makes the existing round commit guard reject. Repeated withdrawal requests are idempotent. If everyone withdraws, the event has no winner. Deadline-based forfeits and sealed final results remain separate open work.
+
+Validation: all 51 backend tests and six actual Worker/D1/DO browser tests pass, including two-round completion and a phone flow that cancels the confirmation, then withdraws, reloads and verifies the other entrant can still play. A test cleanup initially left session foreign keys from the previous case; cleanup now deletes those sessions before players. No production schema migration is added: this uses migration 0006's existing withdrawal field. Production deployment and provider activation remain pending.

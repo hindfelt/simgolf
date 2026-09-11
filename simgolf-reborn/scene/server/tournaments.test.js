@@ -2,7 +2,7 @@ import {beforeEach,test,expect} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSharedCourse} from './shared-courses.js';
 import {publishCourse} from './published-courses.js';
-import {createTournament,getTournament,joinTournament,leaveTournament,setTournamentStatus} from './tournaments.js';
+import {createTournament,getTournament,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {createPlaytestCourse} from '../src/simulation/playtest-course.js';
 import {serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
@@ -10,7 +10,7 @@ import worker from './worker.js';
 import {hash,names} from './security.js';
 const ids=['11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222','33333333-3333-4333-8333-333333333333'];
 beforeEach(async()=>{
- for(const table of ['tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
+ for(const table of ['sessions','tournament_rounds','tournament_entries','tournaments','published_courses','course_members','shared_courses','players'])await env.DB.prepare(`DELETE FROM ${table}`).run();
  for(const id of ids)await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,'Player '+id[0],id+'@proton.me',Date.now()).run();
 });
 async function event(){
@@ -57,4 +57,27 @@ test('HTTP lobby rejects forged identities and seeds; organizer deletion cancels
  expect((await request(path,post(entrant,{}))).status).toBe(200);
  expect((await request('/api/account',{method:'DELETE',headers:owner,body:JSON.stringify({confirm:'DELETE'})})).status).toBe(200);
  const retained=await getTournament(env.DB,cup.id);expect(retained.status).toBe('cancelled');expect(retained.ownerId).toBeNull();expect(retained.courseAuthorId).toBeNull();expect(retained.courseAuthorName).toBe('Former player');expect(retained.course).toEqual(cup.course);expect(retained.entrants.map(p=>p.playerId)).toEqual([ids[1]]);
+});
+
+test('withdrawal is permanent, only changes the entrant, and does not cancel an organizer’s event',async()=>{
+ const cup=await event();await joinTournament(env.DB,cup.id,ids[1]);
+ await expect(withdrawTournament(env.DB,cup.id,ids[1])).rejects.toMatchObject({status:409});
+ await setTournamentStatus(env.DB,cup.id,ids[0],'locked');
+ await expect(withdrawTournament(env.DB,cup.id,ids[2])).rejects.toMatchObject({status:403});
+ await Promise.all([withdrawTournament(env.DB,cup.id,ids[0]),withdrawTournament(env.DB,cup.id,ids[0])]);
+ const loaded=await getTournament(env.DB,cup.id);expect(loaded.status).toBe('locked');expect(loaded.ownerId).toBe(ids[0]);
+ expect(loaded.entrants.find(p=>p.playerId===ids[0]).withdrawn).toBe(true);expect(loaded.entrants.find(p=>p.playerId===ids[1]).withdrawn).toBe(false);
+ await joinTournament(env.DB,cup.id,ids[0]);expect((await getTournament(env.DB,cup.id)).entrants.find(p=>p.playerId===ids[0]).withdrawn).toBe(true);
+ await setTournamentStatus(env.DB,cup.id,ids[0],'cancelled');await expect(withdrawTournament(env.DB,cup.id,ids[1])).rejects.toMatchObject({status:409});
+});
+test('HTTP withdrawal requires the signed-in entrant and CSRF and rejects target identities',async()=>{
+ const cup=await event();await joinTournament(env.DB,cup.id,ids[1]);await setTournamentStatus(env.DB,cup.id,ids[0],'locked');
+ const token=crypto.randomUUID(),csrf=crypto.randomUUID(),origin='https://simgolfer.example';
+ await env.DB.prepare('INSERT INTO sessions(token_hash,player_id,csrf,expires_at) VALUES (?,?,?,?)').bind(await hash(token),ids[1],csrf,Date.now()+60000).run();
+ const headers={origin,cookie:`${names.session}=${token}`,'x-csrf-token':csrf,'content-type':'application/json'};
+ const post=(body={},extra={})=>worker.fetch(new Request(origin+`/api/tournaments/${cup.id}/withdraw`,{method:'POST',headers:{...headers,...extra},body:JSON.stringify(body)}),env);
+ expect((await post({}, {'x-csrf-token':'wrong'})).status).toBe(403);
+ expect((await post({playerId:ids[0]})).status).toBe(400);
+ expect((await post()).status).toBe(200);expect((await post()).status).toBe(200);
+ const current=await getTournament(env.DB,cup.id);expect(current.entrants.find(p=>p.playerId===ids[0]).withdrawn).toBe(false);expect(current.entrants.find(p=>p.playerId===ids[1]).withdrawn).toBe(true);
 });

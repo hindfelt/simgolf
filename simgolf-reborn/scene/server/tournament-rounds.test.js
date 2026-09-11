@@ -1,7 +1,7 @@
 import {beforeEach,afterEach,test,expect,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSharedCourse} from './shared-courses.js';import {publishCourse} from './published-courses.js';
-import {createTournament,joinTournament,setTournamentStatus} from './tournaments.js';
+import {createTournament,joinTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {tournamentRound,tournamentStandings} from './tournament-rounds.js';
 import {createGame,build,serialize,restore,isPutting} from '../src/simulation/game.js';import {createSession} from '../src/simulation/session.js';
 import worker from './worker.js';import {hash,names} from './security.js';
@@ -56,6 +56,7 @@ test('two real simulated rounds produce server scorecards and tied rankings with
   }
   if(round===1)expect((await tournamentStandings(env.DB,event.id)).status).toBe('playing');
  }
+ await expect(withdrawTournament(env.DB,event.id,other)).rejects.toMatchObject({status:409});
  const standings=await tournamentStandings(env.DB,event.id);expect(standings.status).toBe('complete');expect(standings.standings.map(p=>p.rank)).toEqual([1,1]);
  for(const s of snapshots.values()){expect(s.result.scorecard).toHaveLength(1);expect(s.state.stats.fees).toBe(0);expect(s.result.strokes).toBe(s.result.scorecard[0].strokes);}
  const token=crypto.randomUUID(),csrf=crypto.randomUUID(),origin='https://simgolfer.example';
@@ -69,4 +70,14 @@ test('the real Durable Object host preserves round identity and denies suspended
  const first=await stub.read(event.id,owner,1);expect(first.ok).toBe(true);
  expect(await stub.read(event.id,other,1)).toMatchObject({ok:false,status:400});
  await env.DB.prepare('UPDATE players SET disabled_at=? WHERE id=?').bind(Date.now(),owner).run();expect(await stub.read(event.id,owner,1)).toMatchObject({ok:false,status:403});
+});
+
+test('withdrawal stops round commands and all-withdrawn events have no winner',async()=>{
+ const event=await setup(),a=(await tournamentRound(env.DB,event.id,owner,1)).course;
+ await withdrawTournament(env.DB,event.id,owner);
+ await expect(tournamentRound(env.DB,event.id,owner,1,shot(a,owner))).rejects.toMatchObject({status:403});
+ expect((await tournamentRound(env.DB,event.id,other,1)).course.state.pro.strokes).toBe(0);
+ expect((await tournamentStandings(env.DB,event.id)).status).toBe('playing');
+ await withdrawTournament(env.DB,event.id,other);
+ const standings=await tournamentStandings(env.DB,event.id);expect(standings.status).toBe('complete');expect(standings.standings.every(p=>p.withdrawn&&p.rank===null)).toBe(true);
 });

@@ -40,6 +40,18 @@ export async function leaveTournament(db,id,playerId){
  if(!removed&&current.entrants.some(entry=>entry.playerId===playerId))throw fail(409,'Registration closed before you could leave.');
  return current;
 }
+export async function withdrawTournament(db,id,playerId){
+ await active(db,playerId);
+ const event=await getTournament(db,id),entry=event.entrants.find(p=>p.playerId===playerId);
+ if(!entry)throw fail(403,'Only an entrant can withdraw their own place.');
+ if(entry.withdrawn)return event;
+ // Compete with final-score writes in the same database. A completed player
+ // cannot remove a result, and round commits already require withdrawn=0.
+ const changed=await db.prepare("UPDATE tournament_entries SET withdrawn=1 WHERE tournament_id=? AND player_id=? AND withdrawn=0 AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND EXISTS(SELECT 1 FROM tournaments t WHERE t.id=? AND t.status='locked' AND (SELECT count(*) FROM tournament_rounds r WHERE r.tournament_id=t.id AND r.player_id=? AND r.result IS NOT NULL)<t.rounds) RETURNING player_id").bind(id,playerId,playerId,id,playerId).first();
+ const current=await getTournament(db,id);
+ if(!changed&&!current.entrants.find(p=>p.playerId===playerId)?.withdrawn)throw fail(409,'Only unfinished entries in a running tournament can withdraw.');
+ return current;
+}
 export async function setTournamentStatus(db,id,playerId,status){
  await active(db,playerId);
  if(!['locked','cancelled'].includes(status))throw fail(400,'Unknown tournament action.');

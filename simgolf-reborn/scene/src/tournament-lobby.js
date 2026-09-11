@@ -22,7 +22,18 @@ export function mountTournamentLobby(dialog,request,player,status){
       if(current.status==='locked'){
        const scores=await request(`/api/tournaments/${event.id}/standings`),summary=document.createElement('p');summary.textContent=scores.status==='complete'?'Final results — equal totals share a place.':'Scores below cover completed rounds.';body.append(summary);
        for(const score of scores.standings){const line=document.createElement('p');line.textContent=`${score.rank?score.rank+'. ':''}${score.name}${score.withdrawn?' (withdrawn)':''}: ${score.roundsCompleted}/${scores.rounds} rounds · ${score.roundsCompleted?score.strokes:'—'} strokes`;body.append(line);}
-       if(entered){const score=scores.standings.find(p=>p.id===player.id),round=Math.min(current.rounds,score.roundsCompleted+1),play=document.createElement('button');play.textContent=score.roundsCompleted===current.rounds?'Review final round':`Play / resume round ${round}`;play.onclick=()=>location.assign(`/?tournament=${event.id}&round=${round}`);body.append(play);}
+       if(entered&&!scores.standings.find(p=>p.id===player.id)?.withdrawn){const score=scores.standings.find(p=>p.id===player.id),round=Math.min(current.rounds,score.roundsCompleted+1),play=document.createElement('button');play.textContent=score.roundsCompleted===current.rounds?'Review final round':`Play / resume round ${round}`;play.onclick=()=>location.assign(`/?tournament=${event.id}&round=${round}`);body.append(play);
+        if(score.roundsCompleted<current.rounds){
+         const withdraw=document.createElement('button');withdraw.textContent='Withdraw from tournament';
+         withdraw.onclick=()=>{
+          withdraw.disabled=true;const confirmation=document.createElement('div'),message=document.createElement('p'),confirm=document.createElement('button'),keep=document.createElement('button');
+          message.textContent='Withdraw permanently from this event? Your completed scorecards remain visible, but you cannot resume or receive a placing. Other entrants can continue.';
+          confirm.textContent='Confirm withdrawal';keep.textContent='Keep playing';confirmation.append(message,confirm,keep);body.append(confirmation);
+          keep.onclick=()=>{confirmation.remove();withdraw.disabled=false;};
+          confirm.onclick=async()=>{confirm.disabled=true;keep.disabled=true;try{await request(`/api/tournaments/${event.id}/withdraw`,{method:'POST',body:'{}'});status('You withdrew from the tournament.');await view();}catch(error){status(error.message);confirm.disabled=false;keep.disabled=false;}};
+         };body.append(withdraw);
+        }
+       }
       }
       const actions=current.ownerId===player.id?(current.status==='cancelled'?[]:current.status==='locked'?[['cancel','Cancel tournament']]:[['lock','Close registration'],['cancel','Cancel tournament']]):current.status==='registration'?[entered?['leave','Leave tournament']:['join','Join tournament']]:[];
       for(const[action,label]of actions){const button=document.createElement('button');button.textContent=label;button.onclick=async()=>{button.disabled=true;try{await request(`/api/tournaments/${event.id}/${action}`,{method:'POST',body:'{}'});status('Tournament registration updated.');await view();}catch(error){status(error.message);button.disabled=false;}};body.append(button);}

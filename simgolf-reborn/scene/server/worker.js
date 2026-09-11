@@ -3,7 +3,7 @@ import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
 import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
 import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
-import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,setTournamentStatus} from './tournaments.js';
+import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {tournamentStandings} from './tournament-rounds.js';
 export {CourseScheduler} from './course-scheduler.js';
 export {TournamentRoundHost} from './tournament-round-host.js';
@@ -166,14 +166,14 @@ async function handle(request,env){
  }
  const standingsRoute=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})\/standings$/);
  if(standingsRoute&&request.method==='GET')return json(await tournamentStandings(env.DB,standingsRoute[1]));
- const tournament=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})(?:\/(join|leave|lock|cancel))?$/);
+ const tournament=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})(?:\/(join|leave|withdraw|lock|cancel))?$/);
  if(tournament){
   const [,id,action]=tournament;
   if(!action&&request.method==='GET')return json(await getTournament(env.DB,id));
   if(action&&request.method==='POST'){
    await rateLimit(env.DB,'tournament-action:'+user.id,30,60);
    const body=await readJson(request,1000);if(!body||Object.keys(body).length)throw fail(400,'Tournament actions do not accept player identities or scores.');
-   return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
+   return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):action==='withdraw'?await withdrawTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
   }
  }
  if(path==='/api/published-courses'&&request.method==='GET')return json({courses:await listPublishedCourses(env.DB)});
