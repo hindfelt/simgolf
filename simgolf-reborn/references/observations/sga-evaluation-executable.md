@@ -2891,3 +2891,13 @@ Voice lookup0x46c140, presentation0x40c1f0 and secondary0x4a0000 calls are expli
 One native comparison corrected a low-byte instruction detail: the flag0x20000 branch for request2/3/8 masks CL while retaining ECX's high bits. Its presentation base becomes16, not272. The executable fixtures preserve this result.
 
 `verify-original-remark-selection.py` executes the entire switch with its actual dispatch tables for1320 cases. All65 requests plus the default are exercised across four difficulties, with controlled voice results and explicit boundary mutations. It compares full actor bytes, adjustment and ordered call arguments.264 fixtures retain a complete request/difficulty grid. Six selection/response tests pass. External call implementations, earlier entry/history/display processing, contiguous selection-to-response verification and final social effects remain required before live integration.
+
+### Contiguous per-kind adjustment and outcome: 0x467502–0x46806a (2026-09-11)
+
+`original-remark-adjustment.js` connects full request selection to the preamble/outcome composition. It supplies the selected delta, preserves ordered events across both stages and routes sound effects through the same explicit speculative-state resolver contract. No caller-provided delta replaces the original switch result.
+
+`verify-original-remark-adjustment.py` executes the contiguous original range including its real switch tables and sign/clamp/RNG helpers.1320 cases match complete actor, hole, tile, seed, selected/effective deltas and ordered calls. All65 requests plus default are included;132 committed fixtures and eight combined tests pass. External call effects remain controlled, and positions/hole IDs remain fixed in this oracle so the supplied hole/tile records refer to the actor's actual location. A general live adapter must refresh those records if any resolved effect relocates the actor or changes holes.
+
+The next voice-lookup boundary is now identified directly:0x46c140 reads the signed profile index from actor offset0xb6, selects the560-byte record, then returns the complement of bit7 in profile byte at0x4d5061+index*560. It does not itself mutate the actor. Current comparison fixtures deliberately retain explicit voice-call behavior; integrate the recovered query only after supplying those original profile bytes in the shared state schema and updating contiguous comparisons to execute the real helper.
+
+The full routine still needs entry/display/history composition, remaining helpers and post-outcome social/display processing. Live browser reactions and fee mapping are not certified by this contiguous subrange.
