@@ -889,3 +889,27 @@ launch effects are supplied, and accuracy/random variation and special shots
 are not composed yet. In particular club 13 still has nonzero vertical speed
 at this original intermediate point; later putt code zeros it. No live planner
 migration or deployment is made by this change.
+
+
+### Initial launch variation budget and draw (2026-09-11)
+
+Recovered `0x424083–0x424131` and the simple `0x42414a` sum in
+`original-launch-variation.js`. Inputs explicitly represent original fields:
+global bit from 0x5a3228; skill byte actor+0x21; difficulty 0x542bc8;
+actor class byte +0x20; ability flag +0x1e bit 0x10/value +0xfc;
+target-map flag 0x5682dc bit 0x80; signed attitude field +0x3e.
+These are not yet mapped to browser UI properties.
+
+Start budget 10 if global bit 1 else 20; skill 4 adds budget/(4-difficulty)
+for difficulty 1..3 unless actor class masked by 0xe0 is 0x20. Ability adds
+value*budget/8, target flag subtracts 10, attitude <2 halves the result.
+Integer divisions truncate. Random bound is half that budget; variation is
+bounded draw + bound + 4. Zero bound still advances the original RNG.
+This returns the intermediate variation value, not a final heading deviation.
+Later code consumes it alongside further planner effects.
+
+`verify-original-launch-variation.py` executes original branch arithmetic and
+RNG with provided actor/target fields; 5,000 bounds, variations and resulting
+seeds match. Sixty output records retained; seven variation/base-launch tests
+pass, including zero-bound consumption and branch exclusions. Full application
+of variation, subsequent RNG/wind/shot-type effects and live composition remain.
