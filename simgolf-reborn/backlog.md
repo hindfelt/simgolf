@@ -1160,3 +1160,10 @@ shot shaping, recovery and final velocity normalization. 240 uninterrupted
 native runs through 0x425ab9 match state, events, cache and RNG; the 240 middle
 comparisons still pass, plus eight related tests. Target selection, epilogue
 state restoration, full remark effects and live mapping remain unfinished.
+
+F09 planner-exit restoration (2026-09-11): automatic launch now publishes the
+unconditional original terrain-17/20 class writes, sharing a restoration helper
+with speculative candidate completion. 240 native runs extend through both
+epilogue writes, resetting their incoming values per case; thirteen automatic
+and candidate tests pass. Target selection, full remark effects and live owning
+state application remain unfinished.

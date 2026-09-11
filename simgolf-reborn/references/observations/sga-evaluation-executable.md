@@ -2542,3 +2542,20 @@ comparisons still pass; eight related tests pass, including deterministic replay
 This ends before metadata restoration and does not recover initial target/club
 selection or full remark effects. Those steps and live gameplay mapping remain
 unfinished. Nothing is deployed by this change.
+
+### Automatic planner-exit restoration: through 0x425aca
+
+`original-planner-restoration.js` centralizes the two unconditional shared writes:
+terrain 17 and 20 shot classes become 8 at 0x425ab9 and 0x425ac3. Automatic launch
+finish now publishes those writes, and candidate completion uses the same helper.
+They are fresh write lists for the owning simulation to apply, not replacement
+terrain tables; unaffected metadata must be retained by the owner.
+
+The automatic verifier now continues through both native writes to 0x425aca.
+Each case seeds the two incoming bytes with distinct non-8 values so an omitted
+write cannot pass because a previous test left the expected value in memory.
+All 240 uninterrupted runs match final state and restoration outputs. Thirteen
+automatic/candidate tests pass, including flat and nonflat contiguous candidate
+fixtures, serialized shared trials and independent output ownership. The earlier
+epilogue omission is closed at this boundary. Initial target/club selection,
+complete remark effects and applying the state to live gameplay remain open.

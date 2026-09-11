@@ -56,11 +56,13 @@ def run_middle(q):
  u.mem_write(0x53ba00,struct.pack('<2500H',*marks))
  for code in [0,1,2,3,19,21,22]:
   u.mem_write(0x576dc2+code*48,bytes([1 if code==3 else 2 if code==19 else 0]));u.mem_write(0x576dc6+code*48,bytes([13 if code==3 else 0]));u.mem_write(0x576dc7+code*48,bytes([16 if code in [21,22] else 0]))
+ if with_tail:
+  for code,value in zip([17,20],q['restorationClasses']):u.mem_write(0x576dc2+code*48,bytes([value]))
  for code,size in [(4,2),(5,3),(6,1),(7,2)]:u.mem_write(0x4c16b8+code*20,bytes([size]));write(0x5a7680+code*4,3 if code==6 else 9)
  records=[dict(type=-1 if i%5==0 else q['record']['type'] if i%3==0 else 6 if i%2 else 7,x=(i%16)*3,z=(i//16)*3,value=q['record']['value']) for i in range(256)]
  for index,r in [(-1,dict(q['missingRecord'],x=0,z=0)),*enumerate(records)]:u.mem_write(0x58a708+index*16,struct.pack('<hhh',r['type'],r['x'],r['z']));write(0x58a710+index*16,r['value'])
  u.reg_write(UC_X86_REG_ESI,0);u.reg_write(UC_X86_REG_ESP,sp)
- stop=0x425ab9 if with_tail else 0x425372
+ stop=0x425aca if with_tail else 0x425372
  u.emu_start(0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
  result_actor={name:u.mem_read(a,1)[0] for name,a in byte_fields.items()}
  result_actor.update({name:struct.unpack('<H',u.mem_read(a,2))[0] for name,a in word_fields.items()})
@@ -71,7 +73,9 @@ def run_middle(q):
   result_actor['recoveryValue']=u.mem_read(0x578000,1)[0]
   result_actor['stateCode']=struct.unpack('<h',u.mem_read(0x577fb4,2))[0]
   state.update(middle_references,verticalSpeed=read(0x577ff0),heading=read(0x577fe8)&0xffffffff,lie=read(sp+0x14))
- return dict(state=state,events=events,randomDraws=draws,samples=read(sp+0x20))
+ result=dict(state=state,events=events,randomDraws=draws,samples=read(sp+0x20))
+ if with_tail:result['shotClassOverrides']=[dict(code=code,shotClass=u.mem_read(0x576dc2+code*48,1)[0]) for code in [17,20]]
+ return result
 rng=random.Random(2002);rows=[]
 for i in range(240):
  origin=dict(x=24+i%2,z=25);position=dict(x=origin['x']*1024+512,z=26112)
@@ -86,6 +90,7 @@ for i in range(240):
   actor['recoveryValue']=i%40
   q['state'].update(verticalSpeed=500,heading=q['heading'])
   q.update(referenceSpeed=1800,modifier=i%20-5,activeActor=bool(i%2),variant=i%4,stateFlags=i%4,driftMode=i%4)
+  q['restorationClasses']=[i%7,32]
  rows.append([q,run_middle(q)])
 name='original-auto-launch-finish' if with_tail else 'original-auto-launch-middle'
 module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()

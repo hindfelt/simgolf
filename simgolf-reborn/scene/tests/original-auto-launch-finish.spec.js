@@ -19,3 +19,10 @@ test('final launch replays from the complete serialized snapshot',()=>{
   expect(originalAutoLaunchFinish(replay,middleMap(replay),middleEffects(replay))).toEqual(originalAutoLaunchFinish(q,middleMap(q),middleEffects(q)));
  }
 });
+test('each automatic launch publishes independent restoration writes',()=>{
+ const q=rows[0][0];
+ const first=originalAutoLaunchFinish(q,middleMap(q),middleEffects(q));
+ expect(first.shotClassOverrides).toEqual([{code:17,shotClass:8},{code:20,shotClass:8}]);
+ first.shotClassOverrides[0].shotClass=99;
+ expect(originalAutoLaunchFinish(q,middleMap(q),middleEffects(q)).shotClassOverrides).toEqual([{code:17,shotClass:8},{code:20,shotClass:8}]);
+});

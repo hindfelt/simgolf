@@ -1,5 +1,6 @@
 import {originalExactCandidate} from './original-exact-candidate.js';
 import {originalCandidateStep} from './original-candidate-step.js';
+import {originalPlannerRestoration} from './original-planner-restoration.js';
 // Own one speculative shot independently of the golfer's live record.
 // Landing publication and RNG/cache are shared outputs, not restored actor data.
 export function originalCandidateTrial(q,cache,map,physical,previousLanding) {
@@ -24,7 +25,7 @@ export function originalCandidateTrialResult(trial) {
   throw Error('Candidate trial has not completed.');
  return {landing:trial.landing?{...trial.landing}:null,seed:trial.candidate.seed,
   cache:{next:trial.launch.cache.next,entries:trial.launch.cache.entries.map(e=>({...e}))},
-  shotClassOverrides:[{code:17,shotClass:8},{code:20,shotClass:8}]};
+  shotClassOverrides:originalPlannerRestoration()};
 }
 
 // Start the next speculative shot from shared results, not stale actor RNG or
