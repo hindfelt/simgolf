@@ -945,3 +945,8 @@ order with admission, six-option evaluation and shared winner/state propagation.
 100 original full passes match, including dense fresh and mixed-terrain cases;
 ten targeted tests pass. Repeated passes/pruning, real physics callbacks and
 live integration remain unfinished.
+
+F09 survivor statistics (2026-09-11): recovered distance/relative-heading extrema
+and composed them with final pruning survivors. 5,000 original spread cases and
+thirteen tests pass. Full retry-loop verification, repeated-pass orchestration,
+physical callbacks and live integration remain unfinished.

@@ -1776,3 +1776,23 @@ Three saved whole-grid fixtures and ten pass/options/trial tests pass; the pass
 suite was rerun after adding the dense fixture. Repeated-pass pruning and
 statistics, real candidate physics, owning-state persistence and live integration
 remain unfinished. This is not yet a deployed complete route planner.
+
+### Survivor spread and pruning integration (2026-09-11)
+
+`original-route-spread.js` recovers 0x42338e–0x423402. For each surviving option,
+zero stored distance skips the entire update. Otherwise distance min/max update;
+heading min/max update only when the candidate tile center is >100 original yards
+from the golfer. Relative heading subtracts cup heading from stored sample flags
+with signed int32 wrap, retaining the low flag bit as the original does.
+
+`originalRoutePrunedState` augments existing pruning with final-survivor spread
+on the four-sample pass. Each original margin retry resets the extrema, so the
+final surviving set determines the returned statistics. Initial extrema retain
+the original unusual sentinels (65535/-1000 and 0x0fffffff/-536870912). Cup
+heading uses the full fixed-point vector. Other sample counts leave sentinels.
+
+`verify-original-route-spread.py` executes the spread block and original distance
+helpers without stubs; all 5,000 cases match. Sixty fixtures and thirteen spread/
+pruning/finish tests pass. Pruning composition has targeted integration tests,
+not yet a contiguous full retry-loop oracle. Repeated-pass orchestration, physical
+candidate integration and live deployment remain unfinished.
