@@ -2064,3 +2064,25 @@ This closes the separate nonflat-map evidence gap. It is still two chained nativ
 executions, not one uninterrupted 0x421b50 call through the planner and flight.
 Contiguous actor restoration/global-state verification, search scheduler/state
 integration and live gameplay remain unfinished. No deployment is included.
+
+### Uninterrupted original candidate execution (2026-09-11)
+
+`verify-original-contiguous-candidate.py` runs 0x421b50 through return, including
+its actual 0x4235c0 planner call, full launch epilogue, flight loop and actor copy
+restoration. Candidate arguments enforce the original explicit-target false and
+curve argument. The original candidate and browser trial use the same flat map,
+placement marks and bounce/roll coefficients. Original metadata/RNG/cache remain
+in one emulator throughout each call; cache carries between cases.
+
+All 30 calls match final coordinates, published landing, RNG, step count and
+strength cache. The verifier compares all 256 restored actor bytes against their
+pre-call snapshot. No rendering record refers to actor 0, so incidental display
+updates are bypassed by the original lookup; the verifier does not emulate that
+UI. Raw surface/height reads and flat physics height/slope remain supplied.
+The previously separate planner and flight helper code now executes together.
+
+Retained cases match browser trial execution in serialized seven-step slices;
+caller input and previous trial state remain unchanged. The targeted trial tests
+pass. This closes the uninterrupted flat-candidate evidence gap, but nonflat
+uninterrupted execution, cross-trial global metadata/state ownership, integration
+into the full search and live gameplay remain unfinished. No deployment.

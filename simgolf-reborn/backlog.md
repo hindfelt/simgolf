@@ -1022,3 +1022,9 @@ planner/flight oracle to a shared nonzero height field and derived corner data.
 Sixty flat plus sixty nonflat original chains match; ten map tests pass, including
 midflight replay in both modes. Contiguous original candidate execution, shared
 search scheduling/state propagation and live integration remain unfinished.
+
+F09 uninterrupted candidate verification (2026-09-11): 30 original 0x421b50
+calls now execute planning, flight and restoration in one emulator run. Final
+landing/position, RNG and cache match; the original 256-byte actor record is
+verified restored. Sliced browser trials match retained cases. Nonflat contiguous
+execution and search shared-state/live integration remain unfinished.
