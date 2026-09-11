@@ -2406,3 +2406,27 @@ stub. All 2,000 full-stage cases match with profile records in memory. A further
 compare against the JavaScript lookup. Eight related tests pass, including equal
 groups from different bytes and unequal groups suppressing the paired exchange.
 The remark-effect boundary remains controlled and full live integration open.
+
+### Primary automatic reaction: 0x424cc3–0x425001
+
+`original-auto-primary-reaction.js` preserves the original first-match order:
+follow-up lie, scanned scenery/reference, flagged-origin eligibility, search
+diagnostics, per-hole record conditions, then elevation-counter conditions.
+The original RNG is advanced only on reached branches. The elevation counter
+is read as a signed byte; later resets to 0, 6, 10 or 20 preserve the original
+position relative to synchronous remark effects. An effect may change the
+counter or RNG state, and those changes are retained except where original
+post-call instructions explicitly overwrite the counter.
+
+`verify-original-auto-primary-reaction.py` runs the full native stage with the
+real RNG and float-to-integer helper. Entry starts at 0x424cb6 to establish the
+follow-up condition flags and preserve the supplied elevation byte, then stops
+at 0x425001. Controlled 0x466ea0 eligibility and 0x4672d0 remark effects supply
+unrecovered boundaries. All 3,000 cases match selected calls, actor state,
+diagnostics, final seed and draw count. The 180-case fixture covers all fourteen
+reaction IDs emitted by this stage; fourteen related tests pass.
+
+This closes the primary selector in isolation. It does not implement the
+eligibility or remark routines, preceding automatic scenery sampling, or live
+planner integration. Numeric condition/record fields are intentionally retained
+without assigning unsupported player-facing meanings. No deployment is included.

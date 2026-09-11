@@ -1120,3 +1120,10 @@ the recovered lookup directly; profile/hole naming replaces course naming.
 2,000 reaction stages now run with the real native lookup, and all 256 byte
 values at four profile indices match (1,024 cases). Eight related tests pass.
 Remark effects, earlier automatic stages and live integration remain open.
+
+F09 primary automatic reaction (2026-09-11): recovered 0x424cc3–0x425001
+priority selection, conditional original RNG draws, diagnostic masking and
+post-remark counter changes. 3,000 native comparisons and fourteen related
+tests pass. Full remark effects and feature eligibility remain controlled call
+boundaries; preceding scenery sampling and live automatic planner composition
+remain unfinished.
