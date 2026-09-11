@@ -1,6 +1,7 @@
 import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
+import {createSharedCourse,getSharedCourse,listSharedCourses,setCourseMember,executeSharedCommand} from './shared-courses.js';
 const TTL=30*24*60*60;
 async function session(request,env){
  const value=cookie(request,names.session);if(!value)return null;
@@ -115,8 +116,34 @@ async function handle(request,env){
  }
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
-  await env.DB.batch(['saves','sessions','identities'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE player_id=?`).bind(user.id)).concat(env.DB.prepare('DELETE FROM players WHERE id=?').bind(user.id)));
+  await env.DB.batch([
+   env.DB.prepare('DELETE FROM course_members WHERE player_id=? OR course_id IN (SELECT id FROM shared_courses WHERE owner_id=?)').bind(user.id,user.id),
+   env.DB.prepare('DELETE FROM shared_courses WHERE owner_id=?').bind(user.id),
+   ...['saves','sessions','identities'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE player_id=?`).bind(user.id)),env.DB.prepare('DELETE FROM players WHERE id=?').bind(user.id)
+  ]);
   return json({ok:true},200,{'set-cookie':setCookie(names.session,'',0)});
+ }
+ if(path==='/api/courses'){
+  if(request.method==='GET')return json({courses:await listSharedCourses(env.DB,user.id)});
+  if(request.method==='POST'){
+   await rateLimit(env.DB,'course-create:'+user.id,5,3600);
+   const body=await readJson(request,1000);if(Object.keys(body).some(k=>k!=='name'))throw fail(400,'Only a course name can be supplied.');
+   return json(await createSharedCourse(env.DB,user.id,body.name),201);
+  }
+ }
+ const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members))?$/);
+ if(shared){
+  const [,id,action]=shared;
+  if(!action&&request.method==='GET')return json(await getSharedCourse(env.DB,id,user.id));
+  if(action==='commands'&&request.method==='POST'){
+   await rateLimit(env.DB,'course-command:'+user.id,120,60);
+   return json(await executeSharedCommand(env.DB,id,user.id,await readJson(request,20000)));
+  }
+  if(action==='members'&&request.method==='PUT'){
+   const body=await readJson(request,1000);
+   if(typeof body.playerId!=='string'||!/^[-a-f0-9]{36}$/.test(body.playerId))throw fail(400,'A player ID is required.');
+   await setCourseMember(env.DB,id,user.id,body.playerId,body.role);return json({ok:true});
+  }
  }
  const save=path.match(/^\/api\/saves\/([a-z0-9-]{1,24})$/);
  if(save){

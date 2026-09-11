@@ -41,6 +41,19 @@ test('anonymous visitors cannot play or access cloud saves, including testing UR
  for(const path of ['/login.html','/login'])expect(await (await request(path,{},assets)).text()).toBe('Sign in');
  const disabled=await request('/api/auth/providers',{}, {DB:env.DB});expect(await disabled.json()).toEqual({providers:[]});
 });
+test('shared-course HTTP routes derive identity from the session and delete owned data with the account',async()=>{
+ const a=await emailLogin('owner@proton.me'),b=await emailLogin('editor@proton.me');
+ const headers={cookie:a.cookie,'x-csrf-token':a.csrf};
+ expect((await request('/api/courses',post({name:'Mine',cash:999999},headers))).status).toBe(400);
+ expect((await request('/api/courses',post({name:'Mine'},{cookie:a.cookie}))).status).toBe(403);
+ const created=await request('/api/courses',post({name:'Mine'},headers));expect(created.status).toBe(201);const course=await created.json();expect(course.ownerId).toBe(a.user.id);
+ expect((await request('/api/courses/'+course.id,{headers:{cookie:b.cookie}})).status).toBe(404);
+ expect((await request('/api/courses/'+course.id+'/members',{...post({playerId:b.user.id,role:'editor'},headers),method:'PUT'})).status).toBe(200);
+ expect((await (await request('/api/courses/'+course.id,{headers:{cookie:b.cookie}})).json()).role).toBe('editor');
+ expect((await request('/api/account',{...post({confirm:'DELETE'},headers),method:'DELETE'})).status).toBe(200);
+ expect((await request('/api/courses/'+course.id,{headers:{cookie:b.cookie}})).status).toBe(404);
+ expect(await env.DB.prepare('SELECT * FROM course_members WHERE course_id=?').bind(course.id).first()).toBeNull();
+});
 test('email registration supports Proton, keeps server-only cookies, and reuses the same identity',async()=>{
  const a=await emailLogin();expect(a.user.email).toBe('golfer@proton.me');expect(a.user.id).toBeTruthy();
  const b=await emailLogin();expect(b.user.id).toBe(a.user.id);
