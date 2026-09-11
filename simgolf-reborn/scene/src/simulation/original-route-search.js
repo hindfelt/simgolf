@@ -3,6 +3,7 @@ import {originalRouteSearchPasses} from './original-route-search-passes.js';
 import {originalRouteFinish} from './original-route-finish.js';
 import {originalRouteEntry} from './original-route-entry.js';
 import {originalShotRange} from './original-shot-range.js';
+import {originalRouteAssessment} from './original-route-assessment.js';
 // Search body after entry initialization (0x42252c), through publication.
 // Callbacks own the range query, candidate physics and follow-up assessment.
 export function originalRouteSearch(q,nextRange,simulate) {
@@ -37,4 +38,11 @@ export function originalRangedRouteSearch(q,simulate) {
  };
  return originalEnteredRouteSearch({...q,shot:q.shotCounter},()=>rangeFor(q.shotCounter),
   c=>rangeFor(c.shotCounter),simulate);
+}
+
+// terrainAt must include original kind metadata and support the assessor's
+// padded map reads. Only candidate flight outcomes are supplied externally.
+export function originalAssessedRouteSearch(q,simulate) {
+ return originalRangedRouteSearch({...q,
+  assessShot:shot=>originalRouteAssessment({...shot,terrainAt:q.terrainAt})},simulate);
 }

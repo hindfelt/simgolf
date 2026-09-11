@@ -991,3 +991,9 @@ metadata. Thirty full original searches match with real range code, including
 shot-counter wrap; 5,000 range comparisons cover the full byte domain. Ten tests
 pass, with three integrated tests rerun after retaining the wrap fixture.
 Candidate flight/assessment callbacks and live planner integration remain open.
+
+F09 real follow-up assessment integration (2026-09-11): originalAssessedRouteSearch
+now uses recovered prospective-route costs alongside real range arithmetic.
+Thirty complete original searches match, exercising 5,784 real assessments;
+nine targeted tests pass. Candidate trajectory callback, automatic planner
+composition and live integration remain unfinished.

@@ -1952,3 +1952,27 @@ Ten targeted range/search tests pass, and the three integrated tests pass again
 after retaining the counter-wrap search case. Physical candidate trajectories,
 follow-up cost composition and automatic planner/live gameplay integration
 remain unfinished. This work is not deployed.
+
+### Real prospective-route assessment in search (2026-09-11)
+
+`originalAssessedRouteSearch` replaces the supplied follow-up cost callback with
+`originalRouteAssessment`, retaining the real range integration. The common
+terrain accessor must include original terrain kind as well as code, shot class
+and flags, and must support original padded reads for curved assessment rays.
+Only the physical candidate outcome callback remains externally supplied within
+this search composition. This does not yet connect the original candidate
+planner/flight implementation or the surrounding automatic-shot planner.
+
+`verify-original-assessed-route-search.py` executes the entry-to-publication
+range with original 0x421450 assessment and 0x4219e0 range code. Metadata includes
+kind-13 obstacles on code 3, so costs cover more than uniform clear terrain.
+It supplies the range's surface lookup and candidate landings, skips observer
+UI and stubs the UI yield as before. All 30 runs match complete search state,
+result and ordered candidate calls. A separate counter confirms 5,784 original
+assessment invocations actually ran, rather than passing solely through search
+branches that bypass assessment. The counter is asserted nonzero.
+
+Nine assessed/ranged-search and standalone-assessor tests pass, including input
+immutability, original cost fixtures and serialized replay. Candidate flight
+integration, complete automatic planning, and live use remain unfinished.
+No deployment accompanies this change.
