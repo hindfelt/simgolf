@@ -2359,3 +2359,28 @@ remark requests. Six related tests pass, including suppression of later terrain
 reads after marker changes. This proves the calling stage with those controlled
 effects, not the full original remark routine. Earlier automatic scenery and
 reaction stages, actual remark effects and live planner integration remain open.
+
+### Automatic shot reactions: 0x425001–0x425239
+
+`original-auto-shot-reactions.js` clears actor flags 0x60, then preserves the
+original marker/reaction gates and ordered remark calls. These include scenery
+0x1c, curve requests 0x37/0x38, flag-0x80 long-shot request 0x39, state-code-4
+requests 9/0x3c, course-record request 0x3b and the paired 0x30/0x31 exchange.
+Longer-than-75 shots set positive/negative curve flags at strict angular-offset
+thresholds ±(30 << 16), or ±(30 << 15) with skill bit 2. A successful paired
+exchange increments the partner reaction byte after both synchronous effects.
+
+Both actor and partner state are cloned and returned explicitly. The supplied
+effect callback may change state before later gates. Original course-record
+lookup and pair-score routine 0x46c140 are read boundaries; neither is replaced
+with a guessed golf score formula. The active-reaction early exit at 0x425243
+is equivalent here because the following history stage handles invalidating
+the comparison marker.
+
+`verify-original-auto-shot-reactions.py` executes the full stage for actors 0–5,
+compares all modeled state and ordered calls, and checks either original terminal
+address. 2,000 cases cover controlled marker/reaction effects, curve thresholds,
+course marks and paired score results. Nine related tests pass. Verification
+does not establish the implementation of 0x4672d0 or 0x46c140, which are controlled
+call boundaries. Earlier scenery/primary reactions, complete composition and
+live gameplay integration remain unfinished; no deployment is included.

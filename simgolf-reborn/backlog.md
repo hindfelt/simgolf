@@ -1106,3 +1106,9 @@ explicitly returned by the caller. 1,500 native comparisons and six related
 tests pass. Verification controls the remark routine at its call boundary;
 full remark effects, earlier scenery/reaction stages and live integration
 remain unfinished.
+
+F09 automatic shot reactions (2026-09-11): recovered 0x425001–0x425239
+curve flags, conditional remarks and paired-golfer reaction updates with explicit
+state/effect boundaries. 2,000 executable comparisons and nine related tests
+pass. Original remark and pair-score routines remain supplied boundaries; earlier
+scenery/primary reactions and live automatic planner integration remain open.
