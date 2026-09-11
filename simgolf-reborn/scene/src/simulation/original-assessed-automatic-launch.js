@@ -1,6 +1,7 @@
 import {originalLaunchPreparation} from './original-launch-preparation.js';
 import {originalAutoPreparedLaunch} from './original-auto-prepared-launch.js';
 import {originalTargetSelection} from './original-target-selection.js';
+import {originalPlannerSetup} from './original-planner-setup.js';
 // From an already selected target/range through automatic launch restoration.
 // Planning settings are separate from current actor/shared state; the latter
 // supplies mutable fields so stale planning copies cannot replace them.
@@ -36,4 +37,17 @@ export function originalDirectAutomaticLaunch(q,map,effects) {
   planning:{...q.planning,distance:selected.distance,heading:selected.heading,curve:selected.curve},
   state:{...q.state,landing:selected.landing,diagnostics:selected.diagnostics,
    actor:{...actor,target:selected.target,actorFlags:selected.actorFlags}}},map,effects);
+}
+
+// Original entry range query precedes temporary terrain-class overrides.
+export function originalDirectAutomaticPlanner(q,map,effects) {
+ if(q.planning.plannerArgument!==-1)throw Error('Automatic launch requires the original automatic planner sentinel.');
+ const actor=q.state.actor;
+ const planning={...q.planning,actorId:q.actorId,actorFlags:actor.actorFlags,
+  rangeInput:{...q.planning.rangeInput,skillMask:actor.skillMask,
+   shot:actor.shotCounter,professional:actor.actorClass!==0}};
+ const setup=originalPlannerSetup(planning,map);
+ const classes=new Map(setup.shotClassOverrides.map(p=>[p.code,p.shotClass]));
+ const effectiveMap={...map,shotClassAt:code=>classes.has(code)?classes.get(code):map.shotClassAt(code)};
+ return {...originalDirectAutomaticLaunch({...q,planning:{...planning,range:setup.range}},effectiveMap,effects),setup};
 }

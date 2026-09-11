@@ -3,18 +3,23 @@ from pathlib import Path
 # Reuse emulator initialization and height/RNG hooks; do not run its fixture loop.
 setup=Path(__file__).with_name('verify-original-auto-scenery.py')
 exec(compile(setup.read_text().split('rng=random.Random(2002);rows=[]')[0],str(setup),'exec'))
-from_target='--from-target' in sys.argv
+from_entry='--from-entry' in sys.argv
+from_target='--from-target' in sys.argv or from_entry
 from_assessment='--from-assessment' in sys.argv or from_target
 from unicorn.x86_const import UC_X86_REG_EDI
 with_tail='--with-tail' in sys.argv or from_assessment
-for a,n in [(0x42365d,0x24b6),(0x466ba0,0x10e),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50),(0x405710,0x4e)]:
+for a,n in [(0x4235c0,0x2553),(0x4219e0,0x168),(0x466ba0,0x10e),(0x421870,0x167),(0x466ea0,0x22),(0x46c140,0x2c),(0x466a00,0x50),(0x405710,0x4e)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 u.mem_write(0x4672d0,b'\xc3')
-events=[];middle_references={}
+events=[];middle_references={};entry_setup={}
 byte_fields={'marker':0x577f82,'reaction':0x577f8c,'actorClass':0x577f20,'hole':0x577f29,'shotCounter':0x577f2a,'skillMask':0x577f21,'club':0x577f24,'elevationCounter':0x577f23}
 word_fields={'stateCode':0x577fb4,'profileIndex':0x577fbe,'conditionFlags':0x577f90,'usedClubs':0x577fa8}
 def remarks(u,a,size,data):
- global middle_references,draws
+ global middle_references,draws,entry_setup
+ if from_entry and a==0x42365d:
+  sp=u.reg_read(UC_X86_REG_ESP)
+  entry_setup=dict(range=read(sp+0x30),originTile=dict(x=read(sp+0x34),z=read(sp+0x40)),originIndex=read(sp+0x50),
+   terrainCode=read(sp+0x14),obstacleIndex=read(0x4c1fbc),shotClassOverrides=[dict(code=c,shotClass=u.mem_read(0x576dc2+c*48,1)[0]) for c in [17,20]] if current['state']['actor']['actorFlags']&1 else [])
  if from_assessment and a==0x424988:draws=0
  if a==0x425372:
   sp=u.reg_read(UC_X86_REG_ESP)
@@ -79,8 +84,14 @@ def run_middle(q):
   write(0x5a7270,s['landing']['x']);write(0x5a7278,s['landing']['z'])
   u.reg_write(UC_X86_REG_EAX,int(p['explicitTarget']));u.reg_write(UC_X86_REG_EDI,actor['hole'])
  u.reg_write(UC_X86_REG_ESI,0);u.reg_write(UC_X86_REG_ESP,sp)
+ if from_entry:
+  r=p['rangeInput']
+  for off,key in [(0xc2,'level'),(0xf8,'power'),(0xf9,'longDrive'),(0x3e,'boost')]:u.mem_write(0x577f00+off,bytes([r[key]&255]))
+  write(0x542bd8,r['lengthBonus']);write(0x53ce64,p['obstacleCount'])
+  write(0x400104,q['terrainCode']);u.mem_write(0x40bc90,b'\xa1'+struct.pack('<I',0x400104)+b'\xc3')
+  u.reg_write(UC_X86_REG_ESP,sp+0xb1c)
  stop=0x425aca if with_tail else 0x425372
- u.emu_start(0x42365d if from_target else 0x423b66 if from_assessment else 0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
+ u.emu_start(0x4235c0 if from_entry else 0x42365d if from_target else 0x423b66 if from_assessment else 0x424988,stop,count=1000000);assert u.reg_read(UC_X86_REG_EIP)==stop
  result_actor={name:u.mem_read(a,1)[0] for name,a in byte_fields.items()}
  result_actor.update({name:struct.unpack('<H',u.mem_read(a,2))[0] for name,a in word_fields.items()})
  result_actor.update(actorFlags=read(0x577f18)&0xffffffff,angularOffset=read(0x577ff4),target=actor['target'])
@@ -96,6 +107,7 @@ def run_middle(q):
   if result_actor['club']==13:result['samples']=0
  if from_target:state['landing']=dict(x=read(0x5a7270),z=read(0x5a7278))
  if with_tail:result['shotClassOverrides']=[dict(code=code,shotClass=u.mem_read(0x576dc2+code*48,1)[0]) for code in [17,20]]
+ if from_entry:result['setup']=entry_setup
  return result
 rng=random.Random(2002);rows=[]
 for i in range(240):
@@ -126,17 +138,25 @@ for i in range(240):
   if not explicit or q.get('originTerrainCode')==1:actor['target']=dict(x=origin['x']+1+i%2,z=origin['z'])
   q['planning'].update(explicitTarget=explicit,mode=i%4,cup=dict(actor['target']))
   q['state']['landing']=dict(x=123,z=456)
+ if from_entry:
+  q['planning'].update(obstacleCount=0,rangeInput=dict(difficulty=q['conditionLevel'],level=i%5,power=i%12,longDrive=i%10,
+   boost=0,lengthBonus=i%3,abilityFlags=q['planning']['abilityFlags']))
+  if i%8==1:
+   q['originTerrainCode']=q['terrainCode']=17
+   actor['actorFlags']|=1
+   actor['target']=dict(x=origin['x']+1,z=origin['z'])
+   q['planning']['cup']=dict(actor['target'])
  rows.append([q,run_middle(q)])
 name='original-auto-launch-finish' if with_tail else 'original-auto-launch-middle'
 if from_assessment:name='original-assessed-automatic-launch'
 module=(root/f'simgolf-reborn/scene/src/simulation/{name}.js').as_uri()
 adapter=(root/'simgolf-reborn/scene/tests/helpers/original-auto-middle-map.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=FROM_TARGET?module.originalDirectAutomaticLaunch:module.originalAssessedAutomaticLaunch??module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const module=await import(MODULE);const run=FROM_ENTRY?module.originalDirectAutomaticPlanner:FROM_TARGET?module.originalDirectAutomaticLaunch:module.originalAssessedAutomaticLaunch??module.originalAutoLaunchFinish??module.originalAutoLaunchMiddle;const {middleMap,middleEffects}=await import(ADAPTER);
 for(const [q,e] of JSON.parse(readFileSync(0,'utf8'))){const a=run(q,middleMap(q),middleEffects(q));if(!isDeepStrictEqual(a,e))throw Error(JSON.stringify({q,a,e}));}
 console.log('240 uninterrupted '+LABEL+' runs match complete state, events, cache and RNG.');
-""".replace('FROM_TARGET',json.dumps(from_target)).replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps('original-direct-automatic-launch' if from_target else name))
+""".replace('FROM_ENTRY',json.dumps(from_entry)).replace('FROM_TARGET',json.dumps(from_target)).replace('MODULE',json.dumps(module)).replace('ADAPTER',json.dumps(adapter)).replace('LABEL',json.dumps('original-direct-automatic-planner' if from_entry else 'original-direct-automatic-launch' if from_target else name))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 if '--write-fixture' in sys.argv:
- if from_target:name='original-direct-automatic-launch'
+ if from_target:name='original-direct-automatic-planner' if from_entry else 'original-direct-automatic-launch'
  fixtures=rows if from_assessment else rows[:60]
  (root/f'simgolf-reborn/scene/tests/fixtures/{name}.json').write_text(json.dumps(fixtures,separators=(',',':'))+'\n')

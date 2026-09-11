@@ -2682,3 +2682,22 @@ coverage assertion caught that. Nearby green targets now exercise putts, while
 explicit long targets and non-green short approaches remain covered. Eleven
 related regression tests pass. This is not yet a complete outer planner: initial
 range/setup, long-shot composition, full remark behavior and live mapping remain.
+
+### Automatic entry range through direct launch (2026-09-11)
+
+`originalDirectAutomaticPlanner` runs `originalPlannerSetup` before target
+selection, applying temporary class overrides only after the range query.
+The current actor supplies skill mask, shot counter and professional status.
+The caller's estimated range is replaced with the native range calculation.
+Final restoration patches remain separate from initial setup patches.
+
+The `--from-entry` mode of `verify-original-auto-launch-middle.py` begins at
+0x4235c0 with the native caller stack, executes the real range helper, and runs
+through 0x425aca. Surface lookup, height and remark effects remain controlled
+boundaries; this does not claim complete original observer behavior. All 240
+cases match. Flagged terrain-17 origins specifically cover range evaluation
+using the incoming class before its temporary change to 32 and final write
+to 8. The shared fixture map now exposes incoming classes 17/20 accurately.
+Seventeen related tests pass, including prior automatic stages and stale-input
+rejection by authoritative actor fields. Long-shot composition and live game
+state mapping remain unfinished.

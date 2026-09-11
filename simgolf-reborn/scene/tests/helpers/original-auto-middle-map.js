@@ -7,7 +7,7 @@ export function middleMap(q) {
    if(x===q.state.actor.target.x&&z===q.state.actor.target.z)return q.targetTerrainCode;
    return (x-z)%7===0?3:[2,19,21,22][(x+z)%4];},
   marksAt:(x,z)=>x===q.origin.x&&z===q.origin.z?q.originFlags:(x+z)%6===0?0x100:0,
-  shotClassAt:code=>code===3?1:code===19?2:0,kindAt:code=>code===3?13:0,categoryAt:code=>[21,22].includes(code)?16:0,
+  shotClassAt:code=>code===17?q.restorationClasses?.[0]??0:code===20?q.restorationClasses?.[1]??0:code===3?1:code===19?2:0,kindAt:code=>code===3?13:0,categoryAt:code=>[21,22].includes(code)?16:0,
   baseSizeAt:type=>({4:2,5:3,6:1,7:2})[type],expansionAt:type=>type===6?3:9,objectAt:index=>index===-1?q.missingRecord:records[index],
   holeRecordAt:()=>q.holeRecord,profileHoleMarkAt:()=>q.profileHoleMark,
   profileIndexFor:id=>id===0?q.state.actor.profileIndex:q.otherProfileIndex,profileByteAt:index=>q.profileBytes[index]};

@@ -1211,3 +1211,10 @@ explicit targets, green-origin putts and shared landing/diagnostics behavior.
 Eleven related tests pass. Long targets explicitly require physical search;
 full long-shot composition, original remark effects and live integration remain
 unfinished. No deployment occurred.
+
+F09 automatic entry range (2026-09-11): direct automatic planning now begins
+with original range/setup before temporary terrain-class changes. 240 native
+runs from 0x4235c0 through 0x425aca match, with flagged terrain-17 origins
+exercising original class ordering; seventeen related tests pass. Range now
+comes from actor abilities/lie rather than caller estimates. Long-shot launch
+composition, original observer/remark behavior and live integration remain open.
