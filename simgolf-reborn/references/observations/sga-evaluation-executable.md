@@ -2151,3 +2151,25 @@ Surface lookup and vertex/corner reads remain supplied; no actor display record
 is present. This does not yet verify the full route-search invocation with actual
 candidate callbacks or live browser gameplay. Those integrations remain open;
 no deployment is included.
+
+### Search reads current candidate-mutated metadata (2026-09-11)
+
+Landing scoring now resolves class 20 through shotClassAt when provided, instead
+of retaining a scalar exclusion class from search entry. Original instructions
+0x422c9b and 0x422d55 read that global after candidate execution. Corner option
+gating likewise accepts a live originClassAt query, wired to the original origin
+tile by entered search. Standalone scalar inputs remain available to the isolated
+block harnesses. These changes prevent a candidate planner's class resets from
+being ignored by subsequent scoring and option evaluation.
+
+The new live-metadata search oracle executes full original search/range/assessment
+code while candidate callbacks publish supplied landings and set classes 17/20
+to 8, as the verified planner epilogue does. Thirty cases match complete search
+state, result and ordered candidate calls; 5,844 original assessments execute.
+The ranged/assessed fixture adapters now explicitly provide class-20 metadata
+when their terrain grids contain no such tile, matching original global setup.
+Seventeen targeted tests pass, including current-class corner gating.
+
+Candidate outcomes remain supplied in this oracle. Full physical candidate
+callback integration, uninterrupted full-search verification and live gameplay
+remain unfinished. No deployment is included.

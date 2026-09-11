@@ -1,4 +1,4 @@
-"""Verify original entered route search with real range arithmetic."""
+"""Verify live terrain-class changes from candidate callbacks during search."""
 from pathlib import Path
 import hashlib,json,random,struct,subprocess
 import pefile
@@ -8,15 +8,15 @@ root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier'
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32)
 u.mem_map(0x400000,0x200000);u.mem_map(0x820000,0x1000);u.mem_map(0x100000,0x10000)
-for a,n in [(0x42245e,0x115a),(0x4219e0,0x168),(0x466a00,0x50),(0x491380,0x3c),(0x4913e0,0x10b),(0x466b40,0x59),(0x4baa48,16),(0x466ba0,0x10e),(0x40bc50,0x33),(0x40a9f0,0x81),(0x40c1a0,0x42),(0x4a57a0,0x27),(0x4c1870,64)]:
+for a,n in [(0x42245e,0x115a),(0x4219e0,0x168),(0x421450,0x420),(0x466a00,0x50),(0x491380,0x3c),(0x4913e0,0x10b),(0x466b40,0x59),(0x4baa48,16),(0x466ba0,0x10e),(0x40bc50,0x33),(0x40a9f0,0x81),(0x40c1a0,0x42),(0x4a57a0,0x27),(0x4c1870,64)]:
  o=p.get_offset_from_rva(a-0x400000);u.mem_write(a,p.__data__[o:o+n])
 u.mem_write(0x483330,b'\xc3')
 u.mem_map(0x839000,0x1000);u.reg_write(UC_X86_REG_FPCW,0x37f);u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_start(0x491380,0x4913bc,count=20000)
 def write(a,v,size=4):u.mem_write(a,(v&((1<<(size*8))-1)).to_bytes(size,'little'))
 def read(a):return struct.unpack('<i',u.mem_read(a,4))[0]
-remaining=0;lie=0;calls=[];current={};sampleIndex=0;passes=[];searchDiagnostics=0;searchWinner={}
+remaining=0;lie=0;calls=[];current={};sampleIndex=0;passes=[];searchDiagnostics=0;searchWinner={};assessmentCalls=0
 def hook(u,a,s,d):
- global remaining,lie,calls,sampleIndex,searchDiagnostics,searchWinner
+ global remaining,lie,calls,sampleIndex,searchDiagnostics,searchWinner,assessmentCalls
  if a==0x4234eb:searchDiagnostics=read(0x5a5b88);searchWinner=dict(score=read(0x102060),target=dict(x=read(0x102078),z=read(0x1020a4)),curve=read(0x10206c),cornerTarget=read(0x5a8730),landing=dict(x=read(0x5a7270),z=read(0x5a7278)),landingFlag=read(0x1020ac))
  if a==0x423582:u.emu_stop()
  if a==0x4227b1:passes.append(read(0x102038))
@@ -24,14 +24,11 @@ def hook(u,a,s,d):
   sp=u.reg_read(UC_X86_REG_ESP);ret,actor,x,z,curve=struct.unpack('<5i',u.mem_read(sp,20))
   calls.append(dict(type='simulate',actorId=actor,x=x,z=z,curve=curve))
   landing=current['landings'][sampleIndex%len(current['landings'])];sampleIndex+=1
+  for code in [17,20]:write(0x576dc2+48*code,8,1)
   write(0x5691dc,landing['x']);write(0x5691e0,landing['z'])
   u.reg_write(UC_X86_REG_ESP,sp+4);u.reg_write(UC_X86_REG_EIP,ret)
  if a==0x422e99:lie=struct.unpack('<i',struct.pack('<I',u.reg_read(UC_X86_REG_EDI)))[0]
- if a==0x421450:
-  sp=u.reg_read(UC_X86_REG_ESP);ret,x,z,cx,cz,r,shape,flag=struct.unpack('<8i',u.mem_read(sp,32))
-  calls.append(dict(type='assess',landing=dict(x=x,z=z),cup=dict(x=cx,z=cz),range=r,shape=shape,flag=flag))
-  cost=current['costs'][shape+1]+flag*3
-  u.reg_write(UC_X86_REG_EAX,cost);u.reg_write(UC_X86_REG_ESP,sp+4);u.reg_write(UC_X86_REG_EIP,ret)
+ if a==0x421450:assessmentCalls+=1
  if a==0x422e88:remaining=u.reg_read(UC_X86_REG_EAX)
 u.hook_add(UC_HOOK_CODE,hook)
 def run(q):
@@ -39,7 +36,7 @@ def run(q):
  current=q;calls=[];sampleIndex=0;passes=[]
  u.mem_write(0x102000,bytes(0x9000));u.mem_write(0x570d38,bytes([2])*2500)
  for x,z,code,cls,flags in q['cells']:
-  write(0x570d38+x*50+z,code,1);write(0x576dc2+48*code,cls,1);write(0x53ba00+2*(x*50+z),flags,2)
+  write(0x570d38+x*50+z,code,1);write(0x576dc2+48*code,cls,1);write(0x576dc6+48*code,13 if code==3 else 0,1);write(0x53ba00+2*(x*50+z),flags,2)
  write(0x577182,q['excludedClass'],1);write(0x577f21,q['skillMask'],1)
  write(0x577f29,q['hole'],1);write(0x574518+q['hole']*520,q['cup']['x']);write(0x57451c+q['hole']*520,q['cup']['z'])
  write(0x5691dc,q['landing']['x']);write(0x5691e0,q['landing']['z'])
@@ -96,13 +93,15 @@ for _ in range(30):
  q['rangeInput']=dict(difficulty=q['level'],level=rng.randrange(9),power=rng.randrange(16),longDrive=rng.randrange(16),boost=rng.randrange(-2,6),lengthBonus=rng.randrange(5))
  if _==0:q['shotCounter']=255;q['shot']=255
  rows.append([q,run(q),calls])
+assert assessmentCalls>0,'No original assessment calls exercised'
+print(f'{assessmentCalls} original follow-up assessments executed.')
 module=(root/'simgolf-reborn/scene/src/simulation/original-route-search.js').as_uri()
-script='''import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const {originalRangedRouteSearch}=await import(MODULE);
+script='''import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const {originalAssessedRouteSearch}=await import(MODULE);
 const rows=JSON.parse(readFileSync(0,'utf8'));
-for(const [q,e,expectedCalls] of rows){const cells=new Map(q.cells.map(([x,z,code,shotClass,flags])=>[`${x},${z}`,{code,shotClass,flags}]));
- let index=0;const calls=[];const a=originalRangedRouteSearch({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>cells.get(`${p.x},${p.z}`),shotClassAt:code=>(q.cells.find(c=>c[2]===code)?.[3]??(code===20?q.excludedClass:undefined))},c=>{calls.push({type:"simulate",...c});return {landing:q.landings[(index++)%q.landings.length]};});
+for(const [q,e,expectedCalls] of rows){const patches=new Map();const cells=new Map(q.cells.map(([x,z,code,shotClass,flags])=>[`${x},${z}`,{code,shotClass,flags,kind:code===3?13:0}]));
+ let index=0;const calls=[];const a=originalAssessedRouteSearch({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>{const t=cells.get(`${p.x},${p.z}`);return {...t,shotClass:patches.get(t.code)??t.shotClass};},shotClassAt:code=>patches.get(code)??(q.cells.find(c=>c[2]===code)?.[3]??(code===20?q.excludedClass:undefined))},c=>{calls.push({type:"simulate",...c});patches.set(17,8);patches.set(20,8);return {landing:q.landings[(index++)%q.landings.length]};});
  if(!isDeepStrictEqual(a,e)||JSON.stringify(calls)!==JSON.stringify(expectedCalls))throw Error(JSON.stringify({a,e}));
-}console.log(`${rows.length} range-integrated route searches and ordered calls match original x86.`);
+}console.log(`${rows.length} live-metadata searches and ordered flight calls match original x86.`);
 '''.replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 
@@ -111,4 +110,4 @@ if '--write-fixture' in __import__('sys').argv:
  for row in rows:
   key=(tuple(row[1]['search']['passes']),row[0]['mode']==2,row[1]['search']['winner']['target']['x']==-1)
   if key not in seen:fixtures.append(row);seen.add(key)
- (root/'simgolf-reborn/scene/tests/fixtures/original-ranged-route-search.json').write_text(json.dumps(fixtures,separators=(',',':'))+'\n')
+ (root/'simgolf-reborn/scene/tests/fixtures/original-live-metadata-search.json').write_text(json.dumps(fixtures,separators=(',',':'))+'\n')

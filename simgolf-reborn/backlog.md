@@ -1046,3 +1046,9 @@ entry, planner, nonflat height/slope physics and restoration now run together.
 Thirty flat and thirty uneven-terrain calls match all retained final/shared
 state; four targeted tests pass. Full route-search callback integration and
 live gameplay wiring remain unfinished.
+
+F09 live search metadata (2026-09-11): landing scoring now resolves current
+exclusion class and corner-option gates reread origin class. Thirty original
+searches with candidate-induced class changes match, including 5,844 assessments;
+17 targeted tests pass. This removes stale metadata assumptions before physical
+candidate integration. Full search physics and live wiring remain unfinished.

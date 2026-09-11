@@ -98,7 +98,7 @@ module=(root/'simgolf-reborn/scene/src/simulation/original-route-search.js').as_
 script='''import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';const {originalAssessedRouteSearch}=await import(MODULE);
 const rows=JSON.parse(readFileSync(0,'utf8'));
 for(const [q,e,expectedCalls] of rows){const cells=new Map(q.cells.map(([x,z,code,shotClass,flags])=>[`${x},${z}`,{code,shotClass,flags,kind:code===3?13:0}]));
- let index=0;const calls=[];const a=originalAssessedRouteSearch({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>cells.get(`${p.x},${p.z}`),shotClassAt:code=>q.cells.find(c=>c[2]===code)[3]},c=>{calls.push({type:"simulate",...c});return {landing:q.landings[(index++)%q.landings.length]};});
+ let index=0;const calls=[];const a=originalAssessedRouteSearch({...q,assessShot:c=>{calls.push({type:"assess",...c});return q.costs[c.shape+1]+c.flag*3;},terrainAt:p=>cells.get(`${p.x},${p.z}`),shotClassAt:code=>(q.cells.find(c=>c[2]===code)?.[3]??(code===20?q.excludedClass:undefined))},c=>{calls.push({type:"simulate",...c});return {landing:q.landings[(index++)%q.landings.length]};});
  if(!isDeepStrictEqual(a,e)||JSON.stringify(calls)!==JSON.stringify(expectedCalls))throw Error(JSON.stringify({a,e}));
 }console.log(`${rows.length} range-and-assessment-integrated searches and ordered flight calls match original x86.`);
 '''.replace('MODULE',json.dumps(module))

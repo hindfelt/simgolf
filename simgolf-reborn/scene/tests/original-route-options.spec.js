@@ -15,3 +15,8 @@ test('disallowed curves are excluded while straight options retain previous excl
  const q={...rows[0][0],originClass:0,shapeMask:0,scores:[0,99999,0,0,99999,0]};const a=run(q);
  expect(a.calls).toEqual([]);expect(a.result.scores).toEqual([100000,99999,100000,100000,99999,100000]);
 });
+
+test('corner gate reads current origin class instead of the initial snapshot',()=>{
+ const q={...rows[0][0],originClass:0,originClassAt:()=>8,scores:[100000,100000,100000,12,34,56]};
+ const a=run(q);expect(a.calls).toEqual([]);expect(a.result.scores).toEqual(q.scores);
+});

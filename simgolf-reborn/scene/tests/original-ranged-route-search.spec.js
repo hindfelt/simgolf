@@ -5,7 +5,7 @@ const rows=JSON.parse(readFileSync(new URL('./fixtures/original-ranged-route-sea
 function run(q){
  const cells=new Map(q.cells.map(([x,z,code,shotClass,flags])=>[`${x},${z}`,{code,shotClass,flags}]));
  const calls=[];let i=0;
- const result=originalRangedRouteSearch({...q,terrainAt:p=>cells.get(`${p.x},${p.z}`),shotClassAt:code=>q.cells.find(c=>c[2]===code)[3],
+ const result=originalRangedRouteSearch({...q,terrainAt:p=>cells.get(`${p.x},${p.z}`),shotClassAt:code=>(q.cells.find(c=>c[2]===code)?.[3]??(code===20?q.excludedClass:undefined)),
   assessShot:c=>{calls.push({type:'assess',...c});return q.costs[c.shape+1]+c.flag*3;}},
   c=>{calls.push({type:'simulate',...c});return {landing:q.landings[(i++)%q.landings.length]};});
  return {result,calls};

@@ -23,6 +23,7 @@ export function originalEnteredRouteSearch(q,initialRange,nextRange,simulate) {
  const entry=originalRouteEntry(q,initialRange);
  const shotClass=q.terrainAt(entry.originTile).shotClass;
  return originalRouteSearch({...q,...entry,shotClass,originClass:shotClass,
+  originClassAt:()=>q.terrainAt(entry.originTile).shotClass,
   winner:{...q.winner,target:{...q.winner.target,x:entry.winnerTargetX},
    curve:entry.curve,cornerTarget:entry.cornerTarget}},nextRange,simulate);
 }

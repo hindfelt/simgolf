@@ -3,7 +3,8 @@ const directions=[[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];
 // Original landing score, 0x422c34–0x422d87 and 0x422e5a–0x422e99.
 // Does not include the later imaginative follow-up shot score (0x422e9d onward).
 export function originalRouteLandingScore({landing,cup,hole,skillMask,excludedClass,
- distanceDivisor,score=0,goodLandings=0,terrainAt}) {
+ distanceDivisor,score=0,goodLandings=0,terrainAt,shotClassAt}) {
+ if(typeof shotClassAt==='function')excludedClass=shotClassAt(20);
  if(!landing||![landing.x,landing.z].every(n=>Number.isInteger(n)&&n>=0&&n<51200)||
    !cup||![cup.x,cup.z].every(n=>Number.isInteger(n)&&n>=0&&n<50)||
    !Number.isInteger(hole)||hole<0||hole>31||!Number.isInteger(skillMask)||skillMask<0||skillMask>255||

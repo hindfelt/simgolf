@@ -6,7 +6,7 @@ export function originalRouteOptions(q,simulate) {
  const scores=[...q.scores],distances=[...q.distances],flags=[...q.flags];
  let work=q.work,winner=structuredClone(q.winner),searchFlag=q.searchFlag,followupFlag=q.followupFlag;
  for(let cornerTarget=0;cornerTarget<2;cornerTarget++){
-  if(cornerTarget&&q.originClass>0)continue;
+  if(cornerTarget&&(q.originClassAt?q.originClassAt():q.originClass)>0)continue;
   for(let curve=-1;curve<=1;curve++){
    const i=cornerTarget*3+curve+1;
    const gate=originalRouteOption({score:scores[i],curve,curveMask:q.shapeMask,distance:q.distance});
