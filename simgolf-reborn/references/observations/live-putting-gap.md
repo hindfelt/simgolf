@@ -2461,3 +2461,18 @@ still match shared state, actors, holes, RNG and calls, with 52 planner calls
 in that matrix. This closes event transport through the scheduler wrapper; it
 does not yet supply production sound-ID mapping or enable the recovered loop
 in the live browser game.
+
+### Browser contact/cup playback endpoint
+
+`createGameAudio.playOriginalEvents` now consumes drained playback events at
+0x447a30. The executable's 0x447aa0 initialization identifies sound IDs 0–4 as
+drive, iron, chip, putt and cup. They use the shipped replacement contact/putt/
+cup clips; other IDs remain unmapped. The original setter bodies clamp pan to
+[-64,63], mask loudness to seven bits, and clamp pitch to [-1200,1200]. Browser
+playback maps pan and proportional loudness without reprojecting or drawing RNG.
+Pitch/duration and native group-volume behavior remain unimplemented.
+
+Nine browser/audio checks pass and the production build passes. The endpoint
+obeys gesture unlock, volume, visibility and disposal. It expects the scheduler's
+drained batch once; live gameplay has not switched to the recovered scheduler,
+and speech/ambient replacements still need assets and mappings.

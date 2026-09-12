@@ -67,3 +67,25 @@ test('a played hole emits one cup contact when the live golfer holes out',async(
  for(let i=0;i<6000&&!cups.length;i++){update(g,.05);cups=t.observe(g).filter(e=>e.kind==='cup');}
  expect(cups).toHaveLength(1);expect(g.stats.holesCompleted).toBeGreaterThan(0);expect(t.observe(g)).toHaveLength(0);
 });
+
+test('browser plays supported original scheduler cues and leaves unknown speech silent',async({page})=>{
+ await page.addInitScript(()=>{window.starts=0;window.decoded=0;const Native=window.AudioContext;
+ window.AudioContext=class extends Native{
+ async decodeAudioData(data){const b=await super.decodeAudioData(data);window.decoded++;return b;}
+ createBufferSource(){const s=super.createBufferSource(),start=s.start.bind(s);s.start=(...a)=>{window.starts++;return start(...a);};return s;}
+ };});
+ await page.goto('/audio/credits.html');
+ await page.evaluate(async()=>{localStorage.removeItem('fairway-baron.effects-volume');const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);});
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(4);
+ await page.evaluate(()=>window.effects.playOriginalEvents([
+ {address:0x447a30,args:[3,100,0,0,0]},
+ {address:0x447a30,args:[4,100,0,0,0]},
+ {address:0x447a30,args:[71,100,0,0,0]},
+ {address:0x40c1f0,args:[3,100,0,0,0]},
+ ]));
+ expect(await page.evaluate(()=>window.starts)).toBe(2);
+ await page.getByRole('slider',{name:'Effects volume'}).fill('0');
+ await page.evaluate(()=>window.effects.playOriginalEvents([{address:0x447a30,args:[0,100,0,0,0]}]));
+ expect(await page.evaluate(()=>window.starts)).toBe(2);
+ await page.evaluate(()=>window.effects.dispose());
+});

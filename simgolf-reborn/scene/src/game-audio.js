@@ -28,14 +28,14 @@ export function createGameAudio(host){
  slider.addEventListener('input',()=>{volume=Number(slider.value)/100;try{localStorage.setItem(key,String(volume));}catch{}render();silence();void unlock();});
  const visibility=()=>{tracker.reset();if(document.hidden){silence();void context?.suspend().catch(()=>{});}else void unlock();};
  document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);document.addEventListener('visibilitychange',visibility);
- function play(kind,position,project){
+ function play(kind,position,project,level=1,nativePan=null){
   const buffer=buffers[kind];
   if(!buffer||context?.state!=='running'||voices.size>=(rotor?3:4)||volume===0)return;
   const p=project(position);if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.depth < -1||p.depth > 1)return;
   const distance=Math.hypot(p.x-.5,p.y-.5);if(distance>1)return;
-  const gain=context.createGain();gain.gain.value=volume*Math.max(.05,1-distance);
+  const gain=context.createGain();gain.gain.value=volume*level*(nativePan===null?Math.max(.05,1-distance):1);
   const source=context.createBufferSource();source.buffer=buffer;
-  let pan;if(context.createStereoPanner){pan=context.createStereoPanner();pan.pan.value=Math.max(-1,Math.min(1,(p.x-.5)*2));source.connect(gain).connect(pan).connect(context.destination);}else source.connect(gain).connect(context.destination);
+  let pan;if(context.createStereoPanner){pan=context.createStereoPanner();pan.pan.value=nativePan??Math.max(-1,Math.min(1,(p.x-.5)*2));source.connect(gain).connect(pan).connect(context.destination);}else source.connect(gain).connect(context.destination);
   source.onended=()=>{voices.delete(source);source.disconnect();gain.disconnect();pan?.disconnect();};voices.add(source);source.start();
  }
  function updateRotor(g,project){
@@ -54,7 +54,18 @@ export function createGameAudio(host){
   rotor.gain.gain.setTargetAtTime(level,context.currentTime,.12);
   if(rotor.pan&&p)rotor.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,(p.x-.5)*2)),context.currentTime,.12);
  }
- const api={update(g,project,{silent=false}={}){
+ const api={playOriginalEvents(events){
+  if(disposed||document.hidden||!Array.isArray(events))return;
+  // These shipped replacements cover only the verified contact/cup IDs.
+  // The scheduler has already projected and randomized the events.
+  const kinds={0:'drive',1:'drive',2:'drive',3:'putt',4:'cup'};
+  for(const event of events){
+   if(event?.address!==0x447a30||!Array.isArray(event.args)||event.args.length!==5||!event.args.every(Number.isInteger))continue;
+   const [id,loudness,pan]=event.args,kind=kinds[id];if(!kind)continue;
+   const balance=Math.max(-64,Math.min(63,pan));
+   play(kind,null,()=>({x:.5,y:.5,depth:0}),(loudness&127)/127,balance/(balance<0?64:63));
+  }
+ },update(g,project,{silent=false}={}){
   const events=tracker.observe(g);
   if(disposed||document.hidden||silent){silence();return;}
   updateRotor(g,project);
