@@ -2169,3 +2169,19 @@ three-tick real-terrain golfer-loop comparisons also pass; their planner
 outputs remain controlled, so they do not prove a full real-planner world run.
 A current-world binding for all map/social/search dependencies, animation
 cadence and live schema adoption are still required. No deployment.
+
+
+### Shared current-world map binding
+
+`originalWorldShotMap` now builds planning and physics readers from current
+packed terrain, vertex heights, flags, metadata and derived caches.
+`originalActorTerrainEffect` uses this same binding. Social/object callbacks
+can be added without replacing its authoritative terrain readers; unchecked
+out-of-map terrain data remains explicit. Phase-zero generated heights are
+still rejected pending their generator.
+
+Eleven related tests pass across the shared map/stored-height suites, including
+marks/edges, nonzero cached heights and supplied social callbacks. All 300
+three-tick native real-terrain golfer sequences retain their matches. This
+provides a common map binding for the planner dispatcher; complete social and
+search bindings, map-rebuild cadence and live schema adoption remain open.
