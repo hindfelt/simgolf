@@ -1,3 +1,4 @@
+import {createGameAudio} from "./game-audio.js";
 import {mountClubDay} from "./ui/club-day.js";
 import {drawTerrainPreview} from './ui/terrain-preview.js';
 import {playerStorage,mountAccount,signedInAccount,accountRequest} from "./account.js";
@@ -2414,6 +2415,7 @@ const opponentViews = () =>
 const remarks = golferRemarks($("#game"));
 let remarksBottom = innerHeight;
 const dailyUI = mountClubDay();
+const gameAudio = createGameAudio($("#menu"));
 let completionShown = false;
 let landscapeRevision = -1;
 let last = performance.now(),
@@ -2472,6 +2474,7 @@ function frame(now) {
   sun.intensity = 2.3 * brightness;
   ambient.intensity = dayLight.night ? 0.22 : 0.65 + brightness;
   fill.intensity = dayLight.night ? 0.08 : 0.25 + brightness * 0.15;
+  gameAudio.update(game,p=>{const v=new THREE.Vector3(p.x,height(p.x,p.z)+.5,p.z).project(camera);return {x:(v.x+1)/2,y:(1-v.y)/2,depth:v.z};},{silent:paused||!!$("dialog[open]")});
   renderer.render(scene, camera);
   remarks.update(
     [

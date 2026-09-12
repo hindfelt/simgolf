@@ -27,3 +27,11 @@ Original-file download links on these pages request Freesound login. No account 
 ## Status
 
 Source preference and shortlist recorded. Playback integration and listening review remain pending; no gameplay sounds have been added by this research change.
+
+## First playback integration — 12 September 2026
+
+The licensed Cosmic Embers golf impact is now imported from the public HQ MP3 preview and used for new full-shot contacts. Provenance, hash and licence are in `scene/public/audio/effects/README.md`; shipped credits are linked beside Effects volume in the club menu. The camera supplies stereo position/attenuation, voices are capped at four, and effects are independent of music and simulation speed. Restored active shots, reconnect gaps, putts, hidden tabs and paused/modal gameplay do not trigger contact audio. Muting stops existing voices. Audio-context permission or loading failures do not interrupt the game. Page-cache restoration retains the sound controller.
+
+Browser verification exercises actual MP3 decoding, gesture unlock, once-only playback and stored muting. Shot observation has no simulation or RNG side effects. The remaining recordings and subjective listening review are still pending; no helicopter, applause or ambience asset is shipped by this change.
+
+Verification result: 16 audio/menu/playable checks passed, followed by the added live-golfer contact check; production build passed. This does not complete the wider soundscape or listening review.
