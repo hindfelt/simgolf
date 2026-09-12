@@ -43,3 +43,18 @@ test('resumed terrain pass retains pending audio and captures new effects in ord
  expect(result.completed).toBe(true);expect(result.soundEvents.map(e=>e.args[0])).toEqual([3,4]);
  result.soundEvents[0].args[0]=99;expect(suspended).toEqual(before);
 });
+test('native tutorial effects precede aiming and remain in the resumed presentation batch',async()=>{
+ const {resumeOriginalGolferTerrainLoop}=await import('../src/simulation/original-golfer-terrain-loop.js');
+ const {resumeOriginalAimingTurn}=await import('../src/simulation/original-aiming-tutorial.js');
+ const suspended={...pending(),soundEvents:[]},messages=[];
+ const result=resumeOriginalGolferTerrainLoop(suspended,resumeOriginalAimingTurn,(event,state)=>{
+  if(event.address===0x466fb0)state.sourceText='Player'+event.args[0];
+  if(event.address===0x45e9c0)messages.push(state.sourceText);
+  return {state,...(event.address===0x447a30?{soundEvents:[event]}:{})};
+ });
+ expect(result.completed).toBe(true);expect(result.state.selectionMode).toBe(3);
+ expect(messages).toEqual(['Player3 vs...','Player2']);
+ expect(result.soundEvents).toEqual([{address:0x447a30,args:[42,100,0,0,0]}]);
+ expect(result.calls.map(e=>e.address)).toEqual([123,0x447a30,0x466fb0,0x45e9c0,0x466fb0,0x45e9c0,0x4803e0,0x45b990]);
+ expect(suspended.state.selectionMode).toBeUndefined();
+});

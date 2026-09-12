@@ -2510,3 +2510,18 @@ native scheduler sequences still match actors, holes, shared state, calls and
 RNG (55 walking entries, 52 planner calls, 32 position changes). That native
 matrix contains completed passes; resumed tutorial behavior is locally composed
 verification, not a new native tutorial oracle. Live engine adoption remains open.
+
+### Recovered first-hole aiming tutorial boundary
+
+Implemented 0x42b647–0x42b6f8: cue 42, paired/player name expansion,
+profile-indexed presentation calls, and the two closing UI helpers. The
+resumption adapter now executes that sequence before entering preparation at
+0x42b6f8; it does not replay the actor prefix. Name and UI helper bodies remain
+explicit speculative dependencies. Cue 42 remains unmapped in browser audio.
+
+A new private-executable verifier matches all 152 actor slots, including signed
+profile values, event arguments/order, message text and final source buffer.
+The oracle runs the actual boundary with controlled name/presentation helper
+stubs; it does not prove those UI helper bodies. Eleven local preparation and
+resumption checks pass, including the composed tutorial/audio queue. Production
+browser presentation and live recovered-world adoption remain unfinished.
