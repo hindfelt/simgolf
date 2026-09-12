@@ -1216,3 +1216,20 @@ outputs remain controlled. This is not verification of the terrain slope helper
 or full walking. The module is not yet composed with route setup; remaining
 congestion, pathfinder, stepping, service arrivals and live integration remain
 unfinished.
+
+### Congestion delays and composed near behavior
+
+`original-walking-congestion.js` recovers 0x42ad32/0x42ad3b–0x42adac:
+flag 0x1000 entry, randomized wait, easy-difficulty extra RNG/flag, animation
+and signed unhappy-value/class departure gate. 1,600 native cases match actor
+bytes, RNG and branches (323 departure entries). Departure text, record updates
+and partner removal after 0x42adac remain open.
+
+`original-walking-near-behavior.js` composes near steering, avoidance and
+congestion. 700 continuous native runs from 0x42a71c match full actor records,
+scan/count/movement locals, RNG, effects and exits: 661 step continuations and
+39 unhappy-departure entries. Real direction/distance/RNG execute; reaction and
+identity effects are controlled. Fixtures use one near-target vector with
+varied crowd/actor state; separate steering tests cover other vectors. Actual
+walking steps at 0x42af66, far pathfinding, service arrival bodies, departure
+completion and live integration remain unfinished.
