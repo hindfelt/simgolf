@@ -25,7 +25,7 @@ def hook(u,a,size,data):
 for a in [0x4acb95,0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[1,61,59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(640 if kind==59 else 384):
   id=i%16;record=[0]*256;
@@ -39,6 +39,9 @@ for kind in kinds:
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
+  if kind==1:
+   record[0xb6:0xb8]=[i%4,0];record[0xae]=(i//4)%2;record[0xa2:0xa4]=list(struct.pack('<h',id^1));other=[0]*256;otherProfile=(i//8)%8;other[0xb6]=otherProfile;q['state']['actors'][str(id^1)]=other;u.mem_write(0x577f08+(id^1)*256,bytes(other));pr=[0]*560;pr[0x21]=i%256;q['profileRecords']={str(otherProfile):pr};u.mem_write(0x4d5040+otherProfile*560,bytes(pr))
+  if kind==61:q['value']=value=[-2147483648,-1,0,2,3,4,5,6,7,8,2147483647][(i//2)%11]
   if kind==59:
    h=i%18;q['holeIndex']=h;q['mutateProfile']=i>=384;profile=i%8;history=[0]*44;history[h]=(i//72)%2;history[19+h]=i%256;q['profileHistory']={str(profile):history};u.mem_write(0x583433+44*profile,bytes(history));records={str(h):[0]*520,str(h+1):[0]*520};records[str(h)][8]=[3,4,5][(i//9)%3];records[str(h+1)][0]=(i//18)%4;q['holeRecords']=records
    for j,r in records.items():u.mem_write(0x5744f8+int(j)*520,bytes(r))

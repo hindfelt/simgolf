@@ -16,6 +16,12 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===1){const a=actor(q);
+  if(a[0xae]&1){append(0x4d2914);const partner=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xa2,true),other=actor({...q,actorId:partner,state});const odd=other[0xb6]&1;events.push({address:0x46c140,args:[partner]});const voice=originalProfileVoice({...q,actorId:partner,state});append(odd?(voice?0x4e2838:0x4e2850):(voice?0x4e2800:0x4e2820));state.redirected=true;}
+  else{const v=a[0xb6]&3;if(v===3)append(0x4e27ec);else if(v===1)append(0x4e27d8);else if(v===0&&q.actorId!==-1){append(0x4e27bc);append(0x4e27b0);}else append(0x4e2794);}
+  state.remarkStyle=0x800023e8;
+ }
+ else if(kind===61){const v=q.value|0;const pair={3:[0x4e23f0,0x4e23f8],4:[0x4e23b4,0x4e23d8],5:[0x4e2384,0x4e2390],6:[0x4e235c,0x4e233c],7:[0x4e2310,0x4e2324]}[v]||[0x4e22e8,0x4e22f8];append(pair[q.actorId&1]);}
  else if(kind===59){
   const a=actor(q),profile=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xb6,true),h=q.holeIndex;
   if(!Number.isInteger(h)||h<0||19+h>=44)throw Error('Original history hole index is unavailable.');

@@ -23,7 +23,7 @@ test('selected standard location phrase expands through the actual landmark desc
  expect(result.state.sourceText).toBe(selected.state.sourceText.replace('DATA','lighthouse'));expect(result.state.sourceText).not.toContain('DATA');expect(result.state.remarkStyle).toBe(0x80007d08);
 });
 test('unrecovered standard cases cannot masquerade as successful generic remarks',()=>{
- expect(()=>originalStandardPhrase({kind:1,state:{sourceText:''}})).toThrow('case 1 is not reconstructed');
+ expect(()=>originalStandardPhrase({kind:19,state:{sourceText:''}})).toThrow('case 19 is not reconstructed');
 });
 
 test('direct standard helpers resolve actual actor names and landmark records',()=>{
