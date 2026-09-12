@@ -1350,3 +1350,23 @@ disabled. This is complete-search coverage for these fixtures, not evidence
 for every possible memory state or live gameplay adoption. The longer-walk
 caller still needs connection and continuous verification; service arrivals,
 departures and authoritative actor persistence remain open.
+
+### Far-walk caller with actual pathfinding
+
+`original-walking-pathfinder-route.js` replaces the caller's controlled search
+response with the recovered pathfinder, while retaining explicit reaction
+resolution. Caller coordinates are preserved rather than replaced by the
+search's tile locals. Debug rendering still requires its own continuation.
+
+160 uninterrupted native caller cases match actor bytes, RNG, ordered calls,
+world flags, visited costs and exits: 121 actual searches and five bridge
+reactions. Native search and RNG execute; the reaction body is a controlled
+mutation. The original 1,400-case caller matrix and 160-case full-search
+matrix also pass. These checks stop before route reactions and subsequent
+movement, and do not establish live integration.
+
+During composition verification, the fixture's metadata writes were found to
+overlap actor storage for unused high indices. Both search verifiers now write
+only the 23 terrain metadata entries their fixtures actually reference. The
+corrected complete-search matrix still passes. This was a fixture correction,
+not a change to native gameplay semantics.

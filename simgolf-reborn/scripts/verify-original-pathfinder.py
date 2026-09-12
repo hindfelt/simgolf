@@ -10,7 +10,7 @@ def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
 def get(a):return struct.unpack('<I',u.mem_read(a,4))[0]
 def hook(u,a,size,data):
  if a==0x400fff:u.emu_stop()
-u.hook_add(UC_HOOK_CODE,hook);rng=random.Random(42327);rows=[]
+u.hook_add(UC_HOOK_CODE,hook,begin=0x400fff,end=0x400fff);rng=random.Random(42327);rows=[]
 for n in range(160):
  terrain=bytearray(rng.choices([0,1,2,7,17,20,22],k=2500));costs=[rng.choice([1,2,3,5,8,20,100]) for _ in range(2500)];flags=[rng.choice([0,0,32,32,0x420]) for _ in range(2500)];metadata=bytearray(rng.choices([0,7],k=128))
  if n%8==0:costs=[1]*2500;flags=[32]*2500
@@ -20,7 +20,7 @@ for n in range(160):
  q=dict(actorId=0,origin=dict(x=x,z=z),destination=dest,worldFlags=rng.choice([0,256]),abortSearch=int(n%17==0))
  u.mem_write(0x570d38,bytes(terrain));u.mem_write(0x53aabc,struct.pack('<2500b',*costs));u.mem_write(0x53ba00,struct.pack('<2500H',*flags));u.mem_write(0x577f00,b''.join(actors));put(0x59d208,q['worldFlags']);put(0x838684,q['abortSearch'])
  u.mem_write(0x5a5e4c,bytes(2048));u.mem_write(0x5a6a70,bytes(2048))
- for i,c in enumerate(metadata):u.mem_write(0x576dc6+i*48,bytes([c]))
+ for i,c in enumerate(metadata[:23]):u.mem_write(0x576dc6+i*48,bytes([c]))
  for i,v in enumerate([0x400fff,dest['x'],dest['z'],x,z,0]):put(0x102000+i*4,v)
  u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_start(0x42def0,0x400fff,count=10000000)
  assert u.reg_read(UC_X86_REG_EIP)==0x400fff,'native search did not return'
