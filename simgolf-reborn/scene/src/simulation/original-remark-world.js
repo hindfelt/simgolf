@@ -26,3 +26,22 @@ export function originalApplyRemarkWorld(world,snapshot,reaction){
  result.seed=s.seed;result.worldDirty=s.worldDirty;result.tileFlags[tileIndex]=s.tileFlags;result.tileGrowth[tileIndex]=s.tileGrowth;result.positive[tileIndex]=s.positive;result.negative[tileIndex]=s.negative;
  return result;
 }
+
+// Commit the complete routine, using the final popup seed rather than the
+// intermediate outcome seed. Only outcome execution writes tile/hole counters.
+// snapshot must be the actual outcome-boundary snapshot, not the entry snapshot.
+export function originalApplyCompleteRemarkWorld(world,snapshot,remark){
+ let result;
+ if(remark.reaction?.next==='continue'){
+  if(!snapshot||snapshot.kind!==remark.kind)throw Error('Original completed remark outcome snapshot is unavailable.');
+  result=originalApplyRemarkWorld(world,snapshot,remark.reaction);
+ }else result=structuredClone(world);
+ const s=remark.state;
+ // These fields belong to dispatch/explanation. Do not copy scalar reaction
+ // counters onto the world's typed map arrays or stale whole-map snapshots.
+ for(const key of ['actors','sourceText','remarkStyle','redirected','priority','displayText','requestValues','resourceCacheIndex','resourceCache','seed','originalClock','lastExplanationClock','explanationMaskLow','explanationMaskHigh','interfaceFlags','popupActive','popupPending','popupMode','popupText','popupStyle','popupActor','popupLifetime','popupDuration','popupX','popupY']){
+  if(Object.hasOwn(s,key))result[key]=structuredClone(s[key]);
+ }
+ if(remark.reaction&&Object.hasOwn(remark.reaction.state,'worldDirty'))result.worldDirty=remark.reaction.state.worldDirty;
+ return result;
+}

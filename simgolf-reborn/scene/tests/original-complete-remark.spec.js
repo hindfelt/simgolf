@@ -35,3 +35,8 @@ test('explanation snapshot is mandatory and synchronous after a continuing react
  expect(()=>originalCompleteRemark(input(),{...options,explanationContext:undefined})).toThrow('world snapshot is unavailable');
  expect(()=>originalCompleteRemark(input(),{...options,explanationContext:async()=>({})})).toThrow('synchronous');
 });
+test('reaction early return retains randomness consumed by speech',()=>{
+ const q=input();q.kind=65;q.requestCodes=[65,-1];
+ const result=originalCompleteRemark(q,{...options,reactionContext:()=>({...context(),difficulty:0}),resolveEffect:(e,s)=>({state:{...s,seed:999},result:0}),explanationContext:()=>{throw Error('Must not read explanation state');}});
+ expect(result.next).toBe('return');expect(result.explanation).toBeNull();expect(result.reaction.randomDraws).toBe(0);expect(result.state.seed).toBe(999);
+});
