@@ -1329,3 +1329,24 @@ edges, visited costs (including 0 and 255), terrain, bridge flags, preferred
 masks and sub-tile positions. The native map helper executes without a stub.
 These supplied wavefront fixtures do not verify wavefront generation, complete
 pathfinding or live walking. Those integrations remain unfinished.
+
+### Original wavefront generation through route selection
+
+`original-pathfinder.js` recovers setup and wavefront expansion from
+0x42def0 through 0x42e25a and connects the recovered direction selector.
+It preserves clamped original coordinates, XOR-one partner avoidance,
+heading-derived preference masks, signed traversal costs, path discounts,
+terrain metadata modifiers, water costs, dynamic origin cost limits and the
+1024-slot ring queues. Debug-display mode remains an explicit continuation
+at 0x42e25a; its display effects are not implemented here.
+
+160 uninterrupted native searches match returned direction, world flags,
+all 2,500 visited-cost bytes and both complete queue arrays. Fixtures include
+mixed terrain/path flags, short and long routes, clamped out-of-map endpoints,
+same-tile returns, abort requests, hole 19 and alternate world mode. Native
+heading, octant and map helpers run without stubs. Traversal costs in this
+matrix are positive, metadata codes are nonnegative, and debug display is
+disabled. This is complete-search coverage for these fixtures, not evidence
+for every possible memory state or live gameplay adoption. The longer-walk
+caller still needs connection and continuous verification; service arrivals,
+departures and authoritative actor persistence remain open.
