@@ -1,5 +1,6 @@
 import {safeDestination} from './auth-destination.js';
 import './login.css';
+import './brand-login.css';
 const status=document.querySelector('#status'),emailForm=document.querySelector('#email-form'),codeForm=document.querySelector('#code-form');
 const destination=safeDestination(new URLSearchParams(location.search).get('returnTo'));
 let codeId;

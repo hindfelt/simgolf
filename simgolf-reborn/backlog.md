@@ -1,5 +1,9 @@
 # Build backlog
 
+## Fairway Baron naming and start screen — 12 September 2026
+
+The owner renamed the game **Fairway Baron** and selected a supplied illustrated isometric resort reference (“Like this”). See [the selected direction](graphics/fairway-baron-brand/selected-direction.md): bold gold-and-green lettering, playful golfers, an emerald/gold frame and “Build Your Golfing Empire!” tagline. The [ten earlier concepts](graphics/fairway-baron-brand/index.html) remain exploration history. Next: refine standalone logo assets, responsive splash artwork and the real accessible start menu, then apply the approved name throughout user-facing screens and documentation. This reference selection does not change deployed branding, domains, account identifiers or save keys.
+
 ## Updated owner requirements — accounts and multiplayer, 11 September 2026
 
 The owner now explicitly requests multiplayer implementation, user registration and administration. This expands the earlier requirement to prepare the architecture for later multiplayer; multiplayer is no longer only an optional future idea.
@@ -1471,3 +1475,7 @@ Ruleset 79 full ten-minute earnings soak passed with two authenticated browser a
 Tropical island environment requested: Tonga-inspired lagoon, palms, coral beaches/rocky coastline and Māori-inspired timber/thatched buildings. Initial built-in image-engine concept saved as graphics/samples/tropical-polynesian-concept-v1.png with prompt beside it. Awaiting visual approval before turning this art direction into playable environment assets and course generation; not yet implemented.
 
 Broad ruleset-79 live regression passes: 456 tests across 119 non-original-prefixed test files, 4.9 minutes. Covers browser construction, rounds/saves, facilities, transport, staff, stories and phone controls. Evidence: references/release/ruleset-79-live-regression.md. This is tested current behavior, not complete original-game fidelity or production approval. Tropical concept remains awaiting visual approval.
+
+## Fairway Baron opening flow — 12 September 2026
+
+The selected owner illustration now guides the local sign-in, loading splash and hosted-home start menu. Continue, New Game, Multiplayer and Club & saves reach existing functional flows; shared-course, tournament, practice and testing links retain direct entry. Gameplay does not initialize behind the start menu. New-game backups and startup retry have browser coverage. Account storage keys and deployed domain remain unchanged. This work does not close original-game fidelity, career progression, external provider activation or hosting release gates.
