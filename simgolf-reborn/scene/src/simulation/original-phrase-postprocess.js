@@ -20,8 +20,8 @@ export function originalPhrasePostprocess(q,expandName,describeLocation){
  }else if(kind===39)state.sourceText+=ctext(q.labels[value]);
  else{
   const term=q.terms[value];if(!term)throw Error('Original terrain description is unavailable.');
-  if(kind===2||kind===3)state.sourceText+=(term.type===13?'under the ':'in the ')+ctext(term.name);
-  else state.sourceText+=ctext(kind!==12&&term.type===13?term.alternate:term.name);
+  if(kind===2||kind===3)state.sourceText+=((term.type&255)===13?'under the ':'in the ')+ctext(term.name);
+  else state.sourceText+=ctext(kind!==12&&(term.type&255)===13?term.alternate:term.name);
  }
  if(q.actorId>152)state.sourceText+=')';const data=ctext(state.sourceText);
  state.sourceText=replaceFirst(replaceFirst(replaceFirst(source,'MYNAME',names[0]),'PARTNER',names[1]),'DATA',data);
