@@ -788,3 +788,18 @@ ground centre checks now use it; invalid cup cells bypass capture as native.
 masks; the 2,000 rolling-to-cup comparisons still pass. Populating adjacent
 storage in the full world adapter and broader integration remain open. This
 change supplies storage semantics, not a completed live map conversion.
+
+### Actor motion context from map state
+
+`original-actor-motion-context.js` captures the pre-movement tile, terrain,
+flags and coefficients from one original actor/map snapshot and resets the
+per-step centre flag. It requires complete original metadata and derived edge
+masks; missing coefficients or out-of-map actors are rejected instead of
+receiving invented defaults. Three focused tests pass, including feeding the
+context into the composed movement routine. This helper is a wiring step,
+not a native parity claim for the outer actor loop or world conversion.
+
+The saved original-world format names metadata byte 2 `shotClass`, while
+actor accounting uses `scatterCoefficient`; an explicit full-world adapter
+must unify these and keep mutations consistent. Mixed-terrain full actor
+trajectories and live integration remain unfinished.
