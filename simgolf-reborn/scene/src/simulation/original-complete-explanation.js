@@ -1,3 +1,4 @@
+import {originalExplanationPopup} from './original-explanation-popup.js';
 import {originalActorName} from './original-actor-name.js';
 import {originalLocationDescription} from './original-location-description.js';
 import {originalRemarkExplanationGate,originalRemarkExplanationDisplay} from './original-remark-explanation.js';
@@ -28,4 +29,14 @@ export function originalDescribedCompleteExplanation(q,names,locationContext,rea
   const description=originalLocationDescription({...context,c,r,type,state},context.map);locationEvents.push(...description.events);return description.state;
  },readResource,showPopup);
  return {...result,locationEvents};
+}
+
+export function originalPopupCompleteExplanation(q,resolve,readResource){
+ let popupRandomDraws=0;
+ const result=originalCompleteExplanation(q,resolve,readResource,(event,state)=>{
+  const [style,priority,actorId]=event.args;
+  const popup=originalExplanationPopup({style,priority,actorId,difficulty:q.difficulty,state});
+  popupRandomDraws+=popup.randomDraws;return popup;
+ });
+ return {...result,popupRandomDraws};
 }

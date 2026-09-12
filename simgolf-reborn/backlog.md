@@ -1407,3 +1407,5 @@ Explanatory-message completion now matches3168 original executions: style, enabl
 All original explanatory suffix branches now match2144 native executions, including wording, pronouns, terrain/object names and clear-text cases.8 related tests pass. Quotation/name prefix, full helper/popup composition and live integration remain unfinished.
 
 Complete explanation flow now combines gates, quoted phrase/name, explanatory wording and popup completion.1560 native personal-phrase comparisons and10 related tests pass; actual name/location wrappers are available. Standard-phrase/full-helper native coverage, popup implementation, reaction-to-explanation composition and live wiring remain unfinished.
+
+Original popup helper now matches2880 native executions with actual RNG;7 related tests pass. Complete explanations can use its real acceptance/state rules, preserving retry eligibility and two-draw RNG consumption. Full native popup composition, reaction state transfer and live UI/gameplay integration remain unfinished.
