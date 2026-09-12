@@ -543,3 +543,20 @@ Four focused checks pass, including actual recovered ground capture, sound coord
 `original-actor-position-step.js` recovers 0x42bdc3–0x42beb0 with explicit height and visual effects. It samples prior terrain height, advances position using the recovered original trig table, applies the near-apex visual before gravity, and applies the phase-modulo-eight visual afterward. Callback-modified velocity/phase are re-read while step deltas retain their native local values. Offscreen motion omits visual effects but retains gravity.
 
 Verification matches 1,500 continuous native executions and 2,677 ordered height/visual effects using native trig and controlled effect mutations. Three focused checks pass. This is the actor-state alternative to the pure motion helper's deferred effects; it is not yet joined through all later contact/bounce/scatter branches or applied to the live simulation.
+
+### Ordered airborne actor effects (2026-09-12)
+
+`original-actor-air-phase.js` wraps the recovered airborne physics at
+0x42bf91–0x42c135, continuing to 0x42c527. Terrain sampling precedes drag
+and deflection; impact audio sees the updated ball before collision flag 2
+is applied. The reaction check rereads actor flags after audio, and the final
+flag update preserves reaction callback changes. Original luck is an explicit
+snapshot input (the executable reads beyond the 256-byte actor block).
+
+`verify-original-actor-air-phase.py` compares 3,000 executable cases, all 256
+actor bytes, RNG state/draw count, and 3,129 ordered effects (72 collisions).
+Controlled sound callbacks alter speed or suppress the reaction; reaction
+callbacks alter flags. Three focused tests also pass. This bounded adapter
+is not connected to the live simulation. Ordered ground/bounce effects and
+the full actor-motion integration remain unfinished; live putting remains
+the previously documented approximation.
