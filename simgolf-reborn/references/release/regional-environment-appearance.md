@@ -83,3 +83,13 @@ Tropical uses timber/thatch styling; Links uses stone/slate. The shared course
 factory applies these to placement previews and built shops. Two rendering
 checks and the production build pass; all three variants were visually reviewed.
 Service and placement rules are unchanged. Local, not deployed.
+
+## Placed-building cache invalidation
+
+Placed facilities were cached by identity/type alone. Their render signature now
+includes environment, tile position and rotation; obsolete groups are disposed
+and replaced. Environment changes trigger rebuilding even if the numeric course
+revision is unchanged. Rebuilds refresh facility elevation from the landscape.
+Seven checks pass, including real placed-shop environment/rotation replacement,
+no duplicate groups, hotel connection lighting and regional previews. Production
+build passed. This is local work awaiting publication.

@@ -100,7 +100,7 @@ export function buildCourseView(scene) {
   weedHeads.count = weedLeaves.count = 0;
   scene.add(weedHeads, weedLeaves);
   const dummy = new THREE.Object3D();
-  let revision = -1,
+  let renderedEnvironment, revision = -1,
     weedRevision = -1;
   const flag = new THREE.Group();
   scene.add(flag);
@@ -372,7 +372,7 @@ export function buildCourseView(scene) {
     for (const [id, group] of facilityMap)
       if (
         !g.facilities.some(
-          (f) => f.id === id && f.type === group.userData.facilityType,
+          (f) => f.id === id && facilityAppearance(f,g.environment) === group.userData.facilityAppearance,
         )
       ) {
         disposeGroup(group);
@@ -445,11 +445,14 @@ export function buildCourseView(scene) {
       if(!group){
         group=makeFacility(f,g.environment);
         group.userData.facilityType=f.type;
+        group.userData.facilityAppearance=facilityAppearance(f,g.environment);
         facilityMap.set(f.id,group);
       }
+      group.position.y=height(group.position.x,group.position.z);
       facilityLighting(group,FACILITIES[f.type]?.scenery ? 'scenery' : connected(g,f) ? 'connected' : 'disconnected');
     }
   }
+  function facilityAppearance(f,environment){return `${f.type}:${f.c}:${f.r}:${f.rotation||0}:${environment||""}`;}
   function makeFacility(f,environment=null) {
     const p = center(f.c, f.r);
     let group;
@@ -596,8 +599,8 @@ export function buildCourseView(scene) {
     update(g, time, opponents = []) {
       hazards.update(g);
       trees.update(g);
-      if (revision !== g.revision) {
-        revision = g.revision;
+      if (revision !== g.revision || renderedEnvironment !== g.environment) {
+        revision = g.revision;renderedEnvironment=g.environment;
         rebuild(coastalPreview(g));
       }
       if (weedRevision !== g.weedRevision) {
