@@ -3181,3 +3181,9 @@ Inspection of0x46806a onward corrects the earlier provisional “downstream soci
 `originalExplanationPopup` reconstructs full0x40c7f0–0x40c8e6. Active/pending popups reject nonpositive priorities; mode3 always rejects. Acceptance copies the C-string, resets pending state, stores style/actor, sets the length/difficulty-derived lifetime, and updates duration only for negative priority. Two actual original RNG draws set the popup position fields and advance the shared seed; rejection consumes none. Signed minimum-priority negation retains native32-bit wrapping.
 
 2880 native comparisons match with the actual original RNG helper and no intercepted calls. Seven related tests pass. `originalPopupCompleteExplanation` connects this helper to complete explanation processing and seen-mask/cooldown updates, counting popup RNG draws. Its continuous native composition, broader standard-phrase coverage, reaction-to-explanation state transfer and live UI rendering/integration remain unfinished.
+
+### Native explanation composition with actual popup and actor naming (2026-09-12)
+
+`verify-original-popup-explanation.py` executes0x46806a–0x469075 continuously with the actual0x466fb0 name routine,0x40c7f0 popup helper and original RNG.3120 comparisons match all returned text, phase events, popup fields, masks, cooldown and RNG state. All65 kinds are represented using personal phrase overrides, varied enabled/active/pending/mode states and selected deltas. Only location and string-search calls remain controlled boundaries in this matrix.
+
+Six related tests pass, explicitly including accepted popups and attempted-but-rejected displays with no RNG/cooldown consumption. Native standard-phrase explanation coverage, reaction→explanation state transfer, remaining audio composition and live integration remain open. No production change is claimed by this verification.
