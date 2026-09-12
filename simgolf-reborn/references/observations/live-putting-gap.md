@@ -2217,3 +2217,20 @@ readers alongside terrain/profile/hole data.
 including object references, counters and RNG. Six related tests pass. Native
 map and object-table contents in these matrices are controlled fixtures; this
 does not yet prove whole-world live bindings or automatic reaction effects.
+
+
+### Packed record bindings through uninterrupted direct planning
+
+`verify-original-packed-primary-reaction.py` matches 3,000 native primary
+reaction stages using packed hole counters. `verify-original-packed-shot-reactions.py`
+matches 2,000 native follow-up reaction stages using packed completion/profile
+records. Callback mutations and ordered requests retain the existing coverage.
+
+`packedMiddleMap` packs the controlled native fixture's object, footprint,
+hole and profile data and uses `originalPlannerWorldRecords` for its reads.
+`verify-original-packed-launch-middle.py` passes 240 uninterrupted middle-stage
+cases and another 240 with `--from-entry`, covering direct planner entry through
+launch, complete state, events, cache and RNG. This closes record-binding
+composition under these fixtures. Terrain/height and reaction bodies remain
+controlled; long physical search and actual live-world state still need their
+complete binding and adoption. No deployed behavior changes.
