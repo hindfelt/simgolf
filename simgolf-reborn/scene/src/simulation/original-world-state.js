@@ -23,7 +23,7 @@ function validate(world) {
  const cache=world.strengthCache;
  if(!cache||!Number.isInteger(cache.next)||cache.next<0||cache.next>=10||!Array.isArray(cache.entries)||cache.entries.length!==10||
   !cache.entries.every(e=>e&&[e.distance,e.verticalSpeed,e.speed].every(int)))throw Error('Invalid original strength cache.');
- if(!Array.isArray(world.shots)||world.shots.length>160)throw Error('Invalid original active shots.');
+ if(!Array.isArray(world.shots)||world.shots.length>152)throw Error('Invalid original active shots.');
  const ids=new Set();
  for(const shot of world.shots) {
   if(!shot||typeof shot.id!=='string'||!shot.id.length||shot.id.length>80||ids.has(shot.id))throw Error('Invalid or duplicate shot identity.');ids.add(shot.id);

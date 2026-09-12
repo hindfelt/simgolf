@@ -22,3 +22,12 @@ test('malformed original maps cannot silently wrap terrain or truncate height ar
  const w=fresh();w.terrain[0]=256;expect(()=>serializeOriginalWorld(w)).toThrow(/terrain/);
  w.terrain[0]=1;w.heights.pop();expect(()=>serializeOriginalWorld(w)).toThrow(/heights/);
 });
+
+test('saved worlds cannot exceed the original 152 actor slots',()=>{
+ const w=fresh();
+ const shot={ball:{x:20992,z:20992,height:0,speed:100,verticalSpeed:0,heading:0,angularOffset:0,seed:17},originTerrainCode:1,
+  club:13,eventFlag:false,centreFlag:0,stateFlags:0,skillEnabled:false,skillMask:0,luck:0,targetTile:{x:20,z:20},variant:0};
+ w.shots=Array.from({length:152},(_,i)=>({...shot,id:`golfer-${i}`}));
+ expect(restoreOriginalWorld(serializeOriginalWorld(w)).shots).toHaveLength(152);
+ w.shots.push({...shot,id:'overflow'});expect(()=>serializeOriginalWorld(w)).toThrow(/active shots/);
+});
