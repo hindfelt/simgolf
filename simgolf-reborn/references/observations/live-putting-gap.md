@@ -1578,3 +1578,16 @@ and 272 position changes. All 500 reach skip. Name/formatting, reaction,
 notice/audio and cleanup bodies remain controlled. This verifies the covered
 walking flow, not earlier actor entry, actual effects, multi-tick persistence,
 shot scheduling or live adoption; those remain unfinished.
+
+### Initial walking state and complaint gate
+
+`original-walking-entry.js` recovers 0x428ad1–0x428b38, carrying the
+entry accumulator into queue/follow locals, resetting service index and
+applying the world/class mood floor before the new-complaint gate.
+The accumulator is explicit; its preceding caller provenance is not assumed.
+
+1,600 native cases match actor bytes, walking locals and branch exits,
+including signed threshold boundaries: 49 new-complaint entries and 1,551
+continuations at 0x428f64. No native helpers are stubbed in this slice.
+New-complaint text/outcome, complete entry composition and live actor
+scheduling remain unfinished.
