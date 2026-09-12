@@ -1876,3 +1876,24 @@ scheduler-shaped events with the automatic-target sentinel and controlled
 reaction effects. This proves the effect interface for those cases, not the
 complete actor-loop-to-planner native chain, manual targeting, real reactions,
 scratch provenance or live-game adoption. Those remain open.
+
+
+### Continuous shot preparation through the real automatic planner
+
+`originalPlannedShotPreparation` composes native shot preparation with the
+recovered planner effect, then completes facing, stance and phase writes after
+its return. The actual event emitted by shot preparation supplies planner
+arguments. Map/search/reaction dependencies remain caller-owned.
+
+`verify-original-prepared-planner.py` starts the executable at 0x42b55c,
+executes the actual nested planner, returns through 0x42b758 and stops at
+0x4295ef. Six scenarios match complete actor/adjacent records, hole records
+and shared planner/search state against the packaged JS composition. The
+caller supplies curve zero, as the native shot-preparation call does; terrain
+is code 2 at the origin in these cases. The final packaged version was rerun
+successfully after the initial direct composition passed.
+
+This closes the covered shot-preparation/planner boundary. Earlier actor
+selection and later swing/motion are not included in this uninterrupted
+comparison. Putt accounting, manual targeting, real reaction effects, search
+scratch provenance and live adoption remain open at this integration scope.

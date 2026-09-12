@@ -1,3 +1,4 @@
+import {originalShotPreparation} from './original-shot-preparation.js';
 import {originalPlannerInput} from './original-planner-input.js';
 import {originalAutomaticPlanner} from './original-automatic-planner.js';
 import {applyOriginalPlannerResult} from './original-planner-result.js';
@@ -11,4 +12,14 @@ export function originalPlannerEffect(event,snapshot,context,dependencies,effect
  Object.assign(input.planning,{plannerArgument:args[2],explicitTarget:!!args[1],targetZ:args[3],curve:args[4]});
  const planner=originalAutomaticPlanner(input,dependencies,effects);
  return {state:applyOriginalPlannerResult(snapshot,planner),planner};
+}
+
+// Continuous shot preparation, including the post-planner facing/stance writes.
+export function originalPlannedShotPreparation(snapshot,context,dependencies,effects){
+ let planner;
+ const prepared=originalShotPreparation(snapshot,(event,state)=>{
+  const reply=originalPlannerEffect(event,state,context,dependencies,effects);
+  planner=reply.planner;return reply;
+ });
+ return {...prepared,planner};
 }
