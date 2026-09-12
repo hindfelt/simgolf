@@ -2476,3 +2476,19 @@ Nine browser/audio checks pass and the production build passes. The endpoint
 obeys gesture unlock, volume, visibility and disposal. It expects the scheduler's
 drained batch once; live gameplay has not switched to the recovered scheduler,
 and speech/ambient replacements still need assets and mappings.
+
+### Composed golfer/world update
+
+Added `originalWorldGolferUpdate`, composing the packed golfer terrain loop with
+its recovered world-call boundary. Completed golfer state reaches later world
+systems before phase advancement. An unresolved golfer continuation throws,
+rather than being mistaken for a completed pass. Callback execution remains
+synchronous/speculative: only a successful returned result may be published.
+Sound events are returned separately, in order, and copied from external replies.
+Remaining world-system resolvers are explicit; this does not supply those bodies
+or enable the recovered engine in production gameplay.
+
+Five composition checks pass, including an actual active-ball movement against
+restored terrain, packed waiting-actor RNG carry-through, pause behavior and
+failure/source isolation. The eight existing boundary checks also pass. These
+are composed local checks, not a new uninterrupted native world-tick oracle.
