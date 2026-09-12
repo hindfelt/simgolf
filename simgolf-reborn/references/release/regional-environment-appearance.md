@@ -78,7 +78,7 @@ production build passes. Local only, with further regional facilities open.
 ## Regional pro shops
 
 The pro shop now has its own model with a recessed entrance, glazed displays,
-porch, golf-ball emblem and club rack instead of the generic service counter.
+porch, golf-ball emblem and club rack in place of its previous shared regional design.
 Tropical uses timber/thatch styling; Links uses stone/slate. The shared course
 factory applies these to placement previews and built shops. Two rendering
 checks and the production build pass; all three variants were visually reviewed.
@@ -111,3 +111,13 @@ refresh now preserves each model's ground offset, including the airstrip's 0.35
 raised base. Eighteen regional/transport/aircraft checks and one targeted raised-
 base regression passed, as did the production build. Marina variants were
 visually reviewed. Local only; further regional architecture remains open.
+
+## Recreation and service architecture
+
+Cart garages, swim-club changing pavilions and driving-range shelters now receive
+the regional environment. Tropical uses pale timber/thatch colors and Links
+uses stone/slate colors; swim pavilions also gain pitched roofs. The duplicate
+pro-shop implementation in training facilities now delegates to the regional
+shop model. Twenty-six regional, cart, parking, swimming and training checks
+pass; the production build passes. Garage and swim variants were visually
+reviewed. Service behavior remains unchanged. Not deployed.

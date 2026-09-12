@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { height } from "../landscape.js";
-export function swimClub(scene, x, z) {
+export function swimClub(scene, x, z, environment=null) {
+  const tropical=environment==='tropical',links=environment==='links';
   const group = new THREE.Group();
   group.name = "swim-club";
   group.position.set(x, height(x, z), z);
@@ -22,8 +23,11 @@ export function swimClub(scene, x, z) {
   for (let n = 0; n < 7; n++)
     box(5.8, 0.008, 0.035, 0x9dd5c8, -1.4, 0.47, -2.5 + n);
   // Small changing pavilion at the rear, terracotta roof and a shaded veranda.
-  box(8.2, 1.9, 2.4, 0xe9d9ad, 0, 1.2, -5);
-  box(8.8, 0.18, 3.2, 0xa56444, 0, 2.22, -4.8);
+  box(8.2, 1.9, 2.4, tropical?0xbc965d:links?0xbab8a7:0xe9d9ad, 0, 1.2, -5);
+  if(tropical||links){
+    const roof=new THREE.CylinderGeometry(0,6.22,1.2,4);roof.rotateY(Math.PI/4);roof.scale(1,1,3.2/8.8);
+    add(roof,tropical?0xd2b87b:0x5c6a69,0,2.8,-4.8);
+  }else box(8.8, 0.18, 3.2, 0xa56444, 0, 2.22, -4.8);
   for (const x of [-3.4, 0, 3.4]) box(0.12, 1.8, 0.12, 0x736448, x, 1.2, -3.5);
   for (const x of [-2.7, 0, 2.7]) {
     box(0.8, 1.4, 0.035, 0x526e62, x, 1.05, -3.78);
@@ -42,7 +46,7 @@ export function swimClub(scene, x, z) {
       1.5,
       z,
     );
-    add(new THREE.ConeGeometry(1.35, 0.6, 8), 0xc47c55, 3.7, 2.75, z);
+    add(new THREE.ConeGeometry(1.35, 0.6, 8), tropical?0xd5b775:links?0xbcb89d:0xc47c55, 3.7, 2.75, z);
   }
   for (const x of [-5.8, 5.8])
     for (const z of [-5.8, 5.8]) {

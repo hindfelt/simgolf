@@ -1,6 +1,8 @@
 import * as THREE from "three";
+import {proShop} from "./pro-shop.js";
 import { height } from "../landscape.js";
-export function trainingFacility(scene, type, x, z) {
+export function trainingFacility(scene, type, x, z, environment=null) {
+  if(type==="pro-shop")return proShop(scene,x,z,environment);
   const group = new THREE.Group();
   group.position.set(x, height(x, z), z);
   scene.add(group);
@@ -18,43 +20,7 @@ export function trainingFacility(scene, type, x, z) {
     mesh(new THREE.BoxGeometry(w, h, d), color, x, y, z);
   const pole = (x, z, h = 2) =>
     mesh(new THREE.CylinderGeometry(0.055, 0.055, h, 6), 0xe9e4c8, x, h / 2, z);
-  if (type === "pro-shop") {
-    box(4.2, 2.8, 3.8, 0xe1d8bb, 0, 1.4, 0);
-    const roof = mesh(
-      new THREE.CylinderGeometry(0, 3.65, 1.4, 4),
-      0x77513b,
-      0,
-      3.4,
-      0,
-    );
-    roof.rotation.y = Math.PI / 4;
-    box(0.9, 1.9, 0.12, 0x354b44, 0, 0.95, 1.94);
-    for (const side of [-1, 1]) {
-      box(1.05, 1.1, 0.12, 0x557e85, side * 1.35, 1.55, 1.94);
-      box(1.2, 0.13, 0.2, 0xf5ecd4, side * 1.35, 1, 2);
-    }
-    box(4.6, 0.17, 1.05, 0xc3bfa4, 0, 0.09, 2.15);
-    for (const side of [-1, 1]) pole(side * 1.95, 2.3, 2.7);
-    box(4.6, 0.14, 1.2, 0x5b6a45, 0, 2.7, 2.2);
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 64;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#eee3be";
-    ctx.fillRect(0, 0, 256, 64);
-    ctx.fillStyle = "#304a39";
-    ctx.font = "bold 32px Georgia";
-    ctx.textAlign = "center";
-    ctx.fillText("PRO SHOP", 128, 43);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.4, 0.6),
-      new THREE.MeshStandardMaterial({ map: texture }),
-    );
-    sign.position.set(0, 2.3, 2.02);
-    group.add(sign);
-  } else if (type === "driving-range") {
+  if (type === "driving-range") {
     box(8.7, 0.12, 8.7, 0x527235, 0, 0.07, 0);
     for (let i = 0; i < 5; i++)
       box(
@@ -75,7 +41,7 @@ export function trainingFacility(scene, type, x, z) {
     for (const x of [-2.8, 0, 2.8]) {
       box(2.1, 0.05, 1.25, 0x2c664a, x, 0.2, 2.6);
       pole(x - 1.1, 3.9, 2.4);
-      box(2.7, 0.16, 2.1, 0x765239, x, 2.5, 3.2);
+      box(2.7, 0.16, 2.1, environment==='tropical'?0xcfb575:environment==='links'?0x5c6a69:0x765239, x, 2.5, 3.2);
       mesh(new THREE.SphereGeometry(0.1, 6, 4), 0xf5f0d9, x, 0.3, 2.4);
     }
   } else {

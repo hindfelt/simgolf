@@ -464,15 +464,15 @@ export function buildCourseView(scene) {
     else if (f.type === "church") group = church(scene, p.x, p.z);
     else if (f.type === "pro-shop") group = proShop(scene, p.x, p.z, environment);
     else if (f.type === "snack") group = snackBar(scene, p.x, p.z, environment);
-    else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z);
+    else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z, environment);
     else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z, environment);
     else if (f.type === "flowerbed") group = flowerbed(scene, p.x, p.z);
     else if (["stable", "spa"].includes(f.type))
       group = regionalRecreation(scene, f.type, p.x, p.z);
-    else if (f.type === "swim-club") group = swimClub(scene, p.x, p.z);
+    else if (f.type === "swim-club") group = swimClub(scene, p.x, p.z, environment);
     else if (f.type === "tennis-court") group = tennisCourt(scene, p.x, p.z);
     else if (TRAINING_FACILITIES.includes(f.type))
-      group = trainingFacility(scene, f.type, p.x, p.z);
+      group = trainingFacility(scene, f.type, p.x, p.z, environment);
     else if (f.type === "ballwasher") {
       group = new THREE.Group();
       group.position.set(p.x, height(p.x, p.z), p.z);
