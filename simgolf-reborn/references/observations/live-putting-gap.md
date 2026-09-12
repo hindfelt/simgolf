@@ -1152,3 +1152,19 @@ arrival handoff for these fixtures. Actual movement starts at 0x42a71c, with
 near-target steering followed by golfer avoidance and a separate far-target
 route branch at 0x42aa30. Those bodies, service arrivals, earlier entry and live
 integration remain unfinished.
+
+### Near-target walking steering
+
+`original-walking-near-steering.js` recovers 0x42a71c–0x42a793 and
+the actual octant approximation at 0x466a70. Targets at least 1024 units away
+continue to 0x42aa30. Closer targets add half the distance to both deltas before
+choosing facing, clear the native word at 0x1c, and optionally pause on a direct
+reversal using the original RNG. Signed octant comparisons retain strict 2:1
+boundaries and the original zero-vector outcome.
+
+1,600 native cases execute real octant/RNG helpers and match actor bytes,
+previous facing, RNG and branches: 1,135 near-target cases, 465 far-target
+continuations and 68 reversal pauses. These fixtures verify steering, not actual
+position updates. The helper is not yet composed after arrival. Avoidance at
+0x42a793, far routing at 0x42aa30, actual walking steps and live integration
+remain open.
