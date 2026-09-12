@@ -28,3 +28,11 @@ These are playable renderer captures, not new concept images. The owner selected
 ## Verification
 
 Island, generated landscape and purchase checks: 12 passed, including three seeds, preview/purchase equality, save round-trip and old coast migration. Final targeted suite: 46 passed, covering island saves/purchases, all ten decoded sounds, transport phases and mute, regional appearance, recreation, new-game startup and maintenance. Production build and git diff whitespace checks pass. An earlier broad live run returned 527 passed, five skipped and one maintenance UI failure while source edits triggered reloads; that maintenance test subsequently passed in the final targeted suite. The full broad run has not been repeated on this final revision. This work is local; it is not a hosted release confirmation.
+
+## Terrain variation follow-up
+
+New properties use terrain generator 2: hashed seeds vary coast width, headlands, bays, island count, island proportions and spacing; tropical island sizes and positions also vary. Inland river bends and relief vary more strongly. The clubhouse approach remains dry. New terrain samples up to 16 candidates, preferring at least 22% difference in water/land or substantial elevation; if none meets that threshold it uses the most different candidate. Classic Willow Brook remains the fixed study layout.
+
+Generator revision is stored in saves; absent revision retains the previous coastal continuation and purchase geometry. Protocol 87 identifies the new generation rules. Visual comparisons are saved as coast-seed-11.png and coast-seed-999.png in the review directory.
+
+Verification: 20 targeted tests passed (terrain variation, save migration, preview/purchase agreement, playable generated holes and new-game UI). Production build passed.

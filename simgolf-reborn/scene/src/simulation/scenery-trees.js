@@ -10,7 +10,7 @@ export function sceneryTreeVisible(g, c, r) {
   if (inside && g.removedTrees?.[key(c, r)]) return false;
   if (!isCoastal(g.landscapeStyle)) return true;
   if (ownsLand(g, c, r)) return g.tiles[key(c, r)]?.type !== "water";
-  return (inside && blocked(c, r, g.landscapeStyle==='island'?{}:null)) || !coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle);
+  return (inside && blocked(c, r, g.terrainGeneration>=2||g.landscapeStyle==='island'?{}:null)) || !coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle,g.terrainGeneration);
 }
 
 const cache = new Map(),

@@ -47,13 +47,13 @@ export function buildOcean(scene) {
   const continuation=new THREE.Mesh(new THREE.BufferGeometry(),material);
   continuation.name='coast-beyond-map';continuation.receiveShadow=true;scene.add(continuation);
   let coastSeed;
-  function rebuildContinuation(seed,style){
+  function rebuildContinuation(seed,style,generation){
     const vertices=[],uv=[];
     for(let r=COAST_FIRST_ROW;r<COAST_LAST_ROW;r++){
 
       for(let c=style==='island'?-100:0;c<GRID.width;c++){
         if(r>=0 && r<GRID.height && c>=0)continue;
-        if(!coastalWater(seed,c,r,style))continue;
+        if(!coastalWater(seed,c,r,style,generation))continue;
         const x=GRID.minX+c*GRID.size,z=GRID.minZ+r*GRID.size;
         for(const [dx,dz] of [[0,0],[0,2],[2,0],[2,0],[0,2],[2,2]]){
           vertices.push(x+dx,height(x+dx,z+dz)+0.047,z+dz);
@@ -88,8 +88,8 @@ export function buildOcean(scene) {
       ocean.visible = isCoastal(g.landscapeStyle);
       stones.visible = ocean.visible;
       continuation.visible=ocean.visible;
-      if(ocean.visible && coastSeed!==`${g.landSeed??2002}:${g.landscapeStyle}`){
-        coastSeed=`${g.landSeed??2002}:${g.landscapeStyle}`;rebuildContinuation(g.landSeed??2002,g.landscapeStyle);
+      if(ocean.visible && coastSeed!==`${g.landSeed??2002}:${g.landscapeStyle}:${g.terrainGeneration??1}`){
+        coastSeed=`${g.landSeed??2002}:${g.landscapeStyle}:${g.terrainGeneration??1}`;rebuildContinuation(g.landSeed??2002,g.landscapeStyle,g.terrainGeneration);
       }
       if (currentGame === g && revision === g.revision && !changedAppearance) return;
       currentGame = g;

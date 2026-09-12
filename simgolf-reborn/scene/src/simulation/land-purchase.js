@@ -47,8 +47,8 @@ export function buyLand(g) {
         Math.abs(c - pondC) + Math.abs(local - 5) < 5;
       if (
         (isCoastal(g.landscapeStyle) &&
-          !blocked(c, r, g.landscapeStyle==='island'?{}:null) &&
-          coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle)) ||
+          !blocked(c, r, g.terrainGeneration>=2||g.landscapeStyle==='island'?{}:null) &&
+          coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle,g.terrainGeneration)) ||
         (!isCoastal(g.landscapeStyle) && pond)
       ) {
         g.tiles[k] = { type: "water" };
@@ -71,6 +71,7 @@ export function buyLand(g) {
   };
 }
 export function validateOwnership(g) {
+  if(g.terrainGeneration!==undefined&&![1,2].includes(g.terrainGeneration))throw Error("Invalid terrain generation.");
   if (
     g.landscapeStyle !== undefined &&
     !["classic", "rolling", "river", "coast", "island"].includes(g.landscapeStyle)

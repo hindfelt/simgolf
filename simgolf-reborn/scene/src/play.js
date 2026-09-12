@@ -1,3 +1,4 @@
+import {rerollTerrain} from './simulation/terrain-reroll.js';
 import {isCoastal} from './simulation/coast.js';
 import {createGameAudio} from "./game-audio.js";
 import {mountClubDay} from "./ui/club-day.js";
@@ -1880,7 +1881,7 @@ function previewLandscape() {
 $("#new-landscape").onchange = previewLandscape;
 $("#new-seed").oninput = previewLandscape;
 $("#reroll-landscape").onclick = () => {
-  $("#new-seed").value = crypto.getRandomValues(new Uint32Array(1))[0];
+  $("#new-seed").value = rerollTerrain(Number($("#new-seed").value),$("#new-landscape").value,()=>crypto.getRandomValues(new Uint32Array(1))[0]);
   previewLandscape();
 };
 $("#new").onclick = () => {

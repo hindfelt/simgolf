@@ -44,7 +44,7 @@ export function exteriorCoastalBanks(g,grid){
  if(!isCoastal(g.landscapeStyle))return [];
  const inside=(c,r)=>c>=0&&c<grid.width&&r>=0&&r<grid.height;
  const wet=(c,r)=>inside(c,r)?g.tiles[r*grid.width+c]?.type==='water'
-   : c>=grid.width || coastalWater(g.landSeed??2002,c,r,g.landscapeStyle);
+   : c>=grid.width || coastalWater(g.landSeed??2002,c,r,g.landscapeStyle,g.terrainGeneration);
  const bridge=(c,r)=>inside(c,r)&&!!g.bridges?.[r*grid.width+c];
  const banks=[];
  for(let r=COAST_FIRST_ROW;r<COAST_LAST_ROW;r++)for(let c=0;c<=grid.width;c++){
@@ -66,7 +66,7 @@ export function coastalContourCells(cells,g,grid){
  if(!isCoastal(g.landscapeStyle))return cells;
  const result=cells.map(cell=>[...cell]);
  for(let c=0;c<grid.width;c++)for(const r of [-1,grid.height])
-  if(coastalWater(g.landSeed??2002,c,r,g.landscapeStyle))result.push([c,r]);
+  if(coastalWater(g.landSeed??2002,c,r,g.landscapeStyle,g.terrainGeneration))result.push([c,r]);
  for(let r=-1;r<=grid.height;r++){result.push([grid.width,r]);if(g.landscapeStyle==='island')result.push([-1,r]);}
  return result;
 }

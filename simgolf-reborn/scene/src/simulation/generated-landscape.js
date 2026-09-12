@@ -1,4 +1,4 @@
-import {isCoastal,islandTree} from './coast.js';
+import {isCoastal,islandTree,terrainRandom} from './coast.js';
 import { coastalWater } from "./coast.js";
 import { GRID, key, blocked } from "./world.js";
 import { STARTING_ROWS } from "./land-purchase.js";
@@ -22,13 +22,10 @@ export function generateLandscape(seed, style) {
     style === "classic"
   )
     throw Error("Invalid landscape settings.");
-  let state = seed;
-  const random = () => {
-    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-    return state / 4294967296;
-  };
+  const random = terrainRandom(seed);
   const phase = random() * Math.PI * 2;
-  const riverRow = 23 + Math.floor(random() * 7);
+  const riverRow = 18 + Math.floor(random() * 16);
+  const hillX=4+random()*9,hillZ=4+random()*9,relief=.6+random()*1.8,riverBend=2+random()*5;
   const ponds = [
     {
       c: 23 + Math.floor(random() * 14),
@@ -47,12 +44,12 @@ export function generateLandscape(seed, style) {
   const protectedCell = (c, r) => blocked(c, r) || (c < 15 && r < 23);
   for (let r = 0; r < STARTING_ROWS; r++)
     for (let c = 0; c < GRID.width; c++) {
-      if (isCoastal(style) && !blocked(c, r, style==='island'?{}:null) && coastalWater(seed, c, r, style)) {
+      if (isCoastal(style) && !blocked(c, r, {}) && coastalWater(seed, c, r, style,2)) {
         wet.add(key(c, r));
         continue;
       }
       if (protectedCell(c, r)) continue;
-      const reach = riverRow + Math.round(2 * Math.sin(c / 9 + phase));
+      const reach = riverRow + Math.round(riverBend * Math.sin(c / (6+hillX) + phase));
       const pond = ponds.some((p) => {
         const x = Math.abs(c - p.c),
           y = Math.abs(r - p.r);
@@ -95,16 +92,16 @@ export function generateLandscape(seed, style) {
       );
       const approach = Math.min(1, Math.max(c - 14, r - 22) / 4);
       const value =
-        (Math.sin(c / 7 + phase) * 1.6 + Math.cos(r / 6 - phase) * 1.3) *
+        (Math.sin(c / hillX + phase) * 1.6*relief + Math.cos(r / hillZ - phase) * 1.3*relief) *
         shore *
         edge *
         approach;
       const h = isCoastal(style)
         ? Math.round(((style==='island'?.5:2.5) + Math.max(0,value)) * 2) / 2
         : Math.round(value * 2) / 2;
-      if (h) elevation[k] = h;
+      if (h) elevation[k] = Math.max(-6,Math.min(6,h));
       if(style==='island'&&islandTree(seed,c,r))tiles[k]={type:'tree'};
     }
   for (let r = 10; r <= 14; r++) tiles[key(7, r)] = { type: "path" };
-  return { tiles, elevation, starterBridgeRemoved: true, editableWater: true };
+  return { terrainGeneration:2, tiles, elevation, starterBridgeRemoved: true, editableWater: true };
 }
