@@ -23,7 +23,7 @@ test("seeded coastline reaches the property edge and continues through purchased
       for (let c = 27; c < GRID.width; c++)
         if (!blocked(c, r))
           expect(g.tiles[key(c, r)]?.type === "water").toBe(
-            coastalWater(seed, c, r),
+            coastalWater(seed, c, r, g.landscapeStyle, g.terrainGeneration),
           );
     expect(restore(serialize(g)).tiles).toEqual(g.tiles);
   }
@@ -83,6 +83,12 @@ test("an island green needs a crossing and supports paid rounds after it is conn
   const g = createGame(1234, "coast", "links");
   expect(build(g, "tee", 24, 15).ok).toBe(true);
   expect(build(g, "green", 39, 15).ok).toBe(true);
+  // Generated islands now vary with the seed. Build a closed water ring so
+  // this route test guarantees an island instead of assuming an old coastline.
+  for (let r = 11; r <= 19; r++)
+    for (let c = 35; c <= 43; c++)
+      if (r === 11 || r === 19 || c === 35 || c === 43)
+        expect(build(g, "water", c, r).ok).toBe(true);
   expect(openHole(g).ok).toBe(false);
   for (let c = 28; c <= 37; c++) expect(build(g, "path", c, 19).ok).toBe(true);
   expect(Object.keys(g.bridges).length).toBeGreaterThan(0);

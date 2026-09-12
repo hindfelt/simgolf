@@ -4,16 +4,21 @@ import {
   restoreCompetition,
 } from "../src/simulation/competition.js";
 import { createGame, build } from "../src/simulation/game.js";
-import { exportCourse } from "../src/simulation/course-package.js";
+import { exportCourse, courseDigest } from "../src/simulation/course-package.js";
 import { exportGolfer } from "../src/simulation/golfer-package.js";
 const principal = (id) => ({ id, role: "golfer" });
-async function setup() {
+async function setup(ruleset) {
   const g = createGame();
   build(g, "tee", 7, 20);
   build(g, "green", 36, 5);
+  const course = structuredClone(await exportCourse(g));
+  if (ruleset) {
+    course.content.ruleset = ruleset;
+    course.digest = await courseDigest(course.content);
+  }
   return createCompetition({
     id: "saved-event",
-    course: await exportCourse(g),
+    course,
     rounds: 2,
     entrants: ["alice", "bob"].map((id) => ({
       id,
@@ -86,7 +91,7 @@ test("damaged receipts, clock budgets, rulesets and injected final scores reject
 test('pre-tennis tournament saves preserve pinned course, shots and standings on upgrade',async()=>{
  const {PRE_TENNIS_RULESET}=await import('../src/simulation/protocol.js');
  const {courseDigest,importCourse}=await import('../src/simulation/course-package.js');
- const host=await setup();shoot(host,'alice');shoot(host,'bob');host.stepTicks(12);
+ const host=await setup(PRE_TENNIS_RULESET);shoot(host,'alice');shoot(host,'bob');host.stepTicks(12);
  const legacy=JSON.parse(host.save());legacy.ruleset=PRE_TENNIS_RULESET;
  legacy.config.course.content.ruleset=PRE_TENNIS_RULESET;
  legacy.config.course.digest=await courseDigest(legacy.config.course.content);
@@ -105,7 +110,7 @@ test('pre-tennis tournament saves preserve pinned course, shots and standings on
 test('the tennis-release tournament format also migrates without changing a shot',async()=>{
  const {PRE_MARINA_RULESET}=await import('../src/simulation/protocol.js');
  const {courseDigest}=await import('../src/simulation/course-package.js');
- const host=await setup();shoot(host,'alice');host.stepTicks(12);
+ const host=await setup(PRE_MARINA_RULESET);shoot(host,'alice');host.stepTicks(12);
  const legacy=JSON.parse(host.save());legacy.ruleset=PRE_MARINA_RULESET;
  legacy.config.course.content.ruleset=PRE_MARINA_RULESET;legacy.config.course.digest=await courseDigest(legacy.config.course.content);
  for(const row of legacy.journal)if(row.type==='command')row.request.command.version=76;
@@ -117,7 +122,7 @@ test('the tennis-release tournament format also migrates without changing a shot
 test('the pre-airstrip-fee tournament format also migrates without changing a shot',async()=>{
  const {PRE_AIRSTRIP_RULESET}=await import('../src/simulation/protocol.js');
  const {courseDigest}=await import('../src/simulation/course-package.js');
- const host=await setup();shoot(host,'alice');host.stepTicks(12);
+ const host=await setup(PRE_AIRSTRIP_RULESET);shoot(host,'alice');host.stepTicks(12);
  const legacy=JSON.parse(host.save());legacy.ruleset=PRE_AIRSTRIP_RULESET;
  legacy.config.course.content.ruleset=PRE_AIRSTRIP_RULESET;legacy.config.course.digest=await courseDigest(legacy.config.course.content);
  for(const row of legacy.journal)if(row.type==='command')row.request.command.version=77;
@@ -129,7 +134,7 @@ test('the pre-airstrip-fee tournament format also migrates without changing a sh
 test('the pre-signed-happiness tournament format also migrates without changing a shot',async()=>{
  const {PRE_SIGNED_HAPPINESS_RULESET}=await import('../src/simulation/protocol.js');
  const {courseDigest}=await import('../src/simulation/course-package.js');
- const host=await setup();shoot(host,'alice');host.stepTicks(12);
+ const host=await setup(PRE_SIGNED_HAPPINESS_RULESET);shoot(host,'alice');host.stepTicks(12);
  const legacy=JSON.parse(host.save());legacy.ruleset=PRE_SIGNED_HAPPINESS_RULESET;
  legacy.config.course.content.ruleset=PRE_SIGNED_HAPPINESS_RULESET;legacy.config.course.digest=await courseDigest(legacy.config.course.content);
  for(const row of legacy.journal)if(row.type==='command')row.request.command.version=78;

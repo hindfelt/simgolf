@@ -12,7 +12,7 @@ test('rocky banks extend around outside islands and mainland without duplicate i
  expect(edges.some(e=>e.r>=GRID.height)).toBe(true);
  for(const e of edges){
   expect(interior.has([e.c,e.r,e.dc,e.dr].join(','))).toBe(false);
-  if(e.r< -1 || e.r>GRID.height)expect(coastalWater(g.landSeed,e.c,e.r)).toBe(true);
+  if(e.r< -1 || e.r>GRID.height)expect(coastalWater(g.landSeed,e.c,e.r,g.landscapeStyle,g.terrainGeneration)).toBe(true);
  }
  expect(serialize(g)).toBe(saved);
  expect(exteriorCoastalBanks({...view,landscapeStyle:'river'},GRID)).toEqual([]);

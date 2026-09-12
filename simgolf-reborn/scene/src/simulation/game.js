@@ -1,3 +1,5 @@
+import {startLiveOriginalPutt,stepLiveOriginalPutt,validateLiveOriginalPutt,validateLiveStrengthCache} from './live-original-putting.js';
+import {liveOriginalLaunch} from './live-original-launch.js';
 import {stepAircraft,validateAircraft} from "./aircraft.js";
 import {advanceClubDay, clubTime, initializeClubDay, recordClubArrival, validateClubDay} from "./club-day.js";
 import {stepMarinas,validateMarinas} from "./marina-activity.js";
@@ -185,6 +187,7 @@ export function createGame(
     environment,
     landscapeStyle: landscape,
     landSeed: seed >>> 0,
+    liveSimulationVersion:1,
     landParcels: 0,
     time: 0,
     rng: seed >>> 0,
@@ -945,11 +948,9 @@ export function takeShot(g, v, target, technique = "straight") {
   const from = { ...v.ball },
     aim = putt ? { x: cup.x, z: cup.z } : target,
     d = distance(from, aim);
-  if (d < 0.2) return { ok: false, message: "Aim farther from the ball." };
-  const carry = Math.min(
-    d,
-    shotLimit(g, v) * (technique === "punch" ? 0.8 : 1),
-  );
+  if (d < 0.2 && !(putt && g.liveSimulationVersion===1)) return { ok: false, message: "Aim farther from the ball." };
+  const launch = g.liveSimulationVersion===1?liveOriginalLaunch({distance:d,range:shotLimit(g,v)*(technique === "punch" ? 0.8 : 1),surface:lie(g,from),putt}):{carry:Math.min(d,shotLimit(g,v)*(technique === "punch" ? .8 : 1))};
+  const carry=launch.carry;
   const ratio = putt ? 1 : carry / d,
     spread = v.proSkills
       ? (putt
@@ -974,6 +975,7 @@ export function takeShot(g, v, target, technique = "straight") {
       (aim.z - from.z) * ratio +
       (random(g) - 0.5) * spread * accuracyFactor,
   };
+  const nativePutt=putt&&g.liveSimulationVersion===1?startLiveOriginalPutt(g,v,cup,{lie,height:elevationAt,skill:proSkill(v,"putter"),blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)}):null;
   const rise =
     elevationAt(g, landing.x, landing.z) - elevationAt(g, from.x, from.z);
   if (!putt && rise) {
@@ -1016,11 +1018,14 @@ export function takeShot(g, v, target, technique = "straight") {
   v.strokes++;
   if (v.holeReactions?.holeId === v.holeId) v.holeReactions.shots++;
   v.shot = {
+    ...(nativePutt?{nativePutt}:{}),
+    club:launch.club,
+    strengthYards:launch.strengthYards,
     from,
     landing,
     bounce: behavior.bounce,
-    landingSurface: surface,
-    waterLanding,
+    landingSurface: nativePutt ? "green" : surface,
+    waterLanding: nativePutt ? false : waterLanding,
     end: endpoint,
     time: 0,
     duration: putt ? 1.3 : 1.2 + carry * 0.028,
@@ -1157,7 +1162,11 @@ function stepShot(g, v, dt) {
   s.time += dt;
   let lift = 0,
     point;
-  if (s.obstruction && s.time >= s.duration * s.obstruction.t) {
+  if(s.nativePutt){
+    const step=stepLiveOriginalPutt(g,s,dt,{lie,height:elevationAt,blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)});point=step.point;
+    if(!step.done){v.ball=point;v.ballHeight=0;return;}
+    s.end={...point};s.time=s.duration;
+  } else if (s.obstruction && s.time >= s.duration * s.obstruction.t) {
     const u = clamp((s.time - s.duration * s.obstruction.t) / 0.8, 0, 1);
     point = { ...s.obstruction.point };
     lift = s.obstruction.height * (1 - u * u);
@@ -1242,7 +1251,7 @@ function stepShot(g, v, dt) {
       turf?.type === "green" && turf.holeId === v.holeId,
     );
   }
-  if (distance(v.ball, golferHole(g, v).green) < 0.75 || v.strokes >= 12) {
+  if ((s.nativePutt ? s.nativePutt.state.status === "captured" : distance(v.ball, golferHole(g, v).green) < 0.75) || v.strokes >= 12) {
     finishHole(g, v);
     return;
   }
@@ -1942,6 +1951,8 @@ export function restore(raw) {
   if (typeof raw !== "string" || raw.length > 2_000_000)
     throw Error("Save is too large or unreadable.");
   const g = JSON.parse(raw);
+  if(g.liveStrengthCache!==undefined)validateLiveStrengthCache(g.liveStrengthCache);
+  if(g.liveSimulationVersion!==undefined&&g.liveSimulationVersion!==1)throw Error("Unsupported live simulation version.");
   if (g?.version === 1) migrateSingleHole(g);
   if (g?.version === 2) {
     g.retiredHoles ??= [];
@@ -2129,10 +2140,15 @@ export function restore(raw) {
       ].includes(v.phase)
     )
       throw Error("Invalid golfer in save.");
+    if(v.shot?.nativePutt){
+      if(g.liveSimulationVersion!==1||!v.shot.putt||v.shot.waterLanding)throw Error("Invalid live putt context.");
+      validateLiveOriginalPutt(v.shot.nativePutt);
+    }
     if (v.phase === "shot" && !v.shot) throw Error("Missing shot in save.");
     if (
       v.shot &&
-      (!point(v.shot.from) ||
+      ((v.shot.club!==undefined&&(!Number.isInteger(v.shot.club)||v.shot.club<0||v.shot.club>13)) ||
+       (v.shot.strengthYards!==undefined&&(!Number.isInteger(v.shot.strengthYards)||v.shot.strengthYards<0||v.shot.strengthYards>330)) || !point(v.shot.from) ||
         !point(v.shot.landing) ||
         !point(v.shot.end) ||
         ["time", "duration", "apex", "curve"].some(

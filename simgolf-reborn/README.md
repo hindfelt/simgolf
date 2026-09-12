@@ -90,3 +90,7 @@ See the [worlds and polish review](references/release/worlds-polish-2026-09-12.m
 In Multiplayer → Tournament registration, choose a published course, playing window and optional scheduled start (shown in your local time). Share the invitation link; each player signs in and explicitly joins. Download the calendar reminder to retain the start time. Events start automatically with at least two active entrants; otherwise they cancel. Final tied places share Gold, Silver or Bronze medals, visible in the tournament lobby.
 
 See [multiplayer verification](references/release/multiplayer-scheduling-2026-09-12.md) for the separate hosted review environment and remaining physical-device checks.
+
+### Live simulation integration — 12 September 2026
+
+New games use the recovered club selector and recovered flat-green putt motion, including cup capture and a saved strength-search cache. Existing saves and older published tournament courses retain their previous shot model. This is a partial integration: flight, sloped/edge putting, routing, reactions and facility decisions still use browser behavior. [Integration evidence and remaining work](references/release/live-simulation-2026-09-12.md).

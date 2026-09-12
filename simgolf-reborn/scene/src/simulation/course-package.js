@@ -18,7 +18,7 @@ import {
   inBounds,
 } from "./world.js";
 import { FACILITIES } from "./facilities.js";
-import { RULESET_VERSION, canonical, compatibleCourseRuleset } from "./protocol.js";
+import { RULESET_VERSION, canonical, compatibleCourseRuleset, golfProtocolVersion } from "./protocol.js";
 export const PACKAGE_VERSION = 1;
 const PROPERTY = "willow-brook-v1";
 const exact = (v, keys) =>
@@ -79,6 +79,7 @@ function designGame(content, seed = 2002) {
   )
     fail();
   const g = createGame(seed);
+  if(golfProtocolVersion(content.ruleset)<88)delete g.liveSimulationVersion;
   g.removedTrees = structuredClone(content.removedTrees);
   g.landscapeStyle = content.landscapeStyle;
   g.environment = content.environment;

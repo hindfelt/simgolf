@@ -105,7 +105,8 @@ test("browser retains a parked cart apart from its golfer after reload", async (
 
 test("collecting a holed putt leaves the cart parked without a pickup detour", () => {
   const { g, v } = course();
-  v.pos = center(35, 4);
+  // A short tap-in isolates cart collection from the outcome of a long putt.
+  v.pos = { x: g.holes[0].green.x - 1, z: g.holes[0].green.z };
   v.ball = { ...v.pos };
   v.phase = "address";
   v.path = [];

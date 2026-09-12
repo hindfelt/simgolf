@@ -1,5 +1,6 @@
-export const PROTOCOL_VERSION = 87;
-export const RULESET_VERSION = "varied-terrain-2026-09-12";
+export const PROTOCOL_VERSION = 88;
+export const RULESET_VERSION = "live-native-launch-putting-2026-09-12";
+export const PRE_LIVE_PUTTING_RULESET = "varied-terrain-2026-09-12";
 export const PRE_VARIATION_RULESET = "island-properties-2026-09-12";
 export const PRE_ISLAND_RULESET = "regional-palm-crowns-2026-09-12";
 export const PRE_PALMS_RULESET = "regional-links-scrub-2026-09-12";
@@ -12,7 +13,7 @@ export const PRE_SIGNED_HAPPINESS_RULESET = "original-airstrip-fee-2026-09-12";
 export const PRE_TENNIS_RULESET = "prototype-boundary-regions-2026-09-10";
 export const PRE_AIRSTRIP_RULESET = "prototype-marina-activity-2026-09-11";
 export const PRE_MARINA_RULESET = "prototype-tennis-visits-2026-09-11";
-const golfVersions = new Map([[RULESET_VERSION,PROTOCOL_VERSION],[PRE_VARIATION_RULESET,86],[PRE_ISLAND_RULESET,85],[PRE_PALMS_RULESET,84],[PRE_LINKS_RULESET,83],[PRE_VISIBLE_TREES_RULESET,82],[PRE_REGIONAL_TREES_RULESET,81],[PRE_AIRCRAFT_RULESET,80],
+const golfVersions = new Map([[RULESET_VERSION,PROTOCOL_VERSION],[PRE_LIVE_PUTTING_RULESET,87],[PRE_VARIATION_RULESET,86],[PRE_ISLAND_RULESET,85],[PRE_PALMS_RULESET,84],[PRE_LINKS_RULESET,83],[PRE_VISIBLE_TREES_RULESET,82],[PRE_REGIONAL_TREES_RULESET,81],[PRE_AIRCRAFT_RULESET,80],
  [PRE_DAY_CYCLE_RULESET,79],[PRE_SIGNED_HAPPINESS_RULESET,78],[PRE_AIRSTRIP_RULESET,77],[PRE_MARINA_RULESET,76],[PRE_TENNIS_RULESET,75]]);
 export const golfProtocolVersion = ruleset => golfVersions.get(ruleset);
 // Geometry remains importable even when old tournament physics cannot replay.
@@ -86,6 +87,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 87 && p.ruleset === PRE_LIVE_PUTTING_RULESET) ||
     (p?.version === 86 && p.ruleset === PRE_VARIATION_RULESET) ||
     (p?.version === 85 && p.ruleset === PRE_ISLAND_RULESET) ||
     (p?.version === 84 && p.ruleset === PRE_PALMS_RULESET) ||
