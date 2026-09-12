@@ -34,8 +34,8 @@ export function originalFlatPuttStep(state,{phaseCounter,seed}) {
   rollCoefficient:state.rollCoefficient,forwardSlope:0,crossSlope:0,boundaryFlags:0,phaseCounter,seed});
  let ball={...before,...position,speed:response.speed,heading:response.heading,
   angularOffset:response.angularOffset,seed:response.rngState};
- // This composition samples the cell before movement. The full executable
- // caller still needs an oracle check at tile crossings before live adoption.
+ // Sample before movement: native block 0x4285bb stores these locals;
+ // 0x42c354 uses them for cup detection (verify-original-putt-cells.py).
  // The cup flag is present only on the actual cup tile.
  const cellX=before.x>>10,cellZ=before.z>>10;
  const capture=originalCupCapture({...ball,cellX,cellZ,terrainCode:1,
