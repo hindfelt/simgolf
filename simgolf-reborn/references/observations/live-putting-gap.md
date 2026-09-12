@@ -587,3 +587,15 @@ interchangeable with the pure helper's final result assignment.
 query arguments/order and RNG, with half the cases mutating heading/velocity
 inside the slope callbacks. Later landing deflection, continuous composition
 and live world integration remain unfinished. No live deployment changed.
+
+### Continuous contact composition
+
+`original-actor-contact.js` joins bounce and terrain impact, bypassing impact
+for noncontacts. 1,600 continuous native sequences match complete actor state,
+RNG, stop globals and 5,061 ordered effects. The harness explicitly initializes
+x87 precision to 0x37f: the emulator default produced a one-unit bounded-RNG
+difference on this wider sample. Both earlier impact verifiers now initialize
+that precision too, and their 3,000-case comparisons each still pass.
+
+This closes the separate bounce-to-impact composition gap, not later landing
+scatter/reactions or live gameplay integration. No release completion is implied.

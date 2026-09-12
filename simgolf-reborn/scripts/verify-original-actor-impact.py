@@ -3,7 +3,7 @@ from pathlib import Path
 import hashlib,json,random,struct,subprocess
 import pefile
 from unicorn import Uc,UC_ARCH_X86,UC_MODE_32,UC_HOOK_CODE
-from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EBP,UC_X86_REG_EBX,UC_X86_REG_EAX
+from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EBP,UC_X86_REG_EBX,UC_X86_REG_EAX,UC_X86_REG_FPCW
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x500000);u.mem_write(0x400000,p.get_memory_mapped_image());u.mem_map(0x100000,0x4000)
@@ -21,7 +21,7 @@ def hook(u,a,size,data):
   if current['mutate']:write(0x577ff0,123+len(queried));write(0x577fe8,98765)
  if a==0x40bc90:u.reg_write(UC_X86_REG_EAX,current['currentTerrainCode'])
  if a==0x45ba70:draws+=1
-u.hook_add(UC_HOOK_CODE,hook)
+u.reg_write(UC_X86_REG_FPCW,0x37f);u.hook_add(UC_HOOK_CODE,hook)
 rng=random.Random(2002);rows=[]
 for i in range(3000):
  q=dict(speed=rng.randrange(4000),heading=rng.randrange(2**32),verticalSpeed=rng.randrange(10000),stateFlags=rng.choice([0,128,256,384]),direction=rng.randrange(8),scatterCoefficient=rng.randrange(-2,6),currentTerrainCode=rng.choice([1,17]),boundaryFlags=rng.choice([0,0,8]),seed=rng.randrange(2**32),slopes=[rng.randrange(-8,9) for j in range(8)])
