@@ -7,15 +7,15 @@ from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EIP,UC_X86_REG_EBX,UC_X8
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x200000);u.mem_map(0x800000,0x40000);u.mem_map(0x100000,0x8000)
-for a,n in [(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
+for a,n in [(0x40a6c0,0xdc),(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
 def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
 events=[]
 def hook(u,a,size,data):
  if a==0x46bc8c:u.emu_stop();return
  if a==0x4acb95:
   sp=u.reg_read(UC_X86_REG_ESP);args=list(struct.unpack('<iii',u.mem_read(sp+4,12)));events.append(dict(address=a,args=args));u.mem_write(args[1],str(args[0]).encode()+b'\0');u.reg_write(UC_X86_REG_EAX,args[1]);return
- if a not in [0x46c140,0x466e30,0x466fb0,0x4074d0]:return
- if a in [0x466e30,0x46c140]:
+ if a not in [0x40a6c0,0x46c140,0x466e30,0x466fb0,0x4074d0]:return
+ if a in [0x40a6c0,0x466e30,0x46c140]:
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[struct.unpack('<i',u.mem_read(sp+4,4))[0]]));return
  sp=u.reg_read(UC_X86_REG_ESP);args=list(struct.unpack('<'+'i'*(2 if a==0x466fb0 else 3),u.mem_read(sp+4,8 if a==0x466fb0 else 12)));events.append(dict(address=a,args=args))
  text=bytes(u.mem_read(0x518f78,512)).split(b'\0')[0].decode('ascii')+('Name'+str(args[0]) if a==0x466fb0 else 'Place'+str(args[2]))
@@ -23,7 +23,7 @@ def hook(u,a,size,data):
 for a in [0x4acb95,0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(384):
   id=i%16;record=[0]*256;
@@ -37,6 +37,7 @@ for kind in kinds:
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
+  if kind==54:q['value']=value=[-2147483648,-1,*range(15),2147483647][i%18]
   if kind==30:
    h=i%18;q['holeIndex']=h;records={str(j):[0]*520 for j in [h-1,h,h+1]};records[str(h)][0]=[0,32,64,96][i%4];records[str(h+1)][0]=[0,32,64,96][(i//4)%4];par=[0,3,4,5,127,128,255][(i//16)%7];records[str(h)][8]=par;records[str(h-1)][8]=par if (i//112)%2 else (par+1)%256;q['holeRecords']=records
    for j,r in records.items():u.mem_write(0x5744f8+int(j)*520,bytes(r))

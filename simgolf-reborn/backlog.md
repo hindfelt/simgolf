@@ -1365,3 +1365,5 @@ F06 standard remarks now cover52 of65 cases. Added native terrain plural/categor
 F06 standard remarks now cover55 of65 cases. Added current-golfer/partner wording and exact redirection distinctions for3/11/28.22656 native comparisons and26 related tests pass. Ten cases (1,7,19,23,30,50,54,58,59,61), contiguous phrase verification and live integration remain open.
 
 F06 standard remarks now cover58 of65 cases. Added original hole-flag/par wording and replacement-buffer/value branches7/30/58.23808 native comparisons and28 related tests pass. Seven cases (1,19,23,50,54,59,61), contiguous phrase verification and live integration remain open.
+
+F06 standard remarks now cover59 of65 cases. Added complete club-name helper/case54 and recovered the original custom/par-based/numbered hole-name helpers needed by history remarks.24192 standard native cases,6400 hole-name comparisons and31 related tests pass. Six cases (1,19,23,50,59,61), contiguous phrase verification and live integration remain open.

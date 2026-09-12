@@ -1,3 +1,4 @@
+import {originalClubName} from './original-club-name.js';
 import {originalProfileVoice} from './original-profile-voice.js';
 import {originalAffectionateAddress} from './original-affectionate-address.js';
 import {originalActorName} from './original-actor-name.js';
@@ -14,6 +15,7 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===54){if(!Number.isInteger(q.originalMode))throw Error('Original phrase mode is unavailable.');append(0x4e1c5c);events.push({address:0x40a6c0,args:[q.value|0]});state=originalClubName({clubId:q.value,state});append(0x4e1c4c);if((q.originalMode|0)<=1)state.remarkStyle=0x800023e8;}
  else if(kind===7){state.sourceText='';if((q.value|0)===0){append(actor(q)[0x12]&1?0x4e1ff8:0x4e1fd0);state.remarkStyle=0x800023e8;}else append(0x4e1fa8);}
  else if(kind===58){const value=q.value|0;if(value>=0&&value<=2)append([0x4e2414,0x4e2438,0x4e244c][value]);}
  else if(kind===30){

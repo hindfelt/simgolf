@@ -116,3 +116,9 @@ test('hole remarks honor flag precedence and signed repeated par without mutatin
  current[0]=next[0]=0;current[8]=prev[8]=255;
  const signed=originalStandardPhrase(q);expect(signed.state.sourceText).toContain('-1');expect(signed.events).toEqual([{address:0x4acb95,args:[-1,0x836454,10]}]);expect(current[8]).toBe(255);
 });
+test('club-related remarks use original names and mode-dependent style',()=>{
+ const q={kind:54,actorId:0,value:13,state:{sourceText:''}};
+ const normal=originalStandardPhrase({...q,originalMode:1});expect(normal.state.sourceText).toContain('Putter');expect(normal.state.remarkStyle).toBe(0x800023e8);
+ const alternate=originalStandardPhrase({...q,originalMode:2});expect(alternate.state.remarkStyle).toBe(0x80006318);
+ expect(originalStandardPhrase({...q,value:-1,originalMode:1}).state.sourceText).not.toContain('Putter');
+});

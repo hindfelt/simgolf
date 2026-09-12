@@ -283,5 +283,7 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e24c4": "Great, another dogleg left.",
   "0x4e24a8": "Yawn, another dogleg right.",
   "0x4e2490": "Wow, yet another par ",
-  "0x4e246c": "This hole is like the last hole."
+  "0x4e246c": "This hole is like the last hole.",
+  "0x4e1c5c": "I'll use my ",
+  "0x4e1c4c": " for this shot."
 };
