@@ -65,3 +65,12 @@ Four targeted tests pass, including three seeds with no horizontal contour
 through continuous sea, input isolation, preview/purchase agreement and the
 Tropical coast render. The updated render was inspected: the straight pale line
 across the top bay is removed. Production build passed. No push or deployment.
+
+## Regional snack pavilions
+
+Tropical snack bars now use timber battens, a pale thatched roof and a fringed
+serving canopy. Links uses stone courses, a slate roof and plain canvas. The
+course factory forwards the environment for both placed and preview buildings.
+Footprints, service logic and access are unchanged. Three targeted renderer
+checks pass and the three variants were visually inspected together; the
+production build passes. Local only, with further regional facilities open.

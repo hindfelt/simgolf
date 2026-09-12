@@ -3,7 +3,8 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { height } from "../landscape.js";
 
 // A compact parkland refreshment pavilion, contained by its three-tile plot.
-export function snackBar(scene, x, z) {
+export function snackBar(scene, x, z, environment=null) {
+  const tropical=environment==='tropical',links=environment==='links';
   const group = new THREE.Group(),
     batches = new Map();
   group.position.set(x, height(x, z), z);
@@ -15,15 +16,18 @@ export function snackBar(scene, x, z) {
   }
   const box = (w, h, d, color, x, y, z) =>
     add(new THREE.BoxGeometry(w, h, d), color, x, y, z);
-  const cream = 0xe7dab8,
-    timber = 0x68513a,
-    green = 0x42604b;
+  const cream = tropical?0xc59b62:links?0xb5b09a:0xe7dab8,
+    timber = tropical?0x67432b:0x68513a,
+    green = tropical?0x547c62:links?0x55635c:0x42604b;
   box(5.5, 0.16, 5.4, 0x9c927b, 0, 0.08, 0);
   box(4.4, 2.5, 3.5, cream, 0, 1.4, -0.55);
   // Clapboard courses, timber corners and low skirt.
   for (let y = 0.35; y < 2.65; y += 0.25) {
-    box(4.45, 0.035, 3.55, 0xd1c3a0, 0, y, -0.55);
+    if(!tropical)box(4.45, 0.035, 3.55, links?0x8e8c7d:0xd1c3a0, 0, y, -0.55);
   }
+  if(tropical)for(let px=-2;px<=2;px+=.25)box(.04,2.3,3.53,timber,px,1.45,-.55);
+  if(links)for(let row=0;row<6;row++)for(let px=-1.9;px<2;px+=.7)
+    box(.025,.35,3.54,0x8e8c7d,px+(row%2)*.18,.5+row*.36,-.55);
   box(4.5, 0.3, 3.6, green, 0, 0.3, -0.55);
   for (const sx of [-1, 1])
     for (const sz of [-1, 1])
@@ -43,7 +47,7 @@ export function snackBar(scene, x, z) {
   const roof = new THREE.CylinderGeometry(0, 3.5, 1.15, 4);
   roof.rotateY(Math.PI / 4);
   roof.scale(1, 1, 0.85);
-  add(roof, 0x815c3e, 0, 3.2, -0.55);
+  add(roof, tropical?0xc9ac70:links?0x657070:0x815c3e, 0, 3.2, -0.55);
   for (let row = 0; row < 5; row++) {
     const f = (row + 0.5) / 5,
       y = 2.64 + f * 1.15,
@@ -53,7 +57,7 @@ export function snackBar(scene, x, z) {
         span,
         0.025,
         0.055,
-        row % 2 ? 0x705136 : 0x97704b,
+        tropical?(row%2?0xb49253:0xddc58b):links?0x485957:row % 2 ? 0x705136 : 0x97704b,
         0,
         y,
         -0.55 + side * 2.1 * (1 - f),
@@ -62,11 +66,12 @@ export function snackBar(scene, x, z) {
   // Green/cream canvas awning and hanging scallop strips.
   for (let i = 0; i < 10; i++) {
     const px = -2.025 + i * 0.45,
-      color = i % 2 ? cream : green;
+      color = tropical?(i%2?0xd5b975:0xc4a35f):links?0xc3bb9e:i % 2 ? cream : green;
     const awning = new THREE.BoxGeometry(0.45, 0.09, 1.25);
     awning.rotateX(0.13);
     add(awning, color, px, 2.42, 1.9);
-    box(0.45, 0.19, 0.07, color, px, 2.25, 2.5);
+    if(tropical){for(let j=0;j<4;j++)box(.07,.17+(j%2)*.06,.07,color,px-.16+j*.1,2.25,2.5);}
+    else box(0.45, 0.19, 0.07, color, px, 2.25, 2.5);
   }
   for (const px of [-2.1, 2.1]) {
     box(0.1, 2.35, 0.1, timber, px, 1.25, 2.45);

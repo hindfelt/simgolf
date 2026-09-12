@@ -458,7 +458,7 @@ export function buildCourseView(scene) {
       group = transportFacility(scene, f.type, p.x, p.z);
     else if (f.type === "lighthouse") group = lighthouse(scene, p.x, p.z);
     else if (f.type === "church") group = church(scene, p.x, p.z);
-    else if (f.type === "snack") group = snackBar(scene, p.x, p.z);
+    else if (f.type === "snack") group = snackBar(scene, p.x, p.z, environment);
     else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z);
     else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z, environment);
     else if (f.type === "flowerbed") group = flowerbed(scene, p.x, p.z);
