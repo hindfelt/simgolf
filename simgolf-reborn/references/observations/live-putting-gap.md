@@ -104,3 +104,7 @@ Live migration constraint confirmed from current code: `world.js` has a 45×72 g
 `original-world-state.js` defines `fairway-baron.original-world` version 1 with explicit 50×50 geometry, 25 yards/cell and 1,024 fixed-point units/cell. It serializes original terrain/marks/ownership/vertices, runtime metadata including shape, shared phase/RNG, strength-cache contents and active shot fields. `originalWorldMap` rebuilds derived map data from that source and supplies the shared planning/motion adapters. The codec rejects legacy formats and rescaled geometry instead of silently translating the 8-yard browser tiles.
 
 Three tests pass: whole-state round-trip plus the same next motion update after map rebuild, independent restored metadata, rejected legacy/scale changes and malformed map arrays. This is the new simulation-world payload, not a complete replacement for player/course/career/account saves. Browser construction, world creation/rendering, command/replay protocol and golfer scheduling still need to adopt it explicitly.
+
+### Recovered simulation regression run
+
+After the motion/world-state changes, `npm --prefix simgolf-reborn/scene test -- 'original-.*\.spec\.js'` completed with **658 passed in 2.6 minutes**. This includes recovered planning, geometry, construction, golfer/remark/fee logic and the new motion/state tests. It is the recovered subsystem suite, not the browser UI/account/production deployment suite, and does not close the live integration requirement.
