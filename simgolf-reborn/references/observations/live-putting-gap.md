@@ -985,3 +985,20 @@ widths and positions. The pure adapter accepts the full original record table.
 This closes the search helper needed by walking service selection; it has not
 yet been connected to the service branch or live building records. Facility
 catalog/persistence mapping and complete golfer movement remain unfinished.
+
+### Walking service search integration
+
+`original-walking-service-search.js` recovers 0x429947–0x4299c0 and
+rejection at 0x429a6f, executing `originalNearestFacility` for type 7. The
+flag-dependent distance limit is strict: distances equal to the limit reject.
+Acceptance sets flag 0x2000 and uses the facility's origin tile centre as the
+walking destination; rejection clears that flag, sets service index -1 and
+retains the previous tee destination. Search distance still uses the catalog
+width-adjusted centre, matching the distinct native calculations.
+
+1,200 continuous native cases execute actual search and distance helpers and
+match actor bytes, selected index, distance, destination, call sequence and
+branch (456 accepted stops). Walking preparation now invokes the search after
+service admission; three composition tests pass, including a real facility
+selection. Later service fallback at 0x4299c0, arrival handling at 0x429b53,
+full movement and live integration remain open.

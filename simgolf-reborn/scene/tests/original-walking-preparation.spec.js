@@ -21,6 +21,7 @@ test('closed hole propagates to later partner checks and destination continuatio
 test('missing ball reaches tee stance and service admission',()=>{
  const s=fresh(),a=new DataView(s.actors[0].buffer);a.setInt32(0xdc,0,true);a.setInt16(0xae,10,true);s.actors[1][0x29]=0;
  const h=new DataView(s.holes[1].buffer);h.setInt32(0x10,20,true);h.setInt32(0x14,20,true);
+ s.facilityRecords=new Uint8Array(4096);s.facilityWidths=Array(16).fill(2);const f=new DataView(s.facilityRecords.buffer);f.setInt16(0,7,true);f.setInt16(2,23,true);f.setInt16(4,23,true);s.facilityRecords[7]=64;
  const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
- expect(r.next).toBe('0x429947');expect(r.teePosition).toEqual({x:20992,z:20992});expect(r.destination).not.toEqual(r.teePosition);
+ expect(r.next).toBe('0x429b53');expect(r.serviceIndex).toBe(0);expect(r.destination).toEqual({x:24064,z:24064});expect(r.teePosition).toEqual({x:20992,z:20992});expect(r.destination).not.toEqual(r.teePosition);
 });
