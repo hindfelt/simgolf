@@ -3311,3 +3311,9 @@ The matrix retains its prior controlled phrase/location and playback boundaries.
 The new oracle executes 0x426e6b–0x426f30 and calls the actual 0x4672d0 remark routine, returning through its real epilogue into reset. All 192 cases match complete packed world state. Coverage includes +0x84 skip, ordinary kind 19, kind-23 remapping for established-hole flags/scores, different clocks, difficulties and popup states. Native audio, projection, naming, reaction and popup instructions execute; terrain reads, playback, integer formatting and location text retain controlled boundaries.
 
 Three related tests pass, including the retained native matrix and the two direct integration cases. This closes uninterrupted native coverage for the conditional remark/reset section; earlier fee-to-remark composition, the remaining completion branches and live browser/server state mapping remain unfinished.
+
+### Score and fee through actual audible completion
+
+`originalAudibleHoleCompletionPrefix` joins score/statistics and fee settlement with the actual audible completion remark/reset flow. Its oracle executes 0x426b10–0x426f30 continuously, including native statistical comparison, fee popup/payment, remark, audio, projection and reset routines. All 384 cases match complete state, including signed fee/cash/ledger values, performance counters, profile scores, hole/tile counters, actor/messages and final RNG. Cases vary payment suppression, disabled notices, mode doubling and bonus units; the fee profile tier is zero in this joined matrix (higher tiers remain covered by the separate fee matrices). Terrain, playback and text boundaries retain controlled inputs.
+
+Two retained native matrix tests pass. This closes the previously missing joined prefix with actual remarks for those cases, not the remaining branches after 0x426f30, invocation eligibility, or live authoritative schema migration. No production changes.
