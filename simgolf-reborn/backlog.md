@@ -1393,3 +1393,5 @@ Original remark history preparation now follows complete message dispatch, prese
 Continuous remark eligibility→phrase→display→history verification now matches10763 original executions;7 related tests pass. Prepared actor snapshots and voice offsets are checked at the adjustment boundary. Downstream adjustment state mapping, remaining social/audio logic and live integration remain unfinished.
 
 Prepared remarks now connect to recovered happiness/history/terrain reaction effects using original profile records and a post-preparation world snapshot.8 related tests pass. Updated world counters are returned for an authoritative writer; full continuous native reaction verification, world write-back, social/audio completion and live integration remain unfinished.
+
+Original reaction world adapter now reads/writes packed hole and tile records with exact offsets, preserves the kind64 alias and rejects stale location targets.48 native outcome fixtures round-trip correctly;10 related tests pass. Late world reads after speech/preamble, full reaction composition and live state ownership remain unfinished.
