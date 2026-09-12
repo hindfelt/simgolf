@@ -2346,3 +2346,19 @@ plus physics-height consistency and explicit rejection of asynchronous readers
 and unsupported generated-height phases. This is adapter-level coverage, not a
 new full native planner/remark comparison. Scheduler binding composition and
 live schema adoption remain open. No production behavior changed.
+
+### Composed audible planner binding
+
+`originalAudiblePlannerBinding` constructs one invocation-owned audible effect
+adapter, binds its current-world map callbacks, and returns the context,
+dependencies and effects contract consumed by the scheduler's `plannerFor`.
+Search/scoring inputs and remark context remain explicit. Supplied stale map
+objects cannot replace the current-world map in this binding.
+
+The 3,120 retained audible cases now execute through this composed binding,
+including refreshed profile-index reads, reaction publication/reread and final
+world retention. The native matrix plus two scheduler completion checks pass in
+55.2 seconds. These fixtures still control terrain/audio dependencies; they are
+not uninterrupted scheduler-plus-planner-plus-remark native execution. Full
+live-world state publication, performance measurement and live schema adoption
+remain open. No deployment or live gameplay change.
