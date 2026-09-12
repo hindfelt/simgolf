@@ -34,6 +34,6 @@ export function stepOriginalWorldShot(world,id) {
  const outcome=originalMotionStep({...shot,seed:next.rngState,phaseCounter:next.phaseCounter},originalWorldMap(next).motion);
  next.rngState=outcome.rngState;next.revision++;
  if(outcome.stopped)next.shots.splice(index,1);
- else next.shots[index]={...shot,ball:outcome.ball,stateFlags:outcome.stateFlags,centreFlag:outcome.centreFlag};
+ else next.shots[index]={...shot,ball:outcome.ball,stateFlags:outcome.stateFlags,centreFlag:0};
  return {world:restoreOriginalWorld(serializeOriginalWorld(next)),outcome};
 }

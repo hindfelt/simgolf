@@ -11,15 +11,16 @@ import {originalBallStopped} from './original-ground-motion.js';
 // scheduling, launch preparation, RNG handoff, scoring and emitted effects.
 // world uses original coordinate/cell metadata and exact slope/height helpers.
 export function originalMotionStep(q,world) {
+ // 0x4281a5 clears this per-actor scratch flag before every motion update.
  const before=q.ball,cellX=before.x>>10,cellZ=before.z>>10;
  const cell=world.cellAt(cellX,cellZ),previousTerrainHeight=world.heightAt(before.x,before.z);
  let ball={...before,...originalBallPositionStep(before)};
  ball.verticalSpeed=originalGravityStep(ball);
  const sample=originalMotionSample({...ball,cellX,cellZ,terrainCode:cell.code},world.neighborTerrainAt??((x,z)=>world.cellAt(x,z).code));
- let rngState=q.seed,draws=0,stateFlags=q.stateFlags,centreFlag=q.centreFlag;
+ let rngState=q.seed,draws=0,stateFlags=q.stateFlags,centreFlag=0;
  const sounds=[];let captured=false,reflectedX=false,reflectedZ=false,landed=false,terrainStopped=false,luckAdjusted=false;
  if(ball.height<=1) {
-  const phase=originalGroundPhase({...q,before,ball},world);
+  const phase=originalGroundPhase({...q,before,ball,centreFlag:0},world);
   ({ball,centreFlag,rngState,draws,captured,reflectedX,reflectedZ}=phase);
   if(reflectedX)sounds.push(6);
   if(reflectedZ)sounds.push(6);

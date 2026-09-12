@@ -24,3 +24,8 @@ test('each reflected edge emits its collision sound before subsequent impact eff
   {...world,cellAt:()=>({...world.cellAt(),edgeFlags:5})});
  expect(a.reflectedX).toBe(true);expect(a.reflectedZ).toBe(true);expect(a.sounds).toEqual([6,6]);
 });
+test('each actor update resets the previous terrain centre scratch flag',()=>{
+ const a=originalMotionStep({...q,centreFlag:1,phaseCounter:1,ball:{...q.ball,x:20992,z:20*1024+64,height:0,verticalSpeed:0,speed:128}},
+  {...world,cellAt:(x,z)=>({...world.cellAt(),code:x===20&&z===20?10:1})});
+ expect(a.centreFlag).toBe(0);expect(a.ball.speed).toBe(120);expect(a.stopped).toBe(false);
+});

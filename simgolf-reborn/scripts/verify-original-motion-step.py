@@ -53,7 +53,7 @@ for i in range(360):
  for tick in range(400):
   sp=0x102000;u.reg_write(UC_X86_REG_EBP,0);u.reg_write(UC_X86_REG_ESP,sp);u.reg_write(UC_X86_REG_EDI,q['ball']['x']>>10)
   for name,a in [('x',0x577fdc),('z',0x577fe0),('height',0x577fe4),('speed',0x577fec),('verticalSpeed',0x577ff0),('heading',0x577fe8),('angularOffset',0x577ff4)]:write(a,q['ball'][name])
-  for a,v in [(0x820454,q['seed']),(0x831828,q['phaseCounter']),(0x577f18,q['stateFlags']),(sp+0x28,q['centreFlag']),(sp+0x30,-1)]:write(a,v)
+  for a,v in [(0x820454,q['seed']),(0x831828,q['phaseCounter']),(0x577f18,q['stateFlags']),(sp+0x28,0),(sp+0x30,-1)]:write(a,v)
   u.emu_start(0x4285bb,0x4285ff,count=1000)
   u.reg_write(UC_X86_REG_EDI,q['ball']['x']>>10)
   draws=0;captured=False;sounds=[]
