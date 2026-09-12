@@ -2018,3 +2018,22 @@ Animation updates remain explicitly scheduled by the caller; this extraction
 does not invent a browser-frame cadence or join planning to animation. Live
 world mapping, original effects and natural planned-shot completion remain
 open. The current production golfer simulation is unchanged.
+
+
+### Planned putt through clearance, animation and first movement
+
+`verify-original-prepared-putt-movement.py` retains all 36 native green-origin
+preparation comparisons, then uses the resulting packed actors, shared RNG and
+world flags as the next stage's input. Native clearance performs the actual
+animation-16 transition; no phase, club, heading or launch velocity is forced.
+The original eight-frame animation then releases the swing, which executes
+through impact and the first position step. All 36 match both actor records,
+RNG, effect order and animation/swing invocation counts in JavaScript.
+
+The native stages use separate emulators with an explicit checked preparation
+handoff. Additional actor slots are empty; clearance override and round clock
+are zero. Animation direction/counts are explicit, height returns zero and
+presentation/reaction effects are controlled. This is not an uninterrupted
+full native world run. The comparison ends before ground resolution, so it
+does not yet prove naturally planned putts rolling into cups. Live adoption,
+real effects and render cadence remain open; no deployment.
