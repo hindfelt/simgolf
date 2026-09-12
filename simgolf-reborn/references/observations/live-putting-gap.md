@@ -346,3 +346,29 @@ This closes the initial post-motion statistics branch. Raw actor-to-motion
 binding, intermediate effects, subsequent hazards/reactions, scoring settlement
 and live saved-world integration remain required. No live reports or gameplay
 have switched to these recovered records yet.
+
+### Native hazard drop and penalty branch
+
+`original-hazard-drop.js` recovers 0x42ceb2–0x42d110. Invalid terrain without the
+centre flag returns to the saved shot origin after reaction 2. Terrain 17 or the
+centre flag uses the native half-tile search along the original shot heading:
+exclude terrain 17/10, exclude nonzero candidates closer to the cup than the
+original endpoint, and select by distance minus four times terrain scatter. The
+origin is retained if nothing qualifies. Sound and reaction callbacks precede
+the search, and their actor changes are reread. Penalty animation, direction,
+delay, flags and signed stroke-limit behavior follow the original byte writes.
+The original landed tile locals remain available for later reactions.
+
+`verify-original-hazard-drop.py` matches 800 continuous native runs, 8,993 search
+candidates and 615 penalties. Native projection initialization, lookup, heading
+and distance routines execute; only sound/reaction bodies are controlled, with
+actor mutations included. Eight hazard/accounting checks pass, covering exact
+half-tile selection, callback-modified origin, no candidate fallback, no-penalty
+ground and stroke edge cases. Current verified distance-domain limits still
+apply; this is not evidence for arbitrary corrupted/off-map coordinates.
+
+The intervening 0x42cc88–0x42ceb2 wear/reaction branch and subsequent
+0x42d110–0x42d23c reactions must be assembled before invoking this after stopped
+shot accounting. Full motion/scoring and live-world adoption remain open. This
+records original behavior; it does not replace the live game's user-requested
+out-of-bounds drop behavior or claim original rules have been deployed.
