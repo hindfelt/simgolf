@@ -96,3 +96,5 @@ html.baron-ui { --baron-ink:#163725; --baron-panel:#203e2e; --baron-line:#9d9158
 .baron-ui #new-dialog select,.baron-ui #new-dialog input{max-width:100%}
 .baron-ui .baron-dialog-actions .menu-music{margin-top:0}
 @media(max-width:650px){.baron-ui .baron-dialog-actions #confirm-new{flex:1 0 100%;white-space:nowrap}.baron-ui .baron-dialog-actions #cancel-new{white-space:nowrap}}
+
+.baron-ui iframe#landscape-preview{width:100%;aspect-ratio:1.4;height:auto;display:block;min-height:260px}

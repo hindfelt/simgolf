@@ -1852,7 +1852,7 @@ function previewLandscape() {
   $("#confirm-new").disabled = false;
   const environment = $("#new-environment").value;
   const map = createGame(seed, style, environment);
-  drawTerrainPreview($("#landscape-preview"), map, environment);
+  drawTerrainPreview($("#landscape-preview"), environment, {seed,style});
   $("#landscape-summary").textContent =
     `${Object.values(map.tiles).filter((t) => t.type === "water").length} water tiles · ${Math.min(0, ...Object.values(map.elevation || {}))} to ${Math.max(0, ...Object.values(map.elevation || {}))} elevation · All terrain is editable.`;
 }

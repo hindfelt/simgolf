@@ -17,10 +17,10 @@ test('new-game actions remain reachable after scrolling on a phone',async({page}
 test('default new-game dialog uses Baron styling and updates the relief preview',async({page})=>{
  await page.goto('/?start=1');await page.getByRole('button',{name:'New Game',exact:true}).click();
  await expect(page.locator('html')).toHaveClass(/baron-ui/);
- const preview=page.locator('#landscape-preview');await expect(preview).toHaveAttribute('width','720');
- const before=await preview.evaluate(c=>c.toDataURL());
+ const preview=page.locator('#landscape-preview');await expect(preview).toHaveAttribute('data-ready','true',{timeout:30000});
+ const before=await preview.getAttribute('src');
  await page.locator('#new-environment').selectOption('desert');
- expect(await preview.evaluate(c=>c.toDataURL())).not.toBe(before);
+ await expect(preview).toHaveAttribute('data-ready','true',{timeout:30000});expect(await preview.getAttribute('src')).not.toBe(before);
  await expect(page.locator('#confirm-new')).toBeInViewport();
  await page.screenshot({path:'/tmp/fairway-new-course-desktop.png'});
  await page.setViewportSize({width:390,height:844});
