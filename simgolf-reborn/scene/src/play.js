@@ -795,12 +795,26 @@ function renderProSkills() {
   $("#course-skill-limit").textContent =
     `${category.name} · ${category.holes} completed holes · ${Number.isFinite(category.skillCap) ? `${category.skillCap * 10}% maximum per skill` : "No course skill cap"}.`;
 
-  $("#skill-list").innerHTML = Object.entries(PRO_SKILLS)
-    .map(
-      ([id, name]) =>
-        `<div class="pro-skill-row"><span>${name}</span><button data-skill="${id}" data-delta="-1" aria-label="Decrease ${name}" ${locked || !profile.skills[id] ? "disabled" : ""}>−</button><output>${effective[id] * 10}%${effective[id] < profile.skills[id] ? ` (${profile.skills[id] * 10}% saved)` : ""}</output><button data-skill="${id}" data-delta="1" aria-label="Increase ${name}" ${locked || !remaining || profile.skills[id] >= Math.min(10, category.skillCap) ? "disabled" : ""}>+</button></div>`,
-    )
-    .join("");
+  const skillList = $("#skill-list");
+  if (!skillList.children.length) {
+    skillList.innerHTML = Object.entries(PRO_SKILLS).map(([id, name]) =>
+      `<div class="pro-skill-row" data-skill-row="${id}"><div class="pro-skill-detail"><div class="pro-skill-heading"><span>${name}</span><output></output></div><div class="pro-skill-meter" role="progressbar" aria-label="${name} level" aria-valuemin="0" aria-valuemax="100"><span class="pro-skill-fill"></span><span class="pro-skill-cap" aria-hidden="true"></span></div></div><button data-skill="${id}" data-delta="-1" aria-label="Decrease ${name}">−</button><button data-skill="${id}" data-delta="1" aria-label="Increase ${name}">+</button></div>`
+    ).join("");
+  }
+  for (const [id] of Object.entries(PRO_SKILLS)) {
+    const row = skillList.querySelector(`[data-skill-row="${id}"]`);
+    const level = effective[id] * 10;
+    const saved = profile.skills[id] * 10;
+    const cap = Math.min(10, category.skillCap) * 10;
+    row.querySelector("output").textContent = `${level}%${level < saved ? ` (${saved}% saved)` : ""}`;
+    const meter = row.querySelector(".pro-skill-meter");
+    meter.setAttribute("aria-valuenow", level);
+    meter.setAttribute("aria-valuetext", `${level} percent; current course limit ${cap} percent${saved > level ? `; ${saved} percent saved` : ""}`);
+    row.querySelector(".pro-skill-fill").style.width = `${level}%`;
+    row.querySelector(".pro-skill-cap").style.left = `${cap}%`;
+    row.querySelector('[data-delta="-1"]').disabled = locked || !profile.skills[id];
+    row.querySelector('[data-delta="1"]').disabled = locked || !remaining || saved >= cap;
+  }
   $("#skill-list")
     .querySelectorAll("button")
     .forEach(

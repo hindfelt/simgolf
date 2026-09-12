@@ -142,3 +142,27 @@ test("recovery, putting, shaped shots and backspin alter actual shot state", () 
     );
   expect(error(putter)).toBeLessThan(error(novice));
 });
+
+for (const width of [390, 1440]) {
+  test(`skill bars show and update levels at ${width}px`, async ({page}) => {
+    await page.setViewportSize({width, height: 1000});
+    await page.goto('/?start=0');
+    await page.waitForFunction(() => !!window.__gameTest);
+    await page.locator('[data-mode="play"]').click();
+    await page.locator('#pro-skills').click();
+    const bar = page.getByRole('progressbar', {name: 'Power Hitter level', exact:true});
+    await expect(bar).toHaveAttribute('aria-valuenow','0');
+    const plus = page.getByRole('button', {name:'Increase Power Hitter',exact:true});
+    await plus.click();
+    await expect(bar).toHaveAttribute('aria-valuenow','10');
+    await expect(page.locator('[data-skill-row="power"] output')).toHaveText('10%');
+    await expect(plus).toBeFocused();
+    await expect(page.locator('#skill-points')).toHaveText('9 skill points available');
+    await expect.poll(() => bar.locator('.pro-skill-fill').evaluate(el => el.getBoundingClientRect().width / el.parentElement.clientWidth)).toBeCloseTo(.1, 2);
+    await page.screenshot({path:`/tmp/skill-bars-${width}.png`});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByRole('button',{name:'Decrease Power Hitter',exact:true}).click();
+    await expect(bar).toHaveAttribute('aria-valuenow','0');
+    await expect(page.locator('#skill-points')).toHaveText('10 skill points available');
+  });
+}
