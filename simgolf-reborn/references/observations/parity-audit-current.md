@@ -44,8 +44,8 @@ Next substantive progression work should start from the supplied manual's pro-ch
 
 The following dated protocol results are historical. The newer local ruleset-85
 run passed 507 checks with five private-reference skips before the latest
-regional/audio additions. A new full run is in progress; do not infer its result
-from the earlier run. See [regression record](../release/ruleset-85-live-regression.md).
+regional/audio additions. The subsequent regional/audio full run passed 518 checks with five explicit
+private-reference skips in 5.7 minutes. See [regression record](../release/ruleset-85-live-regression.md).
 
 ### Early regression evidence
 Full Playwright run: 153 tests, 152 passed, one bridge-removal browser failure (3.1 minutes). The earlier obsolete assertion forbidding starting-bridge removal was corrected to require restored water. The remaining browser test clicked under the expanded All toolbar; selecting the Landscape category exposes the same target. After correcting that UI flow, all eight course-edit/starting-bridge tests passed. Production source was unchanged during this audit. No full second rerun is claimed, and these prototype regressions do not prove original-game parity.

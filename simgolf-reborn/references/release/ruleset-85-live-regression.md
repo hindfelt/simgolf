@@ -32,3 +32,11 @@ skips are private original-file comparisons documented in [public CI](public-ci.
 all nine tests in those three reference/parser suites also passed separately
 with the local files present. The rerun used the local Chrome browser, not a
 GitHub runner or deployed server. The release limitations above still apply.
+
+## Regional buildings and applause rerun
+
+The full public-mode live suite completed after the regional facilities,
+placement-cache and applause changes: **518 passed, five private-reference
+skips, 523 total, 5.7 minutes**. Application source stayed fixed during this
+run. The stronger playback-clock cooldown test passed within it. This is local
+Chrome regression evidence; hosted and physical-device gates remain open.

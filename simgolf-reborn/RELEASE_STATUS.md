@@ -71,9 +71,8 @@ Uncommitted workspace changes are excluded from that push.
 - [Live putting and recovered-engine integration gap](references/observations/live-putting-gap.md)
 - [Latest broad live stability assessment](references/release/ruleset-85-live-regression.md)
 
-Before the latest regional/audio additions, the repaired ruleset-85 full local
-rerun passed 507 checks with five explicit
-private-reference skips (512 total, 5.6 minutes). The private-reference suites
+The latest regional/audio full local rerun passed 518 checks with five explicit
+private-reference skips (523 total, 5.7 minutes). The private-reference suites
 also passed separately with local files available. This is not a hosted stability
 assessment. Original-engine modules remain separate from the
 live simulation until their integration is explicitly verified.
