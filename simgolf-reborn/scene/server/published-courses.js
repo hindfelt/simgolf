@@ -21,8 +21,19 @@ export async function publishCourse(db,courseId,playerId,expectedRevision){
  throw fail(409,'The course is busy. Review and retry publication.');
 }
 export async function listPublishedCourses(db){
- const result=await db.prepare(`SELECT ${fields},p.name AS authorName FROM published_courses v JOIN players p ON p.id=v.author_id WHERE p.disabled_at IS NULL ORDER BY v.created_at DESC,v.id LIMIT 100`).all();
- return result.results;
+ return (await pagePublishedCourses(db)).courses;
+}
+export async function pagePublishedCourses(db,cursor=null){
+ let after=null;
+ if(cursor!==null){
+  const match=/^(\d{1,16}):([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.exec(cursor);
+  if(!match||!Number.isSafeInteger(Number(match[1])))throw fail(400,'Invalid course page cursor.');
+  after={time:Number(match[1]),id:match[2]};
+ }
+ const query=db.prepare(`SELECT ${fields},p.name AS authorName FROM published_courses v JOIN players p ON p.id=v.author_id WHERE p.disabled_at IS NULL ${after?'AND (v.created_at < ? OR (v.created_at = ? AND v.id > ?))':''} ORDER BY v.created_at DESC,v.id LIMIT 101`);
+ const rows=(await (after?query.bind(after.time,after.time,after.id):query).all()).results;
+ const courses=rows.slice(0,100),last=courses.at(-1);
+ return {courses,nextCursor:rows.length>100?`${last.createdAt}:${last.id}`:null};
 }
 export async function getPublishedCourse(db,id){
  const row=await db.prepare(`SELECT ${fields},p.name AS authorName,v.package FROM published_courses v JOIN players p ON p.id=v.author_id WHERE v.id=? AND p.disabled_at IS NULL`).bind(id).first();

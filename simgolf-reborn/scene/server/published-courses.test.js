@@ -1,7 +1,7 @@
 import {beforeEach,test,expect} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {createSharedCourse,setCourseMember} from './shared-courses.js';
-import {publishCourse,getPublishedCourse,listPublishedCourses} from './published-courses.js';
+import {publishCourse,getPublishedCourse,listPublishedCourses,pagePublishedCourses} from './published-courses.js';
 import {createPlaytestCourse} from '../src/simulation/playtest-course.js';
 import {restore,serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
@@ -18,6 +18,22 @@ async function ready(){
  await env.DB.prepare('UPDATE shared_courses SET state=?,revision=revision+1 WHERE id=?').bind(serialize(game),course.id).run();
  return {course,game};
 }
+test('course pages retain tied timestamps and stay stable after new publications',async()=>{
+ const {course,game}=await ready(),source=await publishCourse(env.DB,course.id,owner,game.protocol.revision);
+ const ids=Array.from({length:104},()=>crypto.randomUUID()).sort();
+ await env.DB.batch(ids.map((id,i)=>env.DB.prepare('INSERT INTO published_courses(id,course_id,author_id,title,digest,ruleset,design_revision,package,created_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(id,course.id,owner,'Archive '+i,'archive-'+i,source.ruleset,0,JSON.stringify(source.package),1000)));
+ const first=await pagePublishedCourses(env.DB);expect(first.courses).toHaveLength(100);expect(first.nextCursor).toBeTruthy();
+ const seen=first.courses.map(c=>c.id);
+ // Removing the cursor row must not invalidate the next page, and a new
+ // publication above the cursor must not duplicate or displace older rows.
+ await env.DB.prepare('DELETE FROM published_courses WHERE id=?').bind(seen.at(-1)).run();
+ await env.DB.prepare('INSERT INTO published_courses(id,course_id,author_id,title,digest,ruleset,design_revision,package,created_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),course.id,owner,'Newest','newest',source.ruleset,0,JSON.stringify(source.package),Date.now()+1000).run();
+ const second=await pagePublishedCourses(env.DB,first.nextCursor);
+ expect(second.courses).toHaveLength(5);expect(second.nextCursor).toBeNull();
+ expect(new Set([...seen,...second.courses.map(c=>c.id)]).size).toBe(105);
+ expect([...seen,...second.courses.map(c=>c.id)].sort()).toEqual([source.id,...ids].sort());
+ await expect(pagePublishedCourses(env.DB,'broken')).rejects.toMatchObject({status:400});
+});
 test('publication is playable, server-authored, idempotent and excludes private resort state',async()=>{
  const {course,game}=await ready();const version=await publishCourse(env.DB,course.id,owner,game.protocol.revision);
  expect(version.authorId).toBe(owner);expect(version.title).toBe('Tournament links');

@@ -3,15 +3,38 @@ import './shared-lobby.css';
 export function mountTournamentLobby(dialog,request,player,status){
  const invited=new URLSearchParams(safeDestination(location.pathname+location.search).split('?')[1]).get('event');
  const section=document.createElement('details');section.id='tournament-lobby';
- section.innerHTML='<summary>Tournament registration</summary><p>Online stroke-play preview. Everyone uses the same starting skills; thinking time pauses between shots. Events keep a fixed published course and accept one entry per account. Event names and rosters are visible to registered players.</p><form><label>Tournament title <input name="title" maxlength="80" required></label><label>Published course <select name="course" required></select></label><label>Rounds <select name="rounds"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Playing window <select name="duration"><option value="24">1 day</option><option value="72">3 days</option><option value="168" selected>7 days</option><option value="336">14 days</option></select></label><label>Player limit <input name="capacity" type="number" min="2" max="64" value="16" required></label><button>Create registration</button></form><button class="refresh-tournaments">Refresh tournaments</button><div class="tournament-list"></div>';
+ section.innerHTML='<summary>Tournament registration</summary><p>Online stroke-play preview. Everyone uses the same starting skills; thinking time pauses between shots. Events keep a fixed published course and accept one entry per account. Event names and rosters are visible to registered players.</p><form><label>Tournament title <input name="title" maxlength="80" required></label><label>Published course <select name="course" aria-label="Published course" required></select></label><label>Rounds <select name="rounds"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Playing window <select name="duration"><option value="24">1 day</option><option value="72">3 days</option><option value="168" selected>7 days</option><option value="336">14 days</option></select></label><label>Player limit <input name="capacity" type="number" min="2" max="64" value="16" required></label><button>Create registration</button></form><button class="refresh-tournaments">Refresh tournaments</button><div class="tournament-list"></div>';
  dialog.append(section);
- async function load(){
+ const courseSelect=section.querySelector('[name="course"]'),moreCourses=document.createElement('button');
+ moreCourses.type='button';moreCourses.textContent='Load more published courses';moreCourses.hidden=true;
+ courseSelect.closest('label').after(moreCourses);
+ let courseCursor=null,courseGeneration=0;
+ function appendCourses(courses){
+  const seen=new Set([...courseSelect.options].map(option=>option.value));
+  for(const course of courses){if(seen.has(course.id))continue;seen.add(course.id);const option=document.createElement('option');option.value=course.id;option.textContent=`${course.title} · ${course.authorName||'Course author'} · ${course.digest.slice(0,8)}`;courseSelect.append(option);}
+ }
+ moreCourses.onclick=async()=>{
+  const generation=courseGeneration;moreCourses.disabled=true;
   try{
-   const [{courses},{tournaments}]=await Promise.all([request('/api/published-courses'),request('/api/tournaments')]);
+   const page=await request('/api/published-courses?cursor='+encodeURIComponent(courseCursor));
+   if(generation!==courseGeneration)return;
+   appendCourses(page.courses);courseCursor=page.nextCursor||null;moreCourses.hidden=!courseCursor;
+   status(`${courseSelect.options.length} published courses available.`);
+  }catch(error){if(generation===courseGeneration)status(error.message);}
+  finally{if(generation===courseGeneration)moreCourses.disabled=false;}
+ };
+ async function load(){
+  const generation=++courseGeneration;moreCourses.disabled=true;
+  try{
+   const [coursePage,{tournaments}]=await Promise.all([request('/api/published-courses'),request('/api/tournaments')]);
+   if(generation!==courseGeneration)return;
+   const {courses}=coursePage;courseCursor=coursePage.nextCursor||null;moreCourses.hidden=!courseCursor;
    if(invited&&!tournaments.some(e=>e.id===invited)){const event=await request('/api/tournaments/'+invited);tournaments.unshift({...event,entrants:event.entrants.length});}
-   const select=section.querySelector('[name="course"]'),previous=select.value;select.replaceChildren();
-   for(const course of courses){const option=document.createElement('option');option.value=course.id;option.textContent=`${course.title} · ${course.digest.slice(0,8)}`;select.append(option);}if(courses.some(c=>c.id===previous))select.value=previous;
-   section.querySelector('form button').disabled=!courses.length;
+   const previous=courseSelect.value,selected=courseSelect.selectedOptions[0]?.cloneNode(true);courseSelect.replaceChildren();
+   appendCourses(courses);
+   if(selected&&!courses.some(c=>c.id===previous))courseSelect.append(selected);
+   if(previous)courseSelect.value=previous;
+   section.querySelector('form button:not([type="button"])').disabled=!courseSelect.options.length;
    const list=section.querySelector('.tournament-list');list.replaceChildren();if(!tournaments.length)list.textContent='No tournaments yet.';
    for(const event of tournaments){
     const details=document.createElement('details'),summary=document.createElement('summary'),body=document.createElement('div');summary.textContent=`${event.title} · ${event.entrants}/${event.capacity} · ${event.status}`;details.append(summary,body);list.append(details);
@@ -45,10 +68,10 @@ export function mountTournamentLobby(dialog,request,player,status){
     }
     details.addEventListener('toggle',()=>{if(details.open)void view();});if(event.id===invited)details.open=true;
    }
-  }catch(error){status(error.message);}
+  }catch(error){status(error.message);}finally{if(generation===courseGeneration)moreCourses.disabled=false;}
  }
  section.querySelector('form').onsubmit=async event=>{
-  event.preventDefault();const form=event.currentTarget,button=form.querySelector('button');button.disabled=true;
+  event.preventDefault();const form=event.currentTarget,button=form.querySelector('button:not([type="button"])');button.disabled=true;
   try{await request('/api/tournaments',{method:'POST',body:JSON.stringify({title:form.elements.title.value,publicationId:form.elements.course.value,rounds:Number(form.elements.rounds.value),capacity:Number(form.elements.capacity.value),durationHours:Number(form.elements.duration.value)})});status('Tournament registration created.');await load();}
   catch(error){status(error.message+' Refresh the tournament list before retrying creation.');button.disabled=false;}
  };

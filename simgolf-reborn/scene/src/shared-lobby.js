@@ -5,10 +5,15 @@ export function mountSharedLobby(dialog,request,player,status){
  section.innerHTML='<summary>Shared courses</summary><p>Build together as owner or editor, or watch as a spectator. Create or join scored events under Tournament registration.</p><p>Shared resorts keep running when you close the browser.</p><p>Your player ID: <code class="player-id"></code></p><form class="create-course"><label>New shared course name <input maxlength="80" required></label><button>Create shared course</button></form><button class="refresh-courses">Refresh courses</button><div class="course-list"></div>';
  section.querySelector('.player-id').textContent=player.id;dialog.append(section);
  const library=document.createElement('details');library.innerHTML='<summary>Published courses</summary><p>Practise a fixed course version made by another player. For scored online play, enter an event under Tournament registration.</p><button class="refresh-published">Refresh published courses</button><div class="published-list"></div>';section.append(library);
- async function loadPublished(){
+ const more=document.createElement('button');more.textContent='Load more courses';more.hidden=true;library.append(more);
+ let nextCursor=null,publishedBusy=false;
+ async function loadPublished(append=false){
+  if(publishedBusy)return;publishedBusy=true;more.disabled=true;
   try{
-   const {courses}=await request('/api/published-courses'),list=library.querySelector('.published-list');list.replaceChildren();
-   if(!courses.length)list.textContent='No published courses yet.';
+   const data=await request('/api/published-courses'+(append&&nextCursor?'?cursor='+encodeURIComponent(nextCursor):'')),{courses}=data,list=library.querySelector('.published-list');
+   if(!append)list.replaceChildren();
+   nextCursor=data.nextCursor||null;more.hidden=!nextCursor;
+   if(!courses.length&&!append)list.textContent='No published courses yet.';
    for(const course of courses){
     const row=document.createElement('p'),title=document.createElement('span'),button=document.createElement('button');
     title.textContent=`${course.title} · ${course.authorName} · version ${course.digest.slice(0,8)} `;
@@ -18,9 +23,11 @@ export function mountSharedLobby(dialog,request,player,status){
      catch(error){status(error.message);button.disabled=false;}
     };row.append(title,button);list.append(row);
    }
-  }catch(error){status(error.message);}
+   status(`${list.querySelectorAll('button').length} published courses loaded.`);
+  }catch(error){status(error.message);}finally{publishedBusy=false;more.disabled=false;}
  }
- library.querySelector('.refresh-published').onclick=loadPublished;library.addEventListener('toggle',()=>{if(library.open)void loadPublished();});
+ more.onclick=()=>loadPublished(true);
+ library.querySelector('.refresh-published').onclick=()=>loadPublished();library.addEventListener('toggle',()=>{if(library.open)void loadPublished();});
  async function load(){
   try{
    const {courses}=await request('/api/courses'),list=section.querySelector('.course-list');list.replaceChildren();

@@ -4,7 +4,7 @@ import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
 import {token,hash,cookie,names,setCookie,json,fail,sameOrigin,readJson,readText,rateLimit} from './security.js';
 import {createSharedCourse,listSharedCourses,setCourseMember} from './shared-courses.js';
-import {listPublishedCourses,getPublishedCourse} from './published-courses.js';
+import {pagePublishedCourses,getPublishedCourse} from './published-courses.js';
 import {createTournament,getTournament,listTournaments,joinTournament,leaveTournament,withdrawTournament,setTournamentStatus} from './tournaments.js';
 import {tournamentStandings} from './tournament-rounds.js';
 import {sealStatement,expireStatement,anonymizeFinalResults} from './tournament-results.js';
@@ -200,7 +200,7 @@ async function handle(request,env){
    return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):action==='withdraw'?await withdrawTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
   }
  }
- if(path==='/api/published-courses'&&request.method==='GET')return json({courses:await listPublishedCourses(env.DB)});
+ if(path==='/api/published-courses'&&request.method==='GET')return json(await pagePublishedCourses(env.DB,new URL(request.url).searchParams.get('cursor')));
  const published=path.match(/^\/api\/published-courses\/([a-f0-9-]{36})$/);
  if(published&&request.method==='GET')return json(await getPublishedCourse(env.DB,published[1]));
  const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members|publish))?$/);

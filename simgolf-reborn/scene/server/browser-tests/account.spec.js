@@ -74,3 +74,40 @@ test('earnings registration sends regional settings and shows them before joinin
  await page.getByLabel('Earnings competition title').fill('Desert coast');await page.getByLabel('Competition landscape').selectOption('coast');await page.getByLabel('Competition environment').selectOption('desert');await page.getByRole('button',{name:'Create earnings competition',exact:true}).click();
  await expect(page.getByText('Coastal course · bays and rolling headlands · Desert',{exact:true})).toBeVisible();expect(created).toBe(true);await page.getByText('Coastal course · bays and rolling headlands · Desert',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/simgolfer-regional-earnings-phone.png'});
 });
+
+test('published library appends older courses and retries failed pages without losing results',async({page})=>{
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
+ await page.route('**/api/courses',r=>reply(r,{courses:[]}));
+ const course=(id,title)=>({id,title,authorName:'Author',digest:'12345678abcdef'});let attempts=0;
+ await page.route('**/api/published-courses*',r=>{
+  const cursor=new URL(r.request().url()).searchParams.get('cursor');
+  if(!cursor)return reply(r,{courses:[course('one','Newest links')],nextCursor:'1000:next'});
+  expect(cursor).toBe('1000:next');
+  if(++attempts===1)return reply(r,{error:'Library temporarily unavailable'},503);
+  return reply(r,{courses:[course('two','Older island')],nextCursor:null});
+ });
+ await page.goto('/');await page.locator('#player-account').click();await page.getByText('Shared courses',{exact:true}).click();await page.getByText('Published courses',{exact:true}).click();
+ await expect(page.locator('.published-list')).toContainText('Newest links');
+ await page.getByRole('button',{name:'Load more courses'}).click();await expect(page.locator('#account-status')).toContainText('temporarily unavailable');
+ await expect(page.locator('.published-list')).toContainText('Newest links');
+ await page.getByRole('button',{name:'Load more courses'}).click();await expect(page.locator('.published-list')).toContainText('Older island');
+ await expect(page.getByRole('button',{name:'Practise this version'})).toHaveCount(2);await expect(page.getByRole('button',{name:'Load more courses'})).toBeHidden();
+ await page.getByRole('button',{name:'Refresh published courses'}).click();await expect(page.getByRole('button',{name:'Practise this version'})).toHaveCount(1);await expect(page.getByRole('button',{name:'Load more courses'})).toBeVisible();
+});
+
+test('tournament picker retains an older course across refresh and submits its immutable publication',async({page})=>{
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
+ let created=null;
+ await page.route('**/api/tournaments',r=>{if(r.request().method()==='POST')created=r.request().postDataJSON();return reply(r,{tournaments:[]});});
+ await page.route('**/api/published-courses*',r=>{
+  const older=new URL(r.request().url()).searchParams.has('cursor');
+  return reply(r,{courses:[{id:older?'old-publication':'new-publication',title:older?'Old island':'New links',authorName:'Author',digest:'abcdef123456'}],nextCursor:older?null:'1000:older'});
+ });
+ await page.goto('/');await page.locator('#player-account').click();await page.getByText('Tournament registration',{exact:true}).click();
+ const select=page.getByLabel('Published course',{exact:true});await expect(select).toHaveValue('new-publication');
+ await page.getByRole('button',{name:'Load more published courses'}).click();await expect(select.locator('option')).toHaveCount(2);await expect(select).toHaveValue('new-publication');
+ await select.selectOption('old-publication');await page.getByRole('button',{name:'Refresh tournaments'}).click();await expect(select).toHaveValue('old-publication');
+ await page.getByRole('button',{name:'Load more published courses'}).click();await expect(select.locator('option')).toHaveCount(2);
+ await page.getByLabel('Tournament title',{exact:true}).fill('Older course cup');await page.getByRole('button',{name:'Create registration',exact:true}).click();
+ await expect.poll(()=>created?.publicationId).toBe('old-publication');await expect(page.locator('#account-status')).toHaveText('Tournament registration created.');
+});
