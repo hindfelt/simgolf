@@ -2447,3 +2447,17 @@ cases (1,523 have sound events), exact event comparison and defensive-copy
 validation, restored terrain planning and dispatcher handoff. This supplies
 events to the integration caller; production browser playback and full live
 engine adoption remain to be connected.
+
+### Scheduler presentation queue
+
+The terrain scheduler now collects sound events returned by planner and other
+effect resolvers. Its result exposes the ordered events once per loop, including
+when the loop returns a continuation. The dispatcher also exposes a draining
+queue for callers that own their scheduling. Events are copied before collection
+and remain outside saved simulation state; draining twice returns no duplicates.
+
+Nine focused checks pass. The existing 300 three-tick native golfer sequences
+still match shared state, actors, holes, RNG and calls, with 52 planner calls
+in that matrix. This closes event transport through the scheduler wrapper; it
+does not yet supply production sound-ID mapping or enable the recovered loop
+in the live browser game.

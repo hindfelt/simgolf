@@ -16,3 +16,12 @@ test('async planner bindings and unresolved effects fail explicitly',()=>{
  expect(()=>originalGolferEffects(undefined,()=>Promise.resolve({}))({address:0x4235c0},{})).toThrow('binding unavailable');
  expect(()=>originalGolferEffects()({address:0x4096e0},{})).toThrow('explicit resolver');
 });
+
+test('external sounds are copied and a malformed queue fails explicitly',()=>{
+ const sounds=[{address:0x447a30,args:[4]}];
+ const dispatch=originalGolferEffects((event,state)=>({state,soundEvents:sounds}));
+ dispatch({address:1},{seed:3});sounds[0].args[0]=9;
+ expect(dispatch.drainSoundEvents()[0].args).toEqual([4]);
+ expect(dispatch.drainSoundEvents()).toEqual([]);
+ expect(()=>originalGolferEffects((event,state)=>({state,soundEvents:Promise.resolve([])}))({address:1},{})).toThrow('synchronous');
+});

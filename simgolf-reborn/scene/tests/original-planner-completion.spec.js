@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
+import {originalGolferEffects} from '../src/simulation/original-golfer-effects.js';
 import {originalPlannerEffect} from '../src/simulation/original-planner-effect.js';
 import {applyOriginalPlannerActor} from '../src/simulation/original-planner-actor.js';
 import {applyOriginalPlannerResult} from '../src/simulation/original-planner-result.js';
@@ -69,4 +70,15 @@ test('planner returns captured sound events without exposing the effect-owned li
  result.soundEvents[0].args[0]=99;expect(soundEvents[0].args[0]).toBe(1);
  expect(()=>originalPlannerEffect(event,snapshot(),q,{map:{planning:middleMap(q)}},
   {...middleEffects(q),readSoundEvents:()=>Promise.resolve([])})).toThrow('synchronous');
+});
+
+test('scheduler dispatcher drains planner sounds in invocation order only once',()=>{
+ let call=0;
+ const dispatch=originalGolferEffects(undefined,()=>({context:q,dependencies:{map:{planning:middleMap(q)}},
+  effects:{...middleEffects(q),readSoundEvents:()=>[{address:0x447a30,args:[++call]}]}}));
+ const a=dispatch(event,snapshot()),b=dispatch(event,snapshot());
+ a.soundEvents[0].args[0]=999;
+ expect(dispatch.drainSoundEvents()).toEqual([{address:0x447a30,args:[1]},{address:0x447a30,args:[2]}]);
+ expect(dispatch.drainSoundEvents()).toEqual([]);
+ expect(a.state.seed).toBe(b.state.seed);
 });
