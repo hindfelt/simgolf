@@ -2,6 +2,7 @@ import {originalWalkingQueue} from './original-walking-queue.js';
 import {originalWalkingPartner} from './original-walking-partner.js';
 import {originalWalkingWatch} from './original-walking-watch.js';
 import {originalWalkingBallDestination} from './original-walking-ball-destination.js';
+import {originalWalkingTeeDestination} from './original-walking-tee-destination.js';
 
 // Continuous preparation from 0x4290ca through ball destination selection.
 export function originalWalkingPreparation(snapshot, resolve) {
@@ -12,5 +13,7 @@ export function originalWalkingPreparation(snapshot, resolve) {
     cupHeading: partner.cupHeading, followPartner: partner.followPartner};
   if (watch.next !== '0x42960b') return result;
   const destination = originalWalkingBallDestination({...watch.state, cupHeading: partner.cupHeading, followPartner: partner.followPartner});
-  return {...result, ...destination};
+  if (destination.next !== '0x4297c7') return {...result, ...destination};
+  const tee = originalWalkingTeeDestination({...destination.state, waitingGroups: queue.waitingGroups});
+  return {...result, ...destination, ...tee};
 }

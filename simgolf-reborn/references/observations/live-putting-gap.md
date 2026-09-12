@@ -951,3 +951,20 @@ include mixed green/rough/water, edge positions, both actor parities, missing
 balls and overrides. Walking preparation now invokes this branch after watch
 checks; both composition tests pass. No-ball/tee destinations, later service
 selection and movement at 0x429f27 remain open, as does live integration.
+
+### Tee destination and initial service admission
+
+`original-walking-tee-destination.js` recovers 0x4297c7–0x429947:
+class/style selection of tee coordinates, native stance offset, waiting-group
+spacing from hole direction and actor parity, and the two signed actor-value
+thresholds leading to service search at 0x429947 or continuation at 0x429a84.
+The thresholds preserve doubled queue-count overflow and flag adjustments;
+this does not assign unverified human-readable meanings to the two counters.
+
+1,800 native cases match tee positions, final destinations and service branches
+using real heading calculations. Fixtures cover class/style alternatives,
+direction bytes, actor parity, flag combinations, counter values and signed
+queue overflow. Walking preparation connects the no-ball/override branch to
+this helper. Three focused composition tests pass, including missing-ball tee
+selection followed by service admission. Actual facility lookup, later movement,
+continuous whole-preparation native verification and live integration remain open.
