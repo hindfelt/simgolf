@@ -273,3 +273,26 @@ and tutorial exits are covered by the separate verifier above. Planner, reaction
 projection, partner-refresh and scoring effects are controlled resolvers. Real
 resolver wiring, tutorial/walking/moving-ball branches, raw actor persistence and
 live original-world adoption remain open. No live physics changed in this step.
+
+### Swing progress and impact effects
+
+`original-swing-progress.js` recovers 0x42bb3b–0x42bdb5 for swing phases 2 and
+later. It retains signed byte phase comparisons, phase wrap, phase-2 stance
+rotation, animation clamping, the impact frame and effect ordering. Impact sound
+selection uses native style/club/terrain precedence; reaction callbacks can change
+the club before sound selection. The original once-only impact flag, terrain-2
+callback, target callback and selected-golfer effect remain explicit resolver calls.
+At phase 32 the original flag can end the swing and place the golfer relative to
+the saved shot origin, with half-size stance offsets for putts. Early frames wait
+unless the impact flag is already set; eligible frames return motion.
+
+`verify-original-swing-progress.py` executes the continuous native range in 3,000
+cases. All match complete actor records, ordered effect calls, seed and exit:
+1,951 motion and 1,049 skip, with 518 controlled effect calls. Inputs include
+signed-byte edge cases, callback mutations, club/style combinations and both
+stance scales. Thirteen swing/preparation/entry checks pass.
+
+The phase-1 clearance gate at 0x42b825–0x42bb3b is still required before this can
+join the normal actor path; it scans other golfers and consumes timing RNG.
+Effect bodies, complete motion/scoring assembly and live world integration remain
+open. This module does not change live browser animations or sound behavior yet.
