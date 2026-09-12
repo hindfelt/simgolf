@@ -1,10 +1,11 @@
-import {originalActorAction} from './original-actor-action.js';
+import {originalActorShotContinuation} from './original-actor-action.js';
+import {originalActorWalkingDecision} from './original-actor-walking-decision.js';
 import {originalActorMotionContext} from './original-actor-motion-context.js';
 import {originalActorBallMotion} from './original-actor-ball-motion.js';
-// Recovered actor actions plus their motion continuation. Walking, tutorial
+// Recovered walking, shot actions and their motion continuation. Tutorial
 // and retry continuations remain explicit until their bodies are recovered.
 export function originalActorTurn(snapshot,resolve,resolveSpecial){
- const action=originalActorAction(snapshot,resolve);
+ const action=originalActorShotContinuation(originalActorWalkingDecision(snapshot,resolve),resolve);
  if(action.next!=='motion')return action;
  const b=action.state.actors[action.state.actorId],a=new DataView(b.buffer,b.byteOffset,b.byteLength);
  // 0x42bdb5: zero horizontal speed skips even with nonzero vertical velocity.

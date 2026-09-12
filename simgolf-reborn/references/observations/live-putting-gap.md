@@ -1675,3 +1675,26 @@ projection and slope effects are controlled. It does not verify arbitrary maps,
 real effect bodies, subsequent shot execution, multi-tick scheduling or live
 adoption. The full actor-turn module still needs this walking continuation
 integrated before authoritative live persistence can use the combined flow.
+
+
+### Walking integrated into the recovered actor turn
+
+`original-actor-turn.js` now executes the combined decision/walking flow,
+then shares the existing shot continuation before ball motion. Extracting
+`originalActorShotContinuation` avoids executing the decision prefix twice.
+Putt accounting updates the packed hole record as well as its separate counter
+view when the full snapshot includes both.
+
+The expanded `verify-original-actor-turn.py` passes 1,500 uninterrupted native
+turns with 126 walking entries, 99 planner calls, 66 actor-position changes and
+182 ball-motion exits. The remaining exits are 1,302 skips and 16 tutorial
+continuations. All actor and hole bytes, putt counters, visitor assignments,
+shared flags, selection/tracking, RNG and calls match. Packed hole bytes are
+compared directly, without reconstructing their counters in the assertion.
+The prior 1,500 actor-action comparisons and the active-ball-motion Playwright
+test also pass.
+
+This verifies one-turn composition on uniform terrain with controlled planner,
+reaction, projection and slope helpers. Tutorial/retry continuations, actual
+helper effects, arbitrary-world adapters, multi-tick scheduling and production
+adoption remain open. No live renderer or hosted rules changed here.
