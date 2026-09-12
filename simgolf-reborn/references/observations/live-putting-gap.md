@@ -1800,3 +1800,23 @@ recovered planner output. All six pass. The prior full planner comparison
 also runs within this oracle. This establishes output persistence for the
 covered planner cases, not input-context construction, real reaction effects,
 scheduler invocation or live-game integration; those remain open.
+
+
+### Planner input reads current packed actor/shared state
+
+`originalPlannerInput` replaces actor, linked-partner class/reaction, ball
+coordinates, ability fields, range skills, shared seed/cache/diagnostics/landing
+and hole counter with values from the packed scheduler snapshot. Launch
+settings and search scratch remain explicit context. The linked partner is
+read via signed word +0xaa; it is not assumed to be actorId XOR 1.
+
+`verify-original-planner-input.py` runs six complete native automatic planners,
+builds the recovered planner input through this adapter, and applies its
+outputs through the earlier result commit. Native actor/adjacent records,
+complete hole records and shared outputs all match. The oracle now captures
+the native linked partner's class/reaction before planner entry, strengthening
+that input boundary beyond the earlier fixed partner fixture.
+
+Remaining integration includes launch-setting/global provenance, search
+scratch initialization, genuine reaction effects and invoking this pipeline
+from the scheduler's planner effect. This does not change the live game.
