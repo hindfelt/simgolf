@@ -2492,3 +2492,21 @@ Five composition checks pass, including an actual active-ball movement against
 restored terrain, packed waiting-actor RNG carry-through, pause behavior and
 failure/source isolation. The eight existing boundary checks also pass. These
 are composed local checks, not a new uninterrupted native world-tick oracle.
+
+### Resume a suspended golfer pass without replaying slots
+
+The packed loop now has an explicit resumption entry. The caller completes only
+its pending native actor continuation; the loop then starts at the following
+slot. Calls and RNG-draw accounting accumulate without repeating the earlier
+actors. The terrain wrapper retains the speculative sound batch and appends new
+resolver sounds for publication only after completion. The caller must still
+provide the tutorial UI effects; this does not skip or implement those effects,
+and the composed world boundary still refuses an incomplete golfer result.
+
+Four resumption checks pass, including the actual first-hole aiming preparation
+continuation, repeated suspension, source isolation and pending audio ordering.
+Nine resumption/composition checks pass together. All 300 retained three-tick
+native scheduler sequences still match actors, holes, shared state, calls and
+RNG (55 walking entries, 52 planner calls, 32 position changes). That native
+matrix contains completed passes; resumed tutorial behavior is locally composed
+verification, not a new native tutorial oracle. Live engine adoption remains open.
