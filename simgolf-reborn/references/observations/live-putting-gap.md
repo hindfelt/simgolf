@@ -1947,3 +1947,20 @@ counts and impact-reaction flags. Native trig/position logic executes; height,
 sound, visual and reaction effects are controlled. These invocations establish
 stage handoffs, not the original full world/render cadence. Ground friction,
 continued movement/cup capture, real effects and live adoption remain open.
+
+
+### Swing release through continued rolling
+
+`verify-original-swing-ground-movement.py` extends the animation/impact
+sequence through the full actor ball-motion function and five further updates.
+Native and JS retain the ball state and shared RNG, refresh pre-movement tile
+locals each update, and advance the supplied phase counter for continued
+movement. No velocity is substituted after impact.
+
+All 500 sequences (3,000 motion updates) match actor bytes, final RNG and
+ordered effects. Cases cover terrain 1/2, varied headings and positive launch
+speeds on uniform terrain with roll coefficient 3; native resistance, ground
+contact and motion-tail code execute. Height/slope and presentation/reaction
+queries remain controlled. Speeds remain above the stop threshold, and no
+cup flags are placed, so stopping/accounting and cup capture are not covered.
+Full world/render cadence, real effects and live adoption remain unfinished.
