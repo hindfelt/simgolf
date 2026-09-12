@@ -1,3 +1,4 @@
+import {originalStandardPhrase} from './original-standard-phrase.js';
 const signedByte=n=>(n<<24)>>24;
 // 0x469330–0x4694a0, before standard phrase cases or common postprocessing.
 export function originalPhraseEntry(q){
@@ -16,4 +17,12 @@ export function originalPhraseEntry(q){
   }
  }
  throw Error('Original phrase request table is missing its terminator.');
+}
+
+// Personal overrides have priority; only a standard route resets remark style.
+export function originalSelectedPhrase(q){
+ const entry=originalPhraseEntry(q);
+ if(entry.next!=='standard')return entry;
+ const selected=originalStandardPhrase({...q,state:entry.state});
+ return {...selected,hole:entry.hole};
 }
