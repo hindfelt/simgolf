@@ -1389,3 +1389,5 @@ Original remark dispatch composition: complete phrases now feed actual named dis
 Original remark eligibility now composes with complete message dispatch from packed actor/hole snapshots.10763 uninterrupted native comparisons and10 related tests pass, including suppressed-state preservation and score-kind remapping. History, happiness/social/audio composition and live initialization/wiring remain unfinished.
 
 Original remark history preparation now follows complete message dispatch, preserving kind19 early return and kind35 speech-before-repeat-check ordering.2080 native stage comparisons and7 related tests pass. Full continuous preparation composition, downstream reactions/social/audio and live initialization/wiring remain unfinished.
+
+Continuous remark eligibility→phrase→display→history verification now matches10763 original executions;7 related tests pass. Prepared actor snapshots and voice offsets are checked at the adjustment boundary. Downstream adjustment state mapping, remaining social/audio logic and live integration remain unfinished.
