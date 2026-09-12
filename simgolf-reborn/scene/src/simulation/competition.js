@@ -269,8 +269,8 @@ export async function restoreCompetition(raw) {
     data.journal.length > 10000
   )
     throw Error("Unsupported competition save.");
-  if (!compatibleGolfRuleset(data.ruleset,data.config.course?.content?.environment))
-    throw Error("This desert tournament uses older tree physics. Its record is preserved; start a new tournament from its course.");
+  if (!compatibleGolfRuleset(data.ruleset,data.config.course?.content?.environment,data.config.course?.content?.landscapeStyle))
+    throw Error("This tournament uses older tree physics. Its record is preserved; start a new tournament from its course.");
   let ticks = 0;
   for (const row of data.journal) {
     if (row?.type === "ticks") {

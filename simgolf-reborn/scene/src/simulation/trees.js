@@ -1,6 +1,6 @@
 import {treeScale} from "./tree-scale.js";
 import { GRID, center, key } from "./world.js";
-import { sceneryTrees } from "./scenery-trees.js";
+import { sceneryTrees, sceneryTreeVisible } from "./scenery-trees.js";
 import { elevationAt } from "./landforming.js";
 export const TREE = {
   radius: 2.2,
@@ -16,7 +16,9 @@ function collisionTrees(g) {
       ...TREE,
     }));
   for (const tree of sceneryTrees(g.landscapeStyle === "coast")) {
-    if (g.removedTrees?.[key(tree.c, tree.r)]) continue;
+    if (g.landscapeStyle === "coast"
+      ? !sceneryTreeVisible(g, tree.c, tree.r)
+      : g.removedTrees?.[key(tree.c, tree.r)]) continue;
     trees.push({
       ...tree,
       radius: TREE.radius * tree.size,

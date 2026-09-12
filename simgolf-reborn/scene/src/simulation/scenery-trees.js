@@ -1,4 +1,17 @@
-import { GRID, key, riverZ } from "./world.js";
+import { GRID, key, riverZ, inBounds, blocked } from "./world.js";
+import { coastalWater } from "./coast.js";
+import { ownsLand } from "./land-purchase.js";
+
+// The unowned coast is generated deterministically, just like the purchase preview.
+// Once owned, explicit edits (including drained water) take precedence.
+export function sceneryTreeVisible(g, c, r) {
+  const inside = inBounds(c, r);
+  if (inside && g.removedTrees?.[key(c, r)]) return false;
+  if (g.landscapeStyle !== "coast") return true;
+  if (ownsLand(g, c, r)) return g.tiles[key(c, r)]?.type !== "water";
+  return (inside && blocked(c, r)) || !coastalWater(g.landSeed ?? 2002, c, r);
+}
+
 const cache = new Map(),
   cells = new Map();
 // Reproduces the existing presentation seed, including each tree's detail draws.
@@ -68,5 +81,5 @@ export function sceneryTrees(coastal = false) {
 export function sceneryTreeAt(g, c, r) {
   const coastal = g.landscapeStyle === "coast";
   sceneryTrees(coastal);
-  return !g.removedTrees?.[key(c, r)] && cells.get(coastal).has(key(c, r));
+  return cells.get(coastal).has(key(c, r)) && sceneryTreeVisible(g, c, r);
 }

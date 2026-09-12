@@ -1,6 +1,6 @@
 import {treeScale} from "./simulation/tree-scale.js";
-import {coastalWater} from './simulation/coast.js';
-import { key, GRID, inBounds } from "./simulation/world.js";
+import {sceneryTreeVisible} from './simulation/scenery-trees.js';
+import { key, GRID } from "./simulation/world.js";
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import {
@@ -402,10 +402,7 @@ export function buildFlora(
           );
           dummy.rotation.set(...(t.r || [0, 0, 0]));
           const c=Math.floor((tree.x-GRID.minX)/2),r=Math.floor((tree.z-GRID.minZ)/2);
-          const flooded=g.landscapeStyle==='coast' && (inBounds(c,r)
-            ? g.tiles[tree.k]?.type==='water' : coastalWater(g.landSeed,c,r));
-          const removed=g.removedTrees?.[tree.k] && inBounds(c,r);
-          dummy.scale.set(...(flooded || removed ? [0,0,0] : t.s || [1,1,1]));
+          dummy.scale.set(...(!sceneryTreeVisible(g,c,r) ? [0,0,0] : t.s || [1,1,1]));
           dummy.updateMatrix();
           mesh.setMatrixAt(i, dummy.matrix);
         });
