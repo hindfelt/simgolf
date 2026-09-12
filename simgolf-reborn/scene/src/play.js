@@ -1843,7 +1843,13 @@ function describeEnvironment() {
   $("#environment-summary").textContent =
     `${selected.scenery}. Includes ${FACILITIES[selected.recreation].name.toLowerCase()} recreation.`;
 }
-$("#new-environment").onchange = () => { describeEnvironment(); previewLandscape(); };
+$("#new-environment").onchange = () => {
+  // Start with the region's characteristic terrain; the landscape selector
+  // remains available for players who prefer an inland property.
+  $("#new-landscape").value = ["tropical", "links"].includes($("#new-environment").value) ? "coast" : "river";
+  describeEnvironment();
+  previewLandscape();
+};
 describeEnvironment();
 $("#new-landscape").innerHTML = Object.entries(LANDSCAPES)
   .map(([id, label]) => `<option value="${id}">${label.split(" · ")[0]}</option>`)

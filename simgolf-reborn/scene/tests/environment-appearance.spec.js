@@ -36,11 +36,17 @@ test('new-game environment selector refreshes the rendered preview without chang
   await page.locator('#new-environment').selectOption(environment);
   const frame=page.locator('#landscape-preview');
   await expect(frame).toHaveAttribute('data-ready','true');
-  expect(new URL(await frame.getAttribute('src'),page.url()).searchParams.get('environment')).toBe(environment);
-  views.push(await page.frameLocator('#landscape-preview').locator('canvas').screenshot());
+  const query=new URL(await frame.getAttribute('src'),page.url()).searchParams;
+  expect(query.get('environment')).toBe(environment);
+  expect(query.get('landscape')).toBe(environment==='parklands'?'river':'coast');
+  views.push(await page.frameLocator('#landscape-preview').locator('canvas').screenshot({path:`/tmp/baron-new-${environment}.png`}));
   expect(await page.locator('#new-seed').inputValue()).toBe(seed);
  }
  expect(views[0].equals(views[1])).toBe(false);
  expect(views[1].equals(views[2])).toBe(false);
  await expect(page.locator('#environment-summary')).toContainText('windswept');
+ await page.locator('#new-landscape').selectOption('river');
+ await expect(page.locator('#landscape-preview')).toHaveAttribute('data-ready','true');
+ const query=new URL(await page.locator('#landscape-preview').getAttribute('src'),page.url()).searchParams;
+ expect(query.get('environment')).toBe('links');expect(query.get('landscape')).toBe('river');
 });

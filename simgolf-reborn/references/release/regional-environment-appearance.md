@@ -121,3 +121,9 @@ pro-shop implementation in training facilities now delegates to the regional
 shop model. Twenty-six regional, cart, parking, swimming and training checks
 pass; the production build passes. Garage and swim variants were visually
 reviewed. Service behavior remains unchanged. Not deployed.
+
+## Regional starting layouts — 12 September 2026
+
+Changing the new-game environment to Tropical or Links now selects Coastal terrain. Players can still select an inland landscape afterward; the seed is retained. Links scenery uses dense, low gorse foliage without miniature tree trunks. Existing saved terrain is unchanged.
+
+Verified the actual new-game iframe views for Parklands, Tropical and Links, including an explicit return to River valley. The environment appearance, planted regional tree and regional collision suites passed all 13 checks. The production build passed. This verification is local, not a deployment confirmation.

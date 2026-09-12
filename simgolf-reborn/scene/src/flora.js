@@ -194,8 +194,20 @@ export function buildFlora(
           if(index===2)t.c=new THREE.Color(links?0x9e9b57:0xb6b49b);
         }
       });
-      // Open canopies leave visible branches, instead of dense temperate crowns.
-      leaves.splice(starts[2],leaves.length-starts[2],...leaves.slice(starts[2]).filter((_,i)=>i%2===0));
+      if (links) {
+        // Gorse grows as dense, ground-hugging bushes, not miniature trees.
+        // Keep each plant's position and horizontal footprint for saved edits.
+        trunks.length=starts[0];branches.length=starts[1];
+        for (let i=starts[2];i<leaves.length;i++) {
+          const leaf=leaves[i];
+          leaf.p[1]=ground+(leaf.p[1]-ground)*.45;
+          leaf.s[1]*=.7;
+          leaf.c=new THREE.Color(i%7===0?0xc5b34b:0x707843);
+        }
+      } else {
+        // Desert scrub has open canopies and visible branches.
+        leaves.splice(starts[2],leaves.length-starts[2],...leaves.slice(starts[2]).filter((_,i)=>i%2===0));
+      }
     }
     arrays.forEach((a, index) => {
       for (let i = starts[index]; i < a.length; i++)
