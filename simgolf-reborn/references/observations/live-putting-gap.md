@@ -473,3 +473,11 @@ The checksum-pinned verifier matches 1,200 continuous native executions, includi
 `original-next-hole-transition.js` now composes entry with that tail and dispatches the explicit round-reset callback on 0x4280e4. Special last-hole visitors stop at their original dialogue branches (0x427f01/0x427efa), rather than silently skipping dialogue or its effects. The original 0x425b50 reset routine itself remains an explicit dependency.
 
 Verification: 2,000 continuous native tail executions match, plus 1,200 continuous composed transitions (1,034 controlled reset calls, 1,114 returns, remaining special dialogue exits). Seven focused tests pass. The composed verifier initializes a following-record sentinel because native lookahead reads one record past the newly selected hole. This remains standalone reconstruction: live golfers, missing normal settlement/high-score presentation and the reset/movement routine are not yet integrated.
+
+### Ordinary round-exit dependency resolved
+
+Inspection of 0x425b50 establishes that this dependency is a round-exit/reward routine, not a generic scorecard reset. Ordinary actor classes bypass three special reward/dialogue branches, clear ball X at 0xdc, set hole byte 0x29 to 19, and set global selection state 0x5a4440 to -1 when actor flags include 0x200. Ball Z and other records remain unchanged. The fourth apparent class branch compares `(class & 0xe0)` against 0x100 and is unreachable in the supplied executable; no invented class is substituted.
+
+`original-round-exit.js` executes ordinary cleanup and exposes the original special-class exits. `original-resolved-next-hole.js` now uses it in the composed transition, removing the ordinary 0x425b50 callback stub. Special classes 0x40, 0x60 and 0x80 still require their reward/dialogue continuation; no ordinary cleanup is applied ahead of those effects.
+
+Verification: 1,024 full native routine-entry cases cover every class byte (640 common exits). Another 1,200 continuous native next-hole transitions execute the real round-exit routine, with 1,022 calls and no substituted reset behavior; all match complete actor records, selection state and call order. Ten focused tests pass. This remains standalone original-engine composition, not live-game integration or full career/reward parity.
