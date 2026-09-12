@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { height } from "../landscape.js";
-export function housing(scene, type, x, z) {
+export function housing(scene, type, x, z, environment=null) {
+  const tropical=environment==='tropical',links=environment==='links';
+  const wall=tropical?0xba925e:links?0xb8b6a2:0xe0d1aa,trim=tropical?0x6b4930:0x586b59;
   const group = new THREE.Group();
   group.position.set(x, height(x, z), z);
   const box = (w, h, d, color, x, y, z) => {
@@ -23,10 +25,10 @@ export function housing(scene, type, x, z) {
     for (const x of [-0.55, 0, 0.55])
       box(0.2, 0.35, 0.03, 0x497348, x, 1.4, -0.42);
   } else {
-    box(3.8, 2.4, 3.4, 0xe0d1aa, 0, 1.3, 0);
+    box(3.8, 2.4, 3.4, wall, 0, 1.3, 0);
     const roof = new THREE.Mesh(
       new THREE.CylinderGeometry(0, 3.1, 1.5, 4),
-      new THREE.MeshStandardMaterial({ color: 0x80604b, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: tropical?0xcfb67b:links?0x5a686a:0x80604b, roughness: 1 }),
     );
     roof.rotation.y = Math.PI / 4;
     roof.position.y = 3.1;
@@ -36,7 +38,20 @@ export function housing(scene, type, x, z) {
     box(0.75, 1.5, 0.1, 0x586b59, 0, 0.85, 1.75);
     for (const x of [-1.25, 1.25]) box(0.7, 0.85, 0.1, 0x688c91, x, 1.5, 1.75);
     box(1.1, 0.1, 1, 0xb6ac8c, 0, 0.16, 2.25);
-    box(0.45, 1.2, 0.5, 0x9f8266, 1.1, 3.35, -0.4);
+    if(!tropical)box(0.45, 1.2, 0.5, links?0x999b8c:0x9f8266, 1.1, 3.35, -0.4);
+    if(tropical){
+      // A shaded timber veranda replaces the chimney and paved doorstep.
+      box(3.7,.18,1,0xaa8654,0,.22,2.15);
+      box(3.8,.13,1.15,0xcfb67b,0,2.5,2.08);
+      for(const side of [-1,1])box(.12,2.25,.12,trim,side*1.7,1.38,2.55);
+      for(let px=-1.75;px<1.9;px+=.25)box(.035,2.2,3.43,trim,px,1.3,0);
+    }else if(links){
+      for(let y=.3;y<2.5;y+=.3)box(3.83,.025,3.43,0x8b9084,0,y,0);
+    }
+    for(const side of [-1,1]){
+      box(.08,.85,.8,0x526d66,side*1.94,1.45,-.3);
+      box(.13,.06,.85,wall,side*1.97,1.45,-.3);
+    }
   }
   scene.add(group);
   return group;

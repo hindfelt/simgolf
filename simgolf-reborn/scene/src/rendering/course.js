@@ -457,7 +457,7 @@ export function buildCourseView(scene) {
     const p = center(f.c, f.r);
     let group;
     if (["building-lot", "home"].includes(f.type))
-      group = housing(scene, f.type, p.x, p.z);
+      group = housing(scene, f.type, p.x, p.z, environment);
     else if (["marina", "helipad", "airstrip"].includes(f.type))
       group = transportFacility(scene, f.type, p.x, p.z);
     else if (f.type === "lighthouse") group = lighthouse(scene, p.x, p.z);

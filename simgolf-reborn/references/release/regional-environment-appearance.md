@@ -93,3 +93,12 @@ revision is unchanged. Rebuilds refresh facility elevation from the landscape.
 Seven checks pass, including real placed-shop environment/rotation replacement,
 no duplicate groups, hotel connection lighting and regional previews. Production
 build passed. This is local work awaiting publication.
+
+## Regional homes
+
+Homes now receive the current environment through the course factory. Tropical
+homes use timber battens, pale roofs and a shaded veranda without a chimney;
+Links homes use stone courses and slate. Side windows improve rotated views.
+The lot footprint and simulation/service rules are unchanged. Four regional
+renderer checks and the production build pass; rendered variants were reviewed.
+This remains local work, not a hosted release.
