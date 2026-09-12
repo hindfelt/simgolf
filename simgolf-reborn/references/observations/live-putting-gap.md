@@ -2057,3 +2057,27 @@ The JS comparison composes the existing motion stages and stops at the same
 pre-accounting/pre-capture boundary. The explicit two-emulator preparation
 handoff and timing limitations above still apply. Full scoring after natural
 planning, real terrain/effects and live adoption remain unfinished.
+
+
+### Original green coefficients produce naturally captured planned putts
+
+`verify-original-prepared-putt-native-ground.py` reads the executable's startup
+metadata at 0x4c0a38, using its bounce/roll coefficients in preparation and its
+bounce/roll/scatter coefficients during movement. Green coefficients are
+3/3/-1. The explicit JS planner roll coefficient must also be 3; retaining the
+older controlled fixture's 0 produces different launch/cache values and fails
+the joined comparison. No launch speed, heading or final position is injected.
+
+All 36 preparations and continued rolling sequences match actor records,
+shared RNG, effect order and update counts. Twenty-eight stop and eight enter
+capture at 0x42c3f4. The verifier asserts that all eight capture the target cup's
+tile, not the origin tile (whose flag is varied by the retained matrix).
+This closes natural target-capture coverage under the specified flat-map
+conditions. Earlier all-miss runs used controlled roll coefficient 0 and do not
+represent an original green's braking behavior.
+
+The comparison still ends before capture scoring or stopped-shot accounting.
+Separate native stage handoff, explicit animation/tick scheduling and controlled
+height/slope/effects remain. Planner metadata outside the relevant coefficients
+retains the search fixture's controls. This is not live original-world adoption
+or a deployment; full natural-shot scoring integration remains open.
