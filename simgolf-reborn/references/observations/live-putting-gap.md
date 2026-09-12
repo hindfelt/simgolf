@@ -1388,3 +1388,21 @@ retained routes and prior facing. The separate 1,400-case route-reaction
 matrix also passes. Mixed-world component coverage does not substitute for
 full live-world integration. Destination dispatch, unhappy departures,
 service arrivals and persistent live actor mapping remain unfinished.
+
+### Destination dispatch through both walking routes
+
+`original-walking-dispatch.js` now routes far-target continuations into the
+actual far-walking tick, preserving the prior facing captured by steering.
+It also forwards the synchronous effect resolver into near walking; that
+callback was previously omitted from the composition.
+
+The extended 500-case uninterrupted native matrix starts at 0x4290ca and
+continues through near or far movement: 492 completed/skipped ticks, eight
+service-arrival entries and 405 position changes. Full actor storage, RNG,
+ordered calls and exits match. Fixtures vary mixed terrain, facilities,
+queue state and actors, using traversal cost 2 and next-terrain input 1.
+Search/direction/distance/RNG helpers execute natively; cleanup, slope,
+identity, reaction and sound effects remain controlled. This supersedes the
+previous matrix stopping 365 cases at far-route entry. Service-arrival and
+unhappy-departure execution, earlier walking entry, persisted world mapping
+and live adoption are still incomplete.
