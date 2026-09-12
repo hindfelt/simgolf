@@ -501,3 +501,9 @@ The 0x427d38 section exposes two preceding summary bytes, establishing the full 
 `original-round-performance.js` covers 0x427d38–0x427e25: projected best score, signed relative-score averaging, original performance contributions and actor flag/delay threshold. `original-round-results.js` joins totals, score-list processing, announcement and this summary through the next-hole entry boundary. Meaning of the threshold's later actor behavior is not inferred from the flag alone.
 
 Verification: 1,600 native performance cases match. Revalidated 1,200 settlement-prefix, 1,200 completion-bookkeeping, 2,000 between-hole, 1,500 score-list, 1,200 composed-transition and 1,200 resolved-transition cases after correcting the layout. Twenty-two focused tests pass. Live-engine application, earlier hole-result presentation and special visitor rewards remain incomplete.
+
+### Continuous round finish
+
+`original-round-finish.js` composes the recovered result path with resolved next-hole progression from 0x427a53 through the ordinary return. Ongoing holes bypass result processing; completed courses update the score list and performance record before the actual ordinary exit. Presentation remains an explicit synchronous dependency. Special visitor branches and earlier per-hole settlement/match handling remain outside this recovered continuous path.
+
+The new verifier runs 1,500 complete native sequences without substituting the ordinary round-exit routine. Complete actor/completion records, score list, selection/record-holder state, text and 5,069 ordered calls match. Eight focused finish/performance/exit tests pass. This verifies composition across previous helper boundaries, but remains standalone engine reconstruction; it does not change live rounds or establish the broader original-game parity goal.
