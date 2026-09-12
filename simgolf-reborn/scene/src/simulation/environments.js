@@ -1,9 +1,9 @@
 // Regional substitutions listed in the supplied manual, printed page 19.
 export const ENVIRONMENTS = Object.freeze({
-  parklands: { name: "Parklands", recreation: "tennis-court" },
-  links: { name: "Links", recreation: "stable" },
-  desert: { name: "Desert", recreation: "spa" },
-  tropical: { name: "Tropical", recreation: "swim-club" },
+  parklands: { name: "Parklands", scenery: "Leafy trees, lush grass and a traditional clubhouse", recreation: "tennis-court" },
+  links: { name: "Links", scenery: "Open, windswept grassland, low gorse and stone buildings", recreation: "stable" },
+  desert: { name: "Desert", scenery: "Dry ground and sparse desert scrub", recreation: "spa" },
+  tropical: { name: "Tropical", scenery: "Palms, turquoise water, pale shores and thatched timber buildings", recreation: "swim-club" },
 });
 const recreation = new Set(
   Object.values(ENVIRONMENTS).map((e) => e.recreation),

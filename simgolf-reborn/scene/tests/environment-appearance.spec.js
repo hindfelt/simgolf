@@ -24,3 +24,23 @@ test('palm physics revisions migrate saves but retain explicit tournament bounda
  const p={version:84,ruleset:PRE_PALMS_RULESET,tick:10,revision:2,clients:[]};
  migrateProtocol(p);expect(p.version).toBe(PROTOCOL_VERSION);expect(p.tick).toBe(10);
 });
+
+test('new-game environment selector refreshes the rendered preview without changing the seed',async({page})=>{
+ test.setTimeout(60000);
+ await page.goto('/?start=1');
+ await page.getByRole('button',{name:'New Game',exact:true}).click();
+ await page.locator('#loading').waitFor({state:'hidden'});
+ await expect(page.locator('#new-dialog')).toBeVisible();
+ const seed=await page.locator('#new-seed').inputValue(),views=[];
+ for(const environment of ['parklands','tropical','links']){
+  await page.locator('#new-environment').selectOption(environment);
+  const frame=page.locator('#landscape-preview');
+  await expect(frame).toHaveAttribute('data-ready','true');
+  expect(new URL(await frame.getAttribute('src'),page.url()).searchParams.get('environment')).toBe(environment);
+  views.push(await page.frameLocator('#landscape-preview').locator('canvas').screenshot());
+  expect(await page.locator('#new-seed').inputValue()).toBe(seed);
+ }
+ expect(views[0].equals(views[1])).toBe(false);
+ expect(views[1].equals(views[2])).toBe(false);
+ await expect(page.locator('#environment-summary')).toContainText('windswept');
+});

@@ -1841,7 +1841,7 @@ $("#new-environment").innerHTML = Object.entries(ENVIRONMENTS)
 function describeEnvironment() {
   const selected = ENVIRONMENTS[$("#new-environment").value];
   $("#environment-summary").textContent =
-    `${selected.name || $("#new-environment").selectedOptions[0].textContent} scenery, with ${FACILITIES[selected.recreation].name.toLowerCase()} recreation.`;
+    `${selected.scenery}. Includes ${FACILITIES[selected.recreation].name.toLowerCase()} recreation.`;
 }
 $("#new-environment").onchange = () => { describeEnvironment(); previewLandscape(); };
 describeEnvironment();
