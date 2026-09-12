@@ -9,7 +9,7 @@ export function originalGroundResponse({
   rollCoefficient, forwardSlope, crossSlope, boundaryFlags, phaseCounter, seed,
 }) {
   if (!Number.isInteger(heading) || heading < 0 || heading > 0xffffffff ||
-      ![speed, forwardSlope, crossSlope, boundaryFlags].every(int32) || speed < 0 ||
+      ![speed, forwardSlope, crossSlope, boundaryFlags].every(int32) ||
       !Number.isInteger(rollCoefficient) || rollCoefficient < -128 || rollCoefficient > 127 ||
       !Number.isInteger(originTerrainCode) || originTerrainCode < -128 || originTerrainCode > 127)
     throw Error("Invalid original ground response fields.");

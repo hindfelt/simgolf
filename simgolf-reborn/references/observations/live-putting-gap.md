@@ -86,3 +86,9 @@ All 120 complete trajectories / 4,668 updates match the assembled JS step across
 ### Mixed-terrain continuous verification
 
 The continuous verifier now includes 120 additional trajectories over alternating terrain codes and marked crossing edges. All 240 complete trajectories / 8,889 updates match, with 160 mixed-terrain tile crossings explicitly counted. This comparison found a missing emitted sound for edge reflections; the motion step now emits sound 6 for each reflected axis in native order. A regression exercises two reflected axes and expects two events. Heights/slopes remain flat controlled samples; elevation geometry, real map-edge behavior and live integration are still open.
+
+### Elevation adapter and continuous geometry verification
+
+`createOriginalMotionTerrain` now connects live original cell/corner/vertex readers to the recovered physics-height and slope functions. It rereads geometry so course edits do not leave stale samples. This accepts original data; mapping browser construction tiles into that data remains separate work.
+
+The native verifier now runs original height and slope routines, supplying corner/vertex fixtures instead of stubbing final flat samples. The additional 120 elevated mixed-terrain trajectories brought the total to 360 complete trajectories / 14,166 updates / 373 mixed-terrain crossings, all matching. Elevation exposed a real signed-speed case after landing-slope response: air/ground validation incorrectly rejected negative horizontal speed even while a ball was still airborne. Both phases now retain the original signed arithmetic. Eight targeted tests pass, including signed velocity and terrain edits. The fixture is a stepped height field, not every possible original map or browser course; map edges, real data mapping, launch/scheduler and social/scoring integration remain open.

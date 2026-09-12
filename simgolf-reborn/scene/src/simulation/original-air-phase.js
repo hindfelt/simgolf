@@ -6,7 +6,7 @@ const int=n=>Number.isInteger(n)&&n>=-0x80000000&&n<=0x7fffffff;
 // Bounce/hazard/stop processing follows this phase in the caller.
 export function originalAirPhase({ball,previousTerrainHeight,terrainHeight,cellX,cellZ,
  terrainCode,terrainFlags,variant,stateFlags,skillEnabled,skillMask,luck,seed}) {
- if(![ball.height,ball.speed,ball.x,ball.z,ball.angularOffset,previousTerrainHeight,terrainHeight,cellX,cellZ].every(int)||ball.height<=1||ball.speed<0||
+ if(![ball.height,ball.speed,ball.x,ball.z,ball.angularOffset,previousTerrainHeight,terrainHeight,cellX,cellZ].every(int)||ball.height<=1||
   ![ball.heading,stateFlags].every(n=>Number.isInteger(n)&&n>=0&&n<=0xffffffff)||
   typeof skillEnabled!=='boolean'||!Number.isInteger(skillMask)||skillMask<0||skillMask>65535||
   !Number.isInteger(luck)||luck<0||luck>255)throw Error('Invalid original airborne phase.');
