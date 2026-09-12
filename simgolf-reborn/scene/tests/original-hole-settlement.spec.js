@@ -13,7 +13,7 @@ test('nonzero actor class skips aggregate statistics but writes its scorecard',(
  const q=fresh();q.actors[0][0x20]=1;const r=originalHoleSettlement(q);expect(r.calls).toEqual([]);expect(r.state.actors[0][0x2c]).toBe(3);expect(r.state.statRecords).toEqual(q.statRecords);
 });
 test('clamped histogram and signed totals retain native byte interpretation and callback value edits',()=>{
- const q=fresh();q.actors[0][0x2a]=255;q.completionRecords[0][0x12]=4;new DataView(q.statRecords[13].buffer).setUint32(0x70,0xffffffff,true);
+ const q=fresh();q.actors[0][0x2a]=255;q.completionRecords[0][0]=4;new DataView(q.statRecords[13].buffer).setUint32(0x70,0xffffffff,true);
  const r=originalHoleSettlement(q,(e,state)=>{if(e.address===0x40c1f0)state.settlementValue++;return {state};});
  expect(new DataView(r.state.statRecords[13].buffer).getInt32(0x24,true)).toBe(-1);expect(new DataView(r.state.statRecords[13].buffer).getUint32(0x70,true)).toBe(0);expect(new DataView(r.state.holeRecords[1].buffer).getUint16(0x28+33*2,true)).toBe(1);expect(r.state.settlementValue).toBe(4);
 });

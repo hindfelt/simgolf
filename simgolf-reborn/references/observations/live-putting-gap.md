@@ -436,3 +436,26 @@ tests pass, covering the class gate, captured callback argument, signed stroke
 histogram/total distinction and overflow. The result presentation and next-hole/
 round transition after 0x426c92 remain unfinished; callers must not treat this
 prefix as a complete implementation of 0x426b00 or deploy it as live settlement.
+
+### Completion scorecard, notices and timing
+
+`original-hole-completion-state.js` recovers 0x426e6b–0x426f3b after result
+presentation. It performs the optional reaction, writes the refreshed score into
+the shared completion record, updates all 64 notices with native signed-owner
+comparison, clears the active ball-X/stroke state, accumulates elapsed playing
+time using signed phase arithmetic and resets the original flags/club. Event
+and ordinary completion retain distinct outgoing continuations.
+
+The scorecard accesses establish the 44-byte completion-record base as 0x583432,
+with its type at offset 0 and scorecard at offset 0x14. The earlier settlement
+adapter's type-only window began 18 bytes earlier; it is corrected to this base
+before adding scorecard fields. The updated settlement verifier still matches
+all 1,200 native cases. `verify-original-hole-completion-state.py` matches another
+1,200 native runs, comparing full actor/score records, hashes of all holes and
+notices, flags/phase and effect order. It includes actors 127/128/151, signed phase
+wrap and callback changes to score, hole and event mode. Eleven focused tests pass.
+
+The result-presentation/value-use branch 0x426c92–0x426e6b still separates this
+from the settlement prefix. Next-hole/match handling from 0x426f3b or 0x427e25,
+full effect adapters and live original-world integration remain unfinished. No
+native branch is bypassed or replaced with a default next-hole assumption.

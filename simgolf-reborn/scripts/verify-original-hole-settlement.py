@@ -22,9 +22,9 @@ u.hook_add(UC_HOOK_CODE,hook)
 rng=random.Random(2002);rows=[]
 for i in range(1200):
  b=bytearray(256);b[0x20]=rng.choice([0,0,1]);b[0x21]=rng.randrange(16);b[0x29]=rng.choice([1,2,18]);b[0x2a]=rng.choice([0,1,9,10,127,255]);b[0xc2]=rng.randrange(4);struct.pack_into('<h',b,0xac,rng.randrange(-32768,32768));struct.pack_into('<ii',b,8,20000,25000)
- h=rng.randbytes(520);s=rng.randbytes(184);record=bytearray(44);record[0x12]=rng.randrange(256);mode=rng.choice([0,2]);bonus=rng.choice([-2,0,4,2147483647]);mutate=i%2==0
+ h=rng.randbytes(520);s=rng.randbytes(184);record=bytearray(44);record[0]=rng.randrange(256);mode=rng.choice([0,2]);bonus=rng.choice([-2,0,4,2147483647]);mutate=i%2==0
  q=dict(actor=list(b),hole=list(h),stat=list(s),record=list(record),mode=mode,bonus=bonus)
- u.mem_write(0x577f00,bytes(b));u.mem_write(0x574500,h*20);u.mem_write(0x5698c0,s*32);u.mem_write(0x583420,bytes(record));put(0x542c04,mode);put(0x542be8,bonus);put(0x102004,0)
+ u.mem_write(0x577f00,bytes(b));u.mem_write(0x574500,h*20);u.mem_write(0x5698c0,s*32);u.mem_write(0x583432,bytes(record));put(0x542c04,mode);put(0x542be8,bonus);put(0x102004,0)
  calls=[];u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_start(0x426b00,0x426c92,count=10000)
  rows.append(dict(q=q,mutate=mutate,expected=dict(actor=list(u.mem_read(0x577f00,256)),holes=hashlib.sha256(bytes(u.mem_read(0x574500,520*20))).hexdigest(),stats=hashlib.sha256(bytes(u.mem_read(0x5698c0,184*32))).hexdigest(),value=struct.unpack('<i',u.mem_read(0x4c1848,4))[0],calls=calls)))
 module=(root/'simgolf-reborn/scene/src/simulation/original-hole-settlement.js').as_uri()

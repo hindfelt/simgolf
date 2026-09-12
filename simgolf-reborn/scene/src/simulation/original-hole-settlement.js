@@ -24,7 +24,7 @@ export function originalHoleSettlement(snapshot,resolve){
  let value=a.getInt16(0xac,true);if(state.settlementMode===2)value=(value*2)|0;
  const flags=hole(number).getUint32(0x200,true);if(flags&1)value=(value+2)|0;if(flags&2)value=(value+2)|0;
  value=(value+state.settlementBonus)|0;state.settlementValue=value;
- const record=view(state.completionRecords?.[a.getInt16(0xbe,true)],44,'completion record'),kind=record.getUint8(0x12)&7;
+ const record=view(state.completionRecords?.[a.getInt16(0xbe,true)],44,'completion record'),kind=record.getUint8(0)&7;
  if(kind>3){state.settlementValue=(value+(kind===4?2:5))|0;call(0x40c1f0,[25,a.getInt32(8,true),a.getInt32(12,true),0]);}
  return {state,calls,next:'0x426c92'};
 }
