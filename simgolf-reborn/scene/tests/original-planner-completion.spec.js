@@ -60,3 +60,13 @@ test('automatic planner consumes restored world terrain with packed object and a
  expect(first.state.strengthCache).toEqual(first.planner.state.cache);
  expect(serializeOriginalWorld(world)).toBe(saved);
 });
+
+test('planner returns captured sound events without exposing the effect-owned list',()=>{
+ const soundEvents=[{address:0x447a30,args:[1,2,3]}];
+ const effects={...middleEffects(q),readSoundEvents:()=>soundEvents};
+ const result=originalPlannerEffect(event,snapshot(),q,{map:{planning:middleMap(q)}},effects);
+ expect(result.soundEvents).toEqual(soundEvents);
+ result.soundEvents[0].args[0]=99;expect(soundEvents[0].args[0]).toBe(1);
+ expect(()=>originalPlannerEffect(event,snapshot(),q,{map:{planning:middleMap(q)}},
+  {...middleEffects(q),readSoundEvents:()=>Promise.resolve([])})).toThrow('synchronous');
+});

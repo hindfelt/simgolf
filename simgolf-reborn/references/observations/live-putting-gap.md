@@ -2432,3 +2432,18 @@ The three planner completion checks pass. Extracting the reusable packed
 records retains all 240 native middle-stage and 240 direct-planner comparisons
 (state, events, cache and RNG). Native comparisons retain their controlled
 height/effect helpers; full audible-world integration and live adoption remain.
+
+### Planner reaction sound-event handoff
+
+The audible planner effect owner previously discarded each completed remark's
+sound events. It now accumulates them in invocation order and exposes defensive
+copies. Planner dispatch and shot preparation return that list for presentation,
+without rerunning audio RNG or modifying saved world records. Bindings without
+an audible event reader preserve their previous return contract. Asynchronous
+event readers are rejected.
+
+Five checks passed in 59.6 seconds, including all 3,120 retained native audible
+cases (1,523 have sound events), exact event comparison and defensive-copy
+validation, restored terrain planning and dispatcher handoff. This supplies
+events to the integration caller; production browser playback and full live
+engine adoption remain to be connected.

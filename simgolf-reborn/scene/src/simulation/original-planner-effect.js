@@ -14,15 +14,21 @@ export function originalPlannerEffect(event,snapshot,context,dependencies,effect
  const planner=originalAutomaticPlanner(input,dependencies,effects);
  const state=effects?.complete ? effects.complete(planner) : applyOriginalPlannerResult(snapshot,planner);
  if(!state||typeof state.then==='function')throw Error('Original planner completion must return a synchronous world.');
+ if(effects?.readSoundEvents!==undefined){
+  if(typeof effects.readSoundEvents!=='function')throw Error('Original planner sound events require a synchronous reader.');
+  const soundEvents=effects.readSoundEvents();
+  if(!Array.isArray(soundEvents))throw Error('Original planner sound events must be synchronous.');
+  return {state,planner,soundEvents:structuredClone(soundEvents)};
+ }
  return {state,planner};
 }
 
 // Continuous shot preparation, including the post-planner facing/stance writes.
 export function originalPlannedShotPreparation(snapshot,context,dependencies,effects){
- let planner;
+ let planner,soundEvents;
  const prepared=originalShotPreparation(snapshot,(event,state)=>{
   const reply=originalPlannerEffect(event,state,context,dependencies,effects);
-  planner=reply.planner;return reply;
+  planner=reply.planner;soundEvents=reply.soundEvents;return reply;
  });
- return {...prepared,planner};
+ return {...prepared,planner,...(soundEvents===undefined?{}:{soundEvents})};
 }

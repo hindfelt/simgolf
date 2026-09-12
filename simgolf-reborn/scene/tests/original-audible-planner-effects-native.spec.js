@@ -24,6 +24,9 @@ test('planner audible callbacks retain native actor and message state',()=>{
    },audioContext:()=>({camera:q.camera,zoom:q.zoom,map:{flagsAt:()=>q.terrain.flags,storedHeight:()=>q.terrain.stored,objectHeight:()=>q.terrain.object,cornerHeight:(c,r,d)=>q.terrain.corners[d]}}),playback:(e,s)=>s,reactionContext:()=>q.reactionContext,explanationContext:r=>({state:r.state,difficulty:q.difficulty})
   }})});const effects=binding.effects;
   const reread=effects.emit({actorId:q.actorId,kind:q.kind,value:q.value},partial),result={state:effects.readWorld()};
+  expect(effects.readSoundEvents()).toEqual(expected.soundEvents);
+  const copiedSounds=effects.readSoundEvents();copiedSounds.push({address:0});
+  expect(effects.readSoundEvents()).toEqual(expected.soundEvents);
   expect(reread.actor).toEqual(originalPlannerActor(result.state));expect(reread.seed).toBe(expected.state.seed);
   expect(binding.dependencies.map.planning.profileIndexFor(q.actorId)).toBe(new DataView(result.state.actors[q.actorId].buffer).getInt16(0xbe,true));
   const remarkState=originalRemarkRecordView(result.state);

@@ -7,9 +7,11 @@ import {applyOriginalPlannerResult} from './original-planner-result.js';
 export function originalAudiblePlannerEffects(snapshot,remarkFor){
  const id=snapshot.actorId,holeId=snapshot.actors?.[id]?.[0x29];
  let world=structuredClone(snapshot),generation=0;
+ const soundEvents=[];
  return {
   readWorld:()=>structuredClone(world),
   readGeneration:()=>generation,
+  readSoundEvents:()=>structuredClone(soundEvents),
   emit:(event,partial)=>{
    const published=originalPlannerReactionWorld(world,partial,id,holeId);
    if(typeof remarkFor!=='function')throw Error('Original audible planner remark binding unavailable.');
@@ -17,7 +19,7 @@ export function originalAudiblePlannerEffects(snapshot,remarkFor){
    if(!binding?.request||typeof binding.then==='function')throw Error('Original audible planner remark binding must be synchronous.');
    const result=originalAudibleGolferRemark({...binding.request,state:published,actorId:event.actorId,kind:event.kind,value:event.value,globalFlags:published.globalFlags},binding.options);
    const next=originalPlannerAfterReaction(partial,result.state,id,holeId);
-   world=result.state;generation++;
+   world=result.state;soundEvents.push(...structuredClone(result.soundEvents));generation++;
    return next;
   },
   complete:result=>applyOriginalPlannerResult(world,result,id,holeId),
