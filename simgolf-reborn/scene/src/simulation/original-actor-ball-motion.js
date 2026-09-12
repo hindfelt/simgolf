@@ -1,3 +1,4 @@
+import {originalTerrainByte} from './original-terrain-byte.js';
 import {originalActorPositionStep} from './original-actor-position-step.js';
 import {originalMotionSample} from './original-motion-sample.js';
 import {originalGroundResolution} from './original-ground-resolution.js';
@@ -9,9 +10,7 @@ export function originalActorBallMotion(snapshot,resolve,resolveSpecial){
  const position=originalActorPositionStep(snapshot,resolve),state=position.state;
  if(state.holeRecords)state.holes=state.holeRecords;
  const b=state.actors[state.actorId],a=new DataView(b.buffer,b.byteOffset,b.byteLength),tile=snapshot.ballTile;
- const sample=originalMotionSample({x:a.getInt32(0xdc,true),z:a.getInt32(0xe0,true),heading:a.getUint32(0xe8,true),cellX:tile.x,cellZ:tile.z,terrainCode:snapshot.ballTerrain},(x,z)=>{
-  if(!(state.terrain instanceof Uint8Array)||x<0||z<0||x>=50||z>=50)throw Error('Original motion neighbor storage unavailable.');return (state.terrain[x*50+z]<<24)>>24;
- });
+ const sample=originalMotionSample({x:a.getInt32(0xdc,true),z:a.getInt32(0xe0,true),heading:a.getUint32(0xe8,true),cellX:tile.x,cellZ:tile.z,terrainCode:snapshot.ballTerrain},(x,z)=>originalTerrainByte(state,x,z));
  Object.assign(state,sample,{previousTerrainHeight:position.previousTerrainHeight,stepX:position.stepX,stepCosine:position.stepCosine,ballTile:tile,ballTerrain:snapshot.ballTerrain});
  const result=a.getInt32(0xe4,true)<=1?originalGroundResolution(state,resolve,resolveSpecial):originalResolveStoppedMotion(originalAirborneMotion(state,resolve),resolve);
  return {...result,calls:[...position.calls,...result.calls]};

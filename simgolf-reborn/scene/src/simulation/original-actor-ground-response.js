@@ -1,9 +1,10 @@
+import {originalTerrainByte} from './original-terrain-byte.js';
 import {originalGreenTurnStep} from './original-putting.js';
 // 0x42c13a–0x42c27b. Sample callbacks may mutate actor and terrain state.
 export function originalActorGroundResponse(snapshot,resolve){
  let state=structuredClone(snapshot);const calls=[],id=state.actorId;
  function actor(){const b=state.actors?.[id];if(!Number.isInteger(id)||id<0||id>=152||!(b instanceof Uint8Array)||b.length!==256)throw Error('Original rolling actor unavailable.');return new DataView(b.buffer,b.byteOffset,b.byteLength);}
- function terrain(x,z){if(!(state.terrain instanceof Uint8Array)||x<0||z<0||x>=50||z>=50)throw Error('Original rolling terrain unavailable.');return state.terrain[x*50+z];}
+ const terrain=(x,z)=>originalTerrainByte(state,x,z);
  function slope(direction){const a=actor(),e={address:0x40c140,args:[a.getInt32(0xdc,true),a.getInt32(0xe0,true),direction]};calls.push(e);const r=resolve(structuredClone(e),structuredClone(state));if(!r?.state||!Number.isInteger(r.value)||typeof r.then==='function')throw Error('Expected original rolling slope sample.');state=structuredClone(r.state);return r.value;}
  const forward=slope(snapshot.direction);let resistance=Math.max(0,Math.min(99,(state.rollCoefficient-forward)|0)),cross=slope((snapshot.direction+2)&7);
  if(resistance<2&&snapshot.boundaryFlags!==0)resistance=2;

@@ -774,3 +774,17 @@ accounting through skip, including 8,831 drop candidates and 607 penalties.
 The height sampler is explicitly controlled in both the native harness and JS
 resolver. Earlier standalone cup, contact and slope checks remain valid. Full
 mixed-terrain trajectories, edge storage and live integration remain open.
+
+### Explicit terrain edge storage
+
+`original-terrain-byte.js` implements the raw column-major byte addressing
+used by native neighbor reads, including z-edge aliases into adjacent columns.
+Reads before/after the 2,500-byte map use explicit terrainPrefix/terrainSuffix
+buffers and fail if the caller has not supplied those bytes. It does not invent
+rough/water or clamp coordinates. Actor movement, origin-terrain sampling and
+ground centre checks now use it; invalid cup cells bypass capture as native.
+
+4,096 native border-sampling cases pass across all corners/subcells/neighbor
+masks; the 2,000 rolling-to-cup comparisons still pass. Populating adjacent
+storage in the full world adapter and broader integration remain open. This
+change supplies storage semantics, not a completed live map conversion.
