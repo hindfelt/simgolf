@@ -1687,8 +1687,8 @@ view when the full snapshot includes both.
 
 The expanded `verify-original-actor-turn.py` passes 1,500 uninterrupted native
 turns with 126 walking entries, 99 planner calls, 66 actor-position changes and
-182 ball-motion exits. The remaining exits are 1,302 skips and 16 tutorial
-continuations. All actor and hole bytes, putt counters, visitor assignments,
+182 ball-motion exits. The remaining exits are 1,302 skips and 16 waiting
+continuations at 0x42d23c (previously mislabeled as tutorial continuations). All actor and hole bytes, putt counters, visitor assignments,
 shared flags, selection/tracking, RNG and calls match. Packed hole bytes are
 compared directly, without reconstructing their counters in the assertion.
 The prior 1,500 actor-action comparisons and the active-ball-motion Playwright
@@ -1698,3 +1698,18 @@ This verifies one-turn composition on uniform terrain with controlled planner,
 reaction, projection and slope helpers. Tutorial/retry continuations, actual
 helper effects, arbitrary-world adapters, multi-tick scheduling and production
 adoption remain open. No live renderer or hosted rules changed here.
+
+
+### Actor retry waiting completes within the turn
+
+Native disassembly identifies 0x42d23c–0x42d25f as a random delay in
+[0, 7], negated into the signed delay word, followed by phase zero and
+animation 11. It is a waiting branch, not a tutorial. `original-actor-turn.js`
+now executes it with the shared RNG before returning skip.
+
+The same 1,500-case continuous native turn matrix passes with those 16
+branches now completing: 1,318 skips and 182 motion exits. Actor bytes,
+shared state, counters, RNG and ordered calls remain equal. The genuine
+first-hole tutorial remains at 0x42b647; outer actor-slot scheduling,
+real effect implementations, multi-tick persistence and live adoption remain
+unfinished.

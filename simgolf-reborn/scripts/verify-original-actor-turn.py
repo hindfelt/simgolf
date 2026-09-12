@@ -29,7 +29,7 @@ def hook(u,a,size,data):
  if a in [0x40daa0,0x40db60,0x42def0,0x425b10]:
   sp=u.reg_read(UC_X86_REG_ESP);n=5 if a==0x42def0 else 1 if a==0x425b10 else 3;calls.append(dict(address=a,args=[struct.unpack('<i',u.mem_read(sp+4+j*4,4))[0] for j in range(n)]))
  if a==0x428992:turn_seen=True
- if a in [0x42b647,0x42d23c,0x4295ef]:
+ if a in [0x42b647,0x4295ef]:
   next_branch={0x428ad1:'0x428ad1',0x42b55c:'0x42b55c',0x42b647:'0x42b647',0x42d23c:'0x42d23c',0x42bdb5:'motion',0x4295ef:'0x4295ef' if moving else 'skip'}[a];u.emu_stop()
  if a in [0x42f270,0x42f020,0x47edd0,0x425b50]:
   sp=u.reg_read(UC_X86_REG_ESP)
