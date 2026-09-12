@@ -537,3 +537,9 @@ The ground and motion helpers now additionally expose `cupEntry` on captured bal
 `original-motion-cup-handoff.js` consumes an explicitly captured motion result and writes its pre-snap position, height, speed, heading, vertical speed and angular offset into the original actor fields. It carries the original cell locals and RNG state into resolved cup scoring, preserving actor flags until the native completion sequence clears them. Ordinary stops or missing pre-snap entries reject instead of entering cup accounting.
 
 Four focused checks pass, including actual recovered ground capture, sound coordinates, RNG handoff, one paid completion and motion cleanup. Another 1,200 native cup-completion comparisons replace deliberately stale actor ball fields through the new adapter and match full resulting records/ledgers/calls. Earlier motion effects, non-cup landings and integration with the live world format remain separate unfinished work; this is not a live behavior change.
+
+### Actor position/gravity effect ordering
+
+`original-actor-position-step.js` recovers 0x42bdc3–0x42beb0 with explicit height and visual effects. It samples prior terrain height, advances position using the recovered original trig table, applies the near-apex visual before gravity, and applies the phase-modulo-eight visual afterward. Callback-modified velocity/phase are re-read while step deltas retain their native local values. Offscreen motion omits visual effects but retains gravity.
+
+Verification matches 1,500 continuous native executions and 2,677 ordered height/visual effects using native trig and controlled effect mutations. Three focused checks pass. This is the actor-state alternative to the pure motion helper's deferred effects; it is not yet joined through all later contact/bounce/scatter branches or applied to the live simulation.
