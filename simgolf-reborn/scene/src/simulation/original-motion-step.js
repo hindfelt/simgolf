@@ -25,7 +25,7 @@ export function originalMotionStep(q,world) {
   if(reflectedX)sounds.push(6);
   if(reflectedZ)sounds.push(6);
   if(captured)return {ball,centreFlag,rngState,draws,stateFlags:(stateFlags&~0x40000)>>>0,
-   captured:true,stopped:true,landed:false,terrainStopped:false,luckAdjusted:false,sounds,reflectedX,reflectedZ,nearbyGolferCheck:null};
+   cupEntry:phase.cupEntry,captured:true,stopped:true,landed:false,terrainStopped:false,luckAdjusted:false,sounds,reflectedX,reflectedZ,nearbyGolferCheck:null};
  } else {
   const phase=originalAirPhase({...q,ball,cellX,cellZ,terrainCode:cell.code,terrainFlags:cell.flags,
    previousTerrainHeight,terrainHeight:world.heightAt(ball.x,ball.z)});

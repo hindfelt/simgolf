@@ -20,6 +20,7 @@ export function originalGroundPhase({before,ball,originTerrainCode,club,eventFla
   ...sample,cellX,cellZ,centreFlag},terrainAt);
  let next={...ball,speed:contact.speed,heading:response.heading,angularOffset:response.angularOffset,seed:response.rngState};
  const capture=originalCupCapture({...next,cellX,cellZ,terrainCode:cell.code,cellFlags:cell.flags,club,eventFlag});
+ const cupEntry=capture?{ball:{...next},ballTile:{x:cellX,z:cellZ}}:null;
  let reflectedX=false,reflectedZ=false;
  if(capture)next={...next,...capture};
  else {
@@ -28,5 +29,5 @@ export function originalGroundPhase({before,ball,originTerrainCode,club,eventFla
   next.heading=reflection.heading;({reflectedX,reflectedZ}=reflection);
  }
  return {ball:next,captured:!!capture,centreFlag:contact.centreFlag,boundaryFlags:sample.boundaryFlags,
-  reflectedX,reflectedZ,rngState:response.rngState,draws:response.draws};
+  reflectedX,reflectedZ,...(cupEntry?{cupEntry}:{}),rngState:response.rngState,draws:response.draws};
 }

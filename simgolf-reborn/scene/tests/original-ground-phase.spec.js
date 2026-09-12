@@ -23,3 +23,8 @@ test('terrain adapter uses old cell metadata while slopes use the new position',
 test('airborne positions cannot accidentally take the ground branch',()=>{
  expect(()=>originalGroundPhase({...args,ball:{...before,height:2}},{})).toThrow(/contact height/);
 });
+test('capture retains pre-snap position and surface-adjusted speed for ordered cup effects',()=>{
+ const ball={...before,x:before.x+10};
+ const result=originalGroundPhase({...args,ball},{cellAt:()=>({code:17,rollCoefficient:3,flags:128,edgeFlags:255}),slopeAt:()=>0});
+ expect(result.captured).toBe(true);expect(result.cupEntry.ball.x).toBe(ball.x);expect(result.cupEntry.ball.speed).toBeGreaterThan(0);expect(result.cupEntry.ball.speed).toBeLessThan(320);expect(result.cupEntry.ballTile).toEqual({x:20,z:20});expect(result.ball.x).toBe(before.x);expect(result.ball.speed).toBe(0);
+});
