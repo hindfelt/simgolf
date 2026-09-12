@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { parseStory, storyLine } from "../src/stories/script.js";
 const root = new URL(
   "../../../resources/sim golf/Sid Meier's SimGolf/Themes/Standard/",
   import.meta.url,
 );
 test("original standard stories retain prompt and reply ordering and pairing metadata", () => {
+  test.skip(!!process.env.SIMGOLF_PUBLIC_TESTS || !existsSync(root), "Private original-game stories are unavailable in public CI.");
   const files = readdirSync(root).filter((f) => /^[a-z]{8}.+\.txt$/i.test(f));
   expect(files.length).toBeGreaterThan(5);
   for (const file of files) {

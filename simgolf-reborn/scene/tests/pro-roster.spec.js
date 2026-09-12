@@ -1,14 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { parseProRoster } from "../src/simulation/pro-roster.js";
-const source = readFileSync(
-  new URL(
+const sourcePath = new URL(
     "../../../resources/sim golf/Sid Meier's SimGolf/Themes/Standard/progolfers.dta",
     import.meta.url,
-  ),
-  "latin1",
-);
+  );
+const source = process.env.SIMGOLF_PUBLIC_TESTS || !existsSync(sourcePath) ? null : readFileSync(sourcePath, "latin1");
 test("imports supplied names, appearance fields and caps without spending player points", () => {
+  test.skip(source === null, "Private original-game reference is unavailable in public CI.");
   const issues = [];
   const roster = parseProRoster(source, {
     onMalformed: (row) => issues.push(row),

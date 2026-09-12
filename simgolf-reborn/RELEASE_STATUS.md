@@ -22,8 +22,9 @@ summarizes what still remains; it does not replace the requirements in
 
 These statements describe local code and recorded tests, not deployed features.
 Committed development work through `f616844` has been pushed to the
-`codex/simgolf-reborn-v1` branch and the remote comparison matched. GitHub CI
-started; its completion is not yet verified. Production has not been deployed.
+`codex/simgolf-reborn-v1` branch and the remote comparison matched. The existing GitHub CI passed for `c227e27`, but covered only the older root
+application. A separate Fairway Baron job is being added; its hosted result is
+not yet verified. Production has not been deployed.
 Uncommitted workspace changes are excluded from that push.
 
 ## Remaining completion checklist

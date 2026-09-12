@@ -36,3 +36,31 @@ jobs:
       - run: npm run test:visual
       - run: npm run test:api
       - run: npm run build
+
+  fairway-baron:
+    name: Fairway Baron live game
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: simgolf-reborn/scene
+    env:
+      SIMGOLF_PUBLIC_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: simgolf-reborn/scene/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome
+      - run: npm run build
+      - run: npm run test:live
+      - name: Save browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fairway-baron-browser-failures
+          path: simgolf-reborn/scene/test-results/
+          retention-days: 7

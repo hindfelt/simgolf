@@ -1,13 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { parsePropertyRecords } from "../src/simulation/property-catalog.js";
-const source = readFileSync(
-  new URL(
+const sourcePath = new URL(
     "../../../resources/sim%20golf/Sid%20Meier's%20SimGolf/golf.exe",
     import.meta.url,
-  ),
-);
+  );
+const source = process.env.SIMGOLF_PUBLIC_TESTS || !existsSync(sourcePath) ? null : readFileSync(sourcePath);
 const catalog = JSON.parse(
   readFileSync(
     new URL("../src/content/original-properties.json", import.meta.url),
@@ -15,6 +14,7 @@ const catalog = JSON.parse(
   ),
 );
 test("original property catalog reproduces the supplied executable table and unique IDs", () => {
+  test.skip(source === null, "Private original-game reference is unavailable in public CI.");
   expect(createHash("sha256").update(source).digest("hex")).toBe(
     catalog.sha256,
   );
@@ -49,6 +49,7 @@ test("original property catalog reproduces the supplied executable table and uni
   });
 });
 test("property importer rejects truncation, duplicate identities and broken text boundaries", () => {
+  test.skip(source === null, "Private original-game reference is unavailable in public CI.");
   expect(() =>
     parsePropertyRecords(
       source.slice(0, catalog.tableOffset + 16 * 130 - 1),
@@ -91,6 +92,7 @@ test("extracted map coordinates place known locations and the inspector selects 
 });
 
 test("original setup codes decode environmental labels and reject unknown values", () => {
+  test.skip(source === null, "Private original-game reference is unavailable in public CI.");
   expect(catalog.properties.find((p) => p.location === "Oahu")).toMatchObject({
     environment: "tropical",
     geography: "island",
