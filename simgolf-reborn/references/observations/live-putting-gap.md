@@ -1134,3 +1134,21 @@ and preceding record types. Corrected destination/delta have not yet been
 compared independently in this verifier. Actual stepping at 0x42a71c, service
 arrival bodies and live integration remain open; this gate is not yet composed
 with the complete destination sequence.
+
+### Continuous destination-to-arrival integration
+
+`original-walking-approach.js` connects preparation to arrival for movement
+entries and preserves waiting skips. `verify-original-walking-approach.py`
+executes 500 continuous native paths from 0x4290ca through arrival, comparing
+full actor records, locals, corrected destination/delta, distance, RNG, search
+outputs and calls. Results: 446 walking continuations, 46 skips (including
+finished departures), eight service-arrival continuations. The fixture set has
+no active-shot arrival; that branch has separate arrival-gate coverage.
+
+The native corrected destination is captured at 0x429f4c before facing reuses
+registers. Native search, distance, heading and RNG execute; visitor cleanup
+remains controlled. This closes the destination/delta comparison and composed
+arrival handoff for these fixtures. Actual movement starts at 0x42a71c, with
+near-target steering followed by golfer avoidance and a separate far-target
+route branch at 0x42aa30. Those bodies, service arrivals, earlier entry and live
+integration remain unfinished.
