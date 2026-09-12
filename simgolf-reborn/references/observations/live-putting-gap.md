@@ -415,3 +415,24 @@ the 0x426b00 settlement body or its connection to live play. The motion integrat
 must expose the pre-snap capture boundary rather than first applying its terminal
 ball output and then calling this routine; intermediate flight/impact effects
 also remain to be connected at their native positions.
+
+### Hole-settlement score/statistics prefix
+
+`original-hole-settlement.js` recovers 0x426b00–0x426c92. Normal-class golfers
+invoke assessment on either side of a clamped signed-stroke histogram update.
+The complemented style argument is captured before the first callback, while
+hole/style/statistic fields are reread afterward. Per-hole signed stroke totals,
+round counts and the actor scorecard are then written. Settlement-value setup
+uses the actor's signed word, mode, hole flags, global bonus and the low three
+bits of the 44-byte completion record selected by actor offset 0xbe. That value
+is retained as a native scratch value, not reinterpreted as browser cash.
+
+`verify-original-hole-settlement.py` matches 1,200 continuous native executions.
+It compares full actor records and SHA-256 hashes of all 20 hole records and 32
+statistic records, plus effect order and the resulting settlement value. Native
+clamping executes; assessment/sound callbacks are controlled and may change
+hole, style, record index or settlement value. Eleven settlement/cup/stopped-tail
+tests pass, covering the class gate, captured callback argument, signed stroke
+histogram/total distinction and overflow. The result presentation and next-hole/
+round transition after 0x426c92 remain unfinished; callers must not treat this
+prefix as a complete implementation of 0x426b00 or deploy it as live settlement.
