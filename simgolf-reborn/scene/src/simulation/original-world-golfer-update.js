@@ -1,7 +1,9 @@
+import {originalWorldMotion} from './original-world-motion.js';
 import {originalWorldUpdate,originalWorldAfterGolfers} from './original-world-update.js';
 import {originalGolferTerrainLoop,resumeOriginalGolferTerrainLoop} from './original-golfer-terrain-loop.js';
 
 function worldResolver(resolveWorld,soundEvents,presentationEvents){return (address,state)=>{
+ if(address===0x409980&&state.motionRecords!==undefined)return originalWorldMotion(state).state;
  if(typeof resolveWorld!=='function')throw Error('Original world systems require an explicit resolver.');
  const reply=resolveWorld(address,state);
  if(!reply||typeof reply.then==='function'||!reply.state)throw Error('Original world systems require synchronous state.');

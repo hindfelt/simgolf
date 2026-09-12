@@ -2638,3 +2638,16 @@ exactly two cards, no duplicates and no historical replay. The fifteen preceding
 loop/world/session checks also passed after queue propagation. This connects the
 presentation endpoint to runtime ownership in the controlled integration; the
 production game loop still uses its current simulation and remains to be wired.
+
+### Complete world motion-table callback
+
+Recovered the full 0x409980 body for 256 nine-word records at 0x572108.
+It applies native direction displacement, vertical displacement, ground clamp,
+signed expiry comparison, drag and gravity while retaining opaque fields.
+The composed world dispatcher executes it directly when `motionRecords` is
+provided; snapshots without that backing still require the explicit resolver.
+
+All 64 native whole-table cases match (16,384 records), using the executable's
+actual trig helpers and initialized table. Twelve local motion/world/session
+checks pass, including restored successive ticks. The other world callbacks,
+0x4029e0 and 0x46df40, remain external, and production adoption is still open.
