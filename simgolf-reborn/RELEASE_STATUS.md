@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This checkpoint includes regional/audio work and recovered-runtime integration through `f8148ab`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `e9ac192`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -72,8 +72,8 @@ Uncommitted workspace changes are excluded from that push.
 - [Live putting and recovered-engine integration gap](references/observations/live-putting-gap.md)
 - [Latest broad live stability assessment](references/release/ruleset-85-live-regression.md)
 
-The latest regional/audio full local rerun passed 518 checks with five explicit
-private-reference skips (523 total, 5.7 minutes). The private-reference suites
+The latest regional/audio full local rerun passed 523 checks with five explicit
+private-reference skips (528 total, 5.7 minutes). The private-reference suites
 also passed separately with local files available. This is not a hosted stability
 assessment. Original-engine modules remain separate from the
 live simulation until their integration is explicitly verified.

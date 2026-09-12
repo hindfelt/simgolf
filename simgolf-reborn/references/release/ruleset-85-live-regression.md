@@ -40,3 +40,17 @@ placement-cache and applause changes: **518 passed, five private-reference
 skips, 523 total, 5.7 minutes**. Application source stayed fixed during this
 run. The stronger playback-clock cooldown test passed within it. This is local
 Chrome regression evidence; hosted and physical-device gates remain open.
+
+## Coastal audio and comparison UI rerun
+
+The full public-mode live suite completed successfully: **523 passed, five
+private-reference skips, 528 total, 5.7 minutes**. The production build also
+passed. This includes coastal ambience, New Game environment switching and the
+new golfer-comparison browser tests. Application source remained fixed during
+the run; only documentation and an excluded `original-*` checkpoint test changed.
+The latter's six checks passed separately, including browser-storage reload.
+
+Recovered-engine tests are excluded by the live configuration; this result does
+not claim their full regression, live adoption, hosted stability or physical
+phone performance. The five private-file skips remain explicit. No push or
+production deployment was performed.
