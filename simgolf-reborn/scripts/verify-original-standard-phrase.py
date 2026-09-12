@@ -20,26 +20,29 @@ def hook(u,a,size,data):
 for a in [0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(384):
   id=i%16;record=[0]*256;record[0x18]=(i*17)%256;record[0xb6]=i%256
   profile=[-32768,-17,-8,-1,0,1,2,3,4,5,6,7,8,32767][i%14];record[0xb6:0xb8]=list(struct.pack('<h',profile))
   if i<128:record[0xb6:0xb8]=[i,0]
-  if kind==39:record[0xb6:0xb8]=[i%8,0]
-  if kind in [2,4,26]:
+  if kind in [39,49,62]:record[0xb6:0xb8]=[i%8,0]
+  if kind in [2,4,26,5,13,37,38]:
    record[0xae:0xb0]=list(struct.pack('<h',[-32768,-3,-1,0,1,2,3,4,5,32767][i%10]));record[0xa2:0xa4]=list(struct.pack('<h',id^1))
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
-  if kind==39:
-   profile=[0]*560;profile[0x21]=i%256;q['profileRecords']={str(i%8):profile};u.mem_write(0x4d5040+(i%8)*560,bytes(profile))
+  if kind in [39,49,62]:
+   profile=[0]*560;profile[0x21]=i%256;profile[0x22]=i%20;name=('Profile '+str(i%8)).encode();profile[:len(name)]=name;q['profileRecords']={str(i%8):profile};u.mem_write(0x4d5040+(i%8)*560,bytes(profile))
+  if kind==62:
+   q['profileRemarks']=['Profile line '+str(j) for j in range(40)]
+   for j,line in enumerate(q['profileRemarks']):u.mem_write(0x4d45a4+68*j,line.encode()+b'\0')
   if kind in [51,52,53]:
    q['originalClock']=[-2147483648,-17,-1,0,1,7,8,15,2147483647][i%9];q['facilityLevels']={name:[-1,0,1,2,3,4,2147483647][(i//9+j)%7] for j,name in enumerate(['drivingRange','proShop','puttingGreen'])}
    put(0x831828,q['originalClock'])
    for name,address in [('drivingRange',0x5a76a8),('proShop',0x5a76a0),('puttingGreen',0x5a7698)]:put(address,q['facilityLevels'][name])
   u.mem_write(0x577f08+id*256,bytes(record));u.mem_write(0x518f78,prefix.encode()+b'\0');put(0x589be8,i);put(0x820344,mode);put(0x53f8b8,int(q['state']['redirected']));before=bytes(u.mem_read(0x518f78,512));events=[]
-  u.reg_write(UC_X86_REG_ESP,0x102000);put(0x102000+0x4e4,value);put(0x102000+0x4ec,id);u.reg_write(UC_X86_REG_EBX,id);u.reg_write(UC_X86_REG_EDX,kind&0xffffffff)
+  u.reg_write(UC_X86_REG_ESP,0x102000);put(0x102000+0x4e0,kind);put(0x102000+0x4e4,value);put(0x102000+0x4ec,id);u.reg_write(UC_X86_REG_EBX,id);u.reg_write(UC_X86_REG_EDX,kind&0xffffffff)
   u.emu_start(0x469380,0x46bc7e,count=10000);assert u.reg_read(UC_X86_REG_EIP)==0x46bc7e
   expected=json.loads(json.dumps(q['state']));expected['sourceText']=bytes(u.mem_read(0x518f78,512)).split(b'\0')[0].decode('ascii');expected['remarkStyle']=struct.unpack('<I',u.mem_read(0x589be8,4))[0]
   # With no appends, the JS buffer may retain data beyond C-string termination.

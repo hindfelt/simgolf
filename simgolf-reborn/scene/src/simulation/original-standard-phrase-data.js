@@ -228,5 +228,21 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e1c00": "This new pro shop has",
   "0x4e1be0": "really improved my accuracy.",
   "0x4e2048": "I guess I scared that little DATA.",
-  "0x4e2020": "I think I frightened that poor DATA."
+  "0x4e2020": "I think I frightened that poor DATA.",
+  "0x4e2940": "Eeek, I gotta watch out for the ",
+  "0x4e2920": "Eeek, I gotta hit it past the ",
+  "0x4e28fc": "Eeek, I gotta stay away from the ",
+  "0x4e28f4": "DATA",
+  "0x4e28dc": "Watch out for the DATA",
+  "0x4e28c8": "Careful of the DATA",
+  "0x4e28ac": "You're going into the DATA",
+  "0x4e2894": "Say hello to Mr. DATA",
+  "0x4e288c": " for me",
+  "0x4c2f20": " ",
+  "0x4e1ebc": "Nooooo, I'm in the drink!",
+  "0x4e1ea0": "Did my ball go for a swim?",
+  "0x4e1e8c": "Argh, I drowned it!",
+  "0x4e1e74": "Did I hear a splash ",
+  "0x4c4b98": "?",
+  "0x4e1bbc": "I'm a "
 };

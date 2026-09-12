@@ -14,6 +14,19 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===5||kind===37||kind===38){
+  const a=actor(q),type=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xae,true);
+  if(type===0||type===4){append({5:0x4e28fc,37:0x4e2920,38:0x4e2940}[kind]);append(0x4e28f4);}
+  else if(type===1){append(0x4e28c8);call(0x466e30,[q.actorId]);state.redirected=true;}
+  else if(type===2){if(q.actorId&1)append(0x4e28ac);else{append(0x4e2894);append(0x4e288c);}append(0x4c2f20);call(0x466fb0,[q.actorId,0]);state.redirected=true;}
+  else if(type===3||type===5){append(0x4e28dc);call(0x466fb0,[q.actorId,1]);state.redirected=true;}
+  append(0x4c38f4);
+ }
+ else if(kind===13){const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);
+  if(type===2||type===4){append(0x4e1e74);call(0x466fb0,[q.actorId,0]);append(0x4c4b98);state.redirected=true;}
+  else{const variant=view.getInt16(0xb6,true)%3;if(variant>=0)append([0x4e1e8c,0x4e1ea0,0x4e1ebc][variant]);}
+  state.remarkStyle=0x80007d08;
+ }
  else if(kind===2){const a=actor(q),type=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xae,true);
   if(type===4){append(0x4e276c);call(0x466e30,[q.actorId]);append(0x4c3e10);state.redirected=true;}
   else if(type===2){append(0x4e2764);call(0x466fb0,[q.actorId,0]);append(0x4e2754);state.redirected=true;}
@@ -27,6 +40,12 @@ export function originalStandardPhrase(q,resolve){
  else if(kind===26){const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);
   if(type&1){append(0x4e1e20);if(type===1)call(0x466e30,[q.actorId]);else call(0x466fb0,[view.getInt16(0xa2,true),1]);append(0x4c38f4);state.redirected=true;}
   else append(0x4e1e04);
+ }
+ else if(kind===49||kind===62){
+  const a=actor(q),id=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xb6,true),profile=q.profileRecords?.[id];
+  if(!(profile instanceof Uint8Array)||profile.length!==560)throw Error('Original phrase profile is unavailable.');
+  if(kind===49){append(0x4e1bbc);const end=profile.indexOf(0);if(end<0)throw Error('Original profile name lacks a terminator.');state.sourceText+=String.fromCharCode(...profile.subarray(0,end));append(0x4c38f4);}
+  else{events.push({address:0x46c140,args:[q.actorId]});const index=((profile[0x22]<<24)>>24)+(originalProfileVoice({...q,state})?0:20),phrase=q.profileRemarks?.[index];if(typeof phrase!=='string')throw Error('Original profile remark table is unavailable.');state.sourceText=state.sourceText.split('\0',1)[0]+phrase.split('\0',1)[0];}
  }
  else if(kind===39){events.push({address:0x46c140,args:[q.actorId]});addresses=[originalProfileVoice({...q,state})?0x4e2048:0x4e2020];state.remarkStyle=0x800023e8;}
  else if(kind===51||kind===52||kind===53){

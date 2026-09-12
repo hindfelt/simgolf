@@ -65,3 +65,19 @@ test('profile voice requires original profile metadata and preserves it',()=>{
  profile[0x21]=0x80;const second=originalStandardPhrase(q);expect(second.state.sourceText).toContain('frightened');expect(profile[0x21]).toBe(0x80);
  expect(()=>originalStandardPhrase({...q,profileRecords:{}})).toThrow('profile is unavailable');
 });
+test('profile-selected lines use the original variant and voice bank',()=>{
+ const a=new Uint8Array(256),profile=new Uint8Array(560);profile.set([...new TextEncoder().encode('Original name')]);profile[0x22]=3;
+ const q={actorId:0,state:{sourceText:'',actors:{0:a}},profileRecords:{0:profile},profileRemarks:{3:'First bank',23:'Second bank'}};
+ expect(originalStandardPhrase({...q,kind:62}).state.sourceText).toBe('First bank');
+ profile[0x21]=128;expect(originalStandardPhrase({...q,kind:62}).state.sourceText).toBe('Second bank');
+ expect(originalStandardPhrase({...q,kind:49}).state.sourceText).toContain('Original name');
+ expect(()=>originalStandardPhrase({...q,kind:62,profileRemarks:{}})).toThrow('remark table is unavailable');
+});
+test('related request kinds retain their distinct original openings',()=>{
+ const state={sourceText:'',actors:{0:new Uint8Array(256)}};
+ const lines=[5,37,38].map(kind=>originalStandardPhrase({kind,actorId:0,state}).state.sourceText);
+ expect(new Set(lines).size).toBe(3);
+ const a=state.actors[0];a[0xae]=2;
+ const named=originalDescribedStandardPhrase({kind:13,actorId:0,state},{profileNames:['Gary']});
+ expect(named.state.sourceText).toContain('Gary');expect(named.state.redirected).toBe(true);expect(named.state.remarkStyle).toBe(0x80007d08);
+});
