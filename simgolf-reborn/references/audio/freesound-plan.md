@@ -42,3 +42,8 @@ Verification result: 16 audio/menu/playable checks passed, followed by the added
 A CC0 putter-contact excerpt and an attributed helicopter rotor loop are now shipped alongside full-shot contact. Both use the effects volume control. The helicopter's renderer and audio share one position function, while audio power follows unloading/spin-down, silent parking, boarding/spin-up and departure. Waveform playback rate stays fixed when simulation speed changes. There is one rotor voice, within the four-source cap, and hidden/paused/modal states silence it. Existing saves resume current rotor ambience without replaying historical one-shot contacts. Provenance and exact edits are recorded in the shipped effects README and credits page.
 
 Eight targeted audio/helicopter checks pass, including native MP3 decode/playback, loop deduplication, parked silence, stored mute and actual helicopter passenger/save behavior. Cup completion, crowd reactions, aircraft/boat motors, environmental ambience and subjective listening/mix review remain open.
+
+
+## Cup contact — 12 September 2026
+
+The CC0 inbeeld ball-in-cup recording now follows actual observed hole-outs. Scorecard completion alone is insufficient: the prior frame must contain the matching shot, the ball must finish at the green's cup, and no penalty stroke may have been added. Restores, pickups and repeated frames stay silent. Freshness checks now accommodate ordinary faster-simulation frames while still rejecting reconnect gaps. Eight focused checks pass, including a real simulated hole-out and native decoding of all four shipped effects. Remaining sound work: crowd/golfer reactions, aircraft/boat motors, environment ambience and subjective listening/mix review.

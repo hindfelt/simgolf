@@ -5,7 +5,7 @@ export function createGameAudio(host){
  const key='fairway-baron.effects-volume';
  let volume=.4,context,loading,disposed=false,rotor;
  const buffers={};
- const files={drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',rotor:'helicopter-rotor.mp3'};
+ const files={drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',cup:'ball-in-cup.mp3',rotor:'helicopter-rotor.mp3'};
  try{const saved=localStorage.getItem(key);if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(1,Number(saved)));}catch{}
  const settings=document.createElement('section');settings.className='game-audio-settings';
  settings.innerHTML='<h3>Game sound</h3><label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="100" step="5"><output></output></label><p><a href="/audio/credits.html" target="_blank" rel="noopener">Sound credits</a></p>';

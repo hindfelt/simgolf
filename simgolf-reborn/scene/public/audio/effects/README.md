@@ -36,3 +36,14 @@ The source page specifies an attribution credit to Cosmic Embers and links CC BY
 - Runtime envelope follows arrival, unloading, parked, boarding and departure. Parked is silent; mute, pause and hidden tabs stop playback. Camera projection uses the same flight position as the rendered helicopter.
 
 These edits were checked for decoding, durations and runtime behavior. Subjective listening review remains pending; no claim of a completed sound mix is made.
+
+## ball-in-cup.mp3
+
+- Creator: inbeeld.
+- Source: https://freesound.org/people/inbeeld/sounds/21878/
+- Public HQ preview: https://cdn.freesound.org/previews/21/21878_119168-hq.mp3
+- Licence: CC0, https://creativecommons.org/publicdomain/zero/1.0/
+- Verified/imported: 12 September 2026.
+- Edit: excerpt 0.38–1.38 seconds, +18 dB, final 0.15-second fade-out, MP3 160 kb/s.
+- SHA-256: 4ebc814c4c58e1945d769b6a1e2ee3aca5949784c50dc34b3b59b44b8b11d1cb
+- Runtime trigger: a previously observed shot ends at the cup with a new scorecard entry and unchanged stroke count. Penalty drops, distant pickups, imported completions and repeated snapshots do not trigger it.
