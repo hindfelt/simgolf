@@ -25,3 +25,9 @@ test('missing ball reaches tee stance and service admission',()=>{
  const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
  expect(r.next).toBe('0x429b53');expect(r.serviceIndex).toBe(0);expect(r.destination).toEqual({x:24064,z:24064});expect(r.teePosition).toEqual({x:20992,z:20992});expect(r.destination).not.toEqual(r.teePosition);
 });
+test('unavailable primary facility falls back to a marked service tile',()=>{
+ const s=fresh(),a=new DataView(s.actors[0].buffer);a.setInt32(0xdc,0,true);a.setInt16(0xae,10,true);a.setInt16(0xb2,140,true);s.actors[1][0x29]=0;
+ s.facilityRecords=new Uint8Array(4096);s.facilityWidths=Array(16).fill(2);s.tileFlags=new Uint16Array(2500);s.tileFlags[23*50+23]=512;
+ const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
+ expect(r.next).toBe('0x429b5f');expect(r.serviceIndex).toBe(-2);expect(r.destination).toEqual({x:24064,z:24064});expect(r.calls.map(c=>c.address)).toEqual([0x40daa0,0x40db60]);
+});

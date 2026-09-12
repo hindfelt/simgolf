@@ -1002,3 +1002,20 @@ branch (456 accepted stops). Walking preparation now invokes the search after
 service admission; three composition tests pass, including a real facility
 selection. Later service fallback at 0x4299c0, arrival handling at 0x429b53,
 full movement and live integration remain open.
+
+### Marked-tile service fallback
+
+`original-nearest-service-tile.js` recovers 0x40db60–0x40dc69: the
+nine-by-nine column-major search for tile flag 0x200, strict radius comparison,
+first-match tie handling, and unchanged Z output when no tile is found.
+`original-walking-service-fallback.js` connects it to 0x4299c0–0x429aae,
+including the alternate 0x429a84 entry, signed counter/20 threshold, queued
+waiting adjustment, flag-dependent radius, destination and service index -2.
+
+1,200 continuous native cases execute real tile search and distance helpers;
+actor bytes, distance, tile outputs, destination, ordered calls and branches
+match, with 613 accepted stops. Walking preparation now traverses primary
+rejection or skipped admission into fallback. Four composition tests pass,
+including a real primary-search miss followed by a marked-tile destination.
+Later partner/service checks, arrival execution, movement and live integration
+remain unfinished; the full composition still needs continuous native coverage.

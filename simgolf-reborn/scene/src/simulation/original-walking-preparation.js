@@ -4,6 +4,7 @@ import {originalWalkingWatch} from './original-walking-watch.js';
 import {originalWalkingBallDestination} from './original-walking-ball-destination.js';
 import {originalWalkingTeeDestination} from './original-walking-tee-destination.js';
 import {originalWalkingServiceSearch} from './original-walking-service-search.js';
+import {originalWalkingServiceFallback} from './original-walking-service-fallback.js';
 
 // Continuous preparation from 0x4290ca through ball destination selection.
 export function originalWalkingPreparation(snapshot, resolve) {
@@ -16,8 +17,12 @@ export function originalWalkingPreparation(snapshot, resolve) {
   const destination = originalWalkingBallDestination({...watch.state, cupHeading: partner.cupHeading, followPartner: partner.followPartner});
   if (destination.next !== '0x4297c7') return {...result, ...destination};
   const tee = originalWalkingTeeDestination({...destination.state, waitingGroups: queue.waitingGroups});
-  const prepared = {...result, ...destination, ...tee};
-  if (tee.next !== '0x429947') return prepared;
-  const service = originalWalkingServiceSearch({...tee.state, destination: tee.destination});
-  return {...prepared, ...service, calls: [...result.calls, ...service.calls]};
+  let prepared = {...result, ...destination, ...tee};
+  if (tee.next === '0x429947') {
+    const service = originalWalkingServiceSearch({...tee.state, destination: tee.destination});
+    prepared = {...prepared, ...service, calls: [...result.calls, ...service.calls]};
+    if (service.next !== '0x4299c0') return prepared;
+  }
+  const fallback = originalWalkingServiceFallback({...prepared.state, destination: prepared.destination, serviceIndex: prepared.serviceIndex ?? -1, waitingGroups: queue.waitingGroups, skipPrimaryService: tee.next === '0x429a84'});
+  return {...prepared, ...fallback, calls: [...prepared.calls, ...fallback.calls]};
 }
