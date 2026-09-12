@@ -2002,3 +2002,19 @@ and ordinary payment execute, while height/slope and presentation/reaction
 helpers remain controlled. This does not establish naturally planned approach
 trajectories, matched competition completion, actual reaction bodies, original
 render cadence or live integration. No production change or deployment.
+
+
+### Shared actor motion continuation
+
+`originalActorMotionContinuation` now owns the actor's post-action motion
+branch, including the zero-horizontal-speed guard, pre-movement context and
+ordered effect composition. `originalActorTurn` delegates to it. Both the
+500-sequence swing-to-rest and 1,200-sequence swing-to-cup native oracles now
+exercise this shared implementation instead of manually joining swing and
+ball motion. Both pass. The real-terrain golfer-loop oracle also retains all
+300 three-tick sequence matches; eleven related tests pass.
+
+Animation updates remain explicitly scheduled by the caller; this extraction
+does not invent a browser-frame cadence or join planning to animation. Live
+world mapping, original effects and natural planned-shot completion remain
+open. The current production golfer simulation is unchanged.

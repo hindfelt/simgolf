@@ -1,8 +1,7 @@
 import {originalRandom} from './original-rng.js';
 import {originalActorShotContinuation} from './original-actor-action.js';
 import {originalActorWalkingDecision} from './original-actor-walking-decision.js';
-import {originalActorMotionContext} from './original-actor-motion-context.js';
-import {originalActorBallMotion} from './original-actor-ball-motion.js';
+import {originalActorMotionContinuation} from './original-actor-motion-continuation.js';
 // Recovered walking, shot actions, waiting and ball motion. The first-hole
 // tutorial continuation remains explicit until its UI effects are recovered.
 export function originalActorTurn(snapshot,resolve,resolveSpecial){
@@ -15,11 +14,5 @@ export function originalActorTurn(snapshot,resolve,resolveSpecial){
   state.seed=rng.state;
   return {...action,state,next:'skip',randomDraws:action.randomDraws+rng.draws};
  }
- if(action.next!=='motion')return action;
- const b=action.state.actors[action.state.actorId],a=new DataView(b.buffer,b.byteOffset,b.byteLength);
- // 0x42bdb5: zero horizontal speed skips even with nonzero vertical velocity.
- if(a.getInt32(0xec,true)===0)return {...action,next:'skip'};
- const state=originalActorMotionContext({...action.state,visualSlot:action.visualSlot},action);
- const motion=originalActorBallMotion(state,resolve,resolveSpecial);
- return {...action,...motion,randomDraws:action.randomDraws+motion.randomDraws,calls:[...action.calls,...motion.calls]};
+ return originalActorMotionContinuation(action,resolve,resolveSpecial);
 }
