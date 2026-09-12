@@ -1264,3 +1264,20 @@ rate, sound calls and exits from 0x42af66 to 0x42b2b2 or the waiting gate.
 This composed set uses uniform non-water terrain and varied path flags;
 water-crossing updates have separate position-step coverage. Post-step fatigue,
 animation, pathfinder, service arrivals and complete live integration remain open.
+
+### Complete step with fatigue and animation
+
+`original-walking-post-step.js` recovers 0x42b2b2–0x42b408: phased
+fatigue accumulation with signed wrapping, path cost, hole contribution,
+threshold reactions, special-class cap, world destination override, animation
+cycling and shot/retry continuation. 1,400 native cases match actor records,
+ordered reaction calls and exits, including signed animation and fatigue edges.
+
+`original-walking-complete-step.js` joins rate, position and post-step behavior,
+and executes the paused actor's route-budget reset. 1,400 continuous native
+runs from 0x42af66 match actor records, rate, calls and exits (76 sound/reaction
+effects). This fixture set uses stationary ball state, uniform non-water
+terrain and controlled effect bodies. The separate post-step verifier covers
+moving-ball continuations. Complete walking decisions still need connection
+to this step, and pathfinder, service/departure bodies and live integration
+remain unfinished.
