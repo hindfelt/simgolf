@@ -1,7 +1,8 @@
+import {originalBuildingDescription} from './original-building-description.js';
 import {ORIGINAL_LOCATION_STRINGS as labels} from './original-location-strings.js';
 const signedByte=n=>(n<<24)>>24;
 // 0x4074d0, with explicit original tile/object records and region globals.
-export function originalLocationDescription(q,map,describeBuilding){
+export function originalLocationDescription(q,map,describeBuilding=(event,state)=>originalBuildingDescription({buildingId:event.args[0],detailed:event.args[1],state})){
  let state=structuredClone(q.state),c=q.c|0,r=q.r|0,t=q.type|0;const events=[];
  const object=id=>{const value=q.objects[id];if(!value)throw Error('Original location object is unavailable.');return value;};
  if(t===-1)t=signedByte(map.tileAt(c,r));
