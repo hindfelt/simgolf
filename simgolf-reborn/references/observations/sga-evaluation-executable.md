@@ -3269,3 +3269,9 @@ Renamed the isolated fee adapter's `totalFeeUnits` to `cashUnits` throughout its
 `originalHoleCompletionStats` reconstructs 0x426b10–0x426be5. Actor byte +0x18==0 gates statistical updates, not the following fee calculation. For that status, it calls the read-only 0x405e80 comparison before and after incrementing the current hole histogram at +0x30+2*((actor[0x19]&15)*11+clamp(signed stroke,0,9)). Both comparison results are discarded. It then adds signed strokes to the shared performance table at index (signed actor[0xba]+4*(actor[0x19]&7))*46+signed hole, and increments index+19. All statuses copy the stroke byte into actor[hole+0x23]. Native integer widths are preserved.
 
 576 original executions match, including actual read-only comparison and clamp helpers; two tests pass. The nonzero-status branch does not require statistical records. This establishes the score-recording stage, not the external condition that invokes completion, and does not justify charging practice players based solely on actor status. Complete score/fee composition and subsequent completion progression remain open.
+
+### Continuous score recording through fee posting
+
+`originalRecordedHoleFee` composes statistics, assessment and settlement in original order. The oracle executes 0x426b10–0x426e6b continuously, including the actual statistical comparison, clamp, popup, RNG and floating-money helpers. Speech, actor-name text and integer formatting remain controlled boundaries. All 1,152 cases match complete actor/statistical/fee state and event order. Seven related tests pass, including immutable inputs, score retention when settlement is suppressed and late settlement controls observing the recorded score.
+
+This verifies the completion prefix only. The caller eligibility rule, subsequent completion progression, full live state mapping and exactly-once server integration remain unfinished. No deployment or live scoring replacement is implied.

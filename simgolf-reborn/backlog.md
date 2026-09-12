@@ -1443,3 +1443,5 @@ Ruleset 78 integration check: all eight local authenticated-browser/Worker/D1 te
 Authoritative Airstrip payment regression added: D1-backed shared course completes a paid visitor round through server ticks, records the $100 bonus, gives owner/editor identical state, and preserves payment through reread and save restoration. All 75 backend tests pass (one capacity test skipped). No deployment.
 
 Recovered original pre-fee score/statistics stage: 576 native cases match and two tests pass. Actor status gates statistics but does not itself skip fees; all statuses record the stroke byte. Caller completion eligibility, subsequent progression and live original score/fee integration remain unfinished.
+
+Continuous score recording through fee settlement now matches 1,152 native executions; seven related tests pass. Suppressed settlement retains the already-recorded score/statistics, and the post-speech snapshot observes those changes. Caller eligibility, remaining completion progression and authoritative live integration remain open; this is not a production gameplay change.
