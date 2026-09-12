@@ -50,20 +50,20 @@ export function restoreOriginalWorld(json) {
 // Runtime metadata and the shared strength cache are preserved independently.
 function buildWorldMap(world) {
  validate(world);
- const terrain=Uint8Array.from(world.terrain),metadata=code=>world.metadata[code];
- const readHeight=createOriginalStoredHeight({terrain,heights:Uint8Array.from(world.heights),originalFlags:world.globalFlags});
+ const terrain=Uint8Array.from(world.terrain),heights=Uint8Array.from(world.heights),metadata=code=>world.metadata[code];
+ const readHeight=createOriginalStoredHeight({terrain,heights,originalFlags:world.globalFlags});
  const derived=originalDerivedMap({terrain,ownership:Uint8Array.from(world.ownership),readHeight,metadata,originalFlags:world.globalFlags});
  const marks=Uint16Array.from(world.marks);
  const map=originalShotMap({terrain,marks,derived,readHeight,metadata,globalFlags:world.globalFlags});
- return {map,terrain,marks,derived};
+ return {map,terrain,heights,marks,derived};
 }
 
 export function originalWorldMap(world){return buildWorldMap(world).map;}
 // Original-format terrain for the actor engine; actor/career records remain
 // caller-owned. Metadata byte 2 has both names in the recovered subsystems.
 export function originalWorldActorMap(world){
- const {map,terrain,marks,derived}=buildWorldMap(world);
- return {map,terrain,tileFlags:marks,edgeMasks:derived.edgeMasks,
+ const {map,terrain,heights,marks,derived}=buildWorldMap(world);
+ return {map,terrain,heights,derived,tileFlags:marks,edgeMasks:derived.edgeMasks,
   metadata:world.metadata.map(m=>({...m,scatterCoefficient:m.shotClass})),
   seed:world.rngState,phaseCounter:world.phaseCounter,worldFlags:world.globalFlags,
   globalFlags:world.globalFlags};

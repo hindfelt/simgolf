@@ -2380,3 +2380,18 @@ must stay stable within an invocation generation.
 Six tests pass, including the 3,120 retained audible matrix, replacement-world
 reads, generation invalidation and asynchronous-reader rejection. Full planner
 performance and production schema adoption remain unverified. No deployment.
+
+### Saved terrain reaches scheduler map readers
+
+The original-format world adapter previously returned an already-bound map but
+omitted its typed height array and full derived-map backing. That prevented
+`originalWorldShotMap` from binding the restored actor world. It now exposes the
+same height/derived arrays used to construct its map, retaining the edgeMasks
+alias for existing callers.
+
+Twelve world/save/map checks pass. The movement restore test now uses the actual
+`originalGolferEffects` terrain dispatch rather than a test-only height/slope
+resolver. Restored height and all eight slope directions match the prior map,
+and edits to runtime arrays do not modify the serialized source world. This
+closes a terrain handoff gap; packed actor/profile population and full native
+planner/audible integration remain open. No live browser schema replacement.
