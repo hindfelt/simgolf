@@ -2525,3 +2525,19 @@ The oracle runs the actual boundary with controlled name/presentation helper
 stubs; it does not prove those UI helper bodies. Eleven local preparation and
 resumption checks pass, including the composed tutorial/audio queue. Production
 browser presentation and live recovered-world adoption remain unfinished.
+
+### First-hole comparison card data
+
+Inspection of 0x45e9c0 establishes that the two tutorial calls draw skill cards;
+they are not merely message popups. Their third argument is -1, selecting the
+read-only return rather than the interactive skill-allocation loop. Added a
+read-only descriptor for the ten labels/values, title, portrait and placement,
+plus an adapter for these tutorial draw events. Personal recovery/luck values
+cross the 256-byte actor boundary; the final actor requires explicit trailing
+bytes. Actors without the membership-record marker use shared default skills.
+
+All 306 native byte-selection cases match (153 actor/default selections in each
+of two marker modes). Local tests cover source isolation, defaults, tails and
+draw-event mapping. This verifies data extraction, not the complete native draw
+routine, its interactive allocation branch or browser card rendering. The
+remaining tutorial presentation and live integration work remains open.
