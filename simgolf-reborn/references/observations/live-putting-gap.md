@@ -667,3 +667,18 @@ drop candidates and 509 penalties. These fixtures exercise low-speed contacts
 with zero sampled slopes; prior broader motion verifiers remain relevant but
 do not establish the full combined input domain. Earlier flight/ground/cup
 integration and live world/actor conversion remain unfinished.
+
+### Continuous airborne branch through contact/stop
+
+`original-airborne-motion.js` joins airborne adjustment/obstacle effects to
+contact, landing and the stop decision. RNG state and ordered calls flow
+through all stages, with airborne collision reporting retained separately.
+3,000 continuous native paths from 0x42bf91 match actor bytes, RNG draws/state,
+continuation and 5,811 effects, including 82 airborne obstacle hits. The
+fixtures vary terrain-height delta, downward velocity, bounce/scatter values
+and audio callback mutations; impact slope samples are zero and current
+impact terrain is fixed to grass. This does not replace broader isolated
+slope tests or establish the whole live trajectory integration.
+
+Earlier position/gravity and ground/cup branches still need continuous actor
+composition; the live engine remains separate.
