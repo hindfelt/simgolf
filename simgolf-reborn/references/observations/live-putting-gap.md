@@ -2081,3 +2081,23 @@ Separate native stage handoff, explicit animation/tick scheduling and controlled
 height/slope/effects remain. Planner metadata outside the relevant coefficients
 retains the search fixture's controls. This is not live original-world adoption
 or a deployment; full natural-shot scoring integration remains open.
+
+
+### Naturally planned putts through accounting and ordinary hole completion
+
+`verify-original-prepared-putt-completion.py` continues the 36 original-ground
+cases beyond the stop/capture predicate through the native actor exit. All
+28 stopped shots and eight target-cup captures match the shared actor motion
+continuation, including both actors, all 20 hole records, 32 statistic records,
+wear map, completion record, cash, period/notice tables, settlement/selection
+globals, score list, RNG, effect order and update counts. Seven related tests
+pass. Natural launch values and clearance/animation transitions are retained.
+
+The fixture preserves native metadata immediately after the 20-record hole
+table; adding a synthetic 21st zero record there would overwrite terrain
+coefficients. Financial counters start from an explicit empty ledger and cash
+200. These cases validate completion handoffs; they do not cover all fee,
+match or special-visitor outcomes. Height/slope and presentation/reaction/range
+helpers remain controlled. The preparation-to-motion emulator handoff and
+explicit timing limitations remain. Full native-world cadence, actual effects
+and live gameplay adoption are still required; no production change.
