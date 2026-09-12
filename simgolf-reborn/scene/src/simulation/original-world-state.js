@@ -65,6 +65,7 @@ export function originalWorldActorMap(world){
  const {map,terrain,heights,marks,derived}=buildWorldMap(world);
  return {map,terrain,heights,derived,tileFlags:marks,edgeMasks:derived.edgeMasks,
   metadata:world.metadata.map(m=>({...m,scatterCoefficient:m.shotClass})),
-  seed:world.rngState,phaseCounter:world.phaseCounter,worldFlags:world.globalFlags,
+  seed:world.rngState,strengthCache:structuredClone(world.strengthCache),
+  phaseCounter:world.phaseCounter,worldFlags:world.globalFlags,
   globalFlags:world.globalFlags};
 }

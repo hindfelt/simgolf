@@ -17,3 +17,11 @@ parser checks passed locally with the private files available; the public-mode
 run passed four and explicitly skipped five. Five regional appearance and tree
 checks also passed. The production build passed. The full public-mode live
 suite and hosted execution are pending; this is not a release stability claim.
+
+## Publication status
+
+Commit `83c7f9a` contains the workflow and public-reference handling. GitHub
+rejected its push because the authenticated `hindfelt` OAuth credential lacks
+`workflow` scope. The remote branch therefore still ends at `c227e27`; the new
+Fairway Baron job has not run on GitHub. Publishing it requires an appropriately
+authorized credential. The local full-suite run continues independently.

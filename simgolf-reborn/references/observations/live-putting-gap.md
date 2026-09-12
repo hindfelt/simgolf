@@ -2395,3 +2395,13 @@ resolver. Restored height and all eight slope directions match the prior map,
 and edits to runtime arrays do not modify the serialized source world. This
 closes a terrain handoff gap; packed actor/profile population and full native
 planner/audible integration remain open. No live browser schema replacement.
+
+### Restored strength cache reaches the actor planner
+
+The original-format world preserved its strength-search ring in the save but
+omitted it from the actor-world adapter. The adapter now transfers an isolated
+copy alongside the saved RNG state. A restored search reuses prior entries and
+continues replacing the correct ring slot after a miss, without modifying the
+serialized source. All four actor-world checks pass, including motion/height
+restoration. This fixes another integration handoff; it does not establish full
+live planner adoption or add career records to the saved format.

@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {createOriginalWorld,originalWorldActorMap,serializeOriginalWorld,restoreOriginalWorld} from '../src/simulation/original-world-state.js';
+import {originalStrengthSearch} from '../src/simulation/original-strength-search.js';
 import {originalTerrainMetadata} from '../src/simulation/original-terrain-metadata.js';
 import {originalActorMotionContext} from '../src/simulation/original-actor-motion-context.js';
 import {originalGolferEffects} from '../src/simulation/original-golfer-effects.js';
@@ -21,4 +22,22 @@ test('restored world exposes consistent height and derived backing for current m
  }
  fields.heights[20*51+20]=1;fields.derived.edgeMasks[0]=255;
  expect(serializeOriginalWorld(w)).toBe(saved);
+});
+
+test('restored actor world retains strength-search hits and ring replacement without mutating the save',()=>{
+ const world=fresh();
+ for(let distance=10;distance<=120;distance+=10){
+  world.strengthCache=originalStrengthSearch({distance,verticalSpeed:1024,mode:0},world.strengthCache).cache;
+ }
+ const saved=serializeOriginalWorld(world),runtime=originalWorldActorMap(restoreOriginalWorld(saved));
+ const hit=originalStrengthSearch({distance:120,verticalSpeed:1024,mode:0},runtime.strengthCache);
+ expect(hit.hit).toBe(true);
+ const request={distance:130,verticalSpeed:1024,mode:0};
+ const next=originalStrengthSearch(request,runtime.strengthCache);
+ expect(next.hit).toBe(false);
+ expect(next).toEqual(originalStrengthSearch(request,world.strengthCache));
+ expect(next.cache.next).toBe(3);
+ runtime.strengthCache.entries[0].speed=-1;
+ runtime.strengthCache.next=9;
+ expect(serializeOriginalWorld(world)).toBe(saved);
 });
