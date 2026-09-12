@@ -26,12 +26,22 @@ try{
  const ocean=buildOcean(scene);ocean.update(ground);
  const course=buildCourseView(scene);course.update(game,0,[]);
  const camera=new THREE.OrthographicCamera(-60,60,45,-45,.1,400);
- const target=new THREE.Vector3(-1,0,5);camera.position.copy(target).add(new THREE.Vector3(-52,105,124));camera.lookAt(target);
+ const target=new THREE.Vector3(-1,0,5),initialAngle=Math.atan2(-52,124),radius=Math.hypot(52,124);
+ let angle=initialAngle,zoom=1;
  function render(){
   const aspect=innerWidth/innerHeight,span=Math.max(51,40/aspect);
+  camera.position.copy(target).add(new THREE.Vector3(Math.sin(angle)*radius,105,Math.cos(angle)*radius));camera.lookAt(target);camera.zoom=zoom;
+  document.querySelector("#zoom-in").disabled=zoom>=2;document.querySelector("#zoom-out").disabled=zoom<=.75;
   camera.left=-span*aspect;camera.right=span*aspect;camera.top=span;camera.bottom=-span;camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);renderer.render(scene,camera);
  }
+ for(const [id,action] of Object.entries({
+  'rotate-left':()=>angle-=Math.PI/4,
+  'rotate-right':()=>angle+=Math.PI/4,
+  'zoom-in':()=>zoom=Math.min(2,zoom+.25),
+  'zoom-out':()=>zoom=Math.max(.75,zoom-.25),
+  'reset-view':()=>{angle=initialAngle;zoom=1;},
+ }))document.getElementById(id).addEventListener('click',()=>{action();render();});
  render();document.querySelector('#status').remove();
  parent.postMessage({type:'terrain-preview-ready',query:location.search},location.origin);
  addEventListener('resize',render);
