@@ -1373,3 +1373,5 @@ F06 standard remarks now cover60 of65 cases. Original golfer-history case59 now 
 F06 standard remarks now cover62 of65 cases. Added value/parity branch61 and partner-profile branch1, using actual partner records and recovered profile voice.25600 native comparisons and32 related tests pass. Cases19,23,50, contiguous phrase verification and live integration remain open.
 
 F06 standard remarks now cover64 of65 cases. Added original score-to-par cases19/23 and complete score-comment helper, including narrator, flag/trait precedence and signed partner-score comparisons.33792 native comparisons and33 related tests pass. Case50, contiguous phrase verification and live integration remain open.
+
+F06 case50 helper: recovered original eight-entry resource cache lookup and cache-hit line-selection behavior.2400 native comparisons and20 cache/standard tests pass. Cache misses remain explicit; original file parsing and cache population are next. Standard coverage remains64/65, with full-path verification and live integration still open.

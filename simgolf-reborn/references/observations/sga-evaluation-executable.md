@@ -3067,3 +3067,11 @@ The standard oracle now compares25600 cases. Added matrices cover both parity al
 Cases19/23 now compute the signed-byte stroke/par difference, select the original score term and apply hole-flag0x4/0x8 precedence including narrator152. Case23 then uses its own completion text. Case19 checks the actor/hole-selected trait bit against the hole flags and score, then either compares a partner's nonzero signed stroke count or calls the score-comment helper. `original-score-comment.js` reconstructs complete0x469250, including value0–7 variants, the8–127 range and signed out-of-range fallback.
 
 The standard oracle executes the actual score-comment function and its jump table.33792 comparisons include4096 cases for each new branch, signed score/par boundaries, flag combinations, trait bits, actor types, partner strokes and narrator152. Thirty-three related tests pass, including precedence and partner/no-partner routes. Coverage is64 of65 standard cases. Case50 and its helper, contiguous full-phrase verification and live integration remain open.
+
+### Resource-phrase cache inside the remaining case50 helper (2026-09-12)
+
+The remaining standard case50 clears its text buffer and calls0x466440 with signed actor word0xb0, the value's low nibble, its arithmetic right-shift by4, and actor flag bit20. That helper scans eight268-byte cache entries keyed by file/section/variant before reading an original text resource.
+
+`original-cached-resource-phrase.js` reconstructs the lookup and complete cache-hit paths of0x466440. The first matching entry wins. Mode-1 appends cached text unchanged; mode1 terminates appended text at line breaks; other modes reproduce the native in-place scan/copy behavior, including multiple line breaks and preserved preexisting prefixes. Misses return an explicit load continuation without fabricating text or applying later file-loader writes.
+
+`verify-original-cached-resource-phrase.py` executes the original lookup/hit code and stops at0x46648b before file loading on a miss.2400 cases match across slots, misses, duplicate entries, modes, NUL and line-break variants. Twenty cache/standard tests pass. Standard case coverage remains64 of65: file loading, line parsing and cache population are still required for case50, followed by full contiguous phrase verification and live integration.
