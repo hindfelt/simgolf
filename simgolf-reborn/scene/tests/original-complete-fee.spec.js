@@ -10,6 +10,6 @@ test('assessment through settlement matches uninterrupted native execution',()=>
 test('settlement can read changed control state after speech, without running early',()=>{
  const q=structuredClone(rows.find(([q])=>q.profileTiers[0]===4&&!q.globalFlags)[0]);let played=false;
  const r=originalCompleteFee(q,(e,s)=>{played=true;return {...s,feeUnits:77,seed:999};},s=>{expect(played).toBe(true);expect(s.feeUnits).toBe(77);return {globalFlags:0x200000,state:s};});
- expect(r.posted).toBe(false);expect(r.state.totalFeeUnits).toBe(q.state.totalFeeUnits);expect(r.state.seed).toBe(999);expect(r.events.map(e=>e.address)).toEqual([0x40c1f0]);
+ expect(r.posted).toBe(false);expect(r.state.cashUnits).toBe(q.state.cashUnits);expect(r.state.seed).toBe(999);expect(r.events.map(e=>e.address)).toEqual([0x40c1f0]);
  expect(()=>originalCompleteFee(q,speech(q),async()=>({state:q.state}))).toThrow('synchronous');
 });

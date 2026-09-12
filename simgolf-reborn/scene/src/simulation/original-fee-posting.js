@@ -17,11 +17,11 @@ export function originalMoneyNotice(q){
 export function originalFeePosting(q){
  const state=structuredClone(q.state),actor=state.actors?.[q.actorId];
  if(!(actor instanceof Uint8Array)||actor.length!==256)throw Error('Original fee actor is unavailable.');
- for(const key of ['feeUnits','totalFeeUnits','feeLedgerIndex'])if(!Number.isInteger(state[key]))throw Error('Original fee posting globals are unavailable.');
+ for(const key of ['feeUnits','cashUnits','feeLedgerIndex'])if(!Number.isInteger(state[key]))throw Error('Original fee posting globals are unavailable.');
  const index=(actor[0x21]<<24)>>24,hole=state.holeRecords?.[index],ledger=state.feeLedgerIndex;
  if(!(hole instanceof Uint8Array)||hole.length!==520||!Number.isInteger(state.feeLedger?.[ledger]))throw Error('Original fee posting records are unavailable.');
  const h=recordView(hole),a=recordView(actor),units=state.feeUnits|0;
- state.totalFeeUnits=(state.totalFeeUnits+units)|0;h.setInt32(0x1fc,(h.getInt32(0x1fc,true)+units)|0,true);
+ state.cashUnits=(state.cashUnits+units)|0;h.setInt32(0x1fc,(h.getInt32(0x1fc,true)+units)|0,true);
  state.feeLedger[ledger]=((state.feeLedger[ledger]+units)<<16)>>16;
  const event={address:0x40c580,args:[units,a.getInt32(0,true),a.getInt32(4,true),-1]};
  const result=originalMoneyNotice({state,globalFlags:q.globalFlags,units,x:event.args[1],z:event.args[2],holeIndex:-1});

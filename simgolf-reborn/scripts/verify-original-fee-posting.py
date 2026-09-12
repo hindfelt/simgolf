@@ -18,13 +18,13 @@ for units in [-2147483648,-32769,-10,-1,0,1,10,32767,2147483647]:
  for i in range(64):
   actor=bytearray(256);struct.pack_into('<ii',actor,0,-1024,3072);actor[0x21]=i%3;hole=bytearray(520);struct.pack_into('<i',hole,0x1fc,2147483647 if i%2 else -2147483648)
   notices=[dict(x=j,z=j+10,units=j+20,ticks=j+30) for j in range(8)];ledger=i%4
-  q=dict(actorId=0,globalFlags=0x1000000 if i%3==0 else 0,state=dict(actors={'0':list(actor)},feeUnits=units,totalFeeUnits=2147483647 if i%2 else -2147483648,holeRecords={str(i%3):list(hole)},feeLedgerIndex=ledger,feeLedger={str(j):32767 if j%2 else -32768 for j in range(4)},moneyNoticeIndex=i%8,moneyNotices=notices))
-  s=q['state'];u.mem_write(0x577f08,bytes(actor));u.mem_write(0x5744f8+(i%3)*520,bytes(hole));put(0x570a24,s['totalFeeUnits']);put(0x5a5784,ledger,'<H');put(0x599600,i%8);put(0x59d208,q['globalFlags'])
+  q=dict(actorId=0,globalFlags=0x1000000 if i%3==0 else 0,state=dict(actors={'0':list(actor)},feeUnits=units,cashUnits=2147483647 if i%2 else -2147483648,holeRecords={str(i%3):list(hole)},feeLedgerIndex=ledger,feeLedger={str(j):32767 if j%2 else -32768 for j in range(4)},moneyNoticeIndex=i%8,moneyNotices=notices))
+  s=q['state'];u.mem_write(0x577f08,bytes(actor));u.mem_write(0x5744f8+(i%3)*520,bytes(hole));put(0x570a24,s['cashUnits']);put(0x5a5784,ledger,'<H');put(0x599600,i%8);put(0x59d208,q['globalFlags'])
   for j in range(4):put(0x582c60+j*20,s['feeLedger'][str(j)],'<H')
   for j,n in enumerate(notices):
    for key,a in [('x',0x541ee8),('z',0x541f08),('units',0x541ce8),('ticks',0x541e10)]:put(a+j*4,n[key])
   u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,0);u.reg_write(UC_X86_REG_ECX,units&0xffffffff);events=[];u.emu_start(0x426e12,0x426e6b,count=300)
-  out=json.loads(json.dumps(s));out['totalFeeUnits']=get(0x570a24);out['holeRecords'][str(i%3)]=list(u.mem_read(0x5744f8+(i%3)*520,520));out['feeLedger']={str(j):get(0x582c60+j*20,'<h') for j in range(4)};out['moneyNoticeIndex']=get(0x599600)
+  out=json.loads(json.dumps(s));out['cashUnits']=get(0x570a24);out['holeRecords'][str(i%3)]=list(u.mem_read(0x5744f8+(i%3)*520,520));out['feeLedger']={str(j):get(0x582c60+j*20,'<h') for j in range(4)};out['moneyNoticeIndex']=get(0x599600)
   out['moneyNotices']=[{key:get(a+j*4) for key,a in [('x',0x541ee8),('z',0x541f08),('units',0x541ce8),('ticks',0x541e10)]} for j in range(8)]
   rows.append([q,dict(state=out,events=events)])
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalFeePosting} from MODULE;for(const [q,out] of JSON.parse(readFileSync(0,'utf8'))){for(const s of [q.state,out.state]){s.actors[0]=Uint8Array.from(s.actors[0]);for(const id in s.holeRecords)s.holeRecords[id]=Uint8Array.from(s.holeRecords[id]);}const r=originalFeePosting(q);if(!isDeepStrictEqual(r,out))throw Error(JSON.stringify({q,out,r}));}""".replace('MODULE',json.dumps((root/'simgolf-reborn/scene/src/simulation/original-fee-posting.js').as_uri()))

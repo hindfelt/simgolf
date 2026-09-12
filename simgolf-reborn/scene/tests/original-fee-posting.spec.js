@@ -8,7 +8,7 @@ test('fee ledgers and notices match contiguous native posting including integer 
 });
 test('disabled money notices do not suppress the actual fee ledgers',()=>{
  const [q,out]=rows.find(([q])=>q.state.feeUnits===10&&q.globalFlags===0x1000000);
- expect(out.state.totalFeeUnits).not.toBe(q.state.totalFeeUnits);expect(out.state.moneyNotices).toEqual(q.state.moneyNotices);expect(out.state.moneyNoticeIndex).toBe(q.state.moneyNoticeIndex);
+ expect(out.state.cashUnits).not.toBe(q.state.cashUnits);expect(out.state.moneyNotices).toEqual(q.state.moneyNotices);expect(out.state.moneyNoticeIndex).toBe(q.state.moneyNoticeIndex);
 });
 test('zero notices need no queue and explicit hole notices subtract their units',()=>{
  expect(originalMoneyNotice({units:0,state:{},globalFlags:0})).toEqual({state:{}});

@@ -8,7 +8,7 @@ test('settlement gates, tutorial, popup RNG and ledgers match native execution',
 });
 test('popup rejection still posts fees; settlement suppression touches nothing',()=>{
  const [q,out]=rows.find(([q,r])=>r.posted&&q.state.feeUnits===10&&q.state.popupMode===3&&r.events.some(e=>e.address===0x40c7f0));
- expect(out.popupRandomDraws).toBe(0);expect(out.state.totalFeeUnits).not.toBe(q.state.totalFeeUnits);
+ expect(out.popupRandomDraws).toBe(0);expect(out.state.cashUnits).not.toBe(q.state.cashUnits);
  expect(originalFeeSettlement({globalFlags:0x200000,state:{}})).toEqual({state:{},events:[],posted:false,popupRandomDraws:0});
 });
 test('nonzero ledger selection does not read the first-fee tutorial ledger',()=>{
