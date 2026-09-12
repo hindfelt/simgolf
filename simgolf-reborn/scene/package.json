@@ -13,7 +13,8 @@
     "test:account-browser": "playwright test --config server/browser.config.js",
     "test:shared-integration": "npm run build && playwright test --config server/shared-integration.config.js",
     "benchmark:shared": "node server/benchmark-shared-host.mjs",
-    "test:earnings-soak": "SIMGOLF_EARNINGS_FULL=1 npm run test:shared-integration -- --grep \"two earnings entrants\""
+    "test:earnings-soak": "SIMGOLF_EARNINGS_FULL=1 npm run test:shared-integration -- --grep \"two earnings entrants\"",
+    "test:host-capacity": "SIMGOLF_CAPACITY=1 vitest run --config server/vitest.config.js server/course-capacity.test.js --reporter=default --reporter=./server/capacity-reporter.mjs"
   },
   "dependencies": {
     "jose": "6.2.3",

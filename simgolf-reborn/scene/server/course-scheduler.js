@@ -32,7 +32,7 @@ export class CourseScheduler extends DurableObject {
   const accepted=await this.ctx.storage.transaction(async storage=>{
    const current=await storage.get('courseId');
    if(current&&current!==courseId)return false;
-   await storage.put('courseId',courseId);
+   if(!current)await storage.put('courseId',courseId);
    if(await storage.getAlarm()===null)await storage.setAlarm(Date.now()+1000);
    return true;
   });
