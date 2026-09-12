@@ -7,6 +7,7 @@ test('testing purchases and feedback are isolated from the normal resort',async(
  await page.evaluate(value=>localStorage.setItem('simgolf-reborn.course.v1',value),original);
  await page.goto('/?testing=1');
  await page.locator('#loading').waitFor({state:'hidden'});
+ await page.getByText('Land & boundaries',{exact:true}).click();
  await page.locator('#buy-land').click();
  await page.locator('#confirm-land').click();
  await expect.poll(()=>page.evaluate(()=>window.__gameTest.getState().landParcels)).toBe(1);

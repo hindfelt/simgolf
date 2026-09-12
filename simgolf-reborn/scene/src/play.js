@@ -494,8 +494,17 @@ function resize() {
   camera.right = width / 2;
   camera.top = (width * innerHeight) / innerWidth / 2;
   camera.bottom = -camera.top;
+  frameVisibleCourse();
+}
+// Frame the map above phone controls without changing the target or world picking.
+function frameVisibleCourse() {
+  if (innerWidth < 650) {
+    const panelHeight = $(".console").getBoundingClientRect().height;
+    camera.setViewOffset(innerWidth, innerHeight, 0, Math.max(0, (panelHeight - 150) / 2), innerWidth, innerHeight);
+  } else camera.clearViewOffset();
   camera.updateProjectionMatrix();
 }
+new ResizeObserver(frameVisibleCourse).observe($(".console"));
 addEventListener("resize", resize);
 resize();
 controls.update();

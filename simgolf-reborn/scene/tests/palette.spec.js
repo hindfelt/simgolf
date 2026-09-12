@@ -37,6 +37,7 @@ test("phone brush selector stays visible while the tool list scrolls", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.waitForFunction(() => window.__gameTest);
+  await page.getByText("Brush & direction",{exact:true}).click();
   const before = await page.locator("#brush").boundingBox();
   await page
     .locator(".tools")

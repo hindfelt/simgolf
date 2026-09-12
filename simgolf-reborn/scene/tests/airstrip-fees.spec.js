@@ -80,7 +80,7 @@ test("visitor panel includes the connected Airstrip fee bonus", async ({
     () => window.__gameTest.getState().guests[0].happiness * 100 + 100,
   );
   await expect(page.locator("#live-details")).toContainText(
-    `Current green fee $${expected}`,
+    new RegExp(`Current green fee\\s*\\$${expected}`),
   );
 });
 

@@ -22,6 +22,7 @@ test('invalid outlines and protected cells reject atomically',()=>{
 });
 test('browser outlines and finishes a region',async({page})=>{
  await page.goto('/');await page.waitForFunction(()=>window.__gameTest);await page.locator('#pause').click();
+ await page.getByText('Land & boundaries',{exact:true}).click();
  await page.locator('#boundary-outline').click();
  for(const c of points){const p=await page.evaluate(({c,r})=>window.__gameTest.project(-44+(c+.5)*2,-34+(r+.5)*2),c);await page.mouse.click(p.x,p.y);}
  await page.locator('#finish-boundary').click();

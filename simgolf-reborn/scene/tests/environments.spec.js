@@ -66,7 +66,7 @@ test("phone selects a tropical course and sees its regional recreation option", 
   await page.locator("#menu-button").click();
   await page.locator("#new").click();
   await page.locator("#new-environment").selectOption("tropical");
-  await expect(page.locator("#environment-summary")).toContainText("Swim Club");
+  await expect(page.locator("#environment-summary")).toContainText(/swim club/i);
   await page.locator("#confirm-new").click();
   await page.waitForLoadState("load");
   await page.locator("#loading").waitFor({ state: "hidden" });

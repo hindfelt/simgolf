@@ -70,6 +70,7 @@ test("browser buys a parcel through the visible dialog", async ({ page }) => {
   await page.keyboard.press("h");
   expect(await page.evaluate(() => window.managementShortcutClicks)).toBe(0);
   await page.locator('[data-mode="build"]').click();
+  await page.getByText("Land & boundaries",{exact:true}).click();
   await expect(page.locator("#panel #buy-land")).toBeVisible();
   for (const id of ["#open-hole", "#add-hole", "#edit-holes"])
     await expect(page.locator(id)).toBeVisible();
