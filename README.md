@@ -1,14 +1,16 @@
-# SimGolf Reborn
+# Fairway Baron
 
 **Build a golf course. Run the club. Play your own holes.**
 
-SimGolf Reborn is a browser-based golf course management game inspired by **Sid Meier’s SimGolf**. Start with an empty property, shape the landscape, lay out holes and watch golfers put your design to the test. Use the income to improve the club, hire staff, add facilities and buy more land. Then step onto the course yourself.
+Fairway Baron (formerly SimGolf Reborn) is a browser-based golf course management game inspired by **Sid Meier’s SimGolf**. Start with an empty property, shape the landscape, lay out holes and watch golfers put your design to the test. Use the income to improve the club, hire staff, add facilities and buy more land. Then step onto the course yourself.
 
 The new **1.0.0 major rebuild** uses Three.js for a dimensional, isometric view with rounded tile shapes, green borders and a relaxed model-world feel.
 
 ![A playable course in SimGolf Reborn](simgolf-reborn/graphics/samples/playable-overview.png)
 
 ## Start here
+
+- **[Current release status and remaining TODO](simgolf-reborn/RELEASE_STATUS.md)** — distinguishes local implementation, verification and hosted release.
 
 - **[Player guide: what the game is about and how to play](simgolf-reborn/PLAYER_GUIDE.md)**
 - [Feedback testing: isolated resort copy and prepared two-hole simulation](simgolf-reborn/references/release/playtesting-2026-09-11.md)
@@ -55,9 +57,9 @@ The output is `simgolf-reborn/scene/dist/`. Serve the contents of that folder. S
 
 Current features include up to 18 holes, terrain editing, bridges, tee directions, out-of-bounds stakes, ball flight/bounce/roll, persistent golfers, staff, resort facilities, home sales, land purchases, local competitions and course sharing. The release passed **417 local tests** and its production build.
 
-Still in progress: full original progression and tuning, complete stories and celebrity residency, regional scenery, public hosting, cloud saves and actual multiplayer networking. Some costs and benefits are provisional.
+Still in progress: live adoption of the recovered original simulation, full career progression and tuning, complete stories and celebrity residency, remaining regional presentation and hosted release verification. Some costs and benefits are provisional.
 
-The architecture is being prepared for cooperative course building, earnings competitions and multiplayer tournaments on user-built courses. **Those online modes are not available yet.**
+Cooperative building, earnings competitions and asynchronous tournaments have local implementations and integration coverage. Their hosted deployment, capacity and final release verification remain open. See the current release checklist above.
 
 ## Project documentation
 

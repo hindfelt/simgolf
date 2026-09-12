@@ -1,4 +1,4 @@
-# Player guide
+# Fairway Baron player guide
 
 ## What is the game about?
 
@@ -64,7 +64,7 @@ A connected Marina, Helipad or Links Church currently gives a non-stacking home-
 
 To begin a different property, open **Club menu → Start a new course**. Choose an environment, landscape and terrain seed. The preview shows the proposed terrain; **New terrain** changes the seed. Starting replaces your current course, with a previous-course backup retained in that browser. Export a save first if you want a separate durable copy.
 
-Available landscape choices include the original study, rolling terrain, a river valley and a coastal course. Environments change ground colors and regional recreation choices; full regional vegetation and architecture remain unfinished.
+Available landscape choices include the original study, rolling terrain, a river valley and a coastal course. Environment controls vegetation, ground appearance and regional recreation. Tropical uses palms, turquoise water and timber clubhouse/hotel designs; Links uses low scrub, dry ground and a stone clubhouse. Landscape controls landforms independently: choose Coast for islands and shorelines, or River valley for a stream. The same seed retains comparable terrain layout. Remaining regional resort architecture is still in development.
 
 A **Marina** needs its building on dry land and docks over water. Rotate it to match the shore. A **Helipad** uses a compact 5×5 site, while the **Airstrip** needs a long 31×7 site. Grade transport sites before building if the ground is too uneven.
 
@@ -86,9 +86,9 @@ From the Club menu, **Local championship** and **Pro challenge exhibition** star
 | --- | --- | --- |
 | Place or select | Click | Tap |
 | Paint terrain | Drag with a paint tool | Drag with a paint tool |
-| Pan | Drag in Inspect / pan, or right-drag | Two-finger pan |
+| Pan | Hold Space and drag, drag in Inspect / pan, or right-drag | Two-finger pan |
 | Zoom | Mouse wheel | Pinch |
-| Pause | Pause button or Space | Pause button |
+| Pause | Pause button | Pause button |
 | Open/close selected hole | Button or H | Button |
 
 Use visible buttons on a phone. Some editing dialogs are easier on a larger screen.

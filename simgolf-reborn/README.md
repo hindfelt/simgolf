@@ -1,7 +1,8 @@
-# SimGolf Reborn 1.0.0
+# Fairway Baron — playable development preview
 
 The approved dimensional art direction and subsequent tile-based course/path refinements now support the **playable course with up to 18 holes**. This is an independent browser game in the new subfolder, not a completed 1:1 recreation. The full target remains in [whattobuild.md](whattobuild.md).
 
+- [Current release status and remaining TODO](RELEASE_STATUS.md): local implementation versus hosted verification and unfinished requirements.
 - [Player guide](PLAYER_GUIDE.md): what the game is about and how to build, manage and play.
 - [Development guide](DEVELOPMENT.md): setup, tests and project structure.
 - [Player accounts and administration](ACCOUNT_SETUP.md): sign-in providers, private saves, account linking and operator setup.
@@ -15,7 +16,7 @@ The approved dimensional art direction and subsequent tile-based course/path ref
 
 ## Feedback testing
 
-Signed-in players can open **Account → Shared courses** to create a shared club, grant editor or spectator access using another player's account ID, and open the same course together. Shared resorts use server time and continue running when browsers close. This is a shared-building preview; multiplayer golf tournaments are still in development. Normal local resorts and shared-course saves remain separate.
+Signed-in players can open **Account → Shared courses** to create a shared club, grant editor or spectator access using another player's account ID, and open the same course together. Shared resorts use server time and continue running when browsers close. This is a shared-building preview; asynchronous multiplayer tournaments are implemented locally, with hosted release verification still open. Normal local resorts and shared-course saves remain separate.
 
 Open the game with `?testing=1` or choose **Club menu → Open playtesting copy**. The testing copy has separate saves. Choose **Test & feedback → Start a prepared simulation** for two open holes and an early helicopter visit. Export feedback with the course state and send the file with your comments. [Testing instructions and release assessment](references/release/playtesting-2026-09-11.md).
 
@@ -33,7 +34,7 @@ npm run dev
 
 Open `http://127.0.0.1:4176/`. Place a tee and green, paint the fairway, then **Open hole** or press **H**. Golfers arrive in pairs and pay after finishing. After placing a green, paint with **Green** to extend it; **Move cup** relocates the flag and **Trim green** cuts back its edges. Use **Add hole** and the hole selector to expand the course. **Scorecards** shows per-hole results and completed rounds. The Staff tab hires groundskeepers and, after six completed holes, Turf Technicians who repair divots and crabgrass. Select an employee to rename, locate, reposition or dismiss them; Play starts Gary’s practice round from the selected hole; **Pro skills** allocates ten starting points before play. The club menu saves, exports and imports courses.
 
-Choose **Inspect / pan** to drag the view. In construction mode, right-drag pans; two fingers pan/zoom on touch. Scroll/pinch zooms. Space pauses. Construction tools paint a square grid and reject overlaps with tees, greens, buildings and protected course features. Water and player-built bridges can be edited. The old art study remains at `http://127.0.0.1:4176/?mode=art` with its own review controls.
+Choose **Inspect / pan** to drag the view. In construction mode, right-drag pans; two fingers pan/zoom on touch. Scroll/pinch zooms. Hold Space and drag to pan; use the Pause button to pause. Right-click removes objects in construction mode. Construction tools paint a square grid and reject overlaps with tees, greens, buildings and protected course features. Water and player-built bridges can be edited. The old art study remains at `http://127.0.0.1:4176/?mode=art` with its own review controls.
 
 **Play remotely at https://simgolfer.0x4d.in/**, including on your phone. The local server also listens on the same Wi-Fi at the computer's LAN address and port 4176. Saves live in each browser and hostname; export/import transfers a course from localhost to the public site or between devices.
 
