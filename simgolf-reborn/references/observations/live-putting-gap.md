@@ -1964,3 +1964,21 @@ contact and motion-tail code execute. Height/slope and presentation/reaction
 queries remain controlled. Speeds remain above the stop threshold, and no
 cup flags are placed, so stopping/accounting and cup capture are not covered.
 Full world/render cadence, real effects and live adoption remain unfinished.
+
+
+### Swing release through rolling to rest and shot accounting
+
+`verify-original-swing-stopped-shot.py` continues the ordered animation and
+impact sequence until native speed reaches zero, without replacing velocities.
+All 500 sequences match complete actor, hole and 32 statistic records, all
+2,500 wear cells, shared RNG, ordered effects and movement-update counts.
+Starting strokes vary from zero to two, exercising first-shot drive statistics
+and subsequent-shot accounting on uniform terrain 1/2. Hole 1 has par four;
+the cup is distant and no cup flags are placed. Fourteen related tests pass.
+
+The native resistance, stopping predicate, shot accounting and landing tail
+execute continuously. Height/slope return zero; presentation/reaction helpers
+are controlled and the range helper returns 100. This establishes rolling-to-
+accounting handoffs under those boundaries, not cup capture, mixed terrain,
+real reaction bodies, render cadence or live browser/server adoption. No
+production gameplay change or deployment is included.
