@@ -323,3 +323,26 @@ Lookup/reaction/planning/presentation effect bodies remain controlled in this
 assembled verifier. The phase-1 gap noted above is closed; full motion/scoring,
 walking/tutorial bodies, actual resolver adapters and live saved-world integration
 remain unfinished. There is still no live browser physics change from this work.
+
+### Stopped-shot accounting
+
+`original-shot-accounting.js` recovers 0x42ca9d–0x42cc88, after the native stop
+predicate has zeroed speed. It resets delay/swing state and impact flags, samples
+the final tile, retains the terrain-2 flag exception, and records first-stroke
+drive totals, distance/longest drive and nonpositive-scatter fairway hits. The
+stroke byte then increments; signed comparison with par minus two determines
+the regulation-green counters. Raw 520-byte hole records and 184-byte statistic
+records retain the original offsets and integer widths, rather than accumulating
+parallel approximate totals. Hazard penalties and reaction processing begin at
+the returned continuation and are not silently omitted by this helper.
+
+`verify-original-shot-accounting.py` matches 2,000 continuous native executions
+with the actual distance helper. Entire actor, hole and selected statistic records
+match, together with the final tile locals. Randomized initial counters cover
+signed comparisons and byte/word/dword wraparound. Twelve accounting/entry/
+preparation checks pass. Non-stopped inputs reject atomically.
+
+This closes the initial post-motion statistics branch. Raw actor-to-motion
+binding, intermediate effects, subsequent hazards/reactions, scoring settlement
+and live saved-world integration remain required. No live reports or gameplay
+have switched to these recovered records yet.
