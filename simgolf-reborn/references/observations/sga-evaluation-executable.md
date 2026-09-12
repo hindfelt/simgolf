@@ -3157,3 +3157,9 @@ Inspection of0x46806a onward corrects the earlier provisional “downstream soci
 `originalRemarkExplanationGate` reconstructs0x46806a–0x468148. Kind50 exits before voice lookup. Other kinds choose he/she via the actual profile voice helper, then check signed elapsed time strictly greater than500, actor word0xae zero, two seen-kind masks, and strict screen-coordinate bounds100<x<700 and100<y<400. Native x86 shift wrapping means kinds64/65 reuse bits0/1 of the high mask; this behavior is retained.
 
 3960 native comparisons and2 regression tests pass, including cooldown and screen boundaries, pronouns and high-kind masks. Explanation text assembly, final popup helper/completion and integration after reaction remain open, alongside audio/world/live wiring.
+
+### Explanatory popup completion (2026-09-12)
+
+`originalRemarkExplanationDisplay` reconstructs0x468feb–0x469075. Popup style uses the selected delta from stack0x18, not its later reduced happiness delta. The interface bit4 and nonempty C-string gates precede0x40c7f0(style,-8,actorId). Only a nonzero result marks the kind as seen and stores the current clock; returned popup state is reloaded first, retaining changes to masks, text and clock. The original modulo32 mask behavior is preserved.
+
+3168 native comparisons cover selected-delta/difficulty boundaries, empty/NUL text, disabled messages, callback failure/success and callback state mutations. Five explanation tests pass, including retry eligibility after failure and current-clock bookkeeping after success. The popup helper itself remains an explicit unresolved boundary. Explanation text assembly, complete explanation integration and live gameplay wiring remain unfinished.

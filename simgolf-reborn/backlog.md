@@ -1401,3 +1401,5 @@ Reaction outcome snapshots can now be read after speech/preamble effects and bef
 Complete remark entry through reaction outcome now matches10763 uninterrupted native executions, including actor happiness, history flags, RNG and world counters.10 related tests pass. Social behavior after0x46806a, positional playback integration and live authoritative world wiring remain unfinished.
 
 Correction to the preceding “downstream social” label:0x46806a onward generates explanatory messages for the player, rather than verified relationship changes. Its gating now matches3960 native executions;2 tests pass. Explanation text assembly and popup completion remain, followed by complete integration and live wiring.
+
+Explanatory-message completion now matches3168 original executions: style, enabled/text gates, successful-popup masks and cooldown updates.5 related tests pass. Popup helper implementation, explanation text assembly, full composition and live integration remain unfinished.
