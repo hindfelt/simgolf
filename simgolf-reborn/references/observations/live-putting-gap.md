@@ -1591,3 +1591,16 @@ including signed threshold boundaries: 49 new-complaint entries and 1,551
 continuations at 0x428f64. No native helpers are stubbed in this slice.
 New-complaint text/outcome, complete entry composition and live actor
 scheduling remain unfinished.
+
+### Initial angry complaint and membership resignation
+
+`original-angry-complaint.js` recovers 0x428b38–0x428f64: reason-table
+wording, pronouns, hole/round suffix, membership resignation, notice effects,
+completion/hole records and angry departure state. It rereads state after
+synchronous callbacks and preserves selection clearing for the native flag.
+
+800 native cases match actor/hole/completion records, complaint text, message
+flag, selection and ordered calls. All 256 reason bytes occur, with varying
+hole numbers and membership record bits. Names, identity, integer formatting
+and notice bodies are controlled. Entry-gate composition, real helper effects,
+subsequent departure handling and live scheduling remain unfinished.
