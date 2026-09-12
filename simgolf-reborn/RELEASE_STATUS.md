@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This is the current local development checkpoint following commit `06457df`.
+This is the current local development checkpoint following the terrain handoff work in `f616844`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -21,8 +21,10 @@ summarizes what still remains; it does not replace the requirements in
   and asynchronous tournament implementation with authenticated integration tests.
 
 These statements describe local code and recorded tests, not deployed features.
-The latest changes have not been pushed or deployed. A fresh remote comparison
-and deployment inspection are required before publishing a release.
+Committed development work through `f616844` has been pushed to the
+`codex/simgolf-reborn-v1` branch and the remote comparison matched. GitHub CI
+started; its completion is not yet verified. Production has not been deployed.
+Uncommitted workspace changes are excluded from that push.
 
 ## Remaining completion checklist
 
@@ -49,8 +51,8 @@ and deployment inspection are required before publishing a release.
 - [ ] **Audit original-game requirements F01–F12/P01–P20.** Record evidence and
   remaining differences for each requirement before claiming parity.
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
-  repository sync, push the release branch and documentation, then deploy and
-  smoke-test the actual hosted revision.
+  CI and the final repository revision, then deploy and smoke-test the actual
+  hosted revision. The current development branch and documentation are pushed.
 
 ## Evidence and limitations
 
