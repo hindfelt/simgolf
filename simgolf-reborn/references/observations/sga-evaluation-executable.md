@@ -3209,3 +3209,9 @@ A separate regression caught loss of resolver-consumed randomness when selection
 ### Post-audio outcome reads
 
 `originalAudibleRemarkAdjustment` now accepts and forwards `readOutcome` to the common reaction pipeline. Previously, callers using real positional sound could not refresh world counters after playback effects even though the non-audio path supported it. Twelve tests pass, including the existing native audio/projection fixtures and a composed playback mutation that moves the actor to hole 2/tile 54, changes RNG, then verifies fresh counters, cleared audio queue, tired-state timing and correct write-back. The mutation is an explicit resolver test, not a claim that ordinary audio moves actors. Early exits omit the read and asynchronous reads are rejected. Full entry/preparation/audio/explanation composition and live authoritative state integration remain unfinished.
+
+### Full remark audio composition
+
+`originalAudibleCompleteRemark` routes both preparation speech and reaction speech through actual positional projection/sound rules. It carries seed and queue/sequence state from preparation into reaction and retains final post-popup RNG. Direct playback remains an explicit synchronous resolver; camera/terrain must be authoritative, not spectator-dependent. The complete world writer now also retains queue and sequence fields.
+
+Fourteen related tests pass. New composition tests cover pitch/outcome/popup RNG order, queued speech without a pitch draw, preparation repeat suppression, the two speech calls for a new kind-35 remark, sound-only reaction returns and asynchronous playback rejection. Existing native matrices remain checked, but there is not yet a single uninterrupted native oracle with full audio enabled. Live audio rendering/state mapping and authoritative game-event integration remain open.

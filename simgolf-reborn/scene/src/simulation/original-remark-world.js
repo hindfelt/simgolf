@@ -39,7 +39,7 @@ export function originalApplyCompleteRemarkWorld(world,snapshot,remark){
  const s=remark.state;
  // These fields belong to dispatch/explanation. Do not copy scalar reaction
  // counters onto the world's typed map arrays or stale whole-map snapshots.
- for(const key of ['actors','sourceText','remarkStyle','redirected','priority','displayText','requestValues','resourceCacheIndex','resourceCache','seed','originalClock','lastExplanationClock','explanationMaskLow','explanationMaskHigh','interfaceFlags','popupActive','popupPending','popupMode','popupText','popupStyle','popupActor','popupLifetime','popupDuration','popupX','popupY']){
+ for(const key of ['actors','sourceText','remarkStyle','redirected','priority','displayText','requestValues','resourceCacheIndex','resourceCache','seed','queued','sequenceIndex','originalClock','lastExplanationClock','explanationMaskLow','explanationMaskHigh','interfaceFlags','popupActive','popupPending','popupMode','popupText','popupStyle','popupActor','popupLifetime','popupDuration','popupX','popupY']){
   if(Object.hasOwn(s,key))result[key]=structuredClone(s[key]);
  }
  if(remark.reaction&&Object.hasOwn(remark.reaction.state,'worldDirty'))result.worldDirty=remark.reaction.state.worldDirty;
