@@ -1019,3 +1019,20 @@ rejection or skipped admission into fallback. Four composition tests pass,
 including a real primary-search miss followed by a marked-tile destination.
 Later partner/service checks, arrival execution, movement and live integration
 remain unfinished; the full composition still needs continuous native coverage.
+
+### Partner-dependent secondary service
+
+`original-walking-partner-service.js` recovers 0x429aae–0x429b53,
+including rejection at 0x429c37. It compares signed elapsed actor/partner
+clocks and partner strokes, honors flag 0x4000000, then runs the actual type-3
+facility search with a strict 3072-unit cutoff. Success uses the facility's
+origin tile; rejection retains the prior destination and clears the service
+index. The distinct continuation entries 0x429c40 and 0x429c49 are preserved.
+
+1,200 continuous native cases match actor bytes, service index, distance,
+destination, ordered search calls and branches (433 accepted stops). Fixtures
+include signed clock boundaries, partner progress, flags and real facility
+records. Walking preparation connects this after unsuccessful/unused earlier
+service checks; all five focused composition tests pass. Later service/arrival
+branches and movement remain open, along with continuous full-composition
+verification and live integration.
