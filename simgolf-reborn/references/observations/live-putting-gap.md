@@ -1651,3 +1651,27 @@ comparisons for all 208 walking entries. Cached flags, terrain, override,
 movementReady and entry value match actual registers/stack. Snapshot fields
 remain explicit; mapping into live global names and full actor-turn walking
 composition are still unfinished.
+
+
+### Actor decisions continue through walking
+
+`original-actor-walking-decision.js` now composes the actor decision prefix,
+verified walking locals and walking flow. It carries ordered effects and RNG
+counts across the boundary and reconciles `globalFlags`/`worldFlags`, which
+represent the same native word, including callback changes through either name.
+Conflicting callback writes are rejected rather than silently choosing a value.
+
+`verify-original-actor-walking-decision.py` passes 1,500 uninterrupted native
+cases beginning at 0x42819c. Exits are 1,192 skips, 89 motion continuations,
+80 shot-preparation continuations, 131 swing continuations and 8 tutorial
+continuations. Comparisons include all 152 actor records, 20 hole records,
+visitor assignments, shared flags, avoidance/selection state, visual ownership,
+tracking, tile flags, RNG and ordered calls. Controlled slope callbacks also
+mutate shared flags through either JS alias and match the native mutation.
+The clubhouse fixture follows the native alias with hole 19 tee storage.
+
+This matrix uses uniform terrain 1 and traversal cost 2; lookup/reaction,
+projection and slope effects are controlled. It does not verify arbitrary maps,
+real effect bodies, subsequent shot execution, multi-tick scheduling or live
+adoption. The full actor-turn module still needs this walking continuation
+integrated before authoritative live persistence can use the combined flow.
