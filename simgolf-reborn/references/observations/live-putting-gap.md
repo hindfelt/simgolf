@@ -1248,3 +1248,19 @@ rate/distance bounds, difficulty, fast walking, world slowdown, mixed water and
 signed budgets. Earlier rate selection at 0x42af66–0x42b17c and later walking
 fatigue/animation remain unfinished; this position helper is not yet connected
 to a complete walking tick or live gameplay.
+
+### Walking speed selection and composed position step
+
+`original-walking-rate.js` recovers 0x42af66–0x42b17c: wait/invalid
+facing gates, signed terrain walking cost, fatigue cap, selected-golfer/path
+rate changes, phased boost, cart flags/upgrades and activation sound. Raw
+neighbor path reads require explicit adjacent storage beyond the map, preserving
+native memory semantics rather than clamping. Sound is an explicit effect.
+
+1,400 native rate cases match actors, rates, calls and branches, including 74
+activation sounds. `original-walking-step.js` connects rate selection to actual
+position movement; another 1,400 continuous native cases match actor records,
+rate, sound calls and exits from 0x42af66 to 0x42b2b2 or the waiting gate.
+This composed set uses uniform non-water terrain and varied path flags;
+water-crossing updates have separate position-step coverage. Post-step fatigue,
+animation, pathfinder, service arrivals and complete live integration remain open.
