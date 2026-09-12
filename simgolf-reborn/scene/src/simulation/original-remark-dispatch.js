@@ -1,3 +1,5 @@
+import {originalCompletePhrase,originalDescribedCompletePhrase} from './original-complete-phrase.js';
+import {originalNamedRemarkDisplay} from './original-remark-display.js';
 import {originalRemarkDisplay} from './original-remark-display.js';
 const signedByte=n=>(n<<24)>>24;
 // Original 0x46737d–0x467408: external record processing, receiver selection,
@@ -30,4 +32,28 @@ export function originalDisplayedRemarkDispatch(q,processRecord,expandName){
   const display=originalRemarkDisplay({actorId:event.args[0],priority:event.args[1],state},expandName);displayEvents.push(...display.events);return display.state;
  });
  return {...result,displayEvents};
+}
+
+// Complete recovered record processing and display, preserving dispatch writes.
+export function originalCompleteRemarkDispatch(q,resolve,readResource){
+ const phraseEvents=[];
+ const result=originalDisplayedRemarkDispatch(q,(event,state)=>{
+  const [kind,value,combined,actorId]=event.args;
+  const phrase=originalCompletePhrase({...q,kind,value,combined,actorId,state},resolve,readResource);
+  phraseEvents.push(...phrase.events);return phrase.state;
+ },resolve);
+ return {...result,phraseEvents};
+}
+export function originalDescribedCompleteRemarkDispatch(q,names,locationContext,readResource){
+ const phraseEvents=[],displayEvents=[],locationEvents=[];
+ const result=originalRemarkDispatch(q,(event,state)=>{
+  if(event.address===0x469330){
+   const [kind,value,combined,actorId]=event.args;
+   const phrase=originalDescribedCompletePhrase({...q,kind,value,combined,actorId,state},names,locationContext,readResource);
+   phraseEvents.push(...phrase.events);locationEvents.push(...phrase.locationEvents);return phrase.state;
+  }
+  const display=originalNamedRemarkDisplay({actorId:event.args[0],priority:event.args[1],state},names);
+  displayEvents.push(...display.events);return display.state;
+ });
+ return {...result,phraseEvents,displayEvents,locationEvents};
 }
