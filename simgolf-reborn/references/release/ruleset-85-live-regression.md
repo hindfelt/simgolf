@@ -22,3 +22,13 @@ regional scenery, day/night, course packages and browser/phone-layout assertions
 It does not establish physical-phone performance, hosted multiplayer capacity,
 provider activation, prolonged hosted stability or original-game parity. Those
 release gates remain open. No push or deployment performed.
+
+## Complete rerun after the hotel repair
+
+`SIMGOLF_PUBLIC_TESTS=1 npm run test:live` completed successfully: 507 passed,
+five explicitly skipped, 512 total in 5.6 minutes. This includes the additional
+placed-hotel/preview check and the previously failing facility tests. The five
+skips are private original-file comparisons documented in [public CI](public-ci.md);
+all nine tests in those three reference/parser suites also passed separately
+with the local files present. The rerun used the local Chrome browser, not a
+GitHub runner or deployed server. The release limitations above still apply.

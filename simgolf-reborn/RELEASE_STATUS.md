@@ -65,7 +65,8 @@ Uncommitted workspace changes are excluded from that push.
 - [Live putting and recovered-engine integration gap](references/observations/live-putting-gap.md)
 - [Latest broad live stability assessment](references/release/ruleset-85-live-regression.md)
 
-The ruleset-85 broad local run found two hotel-renderer failures; both have
-focused passing repairs. It is not a clean full-suite rerun or a hosted stability
+The repaired ruleset-85 full local rerun passed 507 checks with five explicit
+private-reference skips (512 total, 5.6 minutes). The private-reference suites
+also passed separately with local files available. This is not a hosted stability
 assessment. Original-engine modules remain separate from the
 live simulation until their integration is explicitly verified.

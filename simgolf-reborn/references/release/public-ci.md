@@ -16,7 +16,8 @@ Validation: the workflow parses as YAML with both jobs. All nine reference and
 parser checks passed locally with the private files available; the public-mode
 run passed four and explicitly skipped five. Five regional appearance and tree
 checks also passed. The production build passed. The full public-mode live
-suite and hosted execution are pending; this is not a release stability claim.
+suite subsequently passed 507 checks with five skips in 5.6 minutes. Hosted
+execution remains pending; this is not a complete release stability claim.
 
 ## Publication status
 
