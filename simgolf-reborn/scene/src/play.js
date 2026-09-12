@@ -953,6 +953,8 @@ function renderPanel() {
       movingStaff = !movingStaff;
       syncControls();
       refresh();
+      // Apply the collapsed panel framing before the next pointer event.
+      frameVisibleCourse();
     };
     $("#staff-upgrade").onclick = () => {
       toast(command("upgrade-staff", { staffId: selectedStaffId }).message);

@@ -8,6 +8,7 @@
     "build": "vite build --base=./",
     "preview": "vite preview --host 0.0.0.0 --port 4176 --strictPort",
     "test": "playwright test",
+    "test:live": "playwright test --config playwright.live.config.js",
     "test:accounts": "vitest run --config server/vitest.config.js",
     "dev:accounts": "../../node_modules/.bin/wrangler dev --port 8788 --var APP_ORIGIN:http://localhost:4176",
     "test:account-browser": "playwright test --config server/browser.config.js",
