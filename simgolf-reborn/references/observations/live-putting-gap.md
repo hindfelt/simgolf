@@ -2297,3 +2297,22 @@ and final outputs across 240 uninterrupted direct planners match, including
 recovery's neighboring-slot byte. Two tests cover unrelated-state preservation,
 input isolation and hole changes. Actual audible effect composition, full
 world callback publication and live adoption remain open.
+
+### Audible planner reactions and final world retention
+
+`originalAudiblePlannerEffects` now publishes each planner reaction into the
+packed golfer world, invokes the actual audible remark adapter, and rereads
+changed planner fields. Its completion step applies final planner outputs to
+the reaction-updated world rather than the original snapshot. The planning
+hole is captured at entry, so a changed current hole cannot redirect the final
+hole-counter write. `applyOriginalPlannerResult` accepts that explicit entry
+hole while retaining its existing default for callers without world reactions.
+
+All 3,120 retained audible native cases across 65 remark kinds pass through
+publication, actual remark execution, reread and final completion. Checks retain
+actor records, hole records, message/RNG state, unrelated terrain and immutable
+inputs; a repeated callback with a changed current hole verifies that final
+counter publication targets the entry hole. The retained fixtures still use
+controlled terrain/playback and personal phrases. This establishes the effect
+adapter, not uninterrupted native planner-plus-audio execution or live game
+adoption. Scheduler binding and current-world map readers remain to integrate.
