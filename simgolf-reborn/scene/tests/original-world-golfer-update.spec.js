@@ -39,3 +39,17 @@ test('world tick advances an active ball against restored terrain',async()=>{
  expect(new DataView(r.state.actors[0].buffer).getInt32(0xe0,true)).toBeLessThan(10240);
  expect(r.golfer.calls.some(e=>e.address===0x42f110)).toBe(true);expect(r.state.phaseCounter).toBe(31);expect(q).toEqual(before);
 });
+test('normal actor pass suspends at tutorial and resumes the same world phase',async()=>{
+ const {aimingWorld}=await import('./helpers/original-aiming-world.js');
+ const {resumeOriginalWorldGolferUpdate}=await import('../src/simulation/original-world-golfer-update.js');
+ const {resumeOriginalAimingTurn}=await import('../src/simulation/original-aiming-tutorial.js');
+ const state=aimingWorld(),before=structuredClone(state),later=[];
+ const resolve=(event,state)=>{if(event.address===0x466fb0)state.sourceText='Player'+event.args[0];return {state,value:0,result:0,point:{x:0,y:0,visible:false},...(event.address===0x447a30?{soundEvents:[event]}:{})};};
+ const resolveWorld=(address,state)=>{later.push(address);return {state};};
+ const suspended=originalWorldGolferUpdate(state,{resolve,resolveWorld});
+ expect(suspended.completed).toBe(false);expect(suspended.continuation.next).toBe('0x42b647');expect(suspended.state).toBeUndefined();expect(later).toEqual([]);expect(suspended.soundEvents).toEqual([]);
+ expect(suspended.continuation.state.phaseCounter).toBe(30);
+ const result=resumeOriginalWorldGolferUpdate(suspended,{resolve,resolveWorld,resumeTurn:resumeOriginalAimingTurn});
+ expect(result.completed).toBe(true);expect(result.state.phaseCounter).toBe(31);expect(result.state.selectedActor).toBe(2);expect(result.state.selectionMode).toBe(3);
+ expect(later).toEqual([0x4029e0,0x409980,0x46df40]);expect(result.soundEvents).toEqual([{address:0x447a30,args:[42,100,0,0,0]}]);expect(state).toEqual(before);
+});

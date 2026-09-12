@@ -19,3 +19,28 @@ for(const width of [900,390])test(`comparison is readable and dismissible at ${w
  await expect(dialog).toHaveCount(0);await expect.poll(()=>page.evaluate(()=>window.closedCount)).toBe(1);
  await page.evaluate(()=>comparison.close());expect(await page.evaluate(()=>window.closedCount)).toBe(1);
 });
+test('completed world tutorial supplies the comparison without publishing a suspended result',async({page})=>{
+ await page.goto('/audio/credits.html');
+ const result=await page.evaluate(async()=>{
+  const {aimingWorld}=await import('/tests/helpers/original-aiming-world.js');
+  const {originalWorldGolferUpdate,resumeOriginalWorldGolferUpdate}=await import('/src/simulation/original-world-golfer-update.js');
+  const {resumeOriginalAimingTurn}=await import('/src/simulation/original-aiming-tutorial.js');
+  const {originalTutorialGolferCard}=await import('/src/simulation/original-golfer-card.js');
+  const {showGolferComparison}=await import('/src/ui/golfer-comparison.js');
+  const state=aimingWorld();state.defaultSkills=new Uint8Array(10).fill(4);const cards=[];
+  const resolve=(event,state)=>{
+   if(event.address===0x466fb0)state.sourceText=event.args[0]===2?'George':'Frances';
+   if(event.address===0x45e9c0)cards.push(originalTutorialGolferCard(event,state));
+   return {state,value:0,result:0,point:{x:0,y:0,visible:false}};
+  };
+  const pending=originalWorldGolferUpdate(state,{resolve});
+  if(pending.completed||document.querySelector('dialog'))throw Error('Unexpected publication');
+  const completed=resumeOriginalWorldGolferUpdate(pending,{resolve,resumeTurn:resumeOriginalAimingTurn,resolveWorld:(_,state)=>({state})});
+  if(!completed.completed)throw Error('Unfinished tutorial');
+  showGolferComparison(document.body,cards);
+  return {phase:completed.state.phaseCounter,actor:completed.state.selectedActor,cards:cards.length};
+ });
+ expect(result).toEqual({phase:31,actor:2,cards:2});
+ await expect(page.getByRole('columnheader',{name:'Frances',exact:true})).toBeVisible();
+ await expect(page.getByRole('columnheader',{name:'George',exact:true})).toBeVisible();
+});

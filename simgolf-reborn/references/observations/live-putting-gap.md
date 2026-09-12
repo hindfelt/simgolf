@@ -2570,3 +2570,17 @@ order, single phase advancement, audio order and failure isolation. All 4,096
 existing native world-dispatch/phase cases still match after the boundary
 refactor; callback bodies remain external in that oracle. Production adoption,
 full packed-world saves and remaining world-system bodies are still open.
+
+### Normal actor-to-browser tutorial integration check
+
+Added a controlled packed-actor world fixture that reaches the tutorial through
+the real actor prelude, condition, turn-order and preparation path. The world
+result suspends at 0x42b647 before later systems run, with no publishable state or
+sound batch. Resuming the recovered tutorial completes the pass and advances
+phase 30 to 31 once. A browser check extracts both cards during the tutorial and
+renders them after completion. Nine composition/browser checks pass.
+
+This closes the prior test gap where suspension was manually assembled from
+shot preparation. Name/presentation and remaining world-system callbacks are
+controlled test dependencies; the production game still does not run this packed
+world fixture. It is not proof of complete live engine adoption or career state.
