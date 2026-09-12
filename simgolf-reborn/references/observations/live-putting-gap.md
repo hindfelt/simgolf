@@ -888,3 +888,19 @@ clearing follows the original paired checks.
 and branches, including 647 real cleanup calls. Earlier departure text and
 ordinary movement remain unfinished; this has not yet been connected to the
 full actor turn or live game.
+
+### Ordinary walking tee queue
+
+`original-walking-queue.js` recovers 0x4290ca–0x429192: inactive hole
+fallback to departure hole 19, same-hole zero-stroke queue comparison using
+signed arrival clocks, partner exclusion, and selected-group cleanup calls.
+The scan preserves its cached clock until paired cleanup calls return, then
+refreshes it. It rereads actor records after effects and retains signed overflow
+in the waiting count. Cleanup 0x425b50 remains an explicit resolver boundary.
+
+600 native cases match all actor records, waiting counts, clock state and 2,624
+ordered cleanup effects. Fixtures exercise all 152 actor slots, closed holes,
+selection/world flags, signed clock boundaries, and cleanup mutations. Cleanup
+bodies are controlled in this verifier; later distance comparisons, destinations,
+walking, full actor integration and live conversion remain open. This is not
+full golfer AI or release parity.
