@@ -2676,3 +2676,9 @@ The remaining visual movement and final world callback remain open.
 `original-visual-step.js` recovers 0x403634–0x40383c. It scans preceding active visual slots, records directional collision pauses, reads native terrain walking cost and path flags, applies movement modifiers, advances fixed-point coordinates and updates stride/animation counters. A newly set collision delay does not cancel this iteration's stride, matching the native control flow.
 
 The private executable comparison (`verify-original-visual-step.py`) passes 512 cases using actual distance, octant, heading, clamp and RNG helper bodies. Comparisons include every current-record byte and final seed; cases span all 64 slot indices, terrain costs, speed flags and signed counter boundaries. Eight local entry/follow/step checks pass. Target/path selection at 0x403488–0x403634 and facility branches are still required before the full visual callback can be installed. No live simulation switch or deployment is claimed.
+
+### Visual path selection — 12 September 2026
+
+`original-visual-route.js` recovers 0x403488–0x403634: return-home destination and arrival flag, periodic return cue, route-search flag lifetime, direction/subtile stride budget, and failed-route facing/delay. Default search runs the recovered `originalPathfinder`; its actor/origin/destination argument fields are restored to their caller values afterward. Controlled resolver injection remains available for boundary verification.
+
+512 native comparisons pass for record bytes, call arguments, world flags, continuation and seed, using a controlled pathfinder return and actual distance/heading/RNG helpers. Eleven local visual checks pass, including actual pathfinder-to-stride integration, caller-field preservation, failed route and return-home arrival. Facility branches before 0x403488 remain unfinished; this is not yet a complete live visual callback or deployment.
