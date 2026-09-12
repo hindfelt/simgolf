@@ -2,7 +2,7 @@ import {originalRemarkPreamble} from './original-remark-preamble.js';
 import {originalRemarkOutcome} from './original-remark-outcome.js';
 // Contiguous common reaction stages, 0x467d72–0x46806a. The audio boundary
 // remains explicit; caller resolves its effect against speculative state.
-export function originalRemarkResponse(q,resolveEffect){
+export function originalRemarkResponse(q,resolveEffect,readOutcome){
  let state=structuredClone(q.state);
  const pre=originalRemarkPreamble({...q,actor:state.actor});
  state.actor=pre.actor;
@@ -15,5 +15,12 @@ export function originalRemarkResponse(q,resolveEffect){
   if(!reply||typeof reply.then==='function')throw Error('Expected synchronous speculative effect state.');
   state=structuredClone(reply);
  }
- return {next:'continue',...originalRemarkOutcome({...q,state}),events};
+ let outcome={...q,state};
+ if(readOutcome!==undefined){
+  if(typeof readOutcome!=='function')throw Error('Original outcome snapshot reader is invalid.');
+  const fresh=readOutcome(structuredClone(state));
+  if(!fresh?.state||typeof fresh.then==='function')throw Error('Expected synchronous original outcome snapshot.');
+  outcome={...q,...fresh,actorId:q.actorId,kind:q.kind,value:q.value,delta:q.delta,state:{...state,...structuredClone(fresh.state),actor:state.actor}};
+ }
+ return {next:'continue',...originalRemarkOutcome(outcome),events};
 }

@@ -2,7 +2,7 @@ import {originalPreparedRemarkDispatch} from './original-remark-dispatch.js';
 import {originalRemarkAdjustment} from './original-remark-adjustment.js';
 // World counters and tile state must be read after message/history processing.
 // The returned reaction state contains their updated values for the world writer.
-export function originalReactedRemark(q,resolvePhrase,readResource,playSpeech,reactionContext,resolveEffect){
+export function originalReactedRemark(q,resolvePhrase,readResource,playSpeech,reactionContext,resolveEffect,readOutcome){
  const prepared=originalPreparedRemarkDispatch(q,resolvePhrase,readResource,playSpeech);
  if(prepared.next==='return')return {...prepared,reaction:null};
  if(typeof reactionContext!=='function')throw Error('Original reaction world snapshot is unavailable.');
@@ -17,7 +17,7 @@ export function originalReactedRemark(q,resolvePhrase,readResource,playSpeech,re
   if(!(r instanceof Uint8Array)||r.length!==44)throw Error('Original reaction profile history is unavailable.');
   for(let hole=0;hole<r.length;hole++)holeBytes[`${id}:${hole}`]=r[hole];
  }
- const reaction=originalRemarkAdjustment({...context,actorId:q.actorId,kind:prepared.kind,value:q.value,globalFlags:q.globalFlags,before:prepared.before,voiceBase:prepared.voiceOffset,state:{...context.state,actor:actors[q.actorId],profiles,profileVoiceBytes,holeBytes}},resolveEffect);
+ const reaction=originalRemarkAdjustment({...context,actorId:q.actorId,kind:prepared.kind,value:q.value,globalFlags:q.globalFlags,before:prepared.before,voiceBase:prepared.voiceOffset,state:{...context.state,actor:actors[q.actorId],profiles,profileVoiceBytes,holeBytes}},resolveEffect,readOutcome);
  const state=structuredClone(prepared.state);state.actors[q.actorId]=reaction.state.actor;
  return {...prepared,state,next:reaction.next,reaction};
 }

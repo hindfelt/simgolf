@@ -1395,3 +1395,5 @@ Continuous remark eligibility→phrase→display→history verification now matc
 Prepared remarks now connect to recovered happiness/history/terrain reaction effects using original profile records and a post-preparation world snapshot.8 related tests pass. Updated world counters are returned for an authoritative writer; full continuous native reaction verification, world write-back, social/audio completion and live integration remain unfinished.
 
 Original reaction world adapter now reads/writes packed hole and tile records with exact offsets, preserves the kind64 alias and rejects stale location targets.48 native outcome fixtures round-trip correctly;10 related tests pass. Late world reads after speech/preamble, full reaction composition and live state ownership remain unfinished.
+
+Reaction outcome snapshots can now be read after speech/preamble effects and before world-counter updates.15 related tests pass, including moving to another hole/tile and preserving the effect's RNG. Full native world-backed verification, audio/social completion and live integration remain unfinished.

@@ -29,13 +29,13 @@ export function originalAudibleRemarkAdjustment(q,context,playback){
 }
 // Common remark dispatch through reaction counters (0x467502–0x46806a).
 // Entry/history and later social/display logic remain outside this stage.
-export function originalRemarkAdjustment(q,resolve){
+export function originalRemarkAdjustment(q,resolve,readOutcome){
  const selection=originalRemarkSelection(q,resolve);
  const response=originalRemarkResponse({...q,state:selection.state,delta:selection.delta},
   typeof resolve==='function'?(event,state)=>{
    const reply=resolve(event,state);
    if(!reply?.state||!Number.isInteger(reply.result))throw Error('Expected speculative state and integer call result.');
    return reply.state;
-  }:undefined);
+  }:undefined,readOutcome);
  return {...response,selectedDelta:selection.delta,events:[...selection.events,...response.events]};
 }
