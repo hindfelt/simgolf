@@ -1,3 +1,4 @@
+import {drawTerrainPreview} from './ui/terrain-preview.js';
 import {playerStorage,mountAccount,signedInAccount,accountRequest} from "./account.js";
 import {createSharedClient} from "./shared-client.js";
 import {coastalPreview} from './rendering/coastal-preview.js';
@@ -10,6 +11,8 @@ import { helicopterView } from "./rendering/helicopter.js";
 import { shotPreview } from "./simulation/shot-preview.js";
 import { greenFee, airstripFeeBonus } from "./simulation/happiness.js";
 import { happinessSummary } from "./ui/happiness-summary.js";
+import {golferDetailModel,renderGolferDetail} from './ui/golfer-detail.js';
+import {arrangeBaronControls,arrangeBaronNewGame} from './ui/baron-control-layout.js';
 import { buildOcean } from "./rendering/ocean.js";
 import { renderHousingReport } from "./ui/housing-report.js";
 import { facilityExtents } from "./simulation/facilities.js";
@@ -94,6 +97,8 @@ import {
 import { GRID, cellAt, center } from "./simulation/world.js";
 import { RULES, TOOLS } from "./simulation/rules.js";
 import "./play.css";
+document.documentElement.classList.add('baron-ui');
+await import('./baron-ui-preview.css');
 
 document.title = "Fairway Baron";
 const bootScreen = document.getElementById("boot-screen");
@@ -125,6 +130,7 @@ document.body.innerHTML = `<main id="game">
 <dialog id="accomplishments-dialog"><form method="dialog"><button class="close" aria-label="Close accomplishments">×</button></form><h2>Professional accomplishments</h2><div id="accomplishments-content"></div></dialog><dialog id="skills-dialog"><form method="dialog"><button class="close" aria-label="Close pro skills">×</button></form><h2>Gary Golf · Skills</h2><p id="skill-points"></p><p id="course-skill-limit"></p><div id="skill-list"></div><div class="actions"><button id="export-golfer">Save golfer</button><label>Load golfer <input id="import-golfer" type="file" accept=".json,application/json"></label></div><p>Each point adds 10%. Finish practice before reallocating points.</p></dialog><dialog id="remove-dialog"><h2>Confirm removal</h2><p id="remove-description"></p><button id="cancel-removal">Keep it</button><button id="confirm-removal">Remove</button></dialog>
 <dialog id="championship-setup"><form method="dialog"><button class="close" aria-label="Close championship setup">×</button></form><h2>Local championship</h2><p>Play this course against a simulated club professional. Your current golfer skills and course layout are fixed for the event. Your resort is saved separately.</p><label>Opponent <select id="championship-opponent" style="min-height:44px;max-width:100%"><option value="">Club professional</option></select></label><p id="opponent-profile"></p><label>Rounds <select id="championship-rounds"><option value="1">1 round</option><option value="2">2 rounds</option><option value="4">4 rounds</option></select></label><div id="challenge-terms" hidden><p>Exhibition stakes are recorded for this match; your resort balance stays unchanged. Original challenge invitations are not yet implemented.</p><label>Per hole $ <input id="challenge-hole-stake" type="number" min="0" max="1000000" step="1" value="${originalChallengeOfferStakes().perHole}"></label><label>Match $ <input id="challenge-match-stake" type="number" min="0" max="1000000" step="1" value="${originalChallengeOfferStakes().match}"></label></div><button id="start-championship">Start championship</button><p id="championship-error" role="status"></p></dialog><dialog id="standings-dialog"><form method="dialog"><button class="close" aria-label="Close standings">×</button></form><h2>Championship standings</h2><div id="standings-content"></div></dialog><dialog id="story-dialog"><form method="dialog"><button class="close" aria-label="Close stories">×</button></form><h2>Golfer stories</h2><div id="story-report-content"></div></dialog><dialog id="roster-dialog"><form method="dialog"><button class="close" aria-label="Close membership roster">×</button></form><h2>Membership roster</h2><div id="roster-content"></div></dialog><dialog id="shot-analysis-dialog"><form method="dialog"><button class="close" aria-label="Close shot analysis">×</button></form><h2>Shot analysis</h2><p>Three simulated outcomes per golfer, aimed toward the selected hole. Lines show one sample each. No money or strokes are spent.</p><div id="shot-analysis-content"></div></dialog><div id="loading">Preparing Willow Brook…</div></main>`;
 if (bootScreen) document.body.append(bootScreen);
+arrangeBaronNewGame();
 const $ = (s) => document.querySelector(s);
 async function restoreEvent(raw) {
   if (typeof raw !== "string" || raw.length > 64000000)
@@ -827,6 +833,7 @@ function renderPanel() {
           `<button data-tool="${t}" aria-pressed="${tool === t}" class="${tool === t ? "active" : ""}"><b class="construction-icon">${constructionIcon(t)}</b><span>${names[t]}</span></button>`,
       )
       .join("")}</div>`;
+    arrangeBaronControls(panel);
     panel.querySelectorAll("[data-palette]").forEach(
       (button) =>
         (button.onclick = () => {
@@ -1408,6 +1415,12 @@ function refresh() {
       );
     }
     const p = game.guests.find((p) => p.id === selected) || game.guests[0];
+    if (p && document.documentElement.classList.contains('baron-ui')) {
+      const lie=TERRAIN[tile(game,cellAt(p.ball.x,p.ball.z).c,cellAt(p.ball.x,p.ball.z).r)]?.name || 'Trouble';
+      renderGolferDetail(live,golferDetailModel(p,lie,game.facilities.some(f=>f.type==='airstrip'&&connected(game,f))));
+      return;
+    }
+    delete live.dataset.golferDetail;
     live.textContent = p
       ? `${p.name} · Hole ${p.holeNumbers[p.holeIndex]} · ${TERRAIN[tile(game, cellAt(p.ball.x, p.ball.z).c, cellAt(p.ball.x, p.ball.z).r)]?.name || "Trouble"} · ${p.strokes} strokes · ${p.phase} · Happiness ${p.happiness} · Current green fee $${greenFee(p) + airstripFeeBonus(p, game.facilities.some(f => f.type === "airstrip" && connected(game,f)))} · Energy ${Math.round(p.energy)} · Hunger ${Math.round(p.hunger)} · Thirst ${Math.round(p.thirst)}. Training: ${
           Object.keys(p.trained || {})
@@ -1814,12 +1827,12 @@ $("#new-environment").innerHTML = Object.entries(ENVIRONMENTS)
 function describeEnvironment() {
   const selected = ENVIRONMENTS[$("#new-environment").value];
   $("#environment-summary").textContent =
-    `${FACILITIES[selected.recreation].name} is this environment’s recreation building. Ground colors match the environment; regional trees and architecture are still to come.`;
+    `${selected.name || $("#new-environment").selectedOptions[0].textContent} scenery, with ${FACILITIES[selected.recreation].name.toLowerCase()} recreation.`;
 }
-$("#new-environment").onchange = describeEnvironment;
+$("#new-environment").onchange = () => { describeEnvironment(); previewLandscape(); };
 describeEnvironment();
 $("#new-landscape").innerHTML = Object.entries(LANDSCAPES)
-  .map(([id, label]) => `<option value="${id}">${label}</option>`)
+  .map(([id, label]) => `<option value="${id}">${label.split(" · ")[0]}</option>`)
   .join("");
 $("#new-landscape").value = "river";
 function previewLandscape() {
@@ -1837,30 +1850,11 @@ function previewLandscape() {
     return;
   }
   $("#confirm-new").disabled = false;
-  const map =
-    style === "classic" ? createGame(seed) : generateLandscape(seed, style);
-  const canvas = $("#landscape-preview"),
-    ctx = canvas.getContext("2d");
-  for (let r = 0; r < 42; r++)
-    for (let c = 0; c < 45; c++) {
-      const k = r * 45 + c,
-        type = map.tiles[k]?.type,
-        h = map.elevation?.[k] || 0;
-      ctx.fillStyle =
-        type === "water"
-          ? "#6db5b5"
-          : type === "path"
-            ? "#c7bd94"
-            : `hsl(83 34% ${43 + h * 4}%)`;
-      ctx.fillRect(c * 8, r * 8, 8, 8);
-    }
-  ctx.fillStyle = "#e9d5b0";
-  ctx.fillRect(3 * 8, 2 * 8, 9 * 8, 7 * 8);
-  ctx.fillStyle = "#302c3f";
-  ctx.font = "11px sans-serif";
-  ctx.fillText("Clubhouse", 25, 47);
+  const environment = $("#new-environment").value;
+  const map = createGame(seed, style, environment);
+  drawTerrainPreview($("#landscape-preview"), map, environment);
   $("#landscape-summary").textContent =
-    `${Object.values(map.tiles).filter((t) => t.type === "water").length} water tiles · ${Math.min(0, ...Object.values(map.elevation || {}))} to ${Math.max(0, ...Object.values(map.elevation || {}))} elevation · light green is higher ground. All terrain is editable.`;
+    `${Object.values(map.tiles).filter((t) => t.type === "water").length} water tiles · ${Math.min(0, ...Object.values(map.elevation || {}))} to ${Math.max(0, ...Object.values(map.elevation || {}))} elevation · All terrain is editable.`;
 }
 $("#new-landscape").onchange = previewLandscape;
 $("#new-seed").oninput = previewLandscape;

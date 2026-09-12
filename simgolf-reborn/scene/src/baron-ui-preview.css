@@ -1,0 +1,98 @@
+/* Fairway Baron default interface. */
+html.baron-ui { --baron-ink:#163725; --baron-panel:#203e2e; --baron-line:#9d9158; --baron-text:#f8efd5; }
+.baron-ui .console{background:linear-gradient(135deg,#284933,#173727);border-color:#baa56a;border-radius:24px 24px 0 0;color:var(--baron-text);box-shadow:0 -6px 24px #102b2855}
+.baron-ui button,.baron-ui .button{background:linear-gradient(#3b5c40,#284631);border:1px solid #8a9162;color:#fff0cc;box-shadow:inset 0 1px #cee2a521,0 2px 3px #091e2340;border-radius:10px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600}
+.baron-ui button.active,.baron-ui button[aria-pressed=true],.baron-ui #confirm-new{background:linear-gradient(#efd786,#c7a94e);border-color:#fff0b2;color:#273623;box-shadow:inset 0 1px #fff8c9,0 2px 4px #071e2544}
+.baron-ui button:disabled{opacity:.48;filter:saturate(.45);cursor:default}
+.baron-ui button:focus-visible,.baron-ui select:focus-visible,.baron-ui input:focus-visible{outline:3px solid #fce2a1;outline-offset:3px}
+.baron-ui .club,.baron-ui .accounts span{background:#1c3b2fed;border-color:#b5a169;box-shadow:0 5px 16px #09211b44}
+.baron-ui .club .crest{background:#3a663e;border-color:#cdbb77}
+.baron-ui .club h1{color:#fff0c9;font-weight:bold}
+.baron-ui .console small{color:#d1ccaa;letter-spacing:1.5px}
+.baron-ui .console nav{border-right:1px solid #9b966444;width:134px}
+.baron-ui .console nav button{border-radius:12px}
+.baron-ui .headline{margin-bottom:7px}
+.baron-ui .headline h2{color:#fff1cd}
+.baron-ui .control-body{padding-top:10px}
+.baron-ui .tools{gap:6px;scrollbar-color:#bca76b #203e2e}
+.baron-ui .tools button{border-radius:10px;font-size:11px;background:linear-gradient(#385b3d,#274731);box-shadow:inset 0 1px #d8d99322}
+.baron-ui .tools button.active{background:linear-gradient(#f0d98a,#c5aa56);color:#1b3525}
+.baron-ui select,.baron-ui input:not([type=range]):not([type=checkbox]){background:#112e21;color:#f8efd5;border:1px solid #8d9161;border-radius:7px;padding:7px 9px;font:14px system-ui,sans-serif}
+.baron-ui dialog{background:linear-gradient(145deg,#2c4b35,#193626);color:#f8efd5;border:1px solid #c2ae75;border-radius:18px;padding:26px;box-shadow:0 0 0 4px #183423,0 22px 90px #081b23a0;font-family:system-ui,sans-serif}
+.baron-ui dialog::backdrop{background:#071b2499;backdrop-filter:blur(3px)}
+.baron-ui dialog h2{font:bold 27px/1.2 Georgia,serif;color:#ffe6a6;margin:0 0 16px}
+.baron-ui dialog p{font-size:14px;line-height:1.6;color:#dfe5cc}
+.baron-ui dialog a{color:#efd58b}
+.baron-ui dialog label{font-size:13px;color:#e8dfbf}
+.baron-ui dialog .close{width:36px;height:36px;padding:0;border-radius:50%;margin:-8px -8px 8px 12px}
+.baron-ui dialog table{color:#f4ebd0}
+.baron-ui dialog th{color:#edcf87;border-color:#8f986755}
+.baron-ui dialog td{border-color:#8f986744}
+.baron-ui #new-dialog{max-width:560px}
+.baron-ui #new-dialog label{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:10px 0}
+.baron-ui #new-dialog select,.baron-ui #new-dialog input{width:62%;min-width:0}
+.baron-ui #landscape-preview{border:1px solid #a8a36b;border-radius:12px;display:block;margin:16px auto;max-width:100%;height:auto}
+.baron-ui #confirm-new,.baron-ui #cancel-new{min-height:44px;padding:10px 16px}
+.baron-ui #live-details{color:#e1e5cc}
+.baron-ui #hint,.baron-ui .actions span,.baron-ui .guest{color:#d7dec2}
+.baron-ui .golfer-detail{font:13px/1.45 system-ui,sans-serif;max-width:1000px;padding:8px 0}
+.baron-ui .golfer-detail h3{font:bold 22px Georgia,serif;color:#ffe4a1;margin:0}
+.baron-ui .golfer-detail p{margin:6px 0}
+.baron-ui .golfer-detail dl{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.baron-ui .golfer-detail dl>div{min-width:120px;padding:8px 12px;background:#132e24;border:1px solid #7a895e;border-radius:10px}
+.baron-ui .golfer-detail dt{color:#c9d3b1;font-size:11px}
+.baron-ui .golfer-detail dd{margin:2px 0 0;font-size:17px;color:#fff1c8}
+.baron-ui .golfer-detail blockquote{margin:10px 0;padding:8px 12px;border-left:3px solid #dac17d;background:#36563a;font-style:italic}
+.baron-ui .golfer-fee-note{color:#ced6be;font-size:12px}
+.baron-ui #live-details:has(.golfer-detail){max-height:min(32dvh,300px);overflow:auto;scrollbar-color:#b8a56b #193626;padding-right:8px}
+.baron-ui #live-details:focus-visible{outline:2px solid #e5ce8b;outline-offset:2px}
+@media(max-width:600px){.baron-ui .console nav{width:54px}}
+@media(max-width:600px){.baron-ui dialog{padding:20px 16px;width:calc(100% - 40px);max-height:calc(100dvh - 48px);overflow:auto}.baron-ui dialog h2{font-size:24px}.baron-ui .console{border-radius:18px 18px 0 0}.baron-ui dialog button{min-height:40px}.baron-ui #new-dialog label{gap:8px}}
+
+/* Shared control rhythm and predictable grouped placement. */
+.baron-ui button,.baron-ui .button,.baron-ui select{min-height:36px;transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease}
+.baron-ui button:hover:not(:disabled){filter:none;border-color:#efda95;box-shadow:inset 0 1px #e8edaa55,0 3px 8px #081f2344}
+.baron-ui button:active:not(:disabled){box-shadow:inset 0 2px 5px #071d2255}
+.baron-ui select{appearance:none;color-scheme:dark;padding:8px 32px 8px 10px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10'%3E%3Cpath d='m2 2 5 5 5-5' fill='none' stroke='%23ecd799' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-position:right 10px center;background-repeat:no-repeat;cursor:pointer}
+.baron-ui select:disabled{opacity:.5;cursor:default}
+.baron-ui .palette-header{align-items:start;gap:8px 16px}
+.baron-ui .construction-settings{display:flex;flex-wrap:wrap;align-items:start;gap:8px;overflow:visible;min-width:0}
+.baron-ui .baron-control-group{border:1px solid #77875b;border-radius:9px;background:#173526;min-width:180px;max-width:100%}
+.baron-ui .baron-control-group summary{cursor:pointer;padding:8px 12px;color:#f2e1ab;font:600 12px/20px system-ui;min-height:36px;box-sizing:border-box}
+.baron-ui .baron-control-group summary:focus-visible{outline:3px solid #fce2a1;outline-offset:2px;border-radius:8px}
+.baron-ui .baron-group-content{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 10px 10px}
+.baron-ui .baron-group-content label{display:flex;gap:8px;align-items:center;margin:0;font:12px system-ui}
+.baron-ui .baron-group-content #land-status{flex-basis:100%;font:12px/1.4 system-ui;color:#d7dec2}
+.baron-ui .baron-dialog-actions{position:sticky;bottom:-26px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;padding:16px 0;background:#1b3929;border-top:1px solid #8c915d;margin-top:20px}
+.baron-ui .baron-dialog-actions #restore-previous{margin-right:auto}
+.baron-ui #new-dialog #confirm-new{font-weight:750}
+@media(max-width:600px){
+ .baron-ui .palette-header{display:block}
+ .baron-ui .construction-settings{display:grid;grid-template-columns:1fr 1fr;margin:8px 0;width:100%}
+ .baron-ui .baron-control-group{min-width:0}
+ .baron-ui .baron-control-group[open]{grid-column:1/-1}
+ .baron-ui .baron-control-group summary{font-size:11px;padding:9px 7px;min-height:40px}
+ .baron-ui .baron-group-content{gap:10px}
+ .baron-ui select{min-height:40px;font-size:16px}
+ .baron-ui .baron-dialog-actions{bottom:-20px;gap:8px;padding:12px 0}
+ .baron-ui .baron-dialog-actions #confirm-new{flex:1}
+ .baron-ui .baron-dialog-actions #restore-previous:not([hidden]){flex-basis:100%;margin:0}
+ .baron-ui .console:has(.palette-header) .tools{max-height:140px}
+}
+@media(prefers-reduced-motion:reduce){.baron-ui button,.baron-ui .button,.baron-ui select{transition:none}}
+/* Fairway Baron default new-course setup. */
+.baron-ui #new-dialog{width:min(940px,calc(100vw - 64px));max-width:940px;max-height:calc(100dvh - 64px);overflow:auto;box-sizing:border-box}
+.baron-ui .new-game-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start;margin-top:24px}
+.baron-ui #new-dialog label{display:block;margin:0 0 18px;font-weight:600}
+.baron-ui #new-dialog select,.baron-ui #new-dialog input{display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:44px}
+.baron-ui #environment-summary{font-size:12px;margin:-6px 0 22px;color:#baccb4}
+.baron-ui #landscape-preview{width:100%;margin:0;border-color:#617956;background:#18382c}
+.baron-ui #landscape-summary{font-size:12px;color:#bccdb2;margin:10px 0}
+.baron-ui .new-game-note{font-size:12px;border-top:1px solid #6e805644;padding-top:16px;margin-bottom:0}
+.baron-ui .baron-dialog-actions{align-items:center}
+.baron-ui .baron-dialog-actions .menu-music{margin-right:auto;order:-1}
+@media(max-width:650px){.baron-ui #new-dialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}.baron-ui .new-game-layout{grid-template-columns:1fr;gap:16px;margin-top:18px}.baron-ui .new-game-settings{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.baron-ui #environment-summary{grid-column:1/-1;grid-row:2}.baron-ui #new-dialog label{margin-bottom:12px}.baron-ui #reroll-landscape{align-self:end;margin-bottom:12px;min-height:44px}.baron-ui .new-game-map{min-width:0}}
+
+.baron-ui #new-dialog select,.baron-ui #new-dialog input{max-width:100%}
+.baron-ui .baron-dialog-actions .menu-music{margin-top:0}
+@media(max-width:650px){.baron-ui .baron-dialog-actions #confirm-new{flex:1 0 100%;white-space:nowrap}.baron-ui .baron-dialog-actions #cancel-new{white-space:nowrap}}

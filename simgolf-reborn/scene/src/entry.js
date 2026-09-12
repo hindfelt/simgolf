@@ -20,7 +20,7 @@ try {
   openStartDestination(action);
   const openingDialog = document.querySelector('dialog[open]');
   if(action && action !== 'continue' && openingDialog) {
-    music.mount(openingDialog);
+    music.mount(openingDialog.querySelector('.baron-dialog-actions') || openingDialog);
     openingDialog.addEventListener('close', () => music.stop(), {once:true});
   } else music.stop();
 } catch(error) {
