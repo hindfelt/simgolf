@@ -2185,3 +2185,20 @@ marks/edges, nonzero cached heights and supplied social callbacks. All 300
 three-tick native real-terrain golfer sequences retain their matches. This
 provides a common map binding for the planner dispatcher; complete social and
 search bindings, map-rebuild cadence and live schema adoption remain open.
+
+
+### Packed planner record readers
+
+`originalPlannerWorldRecords` supplies current hole counter (+0x1fc),
+completion mark (+22+hole), actor profile index (+0xbe), profile classification
+byte (+0x21 in a 560-byte record), and terrain shape to the world map. Native
+0x424b52 uses metadata byte 7 for its scenery category check; catalog category
+must not be substituted. Missing records fail rather than supplying neutral
+reaction values. Object dimensions/records still require explicit readers.
+
+Native 0x46c147 selects +0xbe, unlike speech's +0xb6. Corrected the stale
+profile-group comment. `verify-original-packed-profile-group.py` matches all
+256 classification-byte values against native 0x46c140 with distinct BE/B6
+indices. Five related tests pass for packed values, current-record changes,
+signed profile IDs and missing-data failures. Continuous automatic-reaction
+coverage using these packed bindings and live integration remain open.

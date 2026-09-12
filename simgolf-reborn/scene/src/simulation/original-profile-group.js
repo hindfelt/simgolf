@@ -1,4 +1,4 @@
-// 0x46c140–0x46c16b: actor profile index (+0xb6), profile byte (+0x21).
+// 0x46c140–0x46c16b: actor profile index (+0xbe), profile byte (+0x21).
 // This is a binary profile classification, not a golf score. Keep the raw
 // grouping name until its presentation meaning is independently established.
 export function originalProfileGroup(actorId,profiles) {
