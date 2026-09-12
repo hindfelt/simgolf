@@ -62,18 +62,11 @@ export function transportFacility(scene, type, x, z) {
     for (const side of [-1, 1])
       for (const pz of [-3.5, -2.5, -1.5, -0.5])
         box(1.6, 0.012, 0.16, 0xe4dfc5, side * 27, 0.23, pz);
-    box(15, 0.04, 5.7, 0xa3a18d, 18, 0.2, 3.5);
+    box(21, 0.04, 5.7, 0xa3a18d, 15, 0.2, 3.5);
     box(7, 2.8, 4.3, 0xb6b8a8, 23, 1.65, 4.3);
     box(7.5, 0.2, 4.8, 0x697875, 23, 3.1, 4.3);
     box(5.8, 2.2, 0.06, 0x566661, 23, 1.4, 2.12);
     box(3.5, 1.8, 2.8, 0xd8cfaf, 15, 1.13, 5);
-    // Parked light aircraft, with wings notably smaller than the runway.
-    box(4.3, 0.45, 0.6, 0xe5dfcb, 15, 0.85, 2.4);
-    box(1, 0.12, 5.7, 0xe5dfcb, 15, 0.96, 2.4);
-    box(0.8, 0.8, 0.13, 0x8b4d3c, 16.6, 1.2, 2.4);
-    box(0.8, 0.09, 2, 0xe5dfcb, 16.6, 1.02, 2.4);
-    box(0.6, 0.3, 0.48, 0x54737a, 14.6, 1.14, 2.4);
-    box(0.07, 0.8, 0.06, 0x423f34, 12.8, 0.92, 2.4);
     cylinder(0.07, 3.2, 0xd4c7a3, -25, 1.7, 4);
     const sock = new THREE.ConeGeometry(0.3, 1.3, 8);
     sock.rotateZ(-Math.PI / 2);
@@ -96,6 +89,18 @@ export function transportFacility(scene, type, x, z) {
     part(new THREE.BoxGeometry(.85,.5,1.2),0xf1ebd7,0,.78,0);
     part(new THREE.BoxGeometry(.78,.22,.6),0x53777c,0,.98,-.12);
     part(new THREE.BoxGeometry(.05,2.3,.05),0x968c71,0,1.6,.4);
+  }
+  if(type==='airstrip'){
+    const plane=new THREE.Group();plane.visible=false;group.add(plane);group.userData.aircraft=plane;
+    const part=(geometry,color,x,y,z)=>{const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color,roughness:.6}));m.position.set(x,y,z);m.castShadow=true;plane.add(m);return m;};
+    const body=new THREE.SphereGeometry(1,16,8);body.scale(2.15,.32,.38);part(body,0xeee4c8,0,.8,0);
+    part(new THREE.BoxGeometry(1,.1,5.7),0xeee4c8,0,1.02,0);
+    part(new THREE.BoxGeometry(.8,.8,.13),0x923e35,1.6,1.2,0);
+    part(new THREE.BoxGeometry(.8,.09,2),0xeee4c8,1.6,1.02,0);
+    part(new THREE.BoxGeometry(.7,.35,.58),0x345e70,-.5,1.07,0);
+    for(const z of [-.55,.55])part(new THREE.SphereGeometry(.15,8,6),0x343b39,.25,.3,z);
+    part(new THREE.SphereGeometry(.12,8,6),0x343b39,-1.5,.3,0);
+    const prop=part(new THREE.BoxGeometry(.07,1.4,.09),0x343b39,-2.18,.8,0);plane.userData.propeller=prop;
   }
   scene.add(group);
   return group;

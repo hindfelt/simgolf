@@ -1,3 +1,4 @@
+import {aircraftPose} from "../simulation/aircraft.js";
 import {practicePose} from "./practice-activity.js";
 import {tennisPose,updateTennisBall} from "./tennis-activity.js";
 import {facilityLighting} from './facility-lighting.js';
@@ -631,6 +632,10 @@ export function buildCourseView(scene) {
         const boat=facilityMap.get(f.id)?.userData.marinaBoat;
         if(boat){boat.visible=!!f.marinaActivity && f.marinaActivity.phase!=='idle';
       boat.position.z=1.7+(f.marinaActivity?.offset||0);boat.rotation.y=f.marinaActivity?.direction===-1?Math.PI:0;}
+      }
+      for(const f of g.facilities)if(f.type==='airstrip'){
+        const plane=facilityMap.get(f.id)?.userData.aircraft,pose=aircraftPose(f.aircraft,g.time);
+        if(plane){plane.visible=!!pose;if(pose){plane.position.set(pose.x,pose.y,pose.z);plane.rotation.y=pose.heading;plane.userData.propeller.rotation.x=pose.propeller?g.time*45:0;}}
       }
       const people = [
           ...g.guests,

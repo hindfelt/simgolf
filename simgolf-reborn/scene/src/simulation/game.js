@@ -1,3 +1,4 @@
+import {stepAircraft,validateAircraft} from "./aircraft.js";
 import {advanceClubDay, clubTime, initializeClubDay, recordClubArrival, validateClubDay} from "./club-day.js";
 import {stepMarinas,validateMarinas} from "./marina-activity.js";
 import {scheduleTennis, stepTennisVisit, validateTennis} from "./tennis-visits.js";
@@ -1682,15 +1683,8 @@ function stepSimulation(g, dt, runResort) {
   g.time += dt;
   if (runResort) {
     stepMarinas(g,dt,{connected,entrance:connectedEntrance,ready:()=>!clubTime(g.time).night && firstHoleReadyForArrivals(g),arrive:p=>arrivals(g,p,"marina")});
-    for (const f of g.facilities) if(f.type==="airstrip" && connected(g,f)) {
-      f.nextFlight ??= g.time+240;
-      if(g.time>=f.nextFlight && !clubTime(g.time).night && firstHoleReadyForArrivals(g)) {
-        const p=connectedEntrance(g,f);
-        const ids=p ? arrivals(g,p,"airstrip") : [];
-        f.nextFlight=g.time+(ids.length?480:30);
-        if(ids.length) {f.served=(f.served||0)+ids.length;event(g,"An airport transfer brought two visiting golfers.");}
-      }
-    }
+    stepAircraft(g,{connected,ready:()=>!clubTime(g.time).night && firstHoleReadyForArrivals(g),
+      entrance:connectedEntrance,arrive:p=>arrivals(g,p,"airstrip"),event:message=>event(g,message)});
     stepChallengeCareer(g);
     for (const name of awardCourseAccomplishments(g, par))
       event(g, name + ": earned 3 professional skill points.");
@@ -2300,6 +2294,7 @@ export function restore(raw) {
   validateLand(g);
   validateHelicopter(g);
   validateMarinas(g);
+  validateAircraft(g);
   validateChallengeCareer(g);
   validateOwnership(g);
   validateEnvironment(g.environment);
