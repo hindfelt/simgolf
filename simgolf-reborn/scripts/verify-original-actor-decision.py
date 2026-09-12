@@ -15,11 +15,12 @@ def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
 def read(a):return struct.unpack('<I',u.mem_read(a,4))[0]
 calls=[];response=0;replacement=0;draws=0;sample=None
 # Tile sample is fully computed at 4284c7, before terrain dispatch.
-next_branch=None;point_index=0;points=[]
+next_branch=None;point_index=0;points=[];turn_seen=False
 def hook(u,a,size,data):
- global draws,sample,next_branch,point_index
- if a in [0x428ad1,0x42b3f2,0x42bdb5,0x4295ef]:
-  next_branch={0x428ad1:'0x428ad1',0x42b3f2:'0x42b3f2',0x42bdb5:'motion',0x4295ef:'skip'}[a];u.emu_stop()
+ global draws,sample,next_branch,point_index,turn_seen
+ if a==0x428992:turn_seen=True
+ if a in [0x428ad1,0x42b55c,0x42b825,0x42d23c,0x42bdb5,0x4295ef]:
+  next_branch={0x428ad1:'0x428ad1',0x42b55c:'0x42b55c',0x42b825:'0x42b825',0x42d23c:'0x42d23c',0x42bdb5:'motion',0x4295ef:'skip'}[a];u.emu_stop()
  if a in [0x42f270,0x42f020,0x47edd0,0x425b50]:
   sp=u.reg_read(UC_X86_REG_ESP)
   if a==0x47edd0:
@@ -45,7 +46,7 @@ for i in range(1500):
  slot=0;base=0x577f00+slot*256;actor=bytearray(256)
  struct.pack_into('<ii',actor,8,20*1024,25*1024);struct.pack_into('<H',actor,0x90,rng.choice([0,0x4000,0x8000,0xc000]));struct.pack_into('<h',actor,0x1c,rng.choice([0,1]))
  struct.pack_into('<iiiiI',actor,8,20480,25600,200,200,rng.choice([0,0x200,0x100000,0x40000,0x80040000,0x400,0x20000400,0x10000400]));struct.pack_into('<h',actor,0xaa,1);struct.pack_into('<h',actor,0xba,4);actor[0x25]=7;actor[0x29]=1;actor[0x8c]=rng.choice([0,2,7]);actor[0x8d]=50
- struct.pack_into('<h',actor,0xa6,rng.choice([-1,0]));struct.pack_into('<iii',actor,0xdc,rng.choice([-1024,20480,51200]),25600,0);struct.pack_into('<i',actor,0xec,100);actor[0x2a]=rng.choice([0,10]);
+ struct.pack_into('<h',actor,0xa6,rng.choice([-1,0]));struct.pack_into('<iii',actor,0xdc,rng.choice([-1024,20480,51200]),25600,0);struct.pack_into('<i',actor,0xec,rng.choice([0,100]));actor[0x2a]=rng.choice([0,10]);
  struct.pack_into('<iiii',actor,0xcc,20000,25000,20,30);actor[0x28]=rng.choice([0,1]);
  actor[0x22]=i%8;actor[0x78]=11 if i%17==0 else 0;actor[0x79]=139 if i%19==0 else 0
  phase=rng.choice([0,192,1,256]);seed=rng.randrange(2**32)
@@ -60,8 +61,8 @@ for i in range(1500):
  for a,v in [(0x820344,-1),(0x4c1dfc,-1),(0x599a98,0),(0x4c183c,4),(0x5842a0,-1),(0x5842a4,-1)]:put(a,v)
  u.mem_write(0x576dc7+48,b'\x01');put(0x5672a0,20);u.mem_write(0x5a1f30,b'\x00');u.mem_write(0x568148,b'\x00');u.mem_write(0x5842b6,b'\x00');put(0x820454,seed);put(0x831828,phase);put(0x102010,slot)
  u.mem_write(0x570d38,bytes([code])*2500);u.mem_write(0x53ba00,struct.pack('<H',flags)*2500);u.mem_write(0x58a708,bytes(b))
- calls=[];draws=0;sample=None;next_branch=None;point_index=0;put(0x102050,0);u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,slot*256);u.reg_write(UC_X86_REG_EBX,slot);u.emu_start(0x42819c,0x400fff,count=30000)
- rows.append(dict(q=q,points=points,response=response,replacement=replacement,expected=dict(actor=list(u.mem_read(base,256)),partner=list(u.mem_read(base+256,256)),visualOwners=[struct.unpack('<h',u.mem_read(0x59e6b0+j*0x388,2))[0] for j in range(16)],focusActor=struct.unpack('<i',u.mem_read(0x4c1dfc,4))[0],trackedX=struct.unpack('<i',u.mem_read(0x5842a0,4))[0],trackedZ=struct.unpack('<i',u.mem_read(0x5842a4,4))[0],trackedFacing=u.mem_read(0x5842b6,1)[0],visualSlot=struct.unpack('<i',u.mem_read(0x102030,4))[0],seed=read(0x820454),flags=struct.unpack('<H',u.mem_read(0x53ba00,2))[0],calls=calls,randomDraws=draws,ballTile=dict(x=struct.unpack('<i',u.mem_read(0x102018,4))[0],z=struct.unpack('<i',u.mem_read(0x102020,4))[0]),ballTerrain=read(0x102014),actorIndex=read(0x10203c),actorTerrain=read(0x10202c),next=next_branch,partnerNotReady=bool(read(0x102034)) if next_branch.startswith('0x') else None,closerToCup=bool(read(0x102074)) if next_branch.startswith('0x') else None)))
+ calls=[];draws=0;sample=None;next_branch=None;point_index=0;turn_seen=False;put(0x102050,0);u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,slot*256);u.reg_write(UC_X86_REG_EBX,slot);u.emu_start(0x42819c,0x400fff,count=30000)
+ rows.append(dict(q=q,points=points,response=response,replacement=replacement,expected=dict(actor=list(u.mem_read(base,256)),partner=list(u.mem_read(base+256,256)),visualOwners=[struct.unpack('<h',u.mem_read(0x59e6b0+j*0x388,2))[0] for j in range(16)],focusActor=struct.unpack('<i',u.mem_read(0x4c1dfc,4))[0],trackedX=struct.unpack('<i',u.mem_read(0x5842a0,4))[0],trackedZ=struct.unpack('<i',u.mem_read(0x5842a4,4))[0],trackedFacing=u.mem_read(0x5842b6,1)[0],visualSlot=struct.unpack('<i',u.mem_read(0x102030,4))[0],seed=read(0x820454),flags=struct.unpack('<H',u.mem_read(0x53ba00,2))[0],calls=calls,randomDraws=draws,ballTile=dict(x=struct.unpack('<i',u.mem_read(0x102018,4))[0],z=struct.unpack('<i',u.mem_read(0x102020,4))[0]),ballTerrain=read(0x102014),actorIndex=read(0x10203c),actorTerrain=read(0x10202c),next=next_branch,partnerNotReady=bool(read(0x102034)) if turn_seen else None,closerToCup=bool(read(0x102074)) if turn_seen else None)))
 from collections import Counter
 print('Native continuation coverage:',dict(Counter(row['expected']['next'] for row in rows)),flush=True)
 module=(root/'simgolf-reborn/scene/src/simulation/original-actor-decision.js').as_uri()

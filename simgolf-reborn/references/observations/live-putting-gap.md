@@ -217,3 +217,28 @@ This closes the gap between the previously separate prefix and turn-order stages
 The 0x428ad1 and 0x42b3f2 bodies, real resolver implementations, raw actor save/world
 integration and live shot switch remain open. No live physics ruleset or deployed
 gameplay changed in this step.
+
+### Shot-entry wait and short-putt completion
+
+`original-shot-entry.js` recovers the continuous 0x42b3f2–0x42b55c stage and is
+now called by `originalActorDecision` on that continuation. A stationary golfer
+closer to the cup defers at 0x42d23c; a moving ball continues at 0x42b825. The
+stationary branch clears flags 0x1800, can face/wait for its partner using the
+native heading calculation and signed animation byte, or complete a short putt.
+The short-putt boundary is strictly less than 256 original units from the cup
+centre, and the controlled-golfer class bypasses it. Stroke byte, selected stat
+counter and hole total increment with native widths before the explicit 0x426b00
+settlement callback. The callback body is still pending, so this is not complete
+scoring integration.
+
+`verify-original-shot-entry.py`: 2,500 continuous native cases match, with native
+heading/distance routines and controlled settlement. Outgoing coverage is 442
+closer-turn deferrals, 622 moving balls, 661 aiming continuations and 775 skips
+(partner waits or completed short putts). Inputs include signed partner-animation
+bytes, exact 255/256-unit boundaries and byte/word/dword counter wraparound.
+
+The expanded `verify-original-actor-decision.py` also matches all 1,500 continuous
+prefix-plus-entry cases: 80 aiming, 83 moving-ball, 208 walking, 89 early motion
+and 1,040 skips. Twenty-one focused tests pass. Live browser putting remains
+unchanged; the remaining aiming, movement, scoring/resolver bodies and saved
+original-world integration must still be completed before the live switch.

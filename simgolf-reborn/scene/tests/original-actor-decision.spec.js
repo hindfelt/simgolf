@@ -25,7 +25,7 @@ test('negative delay exits before optional projection or partner processing',()=
 });
 test('clipped shot line still proceeds to ordinary turn selection',()=>{
  const r=originalActorDecision(fresh(),(_,state)=>({state,point:{x:-100,y:0,visible:false}}));
- expect(r.calls).toHaveLength(1);expect(r.next).toBe('0x42b3f2');
+ expect(r.calls).toHaveLength(1);expect(r.next).toBe('0x42b825');
 });
 test('off-map origin is accepted within verified distance bounds, larger differences still reject',()=>{
  expect(originalRouteSegment({x:-512,z:512},{x:0,z:0})).toBe(25);
