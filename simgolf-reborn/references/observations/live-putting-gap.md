@@ -108,3 +108,9 @@ Three tests pass: whole-state round-trip plus the same next motion update after 
 ### Recovered simulation regression run
 
 After the motion/world-state changes, `npm --prefix simgolf-reborn/scene test -- 'original-.*\.spec\.js'` completed with **658 passed in 2.6 minutes**. This includes recovered planning, geometry, construction, golfer/remark/fee logic and the new motion/state tests. It is the recovered subsystem suite, not the browser UI/account/production deployment suite, and does not close the live integration requirement.
+
+### World launch and motion transactions
+
+`original-world-launch.js` connects resolved-target assessment/launch and the assembled motion update to the versioned world. Launch reads authoritative world RNG/global flags and shared cache, then publishes a validated clone containing the active shot, resulting RNG/cache and revision. A per-actor motion transaction similarly publishes the next state or removes a settled shot while returning its outcome to the host. It does not advance the shared phase per actor; original scheduling/order and score/effect consumption remain host work. These are internal simulation operations, not exposed multiplayer commands.
+
+Three tests pass: launch/save/motion handoff, stale caller RNG/global-flag rejection through authoritative override, invalid/duplicate rollback, and repeated full-world save/reload while a launched shot settles. The implementation rebuilds map derivatives for correctness on each transaction; caching by terrain revision and production integration remain work. No claim is made that the browser now uses this world or that full native launch-through-motion scheduling is verified.
