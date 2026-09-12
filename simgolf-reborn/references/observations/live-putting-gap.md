@@ -2682,3 +2682,9 @@ The private executable comparison (`verify-original-visual-step.py`) passes 512 
 `original-visual-route.js` recovers 0x403488–0x403634: return-home destination and arrival flag, periodic return cue, route-search flag lifetime, direction/subtile stride budget, and failed-route facing/delay. Default search runs the recovered `originalPathfinder`; its actor/origin/destination argument fields are restored to their caller values afterward. Controlled resolver injection remains available for boundary verification.
 
 512 native comparisons pass for record bytes, call arguments, world flags, continuation and seed, using a controlled pathfinder return and actual distance/heading/RNG helpers. Eleven local visual checks pass, including actual pathfinder-to-stride integration, caller-field preservation, failed route and return-home arrival. Facility branches before 0x403488 remain unfinished; this is not yet a complete live visual callback or deployment.
+
+### Visual destination scan — 12 September 2026
+
+`original-visual-destination.js` recovers 0x402c6f–0x402ebd. The branch gates special visuals on selected actors, scans a 33×33 region for flag 0x800 excluding off-map/code-20 tiles, preserves strict distance ties, and optionally scans the motion table. The fallback reads two words preceding the motion table and subtracts visual X in both distance components, as the native instructions do. `motionPrefix` explicitly supplies that preceding storage.
+
+128 comparisons with actual native bounds/distance helpers match selected target locals and continuations. Three local checks pass for blocked tiles, actor gates and prefix-backed fallback. Actor selection and arrival branches remain open; the full visual callback is not installed or deployed.
