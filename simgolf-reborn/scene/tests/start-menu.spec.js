@@ -7,21 +7,31 @@ test('hosted home shows menu without intercepting game deep links',()=>{
  expect(shouldShowStartMenu('',false)).toBe(true);
  expect(shouldShowStartMenu('',true)).toBe(false);
  expect(shouldShowStartMenu('?start=1',true)).toBe(true);
+ expect(shouldShowStartMenu('?start=0',true)).toBe(false);
+ expect(shouldShowStartMenu('?start=0',false)).toBe(false);
  for(const key of ['shared','tournament','event','earnings','practice','testing'])expect(shouldShowStartMenu('?'+key+'=1',false)).toBe(false);
 });
 
-test('fresh start opens new-game setup without starting the simulation behind the menu',async({page})=>{
+for(const environment of ['links','tropical'])test(`confirmed ${environment} game starts directly from the menu`,async({page})=>{
  await page.goto('/?start=1');
  await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();
  expect(await page.evaluate(()=>!!window.__gameTest)).toBe(false);
  await page.getByRole('button',{name:'New Game',exact:true}).click();
  await expect(page.locator('#new-dialog')).toBeVisible();
  await expect(page.locator('#boot-screen')).toHaveCount(0);
+ await page.locator('#new-environment').selectOption(environment);
  await page.locator('#new-seed').fill('5678');
  await page.getByRole('button',{name:'Start new game',exact:true}).click();
- await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeEnabled();
- await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await expect(page).toHaveURL(/start=0/);
+ await expect(page.locator('#boot-screen')).toHaveCount(0);
+ await expect(page.locator('#new-dialog')).not.toBeVisible();
+ await expect(page.locator('#menu-button')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>window.__gameTest?.getState().landSeed)).toBe(5678);
+ const state=await page.evaluate(()=>window.__gameTest.getState());
+ expect(state.environment).toBe(environment);expect(state.landscapeStyle).toBe('coast');
+ await page.reload();
+ await expect(page.locator('#menu-button')).toBeVisible();
+ await expect(page.locator('#boot-screen')).toHaveCount(0);
 });
 
 test('saved course continues and phone menu stays within screen width',async({page})=>{

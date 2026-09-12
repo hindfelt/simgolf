@@ -1917,7 +1917,11 @@ $("#confirm-new").onclick = () => {
     playStorage.setItem(`${saveKey}.previous`, serialize(game));
     playStorage.setItem(saveKey, serialize(next));
     saveAllowed = false;
-    location.reload();
+    // Confirmation already chose the game. Reload its saved world directly,
+    // including on hosted home pages that normally open the start menu.
+    const destination = new URL(location.href);
+    destination.searchParams.set("start", "0");
+    location.replace(destination.href);
   } catch (error) {
     toast("This browser cannot save a new game.");
   }

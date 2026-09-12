@@ -3,6 +3,7 @@ import {signOutAccount} from './account.js';
 // the menu. Local development can preview it with ?start=1.
 export function shouldShowStartMenu(search, development) {
   const params = new URLSearchParams(search);
+  if (params.get('start') === '0') return false;
   if ([...params.keys()].some(key => key !== 'start')) return false;
   return !development || params.get('start') === '1';
 }
