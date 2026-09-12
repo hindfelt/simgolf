@@ -1,6 +1,6 @@
 import { originalProfessionalSkills } from "./roster-opponent.js";
 import { validateAppearance } from "./appearance.js";
-import { canonical, RULESET_VERSION, PROTOCOL_VERSION, PRE_TENNIS_RULESET, PRE_MARINA_RULESET, PRE_AIRSTRIP_RULESET, PRE_SIGNED_HAPPINESS_RULESET, compatibleGolfRuleset } from "./protocol.js";
+import { canonical, RULESET_VERSION, PROTOCOL_VERSION, compatibleCourseRuleset, compatibleGolfRuleset, golfProtocolVersion } from "./protocol.js";
 import { importCourse, coursePractice } from "./course-package.js";
 import { validateGolferPackage, loadGolfer } from "./golfer-package.js";
 import { startPractice } from "./game.js";
@@ -263,12 +263,14 @@ export async function restoreCompetition(raw) {
     !exact(data, ["format", "version", "ruleset", "config", "journal"]) ||
     data.format !== "simgolf-reborn-competition" ||
     data.version !== 1 ||
-    !compatibleGolfRuleset(data.ruleset) ||
+    !compatibleCourseRuleset(data.ruleset) ||
     !exact(data.config, ["id", "course", "rounds", "seed", "entrants"]) ||
     !Array.isArray(data.journal) ||
     data.journal.length > 10000
   )
     throw Error("Unsupported competition save.");
+  if (!compatibleGolfRuleset(data.ruleset,data.config.course?.content?.environment))
+    throw Error("This desert tournament uses older tree physics. Its record is preserved; start a new tournament from its course.");
   let ticks = 0;
   for (const row of data.journal) {
     if (row?.type === "ticks") {
@@ -287,8 +289,8 @@ export async function restoreCompetition(raw) {
     )
       throw Error("Invalid competition command record.");
   }
-  if(data.ruleset===PRE_SIGNED_HAPPINESS_RULESET || data.ruleset===PRE_TENNIS_RULESET || data.ruleset===PRE_MARINA_RULESET || data.ruleset===PRE_AIRSTRIP_RULESET){
-    const previousVersion=data.ruleset===PRE_SIGNED_HAPPINESS_RULESET?78:data.ruleset===PRE_TENNIS_RULESET?75:data.ruleset===PRE_MARINA_RULESET?76:77;
+  if(data.ruleset!==RULESET_VERSION){
+    const previousVersion=golfProtocolVersion(data.ruleset);
     for(const row of data.journal) if(row.type==='command' && row.request?.command){
       const c=row.request.command;
       // Translate only the formerly valid version. A formerly rejected future

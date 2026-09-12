@@ -1,3 +1,4 @@
+import {treeScale} from "./tree-scale.js";
 import { GRID, center, key } from "./world.js";
 import { sceneryTrees } from "./scenery-trees.js";
 import { elevationAt } from "./landforming.js";
@@ -23,6 +24,10 @@ function collisionTrees(g) {
       height: tree.height * 1.3,
       trunkRadius: TREE.trunkRadius * tree.size,
     });
+  }
+  for (const tree of trees) {
+    const scale = treeScale(g.environment,tree.x,tree.z,tree.size===undefined);
+    for (const name of ["radius","canopyBottom","height","trunkRadius"])tree[name]*=scale;
   }
   return trees;
 }

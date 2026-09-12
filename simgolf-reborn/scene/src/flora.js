@@ -1,3 +1,4 @@
+import {treeScale} from "./simulation/tree-scale.js";
 import {coastalWater} from './simulation/coast.js';
 import { key, GRID, inBounds } from "./simulation/world.js";
 import * as THREE from "three";
@@ -178,7 +179,7 @@ export function buildFlora(
       // Preserve RNG consumption and tree identity so existing removals and
       // terrain edits still refer to the same plants after the visual change.
       leaves.push(...pinkLeaves.splice(starts[3]));
-      const shrink=0.38 + Math.abs(Math.sin(x*7+z*3))*0.22;
+      const shrink=treeScale(environment,x,z);
       arrays.forEach((a,index)=>{
         for(let i=starts[index];i<a.length;i++){
           const t=a[i];t.p=[x+(t.p[0]-x)*shrink,ground+(t.p[1]-ground)*shrink,z+(t.p[2]-z)*shrink];

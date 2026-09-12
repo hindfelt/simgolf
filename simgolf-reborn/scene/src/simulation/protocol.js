@@ -1,13 +1,18 @@
-export const PROTOCOL_VERSION = 81;
-export const RULESET_VERSION = "aircraft-visits-2026-09-12";
+export const PROTOCOL_VERSION = 82;
+export const RULESET_VERSION = "regional-tree-collisions-2026-09-12";
+export const PRE_REGIONAL_TREES_RULESET = "aircraft-visits-2026-09-12";
 export const PRE_AIRCRAFT_RULESET = "club-day-cycle-2026-09-12";
 export const PRE_DAY_CYCLE_RULESET = "original-signed-happiness-2026-09-12";
 export const PRE_SIGNED_HAPPINESS_RULESET = "original-airstrip-fee-2026-09-12";
-// Golf-only packages/replays from before post-round tennis use identical shot rules.
 export const PRE_TENNIS_RULESET = "prototype-boundary-regions-2026-09-10";
 export const PRE_AIRSTRIP_RULESET = "prototype-marina-activity-2026-09-11";
 export const PRE_MARINA_RULESET = "prototype-tennis-visits-2026-09-11";
-export const compatibleGolfRuleset = value => value===RULESET_VERSION || value===PRE_AIRCRAFT_RULESET || value===PRE_DAY_CYCLE_RULESET || value===PRE_SIGNED_HAPPINESS_RULESET || value===PRE_TENNIS_RULESET || value===PRE_MARINA_RULESET || value===PRE_AIRSTRIP_RULESET;
+const golfVersions = new Map([[RULESET_VERSION,PROTOCOL_VERSION],[PRE_REGIONAL_TREES_RULESET,81],[PRE_AIRCRAFT_RULESET,80],
+ [PRE_DAY_CYCLE_RULESET,79],[PRE_SIGNED_HAPPINESS_RULESET,78],[PRE_AIRSTRIP_RULESET,77],[PRE_MARINA_RULESET,76],[PRE_TENNIS_RULESET,75]]);
+export const golfProtocolVersion = ruleset => golfVersions.get(ruleset);
+// Geometry remains importable even when old tournament physics cannot replay.
+export const compatibleCourseRuleset = value => golfVersions.has(value);
+export const compatibleGolfRuleset = (value,environment=null) => value===RULESET_VERSION || (environment!=='desert' && golfVersions.has(value));
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -73,6 +78,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 81 && p.ruleset === PRE_REGIONAL_TREES_RULESET) ||
     (p?.version === 80 && p.ruleset === PRE_AIRCRAFT_RULESET) ||
     (p?.version === 79 && p.ruleset === PRE_DAY_CYCLE_RULESET) ||
     (p?.version === 78 && p.ruleset === PRE_SIGNED_HAPPINESS_RULESET) ||

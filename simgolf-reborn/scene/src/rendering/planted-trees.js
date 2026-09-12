@@ -1,3 +1,4 @@
+import {treeScale} from "../simulation/tree-scale.js";
 import * as THREE from "three";
 import { GRID, center } from "../simulation/world.js";
 import { height, courseHeight } from "../landscape.js";
@@ -84,10 +85,10 @@ export function plantedTrees(scene) {
       if(g.environment==='desert'){
         const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
         for(const [mesh,parts] of [[trunks,7],[leaves,64]])for(let i=0;i<count*parts;i++){
-          const base=positions[Math.floor(i/parts)];
+          const base=positions[Math.floor(i/parts)],shrink=treeScale(g.environment,base.x,base.z,true);
           mesh.getMatrixAt(i,matrix);matrix.decompose(position,rotation,scale);
-          position.set(base.x+(position.x-base.x)*.6,base.y+(position.y-base.y)*.6,base.z+(position.z-base.z)*.6);
-          scale.multiplyScalar(.6);matrix.compose(position,rotation,scale);mesh.setMatrixAt(i,matrix);
+          position.set(base.x+(position.x-base.x)*shrink,base.y+(position.y-base.y)*shrink,base.z+(position.z-base.z)*shrink);
+          scale.multiplyScalar(shrink);matrix.compose(position,rotation,scale);mesh.setMatrixAt(i,matrix);
         }
       }
       trunks.count = count * 7;

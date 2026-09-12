@@ -18,7 +18,7 @@ import {
   inBounds,
 } from "./world.js";
 import { FACILITIES } from "./facilities.js";
-import { RULESET_VERSION, canonical, compatibleGolfRuleset } from "./protocol.js";
+import { RULESET_VERSION, canonical, compatibleCourseRuleset } from "./protocol.js";
 export const PACKAGE_VERSION = 1;
 const PROPERTY = "willow-brook-v1";
 const exact = (v, keys) =>
@@ -64,7 +64,7 @@ function designGame(content, seed = 2002) {
       "outOfBounds",
     ]) ||
     content.version !== PACKAGE_VERSION ||
-    !compatibleGolfRuleset(content.ruleset) ||
+    !compatibleCourseRuleset(content.ruleset) ||
     content.property !== PROPERTY ||
     typeof content.title !== "string" ||
     !content.title.trim() ||
