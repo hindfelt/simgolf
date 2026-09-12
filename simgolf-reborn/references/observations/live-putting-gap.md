@@ -1036,3 +1036,19 @@ records. Walking preparation connects this after unsuccessful/unused earlier
 service checks; all five focused composition tests pass. Later service/arrival
 branches and movement remain open, along with continuous full-composition
 verification and live integration.
+
+### Optional type-6 pre-shot service
+
+`original-walking-type6-service.js` recovers 0x429c40–0x429d13,
+including successful flag storage through 0x429b70. It preserves existing
+service selections, skips golfers with strokes, resets the club before optional
+eligibility checks, applies class/style/availability gates, and runs the original
+ordered type-6 lookup. Accepted destinations use actor-parity interior offsets;
+rejection clears flag 0x40 and proceeds to the next optional service check.
+
+1,200 native cases match actor bytes, index, search distance, destination, calls
+and continuation, with 113 new accepted stops. Native success executes the
+actual flag write before comparison; no state patch stands in for that write.
+Walking preparation connects secondary search results into this branch, and
+five composition tests pass. Later optional services, movement, complete native
+composition verification and live integration remain open.

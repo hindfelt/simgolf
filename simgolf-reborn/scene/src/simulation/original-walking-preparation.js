@@ -6,6 +6,7 @@ import {originalWalkingTeeDestination} from './original-walking-tee-destination.
 import {originalWalkingServiceSearch} from './original-walking-service-search.js';
 import {originalWalkingServiceFallback} from './original-walking-service-fallback.js';
 import {originalWalkingPartnerService} from './original-walking-partner-service.js';
+import {originalWalkingType6Service} from './original-walking-type6-service.js';
 
 // Continuous preparation from 0x4290ca through ball destination selection.
 export function originalWalkingPreparation(snapshot, resolve) {
@@ -28,5 +29,6 @@ export function originalWalkingPreparation(snapshot, resolve) {
   const combined = {...prepared, ...fallback, calls: [...prepared.calls, ...fallback.calls]};
   if (fallback.next !== '0x429aae') return combined;
   const secondary = originalWalkingPartnerService({...fallback.state, destination: fallback.destination, serviceIndex: fallback.serviceIndex});
-  return {...combined, ...secondary, calls: [...combined.calls, ...secondary.calls]};
+  const optional = originalWalkingType6Service({...secondary.state, destination: secondary.destination, serviceIndex: secondary.serviceIndex});
+  return {...combined, ...secondary, ...optional, calls: [...combined.calls, ...secondary.calls, ...optional.calls]};
 }
