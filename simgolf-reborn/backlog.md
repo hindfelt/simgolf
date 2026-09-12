@@ -1445,3 +1445,5 @@ Authoritative Airstrip payment regression added: D1-backed shared course complet
 Recovered original pre-fee score/statistics stage: 576 native cases match and two tests pass. Actor status gates statistics but does not itself skip fees; all statuses record the stroke byte. Caller completion eligibility, subsequent progression and live original score/fee integration remain unfinished.
 
 Continuous score recording through fee settlement now matches 1,152 native executions; seven related tests pass. Suppressed settlement retains the already-recorded score/statistics, and the post-speech snapshot observes those changes. Caller eligibility, remaining completion progression and authoritative live integration remain open; this is not a production gameplay change.
+
+Post-remark hole completion reset recovered: 128 native comparisons and two tests pass. Profile score copying precedes stroke clearing; matching packed markers, elapsed-time accumulation and actor flag resets retain original integer semantics. The preceding kind-19 remark and following competitive/next-hole branches must still be composed before live use.

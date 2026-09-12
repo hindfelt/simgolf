@@ -3275,3 +3275,9 @@ Renamed the isolated fee adapter's `totalFeeUnits` to `cashUnits` throughout its
 `originalRecordedHoleFee` composes statistics, assessment and settlement in original order. The oracle executes 0x426b10–0x426e6b continuously, including the actual statistical comparison, clamp, popup, RNG and floating-money helpers. Speech, actor-name text and integer formatting remain controlled boundaries. All 1,152 cases match complete actor/statistical/fee state and event order. Seven related tests pass, including immutable inputs, score retention when settlement is suppressed and late settlement controls observing the recorded score.
 
 This verifies the completion prefix only. The caller eligibility rule, subsequent completion progression, full live state mapping and exactly-once server integration remain unfinished. No deployment or live scoring replacement is implied.
+
+### Post-remark completion reset
+
+`originalHoleCompletionReset` reconstructs 0x426e88–0x426f30, after the conditional kind-19 remark. It copies the stroke byte into the 44-byte profile record based at 0x583432, offset 20+signed hole. It traverses 64 records of 76 bytes from 0x5842b2, setting flag 2 only on nonzero flags whose signed actor byte matches. Their higher-level meaning is not inferred. It clears actor +0xd4 and the current stroke byte, adds truncated half of signed wrapped elapsed clock to hole +0x1f4 only when the current signed clock exceeds actor +0xc0, stores the clock, masks actor flags with 0xfbdfbbff and clears +0x1c.
+
+128 native executions match, including signed clock extremes, overflow and matching/nonmatching records; two tests pass and verify input immutability and the branch that needs no timing record. This is deliberately a post-remark stage: invoking it before the preceding remark would change the data that remark reads. That composition, subsequent competitive/next-hole logic and live integration remain unfinished.
