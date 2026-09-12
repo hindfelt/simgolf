@@ -2584,3 +2584,19 @@ This closes the prior test gap where suspension was manually assembled from
 shot preparation. Name/presentation and remaining world-system callbacks are
 controlled test dependencies; the production game still does not run this packed
 world fixture. It is not proof of complete live engine adoption or career state.
+
+### Packed runtime checkpoint transport
+
+Added a data-only runtime checkpoint codec for packed actor worlds and pending
+world transactions. Typed-array constructors, shared backing buffers, record
+aliases and signed zero are preserved; source memory stays independent after
+restore. Functions/resolvers and unsupported objects are rejected. The bounded
+format validates graph references, buffer sizes and view alignment, and restores
+object keys without prototype mutation. This is transport validation, not a
+replacement for authoritative course/ruleset validation or a production save
+migration. Runtime map functions must be rebound by the owner.
+
+Seventeen checkpoint/loop/world checks pass. Saving and restoring an actual
+suspended first-hole turn produces the identical completed world and ordered
+sound batch. Aliased holes and overlapping actor memory survive reload. Live
+save-menu persistence, career record population and engine adoption remain open.
