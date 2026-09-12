@@ -1370,3 +1370,21 @@ overlap actor storage for unused high indices. Both search verifiers now write
 only the 23 terrain metadata entries their fixtures actually reference. The
 corrected complete-search matrix still passes. This was a fixture correction,
 not a change to native gameplay semantics.
+
+### Continuous far-target walking tick
+
+`original-walking-far-tick.js` joins actual pathfinding, route reactions,
+the shared reversal pause, golfer avoidance/congestion and the complete
+movement step. Existing route budgets bypass search and route rescaling,
+while still passing through the shared reversal/avoidance logic.
+
+160 uninterrupted native cases from 0x42aa30 match all 152 actor records,
+shared RNG, ordered helper calls and exits: 152 completed/skipped ticks,
+eight unhappy-departure entries and 100 position changes. Actual native
+pathfinding and RNG run; slope, reaction, identity and sound effects remain
+controlled. This composition matrix uses uniform terrain 10, traversal cost
+2, no path flags and next-terrain input 1, with varied crowds, difficulty,
+retained routes and prior facing. The separate 1,400-case route-reaction
+matrix also passes. Mixed-world component coverage does not substitute for
+full live-world integration. Destination dispatch, unhappy departures,
+service arrivals and persistent live actor mapping remain unfinished.
