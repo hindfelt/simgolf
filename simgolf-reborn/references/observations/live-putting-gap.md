@@ -1281,3 +1281,19 @@ terrain and controlled effect bodies. The separate post-step verifier covers
 moving-ball continuations. Complete walking decisions still need connection
 to this step, and pathfinder, service/departure bodies and live integration
 remain unfinished.
+
+### Continuous near-target walking tick
+
+`original-walking-near-tick.js` connects steering/avoidance/congestion to the
+complete walking step when the actor continues at 0x42af66. It preserves
+ordered effects and leaves unhappy-departure execution explicit.
+
+700 continuous native cases from 0x42a71c through step completion match the
+full actor arena, RNG, ordered calls and exits: 661 completed/skipped ticks,
+39 unhappy-departure entries and 396 actual position changes. This set uses a
+single near-target vector, next-terrain code 1 and uniform non-water terrain;
+crowd, actor state, phase and difficulty vary. Native distance/octant/RNG run,
+while reaction/identity/audio effects remain controlled. Separate component
+checks cover other terrain, speed and vector cases. The tick is not yet linked
+to destination/arrival dispatch; far pathfinding, departure/service bodies,
+world persistence and live integration remain unfinished.
