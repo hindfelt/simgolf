@@ -718,3 +718,16 @@ ordered slopes and RNG with varied clubs, cup flags, event mode, terrain and
 callback mutations. World-edge neighbor storage remains an explicit unsupported
 input; full ground-to-cup scoring/reflection composition and live integration
 remain open.
+
+### Ground branch resolution
+
+`original-ground-resolution.js` routes rolling/cup decision to recovered
+ordinary cup completion, or edge reflection and contact/stopped accounting.
+The cup branch exits directly and never executes ordinary landing accounting.
+800 continuous native non-cup paths from 0x42c13a through skip match full
+actor/hole/stat records, wear, RNG and effects (8,834 drop candidates, 607
+penalties). These retain the prior low-speed/zero-slope fixture limits.
+A focused actual rolling-to-cup test verifies one payment and one completion,
+with no ordinary landing accounting. The entire newly composed cup branch
+still needs its own continuous native comparison. Earlier position/sampling
+composition and live-world integration remain open.
