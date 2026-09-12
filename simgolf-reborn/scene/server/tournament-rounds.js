@@ -1,3 +1,4 @@
+import {advanceTournament} from './tournament-schedule.js';
 import {importCourse,coursePractice} from '../src/simulation/course-package.js';
 import {createSession} from '../src/simulation/session.js';
 import {restore,serialize,startPractice,isPutting} from '../src/simulation/game.js';
@@ -7,6 +8,7 @@ import {sealTournament,finalTournamentResults} from './tournament-results.js';
 const TICK_MS=TICK_SECONDS*1000,MAX_TICKS=120;
 const idle=game=>game.pro.phase==='finished'||(game.pro.phase==='address'&&!isPutting(game,game.pro));
 async function access(db,eventId,playerId,round){
+ await advanceTournament(db,eventId);
  if(!Number.isInteger(round)||round<1||round>4)throw fail(400,'Invalid tournament round.');
  const event=await db.prepare("SELECT t.*,e.player_name,f.tournament_id AS finalized FROM tournaments t JOIN tournament_entries e ON e.tournament_id=t.id JOIN players p ON p.id=e.player_id LEFT JOIN players owner ON owner.id=t.owner_id LEFT JOIN tournament_results f ON f.tournament_id=t.id WHERE t.id=? AND e.player_id=? AND p.disabled_at IS NULL AND (f.tournament_id IS NOT NULL OR (owner.id IS NOT NULL AND owner.disabled_at IS NULL)) AND e.withdrawn=0 AND t.status='locked'").bind(eventId,playerId).first();
  if(!event)throw fail(403,'An active entrant and closed registration are required.');

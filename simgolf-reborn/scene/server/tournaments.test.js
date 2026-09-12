@@ -14,11 +14,11 @@ beforeEach(async()=>{
  for(const id of ids)await env.DB.prepare('INSERT INTO players(id,name,email,created_at) VALUES (?,?,?,?)').bind(id,'Player '+id[0],id+'@proton.me',Date.now()).run();
 });
 afterEach(()=>vi.restoreAllMocks());
-async function event(){
+async function event(settings={}){
  const course=await createSharedCourse(env.DB,ids[0],'Links'),game=createPlaytestCourse();createSession(game);
  await env.DB.prepare('UPDATE shared_courses SET state=? WHERE id=?').bind(serialize(game),course.id).run();
  const version=await publishCourse(env.DB,course.id,ids[0],0);
- return createTournament(env.DB,ids[0],{title:'Players cup',publicationId:version.id,rounds:2,capacity:2});
+ return createTournament(env.DB,ids[0],{title:'Players cup',publicationId:version.id,rounds:2,capacity:2,...settings});
 }
 test('event pins the published course independently and enters its authenticated organizer once',async()=>{
  const cup=await event();expect(cup.entrants.map(p=>p.playerId)).toEqual([ids[0]]);expect(cup.rounds).toBe(2);
@@ -92,4 +92,36 @@ test('playing window starts once on registration closure and invalid windows rej
  now+=60000;expect((await setTournamentStatus(env.DB,cup.id,ids[0],'locked')).endsAt).toBe(locked.endsAt);
  now=locked.endsAt;expect((await listTournaments(env.DB)).find(e=>e.id===cup.id).status).toBe('complete');const expired=await getTournament(env.DB,cup.id);expect(expired.status).toBe('complete');expect(expired.entrants.every(p=>p.withdrawn&&p.withdrawalReason==='deadline')).toBe(true);
  await expect(setTournamentStatus(env.DB,cup.id,ids[0],'cancelled')).rejects.toMatchObject({status:409});
+});
+
+ test('scheduled starts are atomic, keep the advertised deadline and reject late entry',async()=>{
+ const {runTournamentSchedule}=await import('./tournament-schedule.js');
+ const now=Date.now(),cup=await event({startsAt:now+120000});await joinTournament(env.DB,cup.id,ids[1]);
+ await expect(setTournamentStatus(env.DB,cup.id,ids[0],'locked')).rejects.toMatchObject({status:409});
+ vi.spyOn(Date,'now').mockReturnValue(now+180000);
+ await Promise.all([runTournamentSchedule(env.DB),runTournamentSchedule(env.DB)]);
+ const current=await getTournament(env.DB,cup.id);expect(current.status).toBe('locked');expect(current.endsAt).toBe(now+120000+168*3600000);
+ await expect(joinTournament(env.DB,cup.id,ids[2])).rejects.toMatchObject({status:409});
+ });
+ test('scheduled events with insufficient active entrants cancel and award nothing',async()=>{
+ const {runTournamentSchedule}=await import('./tournament-schedule.js');const {playerTournamentAwards}=await import('./tournament-awards.js');
+ const now=Date.now(),cup=await event({startsAt:now+120000});vi.spyOn(Date,'now').mockReturnValue(now+130000);await runTournamentSchedule(env.DB);
+ expect((await getTournament(env.DB,cup.id)).status).toBe('cancelled');expect(await playerTournamentAwards(env.DB,ids[0])).toEqual([]);
+ });
+ test('only sealed ranked finishers receive medals; ties and repeated reads are stable',async()=>{
+ const {playerTournamentAwards}=await import('./tournament-awards.js');const cup=await event();
+ expect(await playerTournamentAwards(env.DB,ids[0])).toEqual([]);
+ const body={standings:ids.map((id,i)=>({id,rank:1,withdrawn:i===2}))};
+ await env.DB.prepare('INSERT INTO tournament_results(tournament_id,completed_at,body) VALUES (?,?,?)').bind(cup.id,Date.now(),JSON.stringify(body)).run();
+ const first=await playerTournamentAwards(env.DB,ids[0]);expect(first[0].medal).toBe('Gold');expect(await playerTournamentAwards(env.DB,ids[0])).toEqual(first);expect((await playerTournamentAwards(env.DB,ids[1]))[0].medal).toBe('Gold');expect(await playerTournamentAwards(env.DB,ids[2])).toEqual([]);
+ });
+test('persistent alarm opens unattended registration and seals the deadline',async()=>{
+ const {runInDurableObject,runDurableObjectAlarm}=await import('cloudflare:test');
+ const cup=await event({startsAt:Date.now()+120000}),stub=env.TOURNAMENT_SCHEDULERS.getByName(cup.id);await joinTournament(env.DB,cup.id,ids[1]);await stub.start(cup.id);
+ expect(await runInDurableObject(stub,async(_,state)=>state.storage.getAlarm())).toBe(cup.startsAt);
+ await env.DB.prepare('UPDATE tournaments SET starts_at=? WHERE id=?').bind(Date.now()-1000,cup.id).run();
+ await runDurableObjectAlarm(stub);expect((await env.DB.prepare('SELECT status FROM tournaments WHERE id=?').bind(cup.id).first()).status).toBe('locked');
+ await env.DB.prepare('UPDATE tournaments SET ends_at=? WHERE id=?').bind(Date.now()-1000,cup.id).run();await runDurableObjectAlarm(stub);
+ expect(await env.DB.prepare('SELECT tournament_id FROM tournament_results WHERE tournament_id=?').bind(cup.id).first()).not.toBeNull();
+ expect(await runInDurableObject(stub,async(_,state)=>state.storage.getAlarm())).toBeNull();
 });

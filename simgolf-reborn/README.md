@@ -84,3 +84,9 @@ Earnings competition preview (not yet deployed): **Account → Earnings competit
 **Environment** selects vegetation, architecture and regional ambience. **Landscape** selects the terrain layout. Tropical now defaults to **Island resort**; Links defaults to **Coastal course**. You can choose another landscape before starting. Confirming a new game enters gameplay directly. Existing saves keep their terrain.
 
 See the [worlds and polish review](references/release/worlds-polish-2026-09-12.md) for current images, sound credits, verification and remaining review items.
+
+### Scheduled multiplayer tournaments
+
+In Multiplayer → Tournament registration, choose a published course, playing window and optional scheduled start (shown in your local time). Share the invitation link; each player signs in and explicitly joins. Download the calendar reminder to retain the start time. Events start automatically with at least two active entrants; otherwise they cancel. Final tied places share Gold, Silver or Bronze medals, visible in the tournament lobby.
+
+See [multiplayer verification](references/release/multiplayer-scheduling-2026-09-12.md) for the separate hosted review environment and remaining physical-device checks.

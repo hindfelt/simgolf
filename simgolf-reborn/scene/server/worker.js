@@ -1,3 +1,4 @@
+import {playerTournamentAwards} from './tournament-awards.js';
 import {createEarningsCompetition,getEarningsCompetition,joinEarningsCompetition,startEarningsCompetition,leaveEarningsCompetition,cancelEarningsCompetition} from './earnings-competitions.js';
 import {safeDestination,loginLocation} from '../src/auth-destination.js';
 import {requirePermanentEmail} from './email-policy.js';
@@ -9,6 +10,7 @@ import {createTournament,getTournament,listTournaments,joinTournament,leaveTourn
 import {tournamentStandings} from './tournament-rounds.js';
 import {sealStatement,expireStatement,anonymizeFinalResults} from './tournament-results.js';
 export {CourseScheduler} from './course-scheduler.js';
+export {TournamentScheduler} from './tournament-scheduler.js';
 export {TournamentRoundHost} from './tournament-round-host.js';
 const TTL=30*24*60*60;
 async function session(request,env){
@@ -168,13 +170,16 @@ async function handle(request,env){
    return json(event);
   }
  }
+ if(path==='/api/tournament-awards'&&request.method==='GET')return json({awards:await playerTournamentAwards(env.DB,user.id)});
  if(path==='/api/tournaments'){
   if(request.method==='GET')return json({tournaments:await listTournaments(env.DB)});
   if(request.method==='POST'){
    await rateLimit(env.DB,'tournament-create:'+user.id,5,3600);
    const body=await readJson(request,2000);
-   if(!body||Object.keys(body).some(key=>!['title','publicationId','rounds','capacity','durationHours'].includes(key)))throw fail(400,'Only tournament settings can be supplied.');
-   return json(await createTournament(env.DB,user.id,body),201);
+   if(!body||Object.keys(body).some(key=>!['title','publicationId','rounds','capacity','durationHours','startsAt'].includes(key)))throw fail(400,'Only tournament settings can be supplied.');
+   const event=await createTournament(env.DB,user.id,body);
+   await env.TOURNAMENT_SCHEDULERS.getByName(event.id).start(event.id);
+   return json(event,201);
   }
  }
  const roundRoute=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})\/rounds\/([1-4])(?:\/(commands))?$/);
@@ -193,11 +198,12 @@ async function handle(request,env){
  const tournament=path.match(/^\/api\/tournaments\/([a-f0-9-]{36})(?:\/(join|leave|withdraw|lock|cancel))?$/);
  if(tournament){
   const [,id,action]=tournament;
-  if(!action&&request.method==='GET')return json(await getTournament(env.DB,id));
+  if(!action&&request.method==='GET'){const event=await getTournament(env.DB,id);await env.TOURNAMENT_SCHEDULERS.getByName(id).start(id);return json(event);}
   if(action&&request.method==='POST'){
    await rateLimit(env.DB,'tournament-action:'+user.id,30,60);
    const body=await readJson(request,1000);if(!body||Object.keys(body).length)throw fail(400,'Tournament actions do not accept player identities or scores.');
-   return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):action==='withdraw'?await withdrawTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
+   const event=action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):action==='withdraw'?await withdrawTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled');
+   await env.TOURNAMENT_SCHEDULERS.getByName(id).start(id);return json(event);
   }
  }
  if(path==='/api/published-courses'&&request.method==='GET'){
@@ -263,6 +269,7 @@ export async function cleanup(env){
  if(claimed)await env.DB.batch(['sessions','transactions','email_codes','rate_limits'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE expires_at<?`).bind(now)));
 }
 export default {
+
  async fetch(request,env,ctx){
   if(env.DB&&ctx&&new URL(request.url).pathname==='/api/auth/me')ctx.waitUntil(cleanup(env).catch(()=>console.error('Account cleanup failed; expired records remain inaccessible.')));
   try{return await handle(request,env);}catch(e){return json({error:e.status?e.message:'The account service is temporarily unavailable.'},e.status||503);}

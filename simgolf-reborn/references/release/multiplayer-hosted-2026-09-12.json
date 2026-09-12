@@ -1,0 +1,26 @@
+{
+  "origin": "https://fairway-baron-multiplayer-review.hindfelt.workers.dev",
+  "startedAt": "2026-09-12T20:08:58.191Z",
+  "checks": [
+    "Authenticated invitation acceptance on phone viewport; calendar download; no horizontal overflow",
+    "Scheduled start and advertised deadline match on hosted service",
+    "Two independent hosted rounds completed, survived reload, sealed final standings and retained repeatable account medals",
+    "No browser page errors",
+    "Signed-out invitation requires login; final medal UI verified on phone viewport"
+  ],
+  "standings": [
+    {
+      "name": "Review host",
+      "rank": 1,
+      "strokes": 5
+    },
+    {
+      "name": "Review guest",
+      "rank": 1,
+      "strokes": 5
+    }
+  ],
+  "finishedAt": "2026-09-12T20:11:10.338Z",
+  "browserErrors": [],
+  "deploymentVersion": "8a53d22e-689a-409b-9c92-80a202321aae"
+}

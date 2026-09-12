@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "simgolfer",
+  "name": "fairway-baron-multiplayer-review",
   "compatibility_date": "2026-09-11",
   "workers_dev": true,
   "assets": {
@@ -8,24 +8,19 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
-  "routes": [
-    {
-      "pattern": "simgolfer.0x4d.in",
-      "custom_domain": true
-    }
-  ],
+  "routes": [],
   "main": "server/worker.js",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "vars": {
-    "APP_ORIGIN": "https://simgolfer.0x4d.in"
+    "APP_ORIGIN": "https://fairway-baron-multiplayer-review.hindfelt.workers.dev"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "simgolfer-accounts",
-      "database_id": "c75a5302-f11d-4786-9221-1debc7991753",
+      "database_name": "fairway-baron-multiplayer-review",
+      "database_id": "6bed7168-c1ef-4891-8d46-5741f6c744b6",
       "migrations_dir": "server/migrations"
     }
   ],
