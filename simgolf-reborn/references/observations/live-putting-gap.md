@@ -1982,3 +1982,23 @@ are controlled and the range helper returns 100. This establishes rolling-to-
 accounting handoffs under those boundaries, not cup capture, mixed terrain,
 real reaction bodies, render cadence or live browser/server adoption. No
 production gameplay change or deployment is included.
+
+
+### Animation through ordinary scored cup completion
+
+`verify-original-swing-scored-cup.py` extends the retained movement/cup oracle
+back to animation 16 in phase 1. Native animation releases phase 2, then actual
+swing progression reaches impact and movement, capture and ordinary hole
+completion. All 1,200 sequences match actor bytes, completion record, complete
+hole/statistic/period/notice arrays, cash and settlement globals, score list,
+selection/presentation state, ordered calls and animation/swing counts.
+Thirteen related tests pass.
+
+Fixtures use the putting club, eight-frame animation, centred ball positions,
+speed 160 and cup flags on every tile to isolate this connection. They vary
+hole IDs, strokes, signed happiness, settlement controls and visual slots;
+half include controlled effect mutations to verify later reads. Native scoring
+and ordinary payment execute, while height/slope and presentation/reaction
+helpers remain controlled. This does not establish naturally planned approach
+trajectories, matched competition completion, actual reaction bodies, original
+render cadence or live integration. No production change or deployment.
