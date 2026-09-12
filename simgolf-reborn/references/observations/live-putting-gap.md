@@ -560,3 +560,16 @@ callbacks alter flags. Three focused tests also pass. This bounded adapter
 is not connected to the live simulation. Ordered ground/bounce effects and
 the full actor-motion integration remain unfinished; live putting remains
 the previously documented approximation.
+
+### Ordered actor bounce prefix
+
+`original-actor-bounce.js` recovers 0x42c527–0x42c648. Contact tests precede
+sound; the coefficient is captured before sound but vertical velocity is
+reread afterward. Clamped rebound and height reset precede the visual effect.
+The native negative-rebound tricky-green test is unreachable after the clamp.
+Noncontacts continue at 0x42ca6c; contacts continue into impact response.
+
+1,600 native sequences match complete actor bytes and 1,581 ordered effects,
+including controlled callback velocity/flag mutations. Two focused tests pass.
+This is standalone reconstruction: later impact/scatter effects and full live
+motion integration remain open. No live gameplay or deployment changed.
