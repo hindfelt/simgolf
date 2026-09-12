@@ -573,3 +573,17 @@ Noncontacts continue at 0x42ca6c; contacts continue into impact response.
 including controlled callback velocity/flag mutations. Two focused tests pass.
 This is standalone reconstruction: later impact/scatter effects and full live
 motion integration remain open. No live gameplay or deployment changed.
+
+### Ordered actor terrain impact
+
+`original-actor-impact.js` covers 0x42c648–0x42c815: reversal/halving flags,
+three ordered slope samples, scatter RNG, current terrain lookup, and the
+terrain-17 stop globals at 0x57724c/0x577250/0x4c1e18. The first slope uses a
+captured velocity multiplier, the second rereads velocity, and the third
+retains its pre-query velocity. Callback state changes are therefore not
+interchangeable with the pure helper's final result assignment.
+
+3,000 native comparisons pass for complete actor records, stop globals,
+query arguments/order and RNG, with half the cases mutating heading/velocity
+inside the slope callbacks. Later landing deflection, continuous composition
+and live world integration remain unfinished. No live deployment changed.
