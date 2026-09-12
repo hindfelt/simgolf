@@ -1200,3 +1200,19 @@ continuations. Native RNG runs; pathfinder/reaction outputs are controlled with
 matching mutations. This verifies route setup only, not pathfinding or position
 updates. Later budget scaling/congestion, the real pathfinder, walking steps,
 service arrivals and live integration remain unfinished.
+
+### Route terrain and steepness reactions
+
+`original-walking-route-reactions.js` recovers 0x42abda–0x42ad32:
+scaling the signed route budget, difficulty/stroke/terrain gates, flag 0x40000000
+warning state, and steepness reactions. Native code queries slope twice before
+its reaction; the adapter preserves both queries and rereads actor state after
+effects. The next-terrain local remains explicit and distinct from ball terrain.
+
+1,400 native cases match actor records, ordered calls and continuation. Fixtures
+vary budget, difficulty, signed stroke byte, facing, terrain metadata, flags and
+previous reactions; reaction effects mutate state on both sides, and slope
+outputs remain controlled. This is not verification of the terrain slope helper
+or full walking. The module is not yet composed with route setup; remaining
+congestion, pathfinder, stepping, service arrivals and live integration remain
+unfinished.
