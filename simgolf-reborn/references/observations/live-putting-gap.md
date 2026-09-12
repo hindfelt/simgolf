@@ -459,3 +459,9 @@ The result-presentation/value-use branch 0x426c92–0x426e6b still separates thi
 from the settlement prefix. Next-hole/match handling from 0x426f3b or 0x427e25,
 full effect adapters and live original-world integration remain unfinished. No
 native branch is bypassed or replaced with a default next-hole assumption.
+
+### Next-hole entry and event wrap
+
+`original-next-hole-entry.js` recovers 0x427e25–0x427ec4. It advances the raw signed-byte hole index, checks the next original hole record, and branches ordinary rounds to 0x4280e4 when that record is empty or the partner is at hole 0/19. With either original event flag in 0x4200000, an empty next record wraps to hole one; the 16-bit ordering clock receives twice the original course-hole count. An already-filled destination scorecard explicitly dispatches 0x425b50, preserving its returned state. No guessed reset behavior is supplied.
+
+The checksum-pinned verifier matches 1,200 continuous native executions, including 725 reset callbacks and 306 ordinary-round exits. Callback mutations and 16-bit clock wrap are covered. Seven focused next-hole/completion checks pass. This module stops before last-hole dialogue, destination assignment and round-exit behavior; normal result/high-score settlement before this entry also remains incomplete. It is not connected to the live golfers yet and does not close F02/F04/F09 or the putting integration gap.
