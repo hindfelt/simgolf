@@ -1604,3 +1604,19 @@ flag, selection and ordered calls. All 256 reason bytes occur, with varying
 hole numbers and membership record bits. Names, identity, integer formatting
 and notice bodies are controlled. Entry-gate composition, real helper effects,
 subsequent departure handling and live scheduling remain unfinished.
+
+### Walking entry through complaint and departure checks
+
+`original-walking-entry-complaint.js` joins entry gating to initial complaints;
+`original-walking-prelude.js` continues through angry-departure timing or
+clubhouse routing and finished-visitor cleanup.
+
+Both 800-case continuous native matrices pass. The full prelude compares
+actor/hole/completion records, assignment cleanup, RNG, text/message state,
+selection, walking locals, calls, destination and exit. Fixtures use entry
+accumulator zero, varying complaint gates and phases 0/1/100. Name/identity,
+formatting, notices and reaction bodies remain controlled; actual RNG and
+assignment cleanup execute. Clubhouse globals alias part of the packed hole
+storage, so the native and JS fixtures initialise that shared storage
+consistently. Joining this prelude to destination/movement dispatch, earlier
+scheduler provenance and live persistence remain unfinished.
