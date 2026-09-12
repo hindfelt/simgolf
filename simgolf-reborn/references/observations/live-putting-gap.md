@@ -920,3 +920,19 @@ classes, flags and clustered positions around the proximity thresholds.
 The native routine's discarded partner heading is also evaluated. This check
 ends before reaction/walking destinations at 0x4294d1; it does not integrate
 movement into the live game or prove full walking behavior.
+
+### Walking watch reaction and preparation composition
+
+`original-walking-watch.js` recovers 0x4294d1–0x4295ef. Nearby actors
+watch eligible airborne partner shots according to terrain, partner animation,
+flags and original signed angular comparison. It sets the watching animation,
+facing and randomized delay. The signed absolute-value overflow is preserved.
+2,000 native cases execute real distance, heading and RNG helpers and match
+full actor records, seed and branch, including 293 watching reactions.
+
+`original-walking-preparation.js` joins tee queue, partner comparison and watch
+reaction from 0x4290ca. Two integration tests prove queue locals survive a
+watching reaction and closed-hole changes reach later decisions. These are
+focused composition checks, not a continuous native verification of the whole
+composition. Destination selection at 0x42960b and full turn/live integration
+remain unfinished; no live rules changed.
