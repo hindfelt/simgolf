@@ -614,3 +614,14 @@ ordered effects. Controlled audio mutations lower speed or change the
 position/heading. Two focused tests pass. Composition into contact, the
 nearby-golfer tail and the live engine remain unfinished; this is not a
 live gameplay change or a completed fidelity audit.
+
+### Continuous landing composition
+
+`original-actor-landing.js` joins contact and landing deflection through
+0x42c9ea. Noncontacts bypass both impact and deflection. Terrain stops feed
+zero speed into subsequent eligibility checks; calls and RNG counts accumulate
+across the stages. 1,600 continuous native executions match all actor bytes,
+stop globals, RNG state and 5,367 ordered calls, including rock surfaces,
+skilled actors and controlled sound/visual effects. Two focused tests verify
+full effect order and terrain-stop suppression. The nearby-golfer scan at
+0x42c9ea, stop decision, and connection to earlier motion/live state remain open.
