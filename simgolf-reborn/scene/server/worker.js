@@ -200,7 +200,10 @@ async function handle(request,env){
    return json(action==='join'?await joinTournament(env.DB,id,user.id):action==='leave'?await leaveTournament(env.DB,id,user.id):action==='withdraw'?await withdrawTournament(env.DB,id,user.id):await setTournamentStatus(env.DB,id,user.id,action==='lock'?'locked':'cancelled'));
   }
  }
- if(path==='/api/published-courses'&&request.method==='GET')return json(await pagePublishedCourses(env.DB,new URL(request.url).searchParams.get('cursor')));
+ if(path==='/api/published-courses'&&request.method==='GET'){
+  const params=new URL(request.url).searchParams;
+  return json(await pagePublishedCourses(env.DB,params.get('cursor'),params.get('courseId')));
+ }
  const published=path.match(/^\/api\/published-courses\/([a-f0-9-]{36})$/);
  if(published&&request.method==='GET')return json(await getPublishedCourse(env.DB,published[1]));
  const shared=path.match(/^\/api\/courses\/([a-f0-9-]{36})(?:\/(commands|members|publish))?$/);

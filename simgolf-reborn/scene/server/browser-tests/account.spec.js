@@ -111,3 +111,19 @@ test('tournament picker retains an older course across refresh and submits its i
  await page.getByLabel('Tournament title',{exact:true}).fill('Older course cup');await page.getByRole('button',{name:'Create registration',exact:true}).click();
  await expect.poll(()=>created?.publicationId).toBe('old-publication');await expect(page.locator('#account-status')).toHaveText('Tournament registration created.');
 });
+
+test('published version history requests only that course and selects the older publication',async({page})=>{
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));await page.route('**/api/courses',r=>reply(r,{courses:[]}));
+ const courseId='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',base={courseId,title:'Island course',authorName:'Author',createdAt:1000,designRevision:1,digest:'abcdef123456'},newer={...base,id:'newer'},older={...base,id:'older',designRevision:0,digest:'123456abcdef'};let chosen='';
+ await page.route('**/api/published-courses**',r=>{
+  const url=new URL(r.request().url());
+  if(url.pathname.endsWith('/older')){chosen='older';return reply(r,{error:'Test stopped before loading geometry'},503);}
+  if(url.searchParams.has('courseId')){expect(url.searchParams.get('courseId')).toBe(courseId);return reply(r,{courses:[newer,older],nextCursor:null});}
+  return reply(r,{courses:[newer],nextCursor:null});
+ });
+ await page.goto('/');await page.locator('#player-account').click();await page.getByText('Shared courses',{exact:true}).click();await page.getByText('Published courses',{exact:true}).click();
+ await page.getByText('Published version history',{exact:true}).click();
+ const history=page.locator('details').filter({has:page.getByText('Each publication is a fixed layout.',{exact:false})}).last();
+ await expect(history).toContainText('design revision 0');await expect(history).toContainText('selected publication');
+ await history.getByRole('button',{name:'Practise this version'}).last().click();await expect.poll(()=>chosen).toBe('older');await expect(page.locator('#account-status')).toContainText('Test stopped before loading geometry');
+});

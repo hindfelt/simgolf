@@ -50,6 +50,11 @@ test('later design edits create a new version and cannot rewrite the published l
  const next=await publishCourse(env.DB,course.id,owner,game.protocol.revision);
  expect(next.digest).not.toBe(first.digest);expect(next.id).not.toBe(first.id);
  expect((await getPublishedCourse(env.DB,first.id)).package).toEqual(first.package);
+ const unrelated=await ready();await publishCourse(env.DB,unrelated.course.id,owner,unrelated.game.protocol.revision);
+ const history=await pagePublishedCourses(env.DB,null,course.id);
+ expect(history.courses.map(v=>v.id).sort()).toEqual([first.id,next.id].sort());
+ expect(history.courses.every(v=>v.courseId===course.id)).toBe(true);
+ await expect(pagePublishedCourses(env.DB,null,'not-a-course')).rejects.toMatchObject({status:400});
 });
 test('editors cannot publish; incomplete layouts and suspended authors are rejected',async()=>{
  const initial=await createSharedCourse(env.DB,owner,'Unfinished');await setCourseMember(env.DB,initial.id,owner,editor,'editor');

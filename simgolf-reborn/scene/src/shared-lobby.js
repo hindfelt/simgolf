@@ -1,4 +1,5 @@
 import './shared-lobby.css';
+import {publicationHistory} from './ui/publication-history.js';
 import {playerStorage} from './account.js';
 export function mountSharedLobby(dialog,request,player,status){
  const section=document.createElement('details');section.id='shared-courses';section.style.overflowWrap='anywhere';
@@ -6,6 +7,14 @@ export function mountSharedLobby(dialog,request,player,status){
  section.querySelector('.player-id').textContent=player.id;dialog.append(section);
  const library=document.createElement('details');library.innerHTML='<summary>Published courses</summary><p>Practise a fixed course version made by another player. For scored online play, enter an event under Tournament registration.</p><button class="refresh-published">Refresh published courses</button><div class="published-list"></div>';section.append(library);
  const more=document.createElement('button');more.textContent='Load more courses';more.hidden=true;library.append(more);
+ function practiceButton(course){const button=document.createElement('button');
+    button.textContent='Practise this version';button.onclick=async()=>{
+     button.disabled=true;
+     try{const version=await request('/api/published-courses/'+course.id),{importCourse}=await import('./simulation/course-package.js'),pkg=await importCourse(JSON.stringify(version.package));playerStorage().setItem(`simgolf-reborn.package.${pkg.digest}`,JSON.stringify(pkg));location.assign('/?practice='+pkg.digest);}
+     catch(error){status(error.message);button.disabled=false;}
+    };
+ return button;
+ }
  let nextCursor=null,publishedBusy=false;
  async function loadPublished(append=false){
   if(publishedBusy)return;publishedBusy=true;more.disabled=true;
@@ -15,15 +24,11 @@ export function mountSharedLobby(dialog,request,player,status){
    nextCursor=data.nextCursor||null;more.hidden=!nextCursor;
    if(!courses.length&&!append)list.textContent='No published courses yet.';
    for(const course of courses){
-    const row=document.createElement('p'),title=document.createElement('span'),button=document.createElement('button');
+    const row=document.createElement('div'),title=document.createElement('span'),button=practiceButton(course);
     title.textContent=`${course.title} · ${course.authorName} · version ${course.digest.slice(0,8)} `;
-    button.textContent='Practise this version';button.onclick=async()=>{
-     button.disabled=true;
-     try{const version=await request('/api/published-courses/'+course.id),{importCourse}=await import('./simulation/course-package.js'),pkg=await importCourse(JSON.stringify(version.package));playerStorage().setItem(`simgolf-reborn.package.${pkg.digest}`,JSON.stringify(pkg));location.assign('/?practice='+pkg.digest);}
-     catch(error){status(error.message);button.disabled=false;}
-    };row.append(title,button);list.append(row);
+    row.append(title,button);if(course.courseId)row.append(publicationHistory(course,request,practiceButton));list.append(row);
    }
-   status(`${list.querySelectorAll('button').length} published courses loaded.`);
+   status(`${list.children.length} published courses loaded.`);
   }catch(error){status(error.message);}finally{publishedBusy=false;more.disabled=false;}
  }
  more.onclick=()=>loadPublished(true);
