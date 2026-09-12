@@ -904,3 +904,19 @@ selection/world flags, signed clock boundaries, and cleanup mutations. Cleanup
 bodies are controlled in this verifier; later distance comparisons, destinations,
 walking, full actor integration and live conversion remain open. This is not
 full golfer AI or release parity.
+
+### Walking partner comparison
+
+`original-walking-partner.js` recovers 0x429192–0x4294d1. It computes
+cup heading and the partner-follow local from same-hole ball ordering,
+original route distances, actor/ball proximity, terrain metadata and actor
+flags. The native no-ball actor-parity fallback is preserved. Terrain lookup
+returns code 20 outside the map; in-map reads use the original byte storage.
+
+1,600 continuous native cases match cup heading and follow decisions (630
+follow results), executing the real original heading and distance helpers.
+Fixtures cover both partner indices, missing balls, different holes, terrain
+classes, flags and clustered positions around the proximity thresholds.
+The native routine's discarded partner heading is also evaluated. This check
+ends before reaction/walking destinations at 0x4294d1; it does not integrate
+movement into the live game or prove full walking behavior.
