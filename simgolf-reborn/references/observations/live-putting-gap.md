@@ -396,3 +396,22 @@ reaction/presentation/range effects. Twelve focused stopped-tail/hazard/accounti
 tests pass. This closes the previously documented gaps on either side of the
 hazard branch. Motion-to-raw-actor binding, effect implementations, hole settlement,
 walking/tutorial branches and live saved-world integration remain open.
+
+### Cup-completion caller and effect ordering
+
+`original-cup-completion.js` recovers 0x42c3f4–0x42c47c after the cup predicate
+succeeds. Sound uses the unsnapped ball position, then the ball snaps to the
+pre-movement tile centre. Optional visual cleanup precedes the stroke increment
+and 0x426b00 settlement callback. Only afterward does the caller zero speed and
+clear the impact flag on the refreshed actor. The result exits the actor directly;
+it must not also run ordinary stopped-shot accounting.
+
+`verify-original-cup-completion.py` matches 1,000 continuous native cases,
+including complete actor/seed output and the actor position/stroke count observed
+at every sound/visual/settlement call. Controlled callbacks mutate position,
+strokes, speed, flags, hole and seed to verify the timing of native rereads.
+Eleven cup/stopped-tail/accounting tests pass. This establishes the caller, not
+the 0x426b00 settlement body or its connection to live play. The motion integrator
+must expose the pre-snap capture boundary rather than first applying its terminal
+ball output and then calling this routine; intermediate flight/impact effects
+also remain to be connected at their native positions.
