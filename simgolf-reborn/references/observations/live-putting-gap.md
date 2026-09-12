@@ -835,3 +835,17 @@ This closes the identified full actor mixed-trajectory verification gap for
 these fixtures. Original outer actor-loop integration, persistent actor/career
 state, metadata mutation synchronization, and live-game conversion remain open.
 The test is not proof of complete original-game or release parity.
+
+### Actor action-to-motion integration
+
+`original-actor-turn.js` connects the existing decision/swing/preparation
+sequence to composed ball motion when it returns `motion`. It preserves the
+pre-callback tile/terrain locals returned by dispatch rather than resampling
+them from possibly changed ball coordinates. The native 0x42bdb5 zero-speed
+check skips motion regardless of vertical velocity. Other unrecovered walking,
+tutorial and retry continuations remain explicit.
+
+Four focused context/turn tests pass, including a real phase-3 swing path that
+advances the ball. The new whole actor-turn composition still needs a continuous
+native verifier; component and trajectory checks do not close that gap.
+Full outer-loop scheduling, live integration and persistence remain open.
