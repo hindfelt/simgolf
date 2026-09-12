@@ -1052,3 +1052,19 @@ actual flag write before comparison; no state patch stands in for that write.
 Walking preparation connects secondary search results into this branch, and
 five composition tests pass. Later optional services, movement, complete native
 composition verification and live integration remain open.
+
+### Optional type-8 service and selected-stop flags
+
+`original-walking-type8-service.js` handles entries 0x429b53/b5f/b70/b76
+through 0x429d3d or 0x429e0d. It preserves entry-specific flag clearing,
+existing selected services, first-stroke/class/style/availability gates, the
+type-8 distance limit and parity-based destination. Walking preparation invokes
+it for all matching continuations, including previously selected primary stops.
+
+1,200 native cases match actor bytes, index, distance, destination, ordered
+calls and continuation; 129 newly select a stop. For the b70 entry, native
+verification begins at b67 so its preceding compare supplies the actual branch
+flags and flag storage executes normally. Five composition tests pass. Type-8
+availability and original facility tables remain explicit state inputs. Remaining
+optional service branches, arrival/movement, full composition verification and
+live integration remain unfinished.
