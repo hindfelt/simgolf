@@ -968,3 +968,20 @@ queue overflow. Walking preparation connects the no-ball/override branch to
 this helper. Three focused composition tests pass, including missing-ball tee
 selection followed by service admission. Actual facility lookup, later movement,
 continuous whole-preparation native verification and live integration remain open.
+
+### Original nearest-facility search
+
+`original-nearest-facility.js` recovers the complete 0x40daa0–0x40db56
+search rather than substituting a geometric nearest-building query. It scans
+256 sixteen-byte records at 0x58a708, applies signed catalog width/2 to the
+origin tile, uses original map distance and retains the first equal-distance
+match. For types >=6, a matching record without flag 0x40 terminates the entire
+scan, preserving the executable's ordered-table behavior. The global distance
+starts at 65535 even when no result is found.
+
+1,200 native searches execute actual distance arithmetic and match result index
+and distance; 891 find a result. Fixtures vary types, inactive records, signed
+widths and positions. The pure adapter accepts the full original record table.
+This closes the search helper needed by walking service selection; it has not
+yet been connected to the service branch or live building records. Facility
+catalog/persistence mapping and complete golfer movement remain unfinished.
