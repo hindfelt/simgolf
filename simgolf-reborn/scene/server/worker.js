@@ -156,7 +156,7 @@ async function handle(request,env){
  }
  if(path==='/api/earnings-competitions'){
   if(request.method==='GET')return json({competitions:(await env.DB.prepare('SELECT id,title,owner_id AS ownerId,status,duration_minutes AS durationMinutes,capacity,starts_at AS startsAt,ends_at AS endsAt FROM earnings_competitions ORDER BY created_at DESC,id LIMIT 100').all()).results});
-  if(request.method==='POST'){await rateLimit(env.DB,'earnings-create:'+user.id,5,3600);const body=await readJson(request,2000);if(Object.keys(body).some(k=>!['title','durationMinutes','capacity'].includes(k)))throw fail(400,'Only competition settings can be supplied.');return json(await createEarningsCompetition(env.DB,user.id,body),201);}
+  if(request.method==='POST'){await rateLimit(env.DB,'earnings-create:'+user.id,5,3600);const body=await readJson(request,2000);if(Object.keys(body).some(k=>!['title','durationMinutes','capacity','landscape','environment'].includes(k)))throw fail(400,'Only competition settings can be supplied.');return json(await createEarningsCompetition(env.DB,user.id,body),201);}
  }
  const earnings=path.match(/^\/api\/earnings-competitions\/([a-f0-9-]{36})(?:\/(join|start|leave|cancel))?$/);
  if(earnings){const [,id,action]=earnings;

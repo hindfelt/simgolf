@@ -1,3 +1,5 @@
+import {LANDSCAPES} from '../src/simulation/generated-landscape.js';
+import {ENVIRONMENTS} from '../src/simulation/environments.js';
 import {createGame,serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
 import {RULES} from '../src/simulation/rules.js';
@@ -9,10 +11,11 @@ export function earningsResult(game){
  if(netCash!==income-spending)throw fail(503,'Competition finances do not reconcile.');
  return {netCash,income,spending,completedHoles:game.stats.holesCompleted,openHoles,eligible:openHoles>0&&game.stats.holesCompleted>0&&game.stats.fees>0};
 }
-export async function createEarningsCompetition(db,playerId,{title,durationMinutes=30,capacity=8}){
+export async function createEarningsCompetition(db,playerId,{title,durationMinutes=30,capacity=8,landscape='classic',environment=null}){
  const player=await active(db,playerId);
  if(typeof title!=='string'||!title.trim()||title.length>80||!Number.isInteger(durationMinutes)||durationMinutes<10||durationMinutes>120||!Number.isInteger(capacity)||capacity<2||capacity>16)throw fail(400,'Enter a title, 10–120 minutes and 2–16 places.');
- const id=crypto.randomUUID(),now=Date.now(),game=createGame(crypto.getRandomValues(new Uint32Array(1))[0]);createSession(game);
+ if(typeof landscape!=='string'||!Object.hasOwn(LANDSCAPES,landscape)||(environment!==null&&(typeof environment!=='string'||!Object.hasOwn(ENVIRONMENTS,environment))))throw fail(400,'Choose a supported landscape and environment.');
+ const id=crypto.randomUUID(),now=Date.now(),game=createGame(crypto.getRandomValues(new Uint32Array(1))[0],landscape,environment);createSession(game);
  await db.batch([
   db.prepare("INSERT INTO earnings_competitions(id,owner_id,title,initial_state,duration_minutes,capacity,status,created_at) SELECT ?,id,?,?,?,?,'registration',? FROM players WHERE id=? AND disabled_at IS NULL").bind(id,title.trim(),serialize(game),durationMinutes,capacity,now,playerId),
   db.prepare('INSERT INTO earnings_entries(competition_id,player_id,player_name,course_id,joined_at) SELECT id,owner_id,?,?,? FROM earnings_competitions WHERE id=?').bind(player.name,crypto.randomUUID(),now,id)
@@ -26,7 +29,7 @@ export async function settleEarningsCompetition(db,id){
 }
 export async function getEarningsCompetition(db,id){
  await settleEarningsCompetition(db,id);
- const row=await db.prepare('SELECT id,owner_id AS ownerId,title,duration_minutes AS durationMinutes,capacity,status,starts_at AS startsAt,ends_at AS endsAt FROM earnings_competitions WHERE id=?').bind(id).first();if(!row)throw fail(404,'Earnings competition not found.');
+ const row=await db.prepare(`SELECT json_extract(initial_state,'$.landscapeStyle') AS landscape,json_extract(initial_state,'$.environment') AS environment,id,owner_id AS ownerId,title,duration_minutes AS durationMinutes,capacity,status,starts_at AS startsAt,ends_at AS endsAt FROM earnings_competitions WHERE id=?`).bind(id).first();if(!row)throw fail(404,'Earnings competition not found.');
  const entries=(await db.prepare('SELECT player_id AS id,player_name AS name,course_id AS courseId,withdrawn,result FROM earnings_entries WHERE competition_id=? ORDER BY joined_at,player_id').bind(id).all()).results.map(e=>({...e,withdrawn:!!e.withdrawn,result:e.result?JSON.parse(e.result):null,rank:null}));
  if(row.status==='complete'){
   entries.sort((a,b)=>Number(!!b.result?.eligible&&!b.withdrawn)-Number(!!a.result?.eligible&&!a.withdrawn)||(b.result?.netCash??0)-(a.result?.netCash??0)||a.id.localeCompare(b.id));

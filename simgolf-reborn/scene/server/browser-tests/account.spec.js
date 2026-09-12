@@ -63,3 +63,14 @@ test('competition access offers spectators while cooperative courses retain edit
  await page.goto('/');await page.waitForFunction(()=>window.__gameTest);await page.locator('#player-account').click();await page.getByText('Shared courses',{exact:true}).click();
  const access=page.getByLabel('Course access');await expect(access).toHaveCount(2);await expect(access.nth(0).locator('option[value=editor]')).toHaveCount(0);await expect(access.nth(0).locator('option[value=spectator]')).toHaveCount(1);await expect(access.nth(1).locator('option[value=editor]')).toHaveCount(1);
 });
+
+test('earnings registration sends regional settings and shows them before joining',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ const event={id:'regional-event',title:'Desert coast',status:'registration',ownerId:user.id,durationMinutes:30,capacity:8,landscape:'coast',environment:'desert',entries:[{id:user.id,name:user.name,withdrawn:false}]};let created=false;
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
+ await page.route('**/api/earnings-competitions',r=>{if(r.request().method()==='POST'){expect(r.request().postDataJSON()).toEqual({title:'Desert coast',durationMinutes:30,capacity:8,landscape:'coast',environment:'desert'});created=true;return reply(r,event);}return reply(r,{competitions:created?[event]:[]});});
+ await page.route('**/api/earnings-competitions/regional-event',r=>reply(r,event));
+ await page.goto('/');await page.waitForFunction(()=>window.__gameTest);await page.locator('#player-account').click();await page.getByText('Earnings competitions',{exact:true}).click();
+ await page.getByLabel('Earnings competition title').fill('Desert coast');await page.getByLabel('Competition landscape').selectOption('coast');await page.getByLabel('Competition environment').selectOption('desert');await page.getByRole('button',{name:'Create earnings competition',exact:true}).click();
+ await expect(page.getByText('Coastal course · bays and rolling headlands · Desert',{exact:true})).toBeVisible();expect(created).toBe(true);await page.getByText('Coastal course · bays and rolling headlands · Desert',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/simgolfer-regional-earnings-phone.png'});
+});

@@ -42,7 +42,8 @@ test('competition HTTP actions reject imported cash, identities and scores',asyn
  const token=crypto.randomUUID(),csrf=crypto.randomUUID(),origin='https://simgolfer.example';await env.DB.prepare('INSERT INTO sessions(token_hash,player_id,csrf,expires_at) VALUES (?,?,?,?)').bind(await hash(token),a,csrf,Date.now()+60000).run();
  const post=(path,body)=>worker.fetch(new Request(origin+path,{method:'POST',headers:{origin,cookie:`${names.session}=${token}`,'x-csrf-token':csrf,'content-type':'application/json'},body:JSON.stringify(body)}),env);
  expect((await post('/api/earnings-competitions',{title:'Cheat',cash:1000000})).status).toBe(400);
- const event=await (await post('/api/earnings-competitions',{title:'Real',durationMinutes:10,capacity:2})).json();
+ const event=await (await post('/api/earnings-competitions',{title:'Real',durationMinutes:10,capacity:2,landscape:'coast',environment:'desert'})).json();
+ expect(event).toMatchObject({landscape:'coast',environment:'desert'});
  expect((await post(`/api/earnings-competitions/${event.id}/join`,{playerId:b})).status).toBe(400);
  expect((await post(`/api/earnings-competitions/${event.id}/start`,{score:9999})).status).toBe(400);
 });
@@ -68,4 +69,16 @@ test('background course host records the finish and stops scheduling after the c
  expect(await runInDurableObject(stub,async(_instance,state)=>state.storage.getAlarm())).toBeNull();
  const read=await stub.read(entry.courseId,a);expect(read.value.earnings.finished).toBe(true);expect(read.value.pendingTicks).toBe(0);expect(await runInDurableObject(stub,async(_instance,state)=>state.storage.getAlarm())).toBeNull();
  expect((await getEarningsCompetition(env.DB,event.id)).entries.find(e=>e.id===a).result).not.toBeNull();
+});
+
+test.each([['classic','parklands'],['rolling','desert'],['river','tropical'],['coast','links']])('competition pins identical %s / %s properties for all entrants',async(landscape,environment)=>{
+ vi.spyOn(Date,'now').mockReturnValue(1800000000000);
+ const event=await createEarningsCompetition(env.DB,a,{title:'Regional builders',landscape,environment});expect(event).toMatchObject({landscape,environment});await joinEarningsCompetition(env.DB,event.id,b);
+ const started=await startEarningsCompetition(env.DB,event.id,a),courses=await Promise.all(started.entries.map(e=>getSharedCourse(env.DB,e.courseId,e.id)));
+ expect(courses[0].state).toEqual(courses[1].state);expect(courses[0].state).toMatchObject({landscapeStyle:landscape,environment,cash:50000});
+ expect(await getEarningsCompetition(env.DB,event.id)).toMatchObject({landscape,environment});
+});
+test.each([{landscape:'unknown'},{landscape:null},{landscape:{}},{environment:'unknown'},{environment:{}}])('unsupported competition generation settings reject: %j',async(settings)=>{
+ await expect(createEarningsCompetition(env.DB,a,{title:'Invalid',...settings})).rejects.toMatchObject({status:400});
+ expect((await env.DB.prepare('SELECT count(*) AS n FROM earnings_competitions').first()).n).toBe(0);
 });
