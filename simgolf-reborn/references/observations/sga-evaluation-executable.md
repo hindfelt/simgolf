@@ -3287,3 +3287,9 @@ This verifies the completion prefix only. The caller eligibility rule, subsequen
 `originalAfterFeeCompletion` covers 0x426e6b–0x426f30. Actor +0x84==0 calls 0x4672d0(actorId,19,signed happiness); the other branch does not require a resolver. An explicit synchronous result supplies the world after the remark, and an optional late clock reader supplies the current clock. The reset reads that updated world, preserving the original order rather than clearing strokes before remarks run.
 
 128 continuous native executions match with a controlled remark helper that changes the stroke byte and clock. Five related tests pass, including mutation visibility, untouched inputs, skipped resolver and asynchronous rejection. This verifies the caller boundary, not the actual remark implementation within this composition. Connecting the recovered complete remark/world writer and subsequent competition/next-hole branches remains required before live completion integration.
+
+### Complete prefix through reset
+
+`originalHoleCompletionPrefix` composes 0x426b10–0x426f30, retaining fee metadata/events and using post-remark world state for reset. All 1,152 continuous native cases match, with actual score comparison, fee popup, RNG and money helpers; speech, name/formatting and the completion remark remain controlled. The retained matrix test also checks input immutability and that remarks observe the already-recorded score. The oracle keeps the profile tier intact when initializing the 44-byte completion profile record, because these share native storage.
+
+This is not full original completion: the actual remark engine/world integration, external eligibility and branches after 0x426f30 remain required. No live or production behavior was changed.
