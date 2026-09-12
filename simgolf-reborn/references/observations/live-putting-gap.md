@@ -242,3 +242,34 @@ prefix-plus-entry cases: 80 aiming, 83 moving-ball, 208 walking, 89 early motion
 and 1,040 skips. Twenty-one focused tests pass. Live browser putting remains
 unchanged; the remaining aiming, movement, scoring/resolver bodies and saved
 original-world integration must still be completed before the live switch.
+
+### Manual and automatic shot preparation
+
+`original-shot-preparation.js` recovers 0x42b55c–0x42b825. Flag 0x200, the
+pre-update terrain local and the native 25-yard distance threshold select manual
+aiming. A new manual target initializes the camera tile only for the original
+-1 actor coordinate sentinel, then initializes aiming state. First-hole tutorial
+conditions return 0x42b647 explicitly; callers may resume at 0x42b6f8 only after
+those effects. The tutorial body is not implemented by this helper.
+
+Manual target -1 sets selection mode/actor and waits. Otherwise the planner gets
+[id,1,-1,0,0]; automatic shots get [id,0,-1,0,0] only when updateScratch is zero.
+After the planner, refreshed heading controls facing. The pre-planner terrain
+and ball-cell locals control putt accounting, while the current tile flags and
+actor record are reread. This preserves native counter wraparound, the unmarked
+putt delay -25, animation 14, shot-origin copying and the final active byte.
+
+`verify-original-shot-preparation.py` matches 2,500 continuous native cases,
+including 1,560 actual planner-call sites with controlled planner results and 11
+explicit tutorial exits. Both normal entry and post-tutorial resume are covered.
+Twelve focused preparation/entry/decision tests pass, including planner mutation
+of ball locals versus tile flags and native counter timing.
+
+`original-actor-action.js` now connects decision, entry and preparation.
+`verify-original-actor-action.py` matches 1,500 continuous native executions from
+0x42819c with whole actor records, effect order, RNG, terrain/turn locals and shot
+counters. The combined fixture covers automatic preparation; manual preparation
+and tutorial exits are covered by the separate verifier above. Planner, reaction,
+projection, partner-refresh and scoring effects are controlled resolvers. Real
+resolver wiring, tutorial/walking/moving-ball branches, raw actor persistence and
+live original-world adoption remain open. No live physics changed in this step.
