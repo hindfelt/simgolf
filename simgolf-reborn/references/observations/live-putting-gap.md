@@ -874,3 +874,17 @@ Unflagged golfers continue explicitly at 0x429024. 1,500 native cases match
 actor bytes, RNG, destination and 497 timed complaints, including callback
 changes and signed-word wrap. Earlier departure text and later ordinary walking
 remain unrecovered; this helper is not yet wired into the complete turn.
+
+### Finished-round departure and assignment cleanup
+
+`original-finished-departure.js` recovers 0x429024–0x4290ca with real
+0x425b10 cleanup. Completed golfers depart at the clubhouse or through the
+native selection/offscreen conditions; selected pairs wait for the partner's
+finished/inactive state. Cleanup resets actor fields and clears matching
+entries in the 100×8-byte visitor assignment table at 0x567698. Selection
+clearing follows the original paired checks.
+
+1,500 native cases match actor bytes, full assignment table, selection state
+and branches, including 647 real cleanup calls. Earlier departure text and
+ordinary movement remain unfinished; this has not yet been connected to the
+full actor turn or live game.
