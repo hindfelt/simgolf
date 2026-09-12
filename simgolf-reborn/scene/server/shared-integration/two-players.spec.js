@@ -1,0 +1,172 @@
+import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
+test('two authenticated browsers share edits, reconnect and enforce spectator access against real D1',async({browser})=>{
+ const [owner,editor]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ async function client(player){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);return {context,page:await context.newPage()};}
+ const a=await client(owner),b=await client(editor),errors=[];a.page.setDefaultTimeout(10000);b.page.setDefaultTimeout(10000);
+ a.page.on('pageerror',e=>errors.push(e.message));b.page.on('pageerror',e=>errors.push(e.message));
+ try{
+  await a.page.goto('http://localhost:8789/');await a.page.getByRole('button',{name:'Multiplayer',exact:true}).click();await a.page.getByText('Shared courses',{exact:true}).click();
+  await a.page.getByLabel('New shared course name').fill('Two-player links');await a.page.getByRole('button',{name:'Create shared course',exact:true}).click();await expect(a.page).toHaveURL(/shared=/);await expect(a.page.locator('#shared-status')).toContainText('owner');
+  const url=a.page.url();const original=await a.page.evaluate(()=>localStorage.getItem(Object.keys(localStorage).find(k=>k.endsWith('.simgolf-reborn.course.v1'))));
+  await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByText('Shared courses',{exact:true}).click();await a.page.getByText('Manage access',{exact:true}).click();await a.page.getByLabel('Player ID',{exact:true}).fill(editor.id);await a.page.getByRole('button',{name:'Update access',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Course access updated.');await a.page.getByRole('button',{name:'Close account',exact:true}).click();
+  await b.page.goto(url);await expect(b.page.locator('#shared-status')).toContainText('editor');
+  for(const [tool,x,z,field] of [['Tee',-29,7,'tee'],['Green',1,-13,'green']]){
+   await a.page.getByRole('button',{name:tool,exact:true}).click();const point=await a.page.evaluate(({x,z})=>window.__gameTest.project(x,z),{x,z});await a.page.mouse.click(point.x,point.y);
+   await expect.poll(()=>a.page.evaluate(field=>!!window.__gameTest.getState().holes[0][field],field)).toBe(true);
+  }
+  await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByRole('button',{name:'Publish course to all players',exact:true}).click();await expect(a.page.locator('#account-status')).toContainText('Published Two-player links');await a.page.getByRole('button',{name:'Close account',exact:true}).click();
+  await a.page.getByRole('button',{name:'＋ Add hole',exact:true}).click();await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
+  const beforeBench=await b.page.evaluate(()=>window.__gameTest.getState().cash);
+  await b.page.getByRole('button',{name:'Bench',exact:true}).click();const point=await b.page.evaluate(()=>window.__gameTest.project(-19,-9));await b.page.mouse.click(point.x,point.y);
+  await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(beforeBench);await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(beforeBench);
+  await b.page.reload();await expect(b.page.locator('#shared-status')).toContainText('editor');expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
+  await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByLabel('Player ID',{exact:true}).fill(editor.id);await a.page.getByLabel('Course access',{exact:true}).selectOption('spectator');await a.page.getByRole('button',{name:'Update access',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Course access updated.');
+  await expect(b.page.locator('#shared-status')).toContainText('spectator · Read only');
+  await expect(b.page.locator('[data-mode="build"]')).toBeHidden();await expect(b.page.locator('[data-mode="staff"]')).toBeHidden();await expect(b.page.locator('#add-hole')).toBeHidden();
+  await b.page.reload();await expect(b.page.locator('#shared-status')).toContainText('Read only');await expect(b.page.locator('[data-mode="build"]')).toBeHidden();
+  await a.page.getByLabel('Course access',{exact:true}).selectOption('editor');await a.page.getByRole('button',{name:'Update access',exact:true}).click();
+  await expect(b.page.locator('[data-mode="build"]')).toBeVisible();await b.page.locator('[data-mode="build"]').click();await expect(b.page.locator('#add-hole')).toBeVisible();
+  await b.page.getByRole('button',{name:'Club menu',exact:false}).click();await b.page.getByRole('link',{name:'Return to my resort',exact:true}).click();await expect(b.page.getByRole('button',{name:'Multiplayer',exact:true})).toBeVisible();await b.page.goBack();
+  await expect(b.page.locator('#shared-status')).toContainText('editor');
+  const tick=await b.page.evaluate(()=>window.__gameTest.getState().protocol.tick);
+  await expect.poll(()=>b.page.evaluate(()=>window.__gameTest.getState().protocol.tick),{timeout:10000}).toBeGreaterThan(tick);
+  expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
+  expect(await a.page.evaluate(()=>localStorage.getItem(Object.keys(localStorage).find(k=>k.endsWith('.simgolf-reborn.course.v1'))))).toBe(original);
+  expect(errors).toEqual([]);
+ }catch(error){console.log('Shared integration failure:',error.message);throw error;}finally{await Promise.allSettled([a.context.close(),b.context.close()]);}
+});
+test('shared-course lobby remains usable on a phone',async({browser})=>{
+ const [owner]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ const context=await browser.newContext({viewport:{width:390,height:844}});
+ await context.addCookies([{name:'__Host-simgolfer_session',value:owner.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);
+ const page=await context.newPage();
+ try{
+  await page.goto('http://localhost:8789/?testing=1');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Shared courses',{exact:true}).click();await expect(page.getByLabel('New shared course name')).toBeVisible();
+  expect(await page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);
+  await page.screenshot({path:'/tmp/simgolfer-shared-lobby-phone.png',fullPage:true});
+  await page.getByRole('link',{name:'Two-player links · owner',exact:true}).click();await expect(page.locator('#shared-status')).toContainText('owner');expect(new URL(page.url()).searchParams.has('testing')).toBe(false);
+ }finally{await context.close();}
+});
+
+test('another registered player can practise an immutable published course',async({browser})=>{
+ const [,player]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ const context=await browser.newContext();await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);
+ const page=await context.newPage();try{
+  await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Shared courses',{exact:true}).click();await page.getByText('Published courses',{exact:true}).click();
+  await page.getByRole('button',{name:'Practise this version',exact:true}).click();await expect(page).toHaveURL(/practice=/);await page.waitForFunction(()=>window.__gameTest);
+  expect(await page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(1);
+  await expect(page.locator('[data-mode="build"]')).toBeHidden();
+  await expect(page.locator('#club-detail')).toContainText('Practice');
+ }finally{await context.close();}
+});
+test('two accounts register once, view the roster and close registration on a phone',async({browser})=>{
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[];
+ for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+ const [a,b]=clients;
+ try{
+  await a.page.getByLabel('Tournament title',{exact:true}).fill('Players cup');await a.page.getByRole('combobox',{name:'Playing window',exact:true}).selectOption('72');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('combobox',{name:'Rounds',exact:true}).selectOption('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
+  await a.page.getByText('Players cup · 1/2 · registration',{exact:true}).click();const invitation=await a.page.getByRole('textbox',{name:'Tournament invitation link',exact:true}).inputValue();await b.page.goto(invitation);await expect(b.page.locator('#account-dialog')).toBeVisible();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await a.page.getByText('Players cup · 2/2 · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Close registration',exact:true}).click();await expect(a.page.getByText('Players cup · 2/2 · locked',{exact:true})).toBeVisible();
+  await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeVisible();await expect(a.page.getByText(/Finish and save all rounds by/)).toBeVisible();
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.screenshot({path:'/tmp/simgolfer-tournament-registration-phone.png',fullPage:true});
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});
+
+test('two browser entrants complete a tournament, resume shots and see final server standings',async({browser})=>{
+ test.setTimeout(240000);
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
+ try{
+  for(const player of players){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();await page.getByText('Players cup · 2/2 · locked',{exact:true}).click();await page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(page.locator('#shared-status')).toContainText('Tournament · round 1/2');await expect(page.locator('[data-mode="build"]')).toBeHidden();}
+  const [a,b]=clients,point=await a.page.evaluate(()=>{const g=window.__gameTest.getState(),green=g.holes[0].green;return window.__gameTest.project(green.x,green.z);});await a.page.mouse.click(point.x,point.y);
+  await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBeGreaterThan(0);
+  expect(await b.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBe(0);
+  await a.page.reload();await expect(a.page.locator('#shared-status')).toContainText('Tournament');await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBeGreaterThan(0);
+  await a.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(a.page.locator('#standings-content')).toContainText('completed rounds');await a.page.getByRole('button',{name:'Close standings',exact:true}).click();
+  async function finish(page){
+   const deadline=Date.now()+180000;let lastAttempt='',attemptedAt=0;
+   while(Date.now()<deadline){
+    const state=await page.evaluate(()=>{const g=window.__gameTest.getState(),p=g.pro,h=g.holes.find(h=>h.id===p.holeId);return {phase:p.phase,strokes:p.strokes,ball:p.ball,target:window.__gameTest.project(h.green.x,h.green.z)};});
+    if(state.phase==='finished'){await expect(page.locator('#shared-status')).toContainText('Complete');return page.evaluate(()=>window.__gameTest.getState().pro.scorecard.reduce((n,h)=>n+h.strokes,0));}
+    const attempt=JSON.stringify([state.strokes,state.ball]);
+    if(state.phase==='address'&&(attempt!==lastAttempt||Date.now()-attemptedAt>3000)){await page.mouse.click(state.target.x,state.target.y);lastAttempt=attempt;attemptedAt=Date.now();}
+    await page.waitForTimeout(500);
+   }
+   throw Error('Tournament did not finish in three minutes: '+JSON.stringify(await page.evaluate(()=>window.__gameTest.getState().pro)));
+  }
+  const firstRound=await Promise.all(clients.map(c=>finish(c.page)));
+  for(const client of clients){
+   await client.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(client.page.locator('#standings-content')).toContainText('In progress');await client.page.getByRole('button',{name:'Close standings',exact:true}).click();
+   await client.page.getByRole('button',{name:'Next tournament round',exact:true}).click();await expect(client.page.locator('#shared-status')).toContainText('Tournament · round 2/2');
+   expect(await client.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBe(0);
+  }
+  const secondRound=await Promise.all(clients.map(c=>finish(c.page))),totals=firstRound.map((score,i)=>score+secondRound[i]);
+  for(const client of clients){await client.page.getByRole('button',{name:'Standings',exact:true}).click();await expect(client.page.locator('#standings-content')).toContainText('Final results');const rows=client.page.locator('#standings-content table tr');await expect(rows).toHaveCount(3);for(let i=0;i<players.length;i++){const row=rows.filter({hasText:players[i].name});await expect(row.locator('td').nth(4)).toHaveText(String(totals[i]));await expect(row.locator('td').first()).not.toHaveText('—');}}
+  await a.page.setViewportSize({width:390,height:844});await a.page.screenshot({path:'/tmp/simgolfer-online-final-standings-phone.png',fullPage:true});expect(errors).toEqual([]);
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});
+
+test('phone withdrawal is explicit, survives reload and leaves the other entrant able to play',async({browser})=>{
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
+ try{
+  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+  const [a,b]=clients;
+  await a.page.getByLabel('Tournament title',{exact:true}).fill('Withdrawal cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
+  await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Withdrawal cup · 1/2 · registration',{exact:true}).click();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
+  await a.page.getByText('Withdrawal cup · 1/2 · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Close registration',exact:true}).click();await expect(a.page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Withdraw from tournament',exact:true}).click();await a.page.getByRole('button',{name:'Keep playing',exact:true}).click();await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Withdraw from tournament',exact:true}).click();await a.page.getByRole('button',{name:'Confirm withdrawal',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('You withdrew from the tournament.');await expect(a.page.getByRole('button',{name:'Play / resume round 1',exact:true})).toBeHidden();
+  await a.page.reload();await a.page.getByRole('button',{name:'Multiplayer',exact:true}).click();await a.page.getByText('Tournament registration',{exact:true}).click();await a.page.getByText('Withdrawal cup · 2/2 · locked',{exact:true}).click();await expect(a.page.getByText('Owner · withdrawn',{exact:true})).toBeVisible();await expect(a.page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeHidden();
+  await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Withdrawal cup · 2/2 · locked',{exact:true}).click();await b.page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(b.page.locator('#shared-status')).toContainText('Tournament');
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.getByText('Owner · withdrawn',{exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-tournament-withdrawal-phone.png',fullPage:true});expect(errors).toEqual([]);
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});
+
+test('completed tournament lobby preserves final standings and removes cancellation controls',async({browser})=>{
+ const [player]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
+ const context=await browser.newContext({viewport:{width:390,height:844}});
+ try{
+  await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();
+  await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();
+  await page.getByText('Players cup · 2/2 · complete',{exact:true}).click();await expect(page.getByText('Final results — equal totals share a place.',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Cancel tournament',exact:true})).toBeHidden();await expect(page.getByRole('button',{name:'Withdraw from tournament',exact:true})).toBeHidden();
+  const summary=page.getByText('Final results — equal totals share a place.',{exact:true});await summary.scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/simgolfer-sealed-results-phone.png',fullPage:true});
+ }finally{await context.close();}
+});
+
+test('two earnings entrants start equal private courses and spend independently',async({browser})=>{
+ const fullEvent=process.env.SIMGOLF_EARNINGS_FULL==='1';if(fullEvent)test.setTimeout(720000);
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
+ try{
+  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Earnings competitions',{exact:true}).click();}
+  const [a,b]=clients;await a.page.getByLabel('Earnings competition title',{exact:true}).fill('Builder earnings');await a.page.getByRole('combobox',{name:'Competition length',exact:true}).selectOption('10');await a.page.getByLabel('Competition player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create earnings competition',exact:true}).click();
+  await expect(a.page.getByRole('button',{name:'Start earnings competition',exact:true})).toBeDisabled();
+  const invitation=await a.page.getByRole('textbox',{name:'Earnings invitation link',exact:true}).inputValue();await b.page.goto(invitation);await b.page.getByRole('button',{name:'Join earnings competition',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave earnings competition',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Refresh earnings competitions',exact:true}).click();await a.page.getByText('Builder earnings · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Start earnings competition',exact:true}).click();await expect(a.page.getByRole('link',{name:'Open my competition course',exact:true})).toBeVisible();
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.getByRole('link',{name:'Open my competition course',exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-earnings-lobby-phone.png',fullPage:true});
+  await b.page.reload();await expect(b.page.getByRole('link',{name:'Open my competition course',exact:true})).toBeVisible();
+  for(const client of clients){await client.page.getByRole('link',{name:'Open my competition course',exact:true}).click();await expect(client.page.locator('#shared-status')).toContainText('Earnings competition');expect(await client.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);}
+  expect(a.page.url()).not.toBe(b.page.url());expect(await a.page.evaluate(()=>window.__gameTest.getState().landSeed)).toBe(await b.page.evaluate(()=>window.__gameTest.getState().landSeed));
+  await a.page.setViewportSize({width:1440,height:1000});await a.page.getByRole('button',{name:'Bench',exact:true}).click();const point=await a.page.evaluate(()=>window.__gameTest.project(-19,-9));await a.page.mouse.click(point.x,point.y);await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(50000);expect(await b.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);
+  if(fullEvent){
+   for(const client of clients){
+    await client.page.setViewportSize({width:1440,height:1000});
+    for(const [tool,x,z] of [['Tee',-29,7],['Green',1,-13]]){await client.page.getByRole('button',{name:tool,exact:true}).click();const point=await client.page.evaluate(({x,z})=>window.__gameTest.project(x,z),{x,z});await client.page.mouse.click(point.x,point.y);await expect.poll(()=>client.page.evaluate(({tool})=>!!window.__gameTest.getState().holes[0][tool==='Tee'?'tee':'green'],{tool})).toBe(true);}
+    await client.page.getByRole('button',{name:'Open hole · H',exact:true}).click();await expect.poll(()=>client.page.evaluate(()=>window.__gameTest.getState().holes[0].open)).toBe(true);
+   }
+   const deadline=Date.now()+660000;let samples=0;
+   while(Date.now()<deadline){
+    const states=await Promise.all(clients.map(c=>c.page.evaluate(()=>{const g=window.__gameTest.getState();return {time:g.time,cash:g.cash,fees:g.stats.fees,completed:g.stats.holesCompleted,guests:g.guests.length,ticks:g.protocol.tick};})));
+    console.log('Earnings wall-clock sample',JSON.stringify({sample:samples++,...{players:states}}));
+    if((await Promise.all(clients.map(c=>c.page.locator('#shared-status').textContent()))).every(s=>s.includes('Finished')))break;
+    await new Promise(resolve=>setTimeout(resolve,30000));
+   }
+   for(const client of clients)await expect(client.page.locator('#shared-status')).toContainText('Finished · Read only');
+   const eventId=new URL(invitation).searchParams.get('earnings'),response=await a.page.request.get('/api/earnings-competitions/'+eventId),event=await response.json();expect(event.status).toBe('complete');
+   for(let i=0;i<clients.length;i++){const state=await clients[i].page.evaluate(()=>window.__gameTest.getState()),entry=event.entries.find(e=>e.id===players[i].id);expect(state.protocol.tick).toBe(12000);expect(entry.result.netCash).toBe(state.cash-50000);expect(entry.result.completedHoles).toBe(state.stats.holesCompleted);expect(entry.result.eligible).toBe(true);expect(entry.rank).not.toBeNull();}
+   const cash=await a.page.evaluate(()=>window.__gameTest.getState().cash);await a.page.reload();await expect(a.page.locator('#shared-status')).toContainText('Finished · Read only');expect(await a.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(cash);
+   await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByText('Earnings competitions',{exact:true}).click();await a.page.getByText('Builder earnings · complete',{exact:true}).click();await a.page.setViewportSize({width:390,height:844});await a.page.getByRole('link',{name:'View my finished course',exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-earnings-full-results-phone.png',fullPage:true});
+  }
+  expect(errors).toEqual([]);
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});

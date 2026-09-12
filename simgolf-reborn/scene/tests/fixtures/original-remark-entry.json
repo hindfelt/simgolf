@@ -1,0 +1,2042 @@
+[
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 33554432,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 128,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 8
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 5,
+      "holeFlags": 11
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 255,
+      "par": 3,
+      "holeFlags": 5
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 128,
+      "par": 3,
+      "holeFlags": 14
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 127,
+      "par": 128,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 12
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 9
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 255,
+      "par": 127,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 128,
+      "holeFlags": 1
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 10
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 3,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 10
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 128,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 3,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 255,
+      "par": 127,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 127,
+      "par": 3,
+      "holeFlags": 15
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 5,
+      "par": 4,
+      "holeFlags": 11
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 7
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 12
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 5,
+      "par": 128,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 4,
+      "par": 5,
+      "holeFlags": 10
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 4,
+      "holeFlags": 5
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 0,
+      "par": 5,
+      "holeFlags": 12
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 255,
+      "holeCompletions": 11,
+      "holeStrokes": 4,
+      "par": 5,
+      "holeFlags": 12
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 3,
+      "par": 3,
+      "holeFlags": 15
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 127,
+      "holeFlags": 0
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 11,
+      "holeStrokes": 6,
+      "par": 128,
+      "holeFlags": 0
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 6,
+      "par": 4,
+      "holeFlags": 11
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 5,
+      "holeFlags": 8
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 255,
+      "par": 4,
+      "holeFlags": 12
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 128,
+      "par": 3,
+      "holeFlags": 15
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 4,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 4,
+      "holeFlags": 4
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 255,
+      "par": 4,
+      "holeFlags": 11
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 5,
+      "holeFlags": 8
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 1
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 128,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 0,
+      "par": 4,
+      "holeFlags": 14
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 4,
+      "par": 127,
+      "holeFlags": 1
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 3
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 255,
+      "par": 128,
+      "holeFlags": 11
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 3,
+      "par": 5,
+      "holeFlags": 1
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 127,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 128,
+      "par": 128,
+      "holeFlags": 10
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 3,
+      "par": 5,
+      "holeFlags": 10
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 128,
+      "par": 3,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 127,
+      "par": 3,
+      "holeFlags": 7
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 128,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 3,
+      "par": 127,
+      "holeFlags": 5
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 255,
+      "par": 127,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 128,
+      "par": 127,
+      "holeFlags": 3
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 4
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 6,
+      "par": 127,
+      "holeFlags": 8
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 127,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 8
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 255,
+      "par": 3,
+      "holeFlags": 4
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 128,
+      "holeFlags": 5
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 127,
+      "holeFlags": 10
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 3,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 6,
+      "par": 5,
+      "holeFlags": 1
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 255,
+      "par": 127,
+      "holeFlags": 9
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 255,
+      "par": 4,
+      "holeFlags": 10
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 3,
+      "par": 5,
+      "holeFlags": 9
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 5,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 6,
+      "par": 5,
+      "holeFlags": 7
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 128,
+      "par": 127,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 128,
+      "globalFlags": 33554432,
+      "kind": 28,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 4,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 3,
+      "holeFlags": 14
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 3,
+      "par": 127,
+      "holeFlags": 4
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 128,
+      "holeFlags": 15
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 3,
+      "holeFlags": 11
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 3
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 127,
+      "holeFlags": 10
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 6,
+      "par": 128,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 128,
+      "par": 128,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 5,
+      "holeFlags": 9
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 4,
+      "par": 127,
+      "holeFlags": 15
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 4,
+      "holeFlags": 15
+    },
+    {
+      "allowed": true,
+      "kind": 23
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 128,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 127,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 3,
+      "holeFlags": 0
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 127,
+      "par": 4,
+      "holeFlags": 9
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 127,
+      "par": 4,
+      "holeFlags": 2
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 3,
+      "par": 128,
+      "holeFlags": 5
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 4,
+      "par": 127,
+      "holeFlags": 1
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 3,
+      "holeFlags": 4
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 128,
+      "par": 127,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 4,
+      "holeFlags": 0
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 128,
+      "holeFlags": 5
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 10,
+      "holeStrokes": 128,
+      "par": 127,
+      "holeFlags": 6
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 10,
+      "holeStrokes": 0,
+      "par": 127,
+      "holeFlags": 5
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 5,
+      "par": 5,
+      "holeFlags": 12
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 128,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 5,
+      "par": 5,
+      "holeFlags": 14
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 3,
+      "holeFlags": 12
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 3,
+      "par": 127,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 3,
+      "par": 3,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 128,
+      "par": 3,
+      "holeFlags": 0
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 4,
+      "par": 4,
+      "holeFlags": 9
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 9,
+      "holeStrokes": 255,
+      "par": 128,
+      "holeFlags": 7
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 3,
+      "par": 3,
+      "holeFlags": 2
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 3,
+      "holeFlags": 3
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 128,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 5,
+      "par": 4,
+      "holeFlags": 2
+    },
+    {
+      "allowed": true,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 9,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 4,
+      "holeFlags": 13
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 5,
+      "holeFlags": 5
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 127,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 4,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 33554432,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 6,
+      "par": 3,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 64,
+      "holeCompletions": 9,
+      "holeStrokes": 128,
+      "par": 4,
+      "holeFlags": 0
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 11,
+      "holeStrokes": 5,
+      "par": 128,
+      "holeFlags": 6
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 127,
+      "par": 5,
+      "holeFlags": 1
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 9,
+      "holeStrokes": 4,
+      "par": 5,
+      "holeFlags": 13
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 3,
+      "par": 3,
+      "holeFlags": 8
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 151,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 28,
+      "actorStatus": 255,
+      "holeCompletions": 11,
+      "holeStrokes": 127,
+      "par": 127,
+      "holeFlags": 4
+    },
+    {
+      "allowed": false,
+      "kind": 28
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 0,
+      "holeCompletions": 10,
+      "holeStrokes": 3,
+      "par": 127,
+      "holeFlags": 2
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 10,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 32,
+      "holeCompletions": 10,
+      "holeStrokes": 6,
+      "par": 127,
+      "holeFlags": 0
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 0,
+      "shotCounter": 255,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 64,
+      "holeCompletions": 11,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 5
+    },
+    {
+      "allowed": true,
+      "kind": 19
+    }
+  ],
+  [
+    {
+      "actorId": 152,
+      "shotCounter": 0,
+      "globalFlags": 0,
+      "kind": 19,
+      "actorStatus": 255,
+      "holeCompletions": 9,
+      "holeStrokes": 0,
+      "par": 3,
+      "holeFlags": 12
+    },
+    {
+      "allowed": false,
+      "kind": 19
+    }
+  ]
+]

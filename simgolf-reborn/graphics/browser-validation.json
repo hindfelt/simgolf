@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-09-05T16:05:13.746Z",
+  "errors": [],
+  "metrics": {
+    "ready": true,
+    "paused": true,
+    "elapsed": 1.9856999999821172,
+    "feature": "overview",
+    "zoom": 1,
+    "target": [
+      -2,
+      0,
+      1
+    ],
+    "fps": 58,
+    "drawCalls": 128,
+    "triangles": 785242,
+    "trees": 165,
+    "dandelions": 902,
+    "viewport": [
+      1440,
+      1000
+    ],
+    "conceptVisible": false,
+    "ball": {
+      "position": [
+        -13.974272727581614,
+        8.451675974506463,
+        -0.662212121054969
+      ],
+      "phase": "flight"
+    }
+  },
+  "revision": "Original-style stepped turf, separate tee and centred bridge approaches"
+}

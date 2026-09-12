@@ -1,0 +1,3 @@
+import {defineConfig} from '@playwright/test';
+import {fileURLToPath} from 'node:url';
+export default defineConfig({testDir:'./shared-integration',workers:1,use:{baseURL:'http://localhost:8789',channel:'chrome',viewport:{width:1440,height:1000}},webServer:{cwd:fileURLToPath(new URL('../',import.meta.url)),command:'node server/prepare-shared-integration.mjs && ./node_modules/.bin/wrangler dev --config .wrangler/shared-integration/wrangler.json --local --port 8789 --persist-to .wrangler/shared-integration',url:'http://localhost:8789/login',reuseExistingServer:false,timeout:60000},timeout:45000});

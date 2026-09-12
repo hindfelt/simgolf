@@ -1,0 +1,111 @@
+#world-dialog {
+  width: min(860px, 94vw);
+  max-width: 94vw;
+  max-height: 90dvh;
+  box-sizing: border-box;
+  overflow: auto;
+}
+#world-dialog > small {
+  letter-spacing: 0.14em;
+  color: #41415f;
+}
+.world-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(240px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.world-properties {
+  display: grid;
+  gap: 7px;
+  max-height: 55dvh;
+  overflow: auto;
+  padding: 3px;
+}
+.world-properties button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 10px 14px;
+  min-height: 56px;
+}
+.world-properties button span {
+  font-size: 12px;
+}
+.world-properties button[aria-pressed="true"] {
+  background: linear-gradient(#f0e08b, #c6b54d);
+  color: #292740;
+  box-shadow: inset 0 0 0 2px #f9f0b1;
+}
+.world-properties button:focus-visible {
+  outline: 3px solid #334e2d;
+  outline-offset: 1px;
+}
+.world-detail {
+  background: linear-gradient(140deg, #ecebd8, #cfdec0);
+  border: 3px solid #627854;
+  border-radius: 20px;
+  padding: 22px;
+  color: #293c28;
+}
+.world-detail h3 {
+  font-size: 26px;
+  margin: 8px 0 18px;
+}
+.world-detail .world-price {
+  font-size: 24px;
+  color: #34552b;
+}
+.world-detail dl {
+  display: grid;
+  gap: 6px;
+  margin: 22px 0;
+}
+.world-detail dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.world-detail dd {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.world-detail .world-note {
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  #world-dialog {
+    padding: 18px;
+    max-height: 94dvh;
+  }
+  .world-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .world-detail {
+    grid-row: 1;
+    padding: 16px;
+  }
+  .world-detail h3 {
+    font-size: 22px;
+    margin: 6px 0;
+  }
+  .world-detail dl {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    gap: 8px;
+    margin: 14px 0;
+  }
+  .world-detail dd {
+    font-size: 15px;
+    margin: 0;
+  }
+  .world-detail .world-price {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+  .world-properties {
+    max-height: 32dvh;
+  }
+}
