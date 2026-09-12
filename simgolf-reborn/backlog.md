@@ -1355,3 +1355,5 @@ F06 standard remark selection:30 of65 original cases now reconstructed, includin
 F06 standard remarks now cover35 of65 cases. Added signed-profile variants, direct actor/location descriptions and original helper/write ordering;14976 native comparisons and18 related tests pass. Thirty cases, contiguous phrase-path verification and live integration remain unfinished.
 
 F06 standard remarks now cover38 of65 cases. Added complete native familiar-address helper and actor-dependent cases2/4/26, including partner-name comma formatting and redirection/write ordering.16128 native comparisons and19 related tests pass. Twenty-seven cases, contiguous phrase verification and live schema integration remain open.
+
+F06 standard remarks now cover42 of65 cases. Added complete profile-voice helper and original driving-range/pro-shop/putting-green quality and improvement fragments.17664 native comparisons and21 related tests pass. Twenty-three cases, contiguous phrase verification and live integration remain open.

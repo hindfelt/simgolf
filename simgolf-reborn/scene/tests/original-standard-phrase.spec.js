@@ -4,6 +4,7 @@ import {originalStandardPhrase,originalDescribedStandardPhrase} from '../src/sim
 import {originalSelectedPhrase} from '../src/simulation/original-phrase-entry.js';
 import {originalDescribedPhrasePostprocess} from '../src/simulation/original-phrase-postprocess.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-standard-phrase.json',import.meta.url)));
+for(const [q] of rows)if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);
 for(const [q,out] of rows)for(const state of [q.state,out.state])for(const id in state.actors)state.actors[id]=Uint8Array.from(state.actors[id]);
 test('supported original standard remarks and display styles match native dispatch',()=>{
  for(const [q,expected] of rows){const before=structuredClone(q);expect(originalStandardPhrase(q,(e,s)=>({...s,remarkStyle:12345,sourceText:s.sourceText.split('\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])}))).toEqual(expected);expect(q).toEqual(before);}
@@ -47,4 +48,20 @@ test('trait-dependent remarks resolve familiar address and partner names',()=>{
  self[0xae]=4;
  const called=originalDescribedStandardPhrase({kind:4,actorId:0,state},names);
  expect(called.state.sourceText).toContain('Gary');expect(called.state.redirected).toBe(true);expect(state.sourceText).toBe('');
+});
+test('facility feedback follows original phase and upgrade level without inventing a benefit',()=>{
+ const cases=[[51,'drivingRange','distance'],[52,'proShop','accuracy'],[53,'puttingGreen','putting']];
+ for(const [kind,key,skill] of cases){
+  const base={kind,actorId:0,state:{sourceText:'',remarkStyle:0}};
+  expect(originalStandardPhrase({...base,originalClock:0}).state.sourceText).toContain(skill);
+  const upgraded=originalStandardPhrase({...base,originalClock:8,facilityLevels:{[key]:3}});expect(upgraded.state.sourceText).toContain('deluxe');
+  const absent=originalStandardPhrase({...base,originalClock:8,facilityLevels:{[key]:0}});expect(absent.state.sourceText).toBe('');expect(absent.state.remarkStyle).toBe(0x80006318);
+  expect(()=>originalStandardPhrase({...base,originalClock:8})).toThrow('facility level is unavailable');
+ }
+});
+test('profile voice requires original profile metadata and preserves it',()=>{
+ const actor=new Uint8Array(256),profile=new Uint8Array(560),q={kind:39,actorId:0,state:{sourceText:'',actors:{0:actor}},profileRecords:{0:profile}};
+ const first=originalStandardPhrase(q);expect(first.state.sourceText).toContain('scared');
+ profile[0x21]=0x80;const second=originalStandardPhrase(q);expect(second.state.sourceText).toContain('frightened');expect(profile[0x21]).toBe(0x80);
+ expect(()=>originalStandardPhrase({...q,profileRecords:{}})).toThrow('profile is unavailable');
 });

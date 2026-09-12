@@ -214,5 +214,19 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e2a38": "Only you could miss this shot ",
   "0x4e2a18": "This shot looks pretty easy.",
   "0x4e1e20": "You look a bit tired",
-  "0x4e1e04": "I'm starting to get tired."
+  "0x4e1e04": "I'm starting to get tired.",
+  "0x4e1d3c": "Our deluxe driving range has",
+  "0x4e1d1c": "This upgraded driving range has",
+  "0x4e1d00": "This new driving range has",
+  "0x4e1ce4": "really helped my distance.",
+  "0x4e1cc4": "Our deluxe putting green has",
+  "0x4e1ca4": "This upgraded putting green has",
+  "0x4e1c88": "This new putting green has",
+  "0x4e1c6c": "really improved my putting.",
+  "0x4e1c34": "Our deluxe pro shop has",
+  "0x4e1c18": "This upgraded pro shop has",
+  "0x4e1c00": "This new pro shop has",
+  "0x4e1be0": "really improved my accuracy.",
+  "0x4e2048": "I guess I scared that little DATA.",
+  "0x4e2020": "I think I frightened that poor DATA."
 };

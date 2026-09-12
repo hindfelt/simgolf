@@ -1,3 +1,4 @@
+import {originalProfileVoice} from './original-profile-voice.js';
 import {originalAffectionateAddress} from './original-affectionate-address.js';
 import {originalActorName} from './original-actor-name.js';
 import {originalLocationDescription} from './original-location-description.js';
@@ -26,6 +27,13 @@ export function originalStandardPhrase(q,resolve){
  else if(kind===26){const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);
   if(type&1){append(0x4e1e20);if(type===1)call(0x466e30,[q.actorId]);else call(0x466fb0,[view.getInt16(0xa2,true),1]);append(0x4c38f4);state.redirected=true;}
   else append(0x4e1e04);
+ }
+ else if(kind===39){events.push({address:0x46c140,args:[q.actorId]});addresses=[originalProfileVoice({...q,state})?0x4e2048:0x4e2020];state.remarkStyle=0x800023e8;}
+ else if(kind===51||kind===52||kind===53){
+  if(!Number.isInteger(q.originalClock))throw Error('Original phrase clock is unavailable.');
+  const data={51:['drivingRange',[0x4e1d00,0x4e1d1c,0x4e1d3c],0x4e1ce4],52:['proShop',[0x4e1c00,0x4e1c18,0x4e1c34],0x4e1be0],53:['puttingGreen',[0x4e1c88,0x4e1ca4,0x4e1cc4],0x4e1c6c]}[kind];
+  if(((q.originalClock|0)+Math.imul(q.actorId,5))&8){const level=q.facilityLevels?.[data[0]];if(!Number.isInteger(level))throw Error('Original facility level is unavailable.');if((level|0)>=1&&(level|0)<=3)addresses=[data[1][(level|0)-1]];}
+  else addresses=[data[2]];
  }
  else if(kind===31)addresses=[[0x4e29ac,0x4e2a00,0x4e29c8,0x4e29e0][actor(q)[0xb6]&3]];
  else if(kind===34){const value=q.value|0;if(value>=0&&value<=2)addresses=[[0x4e21ec,0x4e2208,0x4e2224][value]];state.remarkStyle=0x800023e8;}
