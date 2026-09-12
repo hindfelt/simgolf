@@ -8,7 +8,7 @@ const TICK_MS=TICK_SECONDS*1000,MAX_TICKS=120;
 const idle=game=>game.pro.phase==='finished'||(game.pro.phase==='address'&&!isPutting(game,game.pro));
 async function access(db,eventId,playerId,round){
  if(!Number.isInteger(round)||round<1||round>4)throw fail(400,'Invalid tournament round.');
- const event=await db.prepare("SELECT t.*,e.player_name FROM tournaments t JOIN tournament_entries e ON e.tournament_id=t.id JOIN players p ON p.id=e.player_id JOIN players owner ON owner.id=t.owner_id WHERE t.id=? AND e.player_id=? AND p.disabled_at IS NULL AND owner.disabled_at IS NULL AND e.withdrawn=0 AND t.status='locked'").bind(eventId,playerId).first();
+ const event=await db.prepare("SELECT t.*,e.player_name,f.tournament_id AS finalized FROM tournaments t JOIN tournament_entries e ON e.tournament_id=t.id JOIN players p ON p.id=e.player_id LEFT JOIN players owner ON owner.id=t.owner_id LEFT JOIN tournament_results f ON f.tournament_id=t.id WHERE t.id=? AND e.player_id=? AND p.disabled_at IS NULL AND (f.tournament_id IS NOT NULL OR (owner.id IS NOT NULL AND owner.disabled_at IS NULL)) AND e.withdrawn=0 AND t.status='locked'").bind(eventId,playerId).first();
  if(!event)throw fail(403,'An active entrant and closed registration are required.');
  if(event.ends_at!==null&&event.ends_at<=Date.now()){
   await sealTournament(db,eventId);
@@ -29,6 +29,12 @@ export async function tournamentRound(db,eventId,playerId,round,command){
  for(let attempt=0;attempt<5;attempt++){
   const event=await access(db,eventId,playerId,round);
   let row=await db.prepare('SELECT * FROM tournament_rounds WHERE tournament_id=? AND player_id=? AND round_number=?').bind(eventId,playerId,round).first();
+  if(event.finalized){
+   if(!row?.result)throw fail(404,'The archived round is unavailable.');
+   const archived=restore(row.state),receipt=archived.protocol.clients.find(p=>p.id===playerId);
+   const result=command===undefined?null:command.sequence===receipt?.sequence?createSession(archived,{courseLocked:true}).execute(command,{id:playerId,role:'golfer'}):{ok:false,code:'round-complete',message:'This round is complete.'};
+   return {result,course:snapshot(row,event,playerId)};
+  }
   if(!row){
    const pkg=await importCourse(event.course_package),game=coursePractice(pkg,(event.seed+Math.imul(round-1,2654435761))>>>0);
    // Standard server-created profile for every entrant; imported local career

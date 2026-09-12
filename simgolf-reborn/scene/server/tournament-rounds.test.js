@@ -114,3 +114,22 @@ test('deadline ranks a finished entrant and retains unfinished entrants without 
  expect(scores.standings.find(p=>p.id===other)).toMatchObject({rank:null,withdrawn:true,withdrawalReason:'deadline',roundsCompleted:0});
  now+=86400000;expect(await tournamentStandings(env.DB,event.id)).toEqual(scores);
 },30000);
+
+test('a finished entrant can review their archived round after organizer deletion',async()=>{
+ let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);
+ const event=await setup();await withdrawTournament(env.DB,event.id,owner);
+ let saved=(await tournamentRound(env.DB,event.id,other,1)).course,lastCommand,lastReply;
+ for(let i=0;i<500&&!saved.result;i++){
+  const game=restore(JSON.stringify(saved.state));if(game.pro.phase==='address'&&!isPutting(game,game.pro)){lastCommand=shot(saved,other);const reply=await tournamentRound(env.DB,event.id,other,1,lastCommand);lastReply=reply.result;saved=reply.course;}
+  now+=6000;saved=(await tournamentRound(env.DB,event.id,other,1)).course;
+ }
+ expect(saved.result).not.toBeNull();expect((await tournamentStandings(env.DB,event.id)).status).toBe('complete');
+ const token=crypto.randomUUID(),csrf=crypto.randomUUID(),origin='https://simgolfer.example';
+ await env.DB.prepare('INSERT INTO sessions(token_hash,player_id,csrf,expires_at) VALUES (?,?,?,?)').bind(await hash(token),owner,csrf,now+60000).run();
+ expect((await worker.fetch(new Request(origin+'/api/account',{method:'DELETE',headers:{origin,cookie:`${names.session}=${token}`,'x-csrf-token':csrf,'content-type':'application/json'},body:JSON.stringify({confirm:'DELETE'})}),env)).status).toBe(200);
+ now+=864000000;
+ const archived=(await tournamentRound(env.DB,event.id,other,1)).course;expect(archived).toEqual(saved);
+ expect((await tournamentRound(env.DB,event.id,other,1,lastCommand)).result).toEqual(lastReply);
+ expect((await tournamentRound(env.DB,event.id,other,1,shot(archived,other))).result.code).toBe('round-complete');expect((await tournamentRound(env.DB,event.id,other,1)).course).toEqual(saved);
+ await env.DB.prepare('UPDATE players SET disabled_at=? WHERE id=?').bind(now,other).run();await expect(tournamentRound(env.DB,event.id,other,1)).rejects.toMatchObject({status:403});
+},30000);

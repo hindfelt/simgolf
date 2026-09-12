@@ -1327,3 +1327,5 @@ F06/F01 original screen projection: recovered fixed-point camera transforms, fou
 
 
 M02 real-clock verification (2026-09-12): two Chrome contexts completed a full ten-minute local earnings event without time acceleration. Both stopped at tick12000; server placements reconciled with saved balances and survived reload. Added repeatable `test:earnings-soak` and sampled evidence in `references/release/earnings-realtime-2026-09-12.json`. Competition access now offers spectators only, matching server enforcement. Hosted capacity, larger courses, regional presets and balancing remain open; this is not production multiplayer completion.
+
+M03 archive access (2026-09-12): fixed completed-round review after organizer account deletion. Active remaining entrants can reopen existing completed rounds independently of organizer availability, only when final results are sealed. Archived simulation stays frozen, exact receipts replay, and entrant suspension still denies access. Regression plays a real simulated round, finalizes the event, deletes its organizer through authenticated HTTP, then checks review, retries and rejection. Hosted rollout remains open.
