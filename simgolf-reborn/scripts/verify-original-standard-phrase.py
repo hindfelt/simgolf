@@ -7,28 +7,32 @@ from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EIP,UC_X86_REG_EBX,UC_X8
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x200000);u.mem_map(0x800000,0x40000);u.mem_map(0x100000,0x8000)
-for a,n in [(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
+for a,n in [(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
 def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
 events=[]
 def hook(u,a,size,data):
- if a not in [0x466fb0,0x4074d0]:return
+ if a not in [0x466e30,0x466fb0,0x4074d0]:return
+ if a==0x466e30:
+  sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=[struct.unpack('<i',u.mem_read(sp+4,4))[0]]));return
  sp=u.reg_read(UC_X86_REG_ESP);args=list(struct.unpack('<'+'i'*(2 if a==0x466fb0 else 3),u.mem_read(sp+4,8 if a==0x466fb0 else 12)));events.append(dict(address=a,args=args))
  text=bytes(u.mem_read(0x518f78,512)).split(b'\0')[0].decode('ascii')+('Name'+str(args[0]) if a==0x466fb0 else 'Place'+str(args[2]))
  u.mem_write(0x518f78,text.encode()+b'\0');put(0x589be8,12345)
 for a in [0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(384):
   id=i%16;record=[0]*256;record[0x18]=(i*17)%256;record[0xb6]=i%256
   profile=[-32768,-17,-8,-1,0,1,2,3,4,5,6,7,8,32767][i%14];record[0xb6:0xb8]=list(struct.pack('<h',profile))
   if i<128:record[0xb6:0xb8]=[i,0]
+  if kind in [2,4,26]:
+   record[0xae:0xb0]=list(struct.pack('<h',[-32768,-3,-1,0,1,2,3,4,5,32767][i%10]));record[0xa2:0xa4]=list(struct.pack('<h',id^1))
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
   u.mem_write(0x577f08+id*256,bytes(record));u.mem_write(0x518f78,prefix.encode()+b'\0');put(0x589be8,i);put(0x820344,mode);put(0x53f8b8,int(q['state']['redirected']));before=bytes(u.mem_read(0x518f78,512));events=[]
-  u.reg_write(UC_X86_REG_ESP,0x102000);put(0x102000+0x4e4,value);u.reg_write(UC_X86_REG_EBX,id);u.reg_write(UC_X86_REG_EDX,kind&0xffffffff)
+  u.reg_write(UC_X86_REG_ESP,0x102000);put(0x102000+0x4e4,value);put(0x102000+0x4ec,id);u.reg_write(UC_X86_REG_EBX,id);u.reg_write(UC_X86_REG_EDX,kind&0xffffffff)
   u.emu_start(0x469380,0x46bc7e,count=10000);assert u.reg_read(UC_X86_REG_EIP)==0x46bc7e
   expected=json.loads(json.dumps(q['state']));expected['sourceText']=bytes(u.mem_read(0x518f78,512)).split(b'\0')[0].decode('ascii');expected['remarkStyle']=struct.unpack('<I',u.mem_read(0x589be8,4))[0]
   # With no appends, the JS buffer may retain data beyond C-string termination.

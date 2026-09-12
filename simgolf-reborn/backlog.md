@@ -1353,3 +1353,5 @@ F06 building descriptions: recovered all nineteen original plain/detailed landma
 F06 standard remark selection:30 of65 original cases now reconstructed, including fixed text/display styles, value/identity/staff variants and the no-append route.4352 native dispatch comparisons and17 related tests pass. Personal phrase overrides now compose with standard fallback and recovered location substitutions. The other35 standard cases explicitly remain unsupported; full native-path verification and live integration remain open.
 
 F06 standard remarks now cover35 of65 cases. Added signed-profile variants, direct actor/location descriptions and original helper/write ordering;14976 native comparisons and18 related tests pass. Thirty cases, contiguous phrase-path verification and live integration remain unfinished.
+
+F06 standard remarks now cover38 of65 cases. Added complete native familiar-address helper and actor-dependent cases2/4/26, including partner-name comma formatting and redirection/write ordering.16128 native comparisons and19 related tests pass. Twenty-seven cases, contiguous phrase verification and live schema integration remain open.

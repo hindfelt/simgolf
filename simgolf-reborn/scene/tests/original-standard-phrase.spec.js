@@ -32,3 +32,19 @@ test('direct standard helpers resolve actual actor names and landmark records',(
  expect(place.state.sourceText).toContain('lighthouse');expect(place.state.remarkStyle).toBe(0x800023e8);
  expect(state.sourceText).toBe('');expect(state.redirected).toBeUndefined();
 });
+test('trait-dependent remarks resolve familiar address and partner names',()=>{
+ const self=new Uint8Array(256),partner=new Uint8Array(256);partner[0xb6]=1;self[0xa2]=1;
+ const state={sourceText:'',actors:{0:self,1:partner}},names={profileNames:['Gary','Mary']};
+ self[0xae]=1;
+ const familiar=originalDescribedStandardPhrase({kind:26,actorId:0,state},names);
+ expect(familiar.state.sourceText).toContain(', honey');expect(familiar.state.redirected).toBe(true);
+ self[0xae]=3;
+ const addressed=originalDescribedStandardPhrase({kind:26,actorId:0,state},names);
+ expect(addressed.state.sourceText).toContain(', Mary');expect(addressed.events).toEqual([{address:0x466fb0,args:[1,1]}]);
+ self[0xae]=2;
+ const named=originalDescribedStandardPhrase({kind:2,actorId:0,state},names);
+ expect(named.state.sourceText).toContain('Gary');expect(named.state.redirected).toBe(true);expect(named.state.remarkStyle).toBe(0x80007d08);
+ self[0xae]=4;
+ const called=originalDescribedStandardPhrase({kind:4,actorId:0,state},names);
+ expect(called.state.sourceText).toContain('Gary');expect(called.state.redirected).toBe(true);expect(state.sourceText).toBe('');
+});

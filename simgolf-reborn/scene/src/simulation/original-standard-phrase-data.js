@@ -205,5 +205,14 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4c3924": " (",
   "0x4c496c": ")",
   "0x4e20b0": "Lucky bounce, ",
-  "0x4e209c": "Never mind. (nice "
+  "0x4e209c": "Never mind. (nice ",
+  "0x4e2784": "Darn, I'm DATA!",
+  "0x4e276c": "Oh darn, you're DATA ",
+  "0x4c3e10": "!",
+  "0x4e2764": "Hey ",
+  "0x4e2754": ", you're DATA",
+  "0x4e2a38": "Only you could miss this shot ",
+  "0x4e2a18": "This shot looks pretty easy.",
+  "0x4e1e20": "You look a bit tired",
+  "0x4e1e04": "I'm starting to get tired."
 };
