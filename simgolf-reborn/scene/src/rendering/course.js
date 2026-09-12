@@ -448,7 +448,7 @@ export function buildCourseView(scene) {
         group.userData.facilityAppearance=facilityAppearance(f,g.environment);
         facilityMap.set(f.id,group);
       }
-      group.position.y=height(group.position.x,group.position.z);
+      group.position.y=height(group.position.x,group.position.z)+(group.userData.groundOffset||0);
       facilityLighting(group,FACILITIES[f.type]?.scenery ? 'scenery' : connected(g,f) ? 'connected' : 'disconnected');
     }
   }
@@ -459,7 +459,7 @@ export function buildCourseView(scene) {
     if (["building-lot", "home"].includes(f.type))
       group = housing(scene, f.type, p.x, p.z, environment);
     else if (["marina", "helipad", "airstrip"].includes(f.type))
-      group = transportFacility(scene, f.type, p.x, p.z);
+      group = transportFacility(scene, f.type, p.x, p.z, environment);
     else if (f.type === "lighthouse") group = lighthouse(scene, p.x, p.z);
     else if (f.type === "church") group = church(scene, p.x, p.z);
     else if (f.type === "pro-shop") group = proShop(scene, p.x, p.z, environment);
@@ -521,6 +521,7 @@ export function buildCourseView(scene) {
       add(new THREE.BoxGeometry(2.9, 1, 0.1), 0x354b44, 0, 1.65, 1.7, group);
       add(new THREE.BoxGeometry(3.2, 0.16, 0.7), 0xbdaa79, 0, 1.05, 1.9, group);
     }
+    group.userData.groundOffset=group.position.y-height(p.x,p.z);
     group.rotation.y = ((f.rotation || 0) * Math.PI) / 2;
     return group;
   }

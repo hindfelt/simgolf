@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { height } from "../landscape.js";
-export function transportFacility(scene, type, x, z) {
+export function transportFacility(scene, type, x, z, environment=null) {
+  const tropical=environment==='tropical',links=environment==='links';
   const group = new THREE.Group(),
     batches = new Map();
   group.name = type;
@@ -17,8 +18,14 @@ export function transportFacility(scene, type, x, z) {
     add(new THREE.CylinderGeometry(radius, radius, h, 24), color, x, y, z);
   if (type === "marina") {
     box(13.6, 0.22, 3.6, 0xa49376, 0, 0.15, -3);
-    box(5.6, 2.1, 2.7, 0xd8cead, -3.5, 1.3, -3.1);
-    box(6.1, 0.2, 3.2, 0x6a8278, -3.5, 2.45, -3.1);
+    box(5.6, 2.1, 2.7, tropical?0xba955d:links?0xb4b3a1:0xd8cead, -3.5, 1.3, -3.1);
+    if(tropical||links){
+      const roof=new THREE.CylinderGeometry(0,4.31,1.2,4);roof.rotateY(Math.PI/4);roof.scale(1,1,3.2/6.1);
+      add(roof,tropical?0xd0b477:0x5a6969,-3.5,3.0,-3.1);
+      for(let row=0;row<5;row++){const f=(row+.5)/5;for(const side of [-1,1])box(6.1*(1-f),.025,.05,tropical?0xb5965a:0x455654,-3.5,2.4+f*1.2,-3.1+side*1.6*(1-f));}
+      if(tropical)for(let x=-6.2;x<-1;x+=.3)box(.035,2,2.73,0x725134,x,1.3,-3.1);
+      else for(let y=.5;y<2.3;y+=.3)box(5.63,.025,2.73,0x8f9386,-3.5,y,-3.1);
+    }else box(6.1, 0.2, 3.2, 0x6a8278, -3.5, 2.45, -3.1);
     box(2.5, 1.3, 0.05, 0x587a7a, -3.5, 1.35, -1.73);
     box(13.4, 0.22, 0.9, 0x9b7953, 0, 0.28, -0.8);
     for (const px of [-5.7, -1.9, 1.9, 5.7]) {

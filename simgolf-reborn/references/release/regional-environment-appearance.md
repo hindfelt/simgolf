@@ -102,3 +102,12 @@ Links homes use stone courses and slate. Side windows improve rotated views.
 The lot footprint and simulation/service rules are unchanged. Four regional
 renderer checks and the production build pass; rendered variants were reviewed.
 This remains local work, not a hosted release.
+
+## Regional marina shore buildings
+
+Tropical and Links marinas now have timber/thatch and stone/slate pitched-roof
+shore buildings. Dock geometry and boat behavior are retained. Facility elevation
+refresh now preserves each model's ground offset, including the airstrip's 0.35
+raised base. Eighteen regional/transport/aircraft checks and one targeted raised-
+base regression passed, as did the production build. Marina variants were
+visually reviewed. Local only; further regional architecture remains open.
