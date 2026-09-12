@@ -10,7 +10,7 @@ export function originalGroundPhase({before,ball,originTerrainCode,club,eventFla
  if(!Number.isInteger(ball.height)||ball.height>1)throw Error('Original ground phase requires contact height.');
  if(typeof world?.cellAt!=='function'||typeof world?.slopeAt!=='function')throw Error('Original terrain adapter required.');
  const cellX=before.x>>10,cellZ=before.z>>10;
- const cell=world.cellAt(cellX,cellZ),terrainAt=(x,z)=>world.cellAt(x,z).code;
+ const cell=world.cellAt(cellX,cellZ),terrainAt=world.neighborTerrainAt??((x,z)=>world.cellAt(x,z).code);
  const sample=originalMotionSample({...ball,cellX,cellZ,terrainCode:cell.code},terrainAt);
  const response=originalGroundResponse({...ball,terrainCode:cell.code,originTerrainCode,
   rollCoefficient:cell.rollCoefficient,forwardSlope:world.slopeAt(ball.x,ball.z,sample.direction),

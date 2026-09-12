@@ -68,3 +68,15 @@ test('raw side-ray reads preserve flattened aliases and require explicit externa
  const reads=[];const extended=originalShotMap({...options,readRawTerrain:i=>{reads.push(i);return 3;}});
  expect(extended.planning.terrainAt(-1,0)).toBe(3);expect(reads).toEqual([-50]);
 });
+
+test('live motion uses the planning map geometry, marks and derived edge data',()=>{
+ const terrain=new Uint8Array(2500).fill(2),marks=new Uint16Array(2500),derived=empty();
+ const map=originalShotMap({terrain,marks,derived,readHeight:()=>6,metadata:originalTerrainMetadata,globalFlags:0});
+ marks[510]=128;derived.edgeMasks[510]=5;
+ expect(map.motion.cellAt(10,10).flags).toBe(128);expect(map.motion.cellAt(10,10).edgeFlags).toBe(5);
+ expect(map.motion.cellAt(10,10).scatterCoefficient).toBe(originalTerrainMetadata(2).shotClass);
+ expect(map.motion.heightAt(10500,10500)).toBe(map.heightAt({x:10500,z:10500}));
+ expect(map.motion.slopeAt(10500,10500,2)).toBe(map.slopeAt({x:10500,z:10500},2));
+ terrain[50]=17;expect(map.motion.neighborTerrainAt(0,50)).toBe(17);
+ expect(()=>map.motion.cellAt(0,50)).toThrow(/outer shot handling/);
+});

@@ -1,3 +1,4 @@
+import {createOriginalMotionTerrain} from './original-motion-terrain.js';
 import {originalCornerHeight} from './original-corner-height.js';
 import {originalPhysicsHeight,originalPhysicsSlope} from './original-physics-terrain.js';
 // Shared original map access for launch planning and candidate physics.
@@ -38,6 +39,14 @@ export function originalShotMap({terrain,marks,derived,readHeight,metadata,globa
   readSurfaceHeight:(r,c)=>derived.surfaceHeights[r*50+c],
   readCachedHeight:(r,c,d)=>derived.directionHeights[(r*50+c)*8+d]});
  const sample=p=>{const t=terrainAt({x:p.x>>10,z:p.z>>10});return {...p,terrainCode:t.code,metadataFlags:t.metadataFlags,globalFlags,cornerHeight,vertexHeight:readHeight};};
- return {planning,terrainAt,kindAt:p=>terrainAt(p).kind,shotClassAt:code=>metadata(code).shotClass,
+ const motion=createOriginalMotionTerrain({globalFlags,readCornerHeight:cornerHeight,readVertexHeight:readHeight,
+  readNeighborTerrain:rawTerrainAt,
+  readCell:(x,z)=>{
+   if(index({x,z})<0)throw Error('Original motion outside map requires outer shot handling.');
+   const cell=terrainAt({x,z});
+   return {...cell,edgeFlags:cell.wallFlags,scatterCoefficient:cell.shotClass};
+  },
+ });
+ return {motion,planning,terrainAt,kindAt:p=>terrainAt(p).kind,shotClassAt:code=>metadata(code).shotClass,
   heightAt:p=>originalPhysicsHeight(sample(p)),slopeAt:(p,d)=>originalPhysicsSlope(sample(p),d)};
 }

@@ -15,7 +15,7 @@ export function originalMotionStep(q,world) {
  const cell=world.cellAt(cellX,cellZ),previousTerrainHeight=world.heightAt(before.x,before.z);
  let ball={...before,...originalBallPositionStep(before)};
  ball.verticalSpeed=originalGravityStep(ball);
- const sample=originalMotionSample({...ball,cellX,cellZ,terrainCode:cell.code},(x,z)=>world.cellAt(x,z).code);
+ const sample=originalMotionSample({...ball,cellX,cellZ,terrainCode:cell.code},world.neighborTerrainAt??((x,z)=>world.cellAt(x,z).code));
  let rngState=q.seed,draws=0,stateFlags=q.stateFlags,centreFlag=q.centreFlag;
  const sounds=[];let captured=false,reflectedX=false,reflectedZ=false,landed=false,terrainStopped=false,luckAdjusted=false;
  if(ball.height<=1) {
