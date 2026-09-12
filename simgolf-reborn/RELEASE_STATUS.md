@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This is the current local development checkpoint following the terrain handoff work in `f616844`.
+This is the current local development checkpoint through the regional/audio work in `882d1cf`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -17,14 +17,20 @@ summarizes what still remains; it does not replace the requirements in
 - Distinct Tropical palms, turquoise coast, clubhouse and hotel; Links scrub,
   dry ground and clubhouse. Regional planted trees and collision sizes follow
   the environment. False shoreline strips at map edges are corrected.
+- Regional snack bars, pro shops, homes, marina buildings, cart garages, swim
+  pavilions and range shelters; building caches refresh on regional/layout changes.
+- Contact, putt, cup, rotor and occasional birdie-applause recordings with credits.
+  Speech, ambient recordings and final listening/mix review remain open.
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
 These statements describe local code and recorded tests, not deployed features.
 Committed development work through `f616844` has been pushed to the
 `codex/simgolf-reborn-v1` branch and the remote comparison matched. The existing GitHub CI passed for `c227e27`, but covered only the older root
-application. A separate Fairway Baron job is being added; its hosted result is
-not yet verified. Production has not been deployed.
+application. The separate Fairway Baron job is committed locally, but GitHub
+rejected its publication because the hindfelt credential lacks `workflow` scope.
+The remote remains at `c227e27`; newer local commits are not published.
+Production has not been deployed.
 Uncommitted workspace changes are excluded from that push.
 
 ## Remaining completion checklist
@@ -65,7 +71,8 @@ Uncommitted workspace changes are excluded from that push.
 - [Live putting and recovered-engine integration gap](references/observations/live-putting-gap.md)
 - [Latest broad live stability assessment](references/release/ruleset-85-live-regression.md)
 
-The repaired ruleset-85 full local rerun passed 507 checks with five explicit
+Before the latest regional/audio additions, the repaired ruleset-85 full local
+rerun passed 507 checks with five explicit
 private-reference skips (512 total, 5.6 minutes). The private-reference suites
 also passed separately with local files available. This is not a hosted stability
 assessment. Original-engine modules remain separate from the
