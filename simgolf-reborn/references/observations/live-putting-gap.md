@@ -1820,3 +1820,23 @@ that input boundary beyond the earlier fixed partner fixture.
 Remaining integration includes launch-setting/global provenance, search
 scratch initialization, genuine reaction effects and invoking this pipeline
 from the scheduler's planner effect. This does not change the live game.
+
+
+### Corrected outer-search flags capture and initialization audit
+
+The native search accesses sample flags at frame offset +0x536c
+(0x422e61, 0x42311b, 0x4233df). Four outer-planner oracle scripts had
+incorrectly captured +0x736c; those relative offsets are corrected. Existing
+absolute 0x10736c references with frame base 0x102000 are correct and unchanged.
+The complete packed-input/result oracle passes all six scenarios after the
+correction, comparing native output actors, holes and shared state. Earlier
+passes used incorrect initial scratch captures and should be read with this
+qualification; the corrected run supersedes them for these scenarios.
+
+Initialization at 0x42245e clears the score array; each pass clears distances.
+The sample flags and follow-up word do not have equivalent entry clearing.
+The follow-up word is written conditionally at 0x422fae and read at 0x422fc0.
+A blanket zero-filled replacement for captured search scratch is therefore
+not justified by the entry code alone. Deriving the necessary retained scratch
+semantics remains open; this audit does not complete scheduler planner input
+or live integration.

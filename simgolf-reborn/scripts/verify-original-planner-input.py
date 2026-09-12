@@ -15,7 +15,7 @@ def outer_hook(u,a,n,d):
   sp=u.reg_read(UC_X86_REG_ESP)
   search_input={**current,'candidateLanding':dict(x=read(0x5691dc),z=read(0x5691e0)),
    'distances':[list(struct.unpack('<6i',u.mem_read(sp+0x2a14+i*24,24))) for i in range(441)],
-   'flags':[list(struct.unpack('<6I',u.mem_read(sp+0x736c+i*24,24))) for i in range(441)],
+   'flags':[list(struct.unpack('<6I',u.mem_read(sp+0x536c+i*24,24))) for i in range(441)],
    'followupFlag':read(sp+0xb4),
    'winner':dict(score=read(sp+0x60),target=dict(x=read(sp+0x78),z=read(sp+0xa4)),curve=read(sp+0x6c),cornerTarget=read(0x5a8730),landing=dict(x=read(0x5a7270),z=read(0x5a7278)),landingFlag=read(sp+0xac))}
   search_input.pop('automatic',None)
