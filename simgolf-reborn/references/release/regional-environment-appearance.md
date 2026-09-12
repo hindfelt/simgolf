@@ -74,3 +74,12 @@ course factory forwards the environment for both placed and preview buildings.
 Footprints, service logic and access are unchanged. Three targeted renderer
 checks pass and the three variants were visually inspected together; the
 production build passes. Local only, with further regional facilities open.
+
+## Regional pro shops
+
+The pro shop now has its own model with a recessed entrance, glazed displays,
+porch, golf-ball emblem and club rack instead of the generic service counter.
+Tropical uses timber/thatch styling; Links uses stone/slate. The shared course
+factory applies these to placement previews and built shops. Two rendering
+checks and the production build pass; all three variants were visually reviewed.
+Service and placement rules are unchanged. Local, not deployed.
