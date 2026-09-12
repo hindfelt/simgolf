@@ -18,12 +18,13 @@ export function originalArrivalPartner(snapshot){
  const hb=state.holes?.[a.getInt8(0x29)];if(!(hb instanceof Uint8Array)||hb.length!==520)throw Error('Original arrival hole unavailable.');
  const h=new DataView(hb.buffer,hb.byteOffset,hb.byteLength),cx=((h.getInt32(0x18,true)<<10)+512)|0,cz=((h.getInt32(0x1c,true)<<10)+512)|0;
  // Native compares own distance with partner Z offset here, not partner distance.
- if(hole===a.getUint8(0x29)&&p.getUint8(0x2a)!==0&&a.getInt32(0xdc,true)!==0&&originalMapDistance((a.getInt32(0xdc,true)-cx)|0,(a.getInt32(0xe0,true)-cz)|0)<((p.getInt32(0xe0,true)-cz)|0)){face();return done('0x42badc');}
+ if(hole===a.getUint8(0x29)&&p.getUint8(0x2a)!==0&&a.getInt32(0xdc,true)!==0&&originalMapDistance((a.getInt32(0xdc,true)-cx)|0,(a.getInt32(0xe0,true)-cz)|0)<((p.getInt32(0xe0,true)-cz)|0)){face();a.setInt16(0x1c,0,true);const rng=originalRandom(state.seed);a.setInt16(0xa6,-rng.next(4),true);state.seed=rng.state;randomDraws++;return done('skip');}
  a.setInt32(0xd4,0,true);
  if(!state.walkingOverride&&state.movementReady&&!state.waitingGroups){
   if(a.getInt32(0xdc,true)===0){const p=state.startBall;if(!p||![p.x,p.z].every(Number.isInteger))throw Error('Original starting ball coordinates unavailable.');a.setInt32(0xdc,p.x,true);a.setInt32(0xe0,p.z,true);}
   a.setUint8(0x28,1);
  }
  a.setInt16(0x1c,0,true);a.setInt32(0xf0,0,true);a.setInt32(0xec,0,true);a.setInt32(0xe4,0,true);
- return done('0x42b3d8');
+ // 0x42b3d8 sees the speed just cleared above and exits the actor tick.
+ return done('skip');
 }

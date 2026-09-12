@@ -12,9 +12,9 @@ end=None;calls=[];arrived=None;arrivalBranch=False
 def hook(u,a,size,data):
  global end,arrived,arrivalBranch
  if a==0x42a019:arrivalBranch=True;return
- if a in [0x42badc,0x42b3d8] and not arrivalBranch:return
+ if a in [0x42b3d8] and not arrivalBranch:return
  if a==0x429f4c:arrived=dict(destination=dict(x=u.reg_read(UC_X86_REG_EBX),z=u.reg_read(UC_X86_REG_ESI)),delta=dict(x=u.reg_read(UC_X86_REG_EBX)-get(0x577f08+id*256),z=u.reg_read(UC_X86_REG_ESI)-get(0x577f0c+id*256)))
- if a in [0x4295ef,0x42bdb5,0x42badc,0x42b3d8,0x42adac,0x42d23c,0x42b825]:end='skip' if a==0x4295ef else hex(a);u.emu_stop()
+ if a in [0x4295ef,0x42bdb5,0x42adac,0x42d23c,0x42b825]:end='skip' if a==0x4295ef else hex(a);u.emu_stop()
  if a in [0x425b50,0x40daa0,0x40db60,0x46c140,0x4672d0,0x40c1f0,0x40c140,0x42def0,0x40c580,0x4071d0]:
   sp=u.reg_read(UC_X86_REG_ESP);args=[get(sp+4*j) for j in range(1,2 if a in [0x425b50,0x46c140] else 6 if a==0x42def0 else 5 if a in [0x40c1f0,0x40c580] else 4)];calls.append(dict(address=a,args=args))
   if a==0x425b50:
@@ -23,7 +23,7 @@ def hook(u,a,size,data):
    if a==0x4672d0:u.mem_write(0x577f78+args[0]*256,bytes([36]))
    u.reg_write(UC_X86_REG_EAX,1);u.reg_write(UC_X86_REG_EIP,get(sp));u.reg_write(UC_X86_REG_ESP,sp+4)
 
-for address in [0x42a019,0x429f4c,0x4295ef,0x42bdb5,0x42badc,0x42b3d8,0x42adac,0x42d23c,0x42b825,0x425b50,0x40daa0,0x40db60,0x46c140,0x4672d0,0x40c1f0,0x40c140,0x42def0,0x40c580,0x4071d0]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
+for address in [0x42a019,0x429f4c,0x4295ef,0x42bdb5,0x42adac,0x42d23c,0x42b825,0x425b50,0x40daa0,0x40db60,0x46c140,0x4672d0,0x40c1f0,0x40c140,0x42def0,0x40c580,0x4071d0]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
 rng=random.Random(4290);rows=[]
 for i in range(500):
  b=bytearray(152*256);h=bytearray(20*520);f=bytearray(4096);t=bytes(rng.choices([1,10,17],k=2500));marks=[512 if rng.randrange(20)==0 else 0 for _ in range(2500)];widths=[2]*16;metadata=[dict(shotClass=rng.choice([-1,0,1]),walkingCost=1) for _ in range(21)];id=i%2

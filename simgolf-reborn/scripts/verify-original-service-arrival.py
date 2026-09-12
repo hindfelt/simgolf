@@ -11,12 +11,12 @@ def get(a):return struct.unpack('<i',u.mem_read(a,4))[0]
 calls=[];end=False;attempts=0
 def hook(u,a,size,data):
  global end,attempts
- if a in [0x4295ef,0x42badc,0x42b3d8]:end='skip' if a==0x4295ef else hex(a);u.emu_stop();return
+ if a in [0x4295ef]:end='skip' if a==0x4295ef else hex(a);u.emu_stop();return
  sp=u.reg_read(UC_X86_REG_ESP);args=[get(sp+4*j) for j in range(1,5 if a==0x40c1f0 else 4)];calls.append(dict(address=a,args=args));value=0
  if a==0x4672d0:u.mem_write(0x577f8d,bytes([args[1]]))
  if a==0x4071d0:return
  u.reg_write(UC_X86_REG_EAX,value);u.reg_write(UC_X86_REG_EIP,get(sp));u.reg_write(UC_X86_REG_ESP,sp+4)
-for address in [0x4295ef,0x42badc,0x42b3d8,0x4672d0,0x40c1f0,0x4071d0]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
+for address in [0x4295ef,0x4672d0,0x40c1f0,0x4071d0]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
 rng=random.Random(42026);rows=[]
 for i in range(1200):
  b=bytearray(rng.randbytes(256));struct.pack_into('<h',b,0xb2,rng.choice([1,2,20,100]));q=dict(actorId=0,actorTile=dict(x=23,z=24),restDecoration=rng.randrange(256),seed=rng.getrandbits(32),acceptAfter=rng.randrange(1,10))

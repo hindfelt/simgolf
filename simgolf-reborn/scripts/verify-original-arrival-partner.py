@@ -12,7 +12,7 @@ end=None
 def hook(u,a,size,data):
  global end
  end='skip' if a==0x4295ef else hex(a);u.emu_stop()
-for address in [0x4295ef,0x42badc,0x42b3d8]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
+for address in [0x4295ef]:u.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
 rng=random.Random(42168);rows=[]
 for i in range(1600):
  b=bytearray(512);h=bytearray(20*520);id=i%2

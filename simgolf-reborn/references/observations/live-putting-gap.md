@@ -1521,3 +1521,17 @@ and cleanup effects remain controlled. The verifier distinguishes the shared
 0x42b3d8 address reached from arrival from movement's own passage through it.
 Later shot/wait continuations, unhappy departures, earlier actor entry and
 live world/persistence adoption remain unfinished.
+
+### Arrival continuations now reach the actual tick exit
+
+Partner arrival now executes the 0x42badc late-wait body: clear route budget,
+consume RNG(4), store its negation as delay, then skip. The shot-preparation
+branch reaches 0x42b3d8 with speed already cleared and therefore also skips;
+it does not launch a shot in this tick. Both formerly explicit continuations
+now complete without treating an intermediate address as an unfinished exit.
+
+All 1,600 partner-arrival cases and 1,200 rest-through-partner cases pass
+through the real native tick exit. The 500-case complete walking dispatcher
+also passes (75 rest visits, 76 paid visits, 307 position changes), with all
+cases exiting the tick. This closes those arrival continuations, not later
+actor scheduling/shot execution, unhappy departures or live adoption.
