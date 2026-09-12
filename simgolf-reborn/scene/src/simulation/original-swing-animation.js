@@ -19,3 +19,12 @@ export function originalSwingAnimation(snapshot){
  }
  return {state,animationGroup,frameIndex};
 }
+
+// Preserve the rest of the actor world when the renderer updates this pose.
+export function originalActorSwingAnimation(snapshot,context){
+ if(!Number.isInteger(snapshot.actorId)||snapshot.actorId<0||snapshot.actorId>=152)throw Error('Original animation actor index unavailable.');
+ const state=structuredClone(snapshot),actor=state.actors?.[state.actorId];
+ const result=originalSwingAnimation({...context,actor,globalFlags:state.globalFlags});
+ state.actors[state.actorId]=result.state.actor;
+ return {state,animationGroup:result.animationGroup,frameIndex:result.frameIndex};
+}

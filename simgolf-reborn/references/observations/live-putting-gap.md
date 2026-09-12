@@ -1930,3 +1930,20 @@ directions, varied signed club values and paused updates. This recovers the
 missing phase transition needed between preparation and movement. Animation
 caller cadence, asset frame-count provenance and the continuous planned-putt
 through animation/swing/motion integration remain open; no live change yet.
+
+
+### Swing animation through impact and first position update
+
+`originalActorSwingAnimation` applies the verified animation transition to a
+packed actor world while preserving other state. The integration oracle runs
+animation updates until native phase 2, then swing updates until impact and
+the first position update at 0x42beb0. It supplies the phase accumulator that
+the real clearance branch loads before 0x42bb3b; phase is not forced to 2.
+
+`verify-original-swing-first-movement.py` passes 500 ordered native sequences,
+comparing all actor bytes, animation/swing invocation counts and effect order.
+It varies clubs, terrain code 1/2, headings, positive launch speeds, frame
+counts and impact-reaction flags. Native trig/position logic executes; height,
+sound, visual and reaction effects are controlled. These invocations establish
+stage handoffs, not the original full world/render cadence. Ground friction,
+continued movement/cup capture, real effects and live adoption remain open.
