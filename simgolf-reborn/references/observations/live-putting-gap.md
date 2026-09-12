@@ -1115,3 +1115,22 @@ This closes the full destination-preparation composition check for these
 fixtures, rather than relying only on component tests. It does not cover actual
 movement beyond 0x429f27, earlier walking/departure entry, real cleanup bodies,
 complete actor scheduling, persistent live-world adaptation or release parity.
+
+### Walking arrival gate
+
+`original-walking-arrival-gate.js` recovers 0x429f27–0x42a019. A
+water destination falls back to an existing ball; arrival uses strict 128/512
+unit radii depending on service records. The negative service index -2 reads
+preceding record storage, which must be supplied explicitly as facilityPrefix.
+No invented record type replaces that native read. Arrival sets animation and
+partner-facing, then preserves the active-shot, finished-round and service
+arrival continuations. Distance/delta and corrected destination are returned.
+
+1,600 native cases execute real terrain, heading and distance helpers and match
+actor bytes, distance and branches: 749 walking continuations, 283 service
+arrivals, 291 active-shot continuations, 277 finished departures. Fixtures
+include 127/128/129 and 511/512/513 boundaries, water correction, missing balls
+and preceding record types. Corrected destination/delta have not yet been
+compared independently in this verifier. Actual stepping at 0x42a71c, service
+arrival bodies and live integration remain open; this gate is not yet composed
+with the complete destination sequence.
