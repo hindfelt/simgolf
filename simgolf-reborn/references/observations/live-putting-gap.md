@@ -1840,3 +1840,21 @@ A blanket zero-filled replacement for captured search scratch is therefore
 not justified by the entry code alone. Deriving the necessary retained scratch
 semantics remains open; this audit does not complete scheduler planner input
 or live integration.
+
+
+### Persist search publication for subsequent actors
+
+The planner result commit now also publishes completed search globals:
+world/global flags, updateScratch=1, drift mode, candidate skill mask,
+corner target, search flag and candidate landing. The final launch's landing
+and the candidate landing remain distinct. A non-search launch leaves these
+search globals alone. Persisting updateScratch preserves the native automatic
+shot-preparation guard for subsequent golfers within the same world update.
+
+`verify-original-planner-search-publication.py` passes all six complete native
+planner scenarios. In addition to packed actor/hole and prior shared-state
+comparisons it checks 0x59d208, 0x59a188, 0x5a870c, 0x4c1e0c, 0x5a8730,
+0x5a872c and candidate landing at 0x5691dc/e0 against the committed result.
+No values are substituted for these native output globals. Actual scheduler
+planner invocation, scratch input provenance, reactions and live integration
+remain unfinished.

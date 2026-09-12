@@ -15,5 +15,14 @@ export function applyOriginalPlannerResult(snapshot,result,id=snapshot.actorId){
   if(!Number.isInteger(code)||!state.metadata[code]||!Number.isInteger(shotClass)||shotClass< -128||shotClass>127)throw Error('Invalid original planner metadata write.');
   state.metadata[code]={...state.metadata[code],shotClass,scatterCoefficient:shotClass};
  }
+ if(result.searched){
+  const {result:searchResult,search,shared}=result.searched;
+  if(!uint(searchResult?.worldFlags)||!int(searchResult.mode)||!int(searchResult.candidateSkillMask)||!int(searchResult.cornerTarget)||!int(search?.searchFlag)||!int(shared?.landing?.x)||!int(shared?.landing?.z))throw Error('Original search publication unavailable.');
+  state.globalFlags=searchResult.worldFlags;state.worldFlags=searchResult.worldFlags;
+  state.updateScratch=1; // 0x4224a9: search consumes the current world update.
+  state.driftMode=searchResult.mode;state.candidateSkillMask=searchResult.candidateSkillMask;
+  state.cornerTarget=searchResult.cornerTarget;state.searchFlag=search.searchFlag;
+  state.candidateLanding={...shared.landing};
+ }
  return state;
 }
