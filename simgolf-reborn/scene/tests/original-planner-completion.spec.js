@@ -4,6 +4,10 @@ import {originalPlannerEffect} from '../src/simulation/original-planner-effect.j
 import {applyOriginalPlannerActor} from '../src/simulation/original-planner-actor.js';
 import {applyOriginalPlannerResult} from '../src/simulation/original-planner-result.js';
 import {middleMap,middleEffects} from './helpers/original-auto-middle-map.js';
+import {packedMiddleWorldRecords} from './helpers/original-packed-middle-map.js';
+import {createOriginalWorld,serializeOriginalWorld,restoreOriginalWorld,originalWorldActorMap} from '../src/simulation/original-world-state.js';
+import {originalTerrainMetadata} from '../src/simulation/original-terrain-metadata.js';
+import {originalWorldShotMap} from '../src/simulation/original-world-shot-map.js';
 const [q]=JSON.parse(readFileSync(new URL('./fixtures/original-direct-automatic-planner.json',import.meta.url)))[0];
 function snapshot(){
  const s=applyOriginalPlannerActor({actorId:0,actors:[new Uint8Array(256),new Uint8Array(256)],holes:Array.from({length:20},()=>new Uint8Array(520)),metadata:Array.from({length:32},()=>({})),seed:q.state.seed,strengthCache:q.state.cache,diagnostics:0,landing:q.state.landing},q.state);
@@ -25,4 +29,34 @@ test('scheduler planner commits through the effect-owned world exactly once',()=
 });
 test('planner rejects asynchronous completion rather than returning a promise as world state',()=>{
  expect(()=>originalPlannerEffect(event,snapshot(),q,{map:{planning:middleMap(q)}},{...middleEffects(q),complete:()=>Promise.resolve({})})).toThrow('synchronous world');
+});
+
+test('automatic planner consumes restored world terrain with packed object and actor readers',()=>{
+ const controlled=middleMap(q);
+ const world=createOriginalWorld({
+  terrain:Uint8Array.from({length:2500},(_,i)=>controlled.terrainAt(Math.floor(i/50),i%50)),
+  marks:Uint16Array.from({length:2500},(_,i)=>controlled.marksAt(Math.floor(i/50),i%50)),
+  ownership:new Uint8Array(2500),heights:Uint8Array.from({length:2601},(_,i)=>8+((Math.floor(i/51)+i%51)&3)),
+  metadata:Array.from({length:23},(_,i)=>({...originalTerrainMetadata(i),shape:controlled.categoryAt(i)})),
+  rngState:q.state.seed,phaseCounter:31,globalFlags:0,
+ });
+ const saved=serializeOriginalWorld(world);
+ function run(w){
+  const packed=packedMiddleWorldRecords(q),s=snapshot(),{map,...terrain}=originalWorldActorMap(w);
+  for(let id=0;id<s.actors.length;id++)packed.actors[id]=s.actors[id];
+  const state={...packed,...s,...terrain,actors:packed.actors};
+  const readers=originalWorldShotMap(state);
+  const reads={terrain:0,height:0};
+  for(const [name,key] of [['terrainAt','terrain'],['heightAt','height']]){
+   const read=readers.planning[name];readers.planning[name]=(...args)=>{reads[key]++;return read(...args);};
+  }
+  const result=originalPlannerEffect(event,state,q,{map:readers},middleEffects(q));
+  expect(reads.terrain).toBeGreaterThan(0);expect(reads.height).toBeGreaterThan(0);
+  return result;
+ }
+ const first=run(world),restored=run(restoreOriginalWorld(saved));
+ expect(restored).toEqual(first);
+ expect(first.state.seed).toBe(first.planner.state.seed);
+ expect(first.state.strengthCache).toEqual(first.planner.state.cache);
+ expect(serializeOriginalWorld(world)).toBe(saved);
 });

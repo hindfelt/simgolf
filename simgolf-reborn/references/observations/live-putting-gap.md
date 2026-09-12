@@ -2417,3 +2417,18 @@ changes reach map reads. Twelve actor-world, serialization and launch checks
 pass, including launched-shot completion and restored replay. Derived terrain
 still requires rebuilding after structural map/metadata flag changes, as the
 existing map contract specifies. Live schema adoption remains unfinished.
+
+### Automatic planner on restored terrain
+
+A composed integration check now drives `originalPlannerEffect` through
+`originalWorldActorMap` and `originalWorldShotMap` with saved terrain, stored
+elevations, derived edges, runtime metadata and packed object/profile readers.
+It verifies actual terrain/elevation reads, deterministic planner outputs after
+serialization/reload, published RNG/cache and source-save isolation. Actor and
+social records still come from a controlled fixture; this is not a complete
+career save or an uninterrupted native comparison of the restored world.
+
+The three planner completion checks pass. Extracting the reusable packed
+records retains all 240 native middle-stage and 240 direct-planner comparisons
+(state, events, cache and RNG). Native comparisons retain their controlled
+height/effect helpers; full audible-world integration and live adoption remain.
