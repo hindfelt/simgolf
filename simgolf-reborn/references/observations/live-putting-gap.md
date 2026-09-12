@@ -1185,3 +1185,18 @@ partner rules, cursor order and reaction mutations; native distance, octant and
 RNG execute, while identity/reaction bodies are controlled. The helper remains
 separate from the complete approach. Far routing, congestion continuation,
 position stepping, service arrivals and live integration remain open.
+
+### Far-target route setup
+
+`original-walking-far-route.js` recovers 0x42aa30–0x42abda: retained
+step-budget continuation, marked-water reaction and bit update, pathfinder
+request, world flag handling, reversal correction and sub-tile walking budget.
+Pathfinding at 0x42def0 remains an explicit synchronous resolver, not an invented
+route algorithm. Reactions may mutate actor state before RNG/bit updates;
+pathfinding may set flags that shorten the resulting budget.
+
+1,400 native cases match actor bytes, world flags, RNG, ordered calls and
+continuations. Native RNG runs; pathfinder/reaction outputs are controlled with
+matching mutations. This verifies route setup only, not pathfinding or position
+updates. Later budget scaling/congestion, the real pathfinder, walking steps,
+service arrivals and live integration remain unfinished.
