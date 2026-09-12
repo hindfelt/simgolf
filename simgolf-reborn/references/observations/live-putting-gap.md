@@ -296,3 +296,30 @@ The phase-1 clearance gate at 0x42b825–0x42bb3b is still required before this 
 join the normal actor path; it scans other golfers and consumes timing RNG.
 Effect bodies, complete motion/scoring assembly and live world integration remain
 open. This module does not change live browser animations or sound behavior yet.
+
+### Complete pre-swing clearance and assembled swing dispatch
+
+`original-swing-clearance.js` recovers 0x42b825–0x42bb3b, including all 152 actor
+slots. It preserves the partner-ready shortcut, zero-range putting RNG draw,
+clock subtraction with signed overflow, signed stroke comparison, native tee and
+target distance thresholds, angle comparison and persistent blocked-corridor flag.
+A blocked automatic golfer receives the original random retry delay; the manual
+flag can override that wait. Starting the swing moves the golfer onto the ball,
+sets animation 16 and clears the native flag. Phase zero proceeds directly to
+motion; later phases proceed to the recovered swing handler.
+
+`verify-original-swing-clearance.py` matches 1,000 continuous native runs without
+replacing any helper: native RNG, heading and distance all execute. Deliberate
+fixtures cover tee proximity, landing-ball proximity, golfer proximity and shot
+corridor alignment, including slot 151. Results: 401 blocked, 299 clear and 300
+early exits before scanning. Eighteen clearance/swing/decision/preparation tests
+pass.
+
+`originalActorAction` now dispatches clearance and swing progress. Its expanded
+native verifier matches 1,500 continuous runs through these stages: 1,230 skips,
+153 motion exits and 117 walking continuations. It includes phases 0/1/2/7/31 and
+compares actor records, effects, terrain locals, counters and all consumed RNG.
+Lookup/reaction/planning/presentation effect bodies remain controlled in this
+assembled verifier. The phase-1 gap noted above is closed; full motion/scoring,
+walking/tutorial bodies, actual resolver adapters and live saved-world integration
+remain unfinished. There is still no live browser physics change from this work.
