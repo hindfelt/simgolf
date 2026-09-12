@@ -1,7 +1,7 @@
 const signedByte=n=>(n<<24)>>24;
 // 0x469330–0x4694a0, before standard phrase cases or common postprocessing.
 export function originalPhraseEntry(q){
- const state=structuredClone(q.state),hole=Math.trunc((q.combined|0)/11);
+ const state=structuredClone(q.state),hole=Math.trunc((q.combined|0)/11)|0;
  state.redirected=false;
  if(q.actorId===152){const narrator=state.actors[152];if(!(narrator instanceof Uint8Array)||narrator.length!==256)throw Error('Original narrator record is unavailable.');narrator.fill(0);}
  if(q.actorId>=152)return {state,hole,next:'standard'};

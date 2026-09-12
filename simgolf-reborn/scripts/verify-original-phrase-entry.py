@@ -15,11 +15,12 @@ def hook(u,a,size,data):
  if a in [0x469380,0x46bc7e]:u.emu_stop()
 u.hook_add(UC_HOOK_CODE,hook)
 rng=random.Random(2002);rows=[]
-for i in range(1600):
+for i in range(3200):
  actorId=[0,1,151,152,153][i%5];actors={str(j):bytearray(rng.randrange(256) for _ in range(256)) for j in set([actorId,152])}
  for record in actors.values():struct.pack_into('<h',record,0xb6,i%3)
  codes=[3,7,19,35,64,3,255];phrases=[['' if (i+j+k)%3==0 else f'Personal {j}/{k}' for k in range(6)] for j in range(3)]
  q=dict(actorId=actorId,kind=[3,7,19,35,64,2,65][(i//5)%7],combined=rng.randrange(-2**31,2**31),requestCodes=codes,profilePhrases=phrases,state=dict(actors={j:list(r) for j,r in actors.items()},redirected=bool(i%2),sourceText='Lead: '))
+ if i>=1600:q['combined']=[-11,-10,-1,0,1,10,11][i%7]
  for j,r in actors.items():u.mem_write(0x577f08+int(j)*256,bytes(r))
  u.mem_write(0x4c1d00,bytes(codes));put(0x53f8b8,q['state']['redirected']);text(0x518f78,q['state']['sourceText'])
  for j,group in enumerate(phrases):
@@ -29,4 +30,4 @@ for i in range(1600):
 module=(root/'simgolf-reborn/scene/src/simulation/original-phrase-entry.js').as_uri()
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalPhraseEntry} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){q.state.actors=Object.fromEntries(Object.entries(q.state.actors).map(([k,v])=>[k,Uint8Array.from(v)]));const got=originalPhraseEntry(q);got.state.actors=Object.fromEntries(Object.entries(got.state.actors).map(([k,v])=>[k,[...v]]));if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({q,expected,got}));}console.log(`${rows.length} native phrase-entry cases matched`);""".replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
-(root/'simgolf-reborn/scene/tests/fixtures/original-phrase-entry.json').write_text(json.dumps(rows[:105],separators=(',',':'))+'\n')
+(root/'simgolf-reborn/scene/tests/fixtures/original-phrase-entry.json').write_text(json.dumps(rows[:105]+rows[1600:1635],separators=(',',':'))+'\n')
