@@ -1,3 +1,4 @@
+import {originalRemarkPreparation} from './original-remark-preparation.js';
 import {originalRecordRemarkEntry} from './original-remark-entry.js';
 import {originalCompletePhrase,originalDescribedCompletePhrase} from './original-complete-phrase.js';
 import {originalNamedRemarkDisplay} from './original-remark-display.js';
@@ -63,4 +64,11 @@ export function originalEligibleRemarkDispatch(q,resolve,readResource){
  const entry=originalRecordRemarkEntry(q);
  if(!entry.allowed)return {allowed:false,kind:entry.kind,state:structuredClone(q.state),events:[],phraseEvents:[],displayEvents:[],receiver:null};
  return {...originalCompleteRemarkDispatch({...q,kind:entry.kind},resolve,readResource),allowed:true,kind:entry.kind};
+}
+
+export function originalPreparedRemarkDispatch(q,resolve,readResource,playSound){
+ const dispatched=originalEligibleRemarkDispatch(q,resolve,readResource);
+ if(!dispatched.allowed)return {...dispatched,next:'return',before:null,voiceOffset:null,preparationEvents:[]};
+ const prepared=originalRemarkPreparation({...q,kind:dispatched.kind,state:dispatched.state},playSound);
+ return {...dispatched,state:prepared.state,next:prepared.next,before:prepared.before,voiceOffset:prepared.voiceOffset,preparationEvents:prepared.events};
 }

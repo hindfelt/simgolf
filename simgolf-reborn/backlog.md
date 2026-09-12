@@ -1387,3 +1387,5 @@ Original phrase helper integration: complete phrase API now resolves actual acto
 Original remark dispatch composition: complete phrases now feed actual named display and recipient/pending-field updates.10763 uninterrupted native dispatch/phrase/display comparisons and12 related tests pass. Eligibility/history/adjustment/audio composition and live actor/resource initialization remain unfinished; no production behavior changed yet.
 
 Original remark eligibility now composes with complete message dispatch from packed actor/hole snapshots.10763 uninterrupted native comparisons and10 related tests pass, including suppressed-state preservation and score-kind remapping. History, happiness/social/audio composition and live initialization/wiring remain unfinished.
+
+Original remark history preparation now follows complete message dispatch, preserving kind19 early return and kind35 speech-before-repeat-check ordering.2080 native stage comparisons and7 related tests pass. Full continuous preparation composition, downstream reactions/social/audio and live initialization/wiring remain unfinished.
