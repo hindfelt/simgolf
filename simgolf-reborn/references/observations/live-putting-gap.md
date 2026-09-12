@@ -759,3 +759,18 @@ The 800 contact-to-accounting comparisons still pass after the shared handoff
 refactor. These successful-cup fixtures do not verify the whole new update's
 airborne/mixed-terrain domain; those continuous checks and live integration
 remain open. Original map-edge neighbor storage still requires implementation.
+
+### Broader actor movement composition verification
+
+The same `original-actor-ball-motion.js` now passes 3,000 continuous native
+airborne cases from position integration to continued motion, including 44
+obstacle collisions and 6,079 effects. The airborne fixtures vary rising/falling
+velocity and fast/slow horizontal speeds while retaining positive height;
+height samples match and terrain is uniform per fixture. This is not yet a
+mixed-terrain flight-to-landing trajectory comparison.
+
+A further 800 continuous ground cases start before movement and match stopped
+accounting through skip, including 8,831 drop candidates and 607 penalties.
+The height sampler is explicitly controlled in both the native harness and JS
+resolver. Earlier standalone cup, contact and slope checks remain valid. Full
+mixed-terrain trajectories, edge storage and live integration remain open.
