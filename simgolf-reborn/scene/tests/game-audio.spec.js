@@ -98,3 +98,33 @@ test('applause follows observed birdies, not pars or loaded results',()=>{
   expect(t.observe(g)).toEqual([]);t.reset();expect(t.observe(g)).toEqual([]);
  }
 });
+
+test('birdie applause cooldown uses playback time rather than accelerated course time',async({page})=>{
+ await page.addInitScript(()=>{
+  window.applauseStarts=0;window.decoded=0;window.playbackTime=1;
+  const Native=window.AudioContext;
+  window.AudioContext=class extends Native{
+   constructor(...args){super(...args);Object.defineProperty(this,'currentTime',{get:()=>window.playbackTime});}
+   async decodeAudioData(data){const buffer=await super.decodeAudioData(data);window.decoded++;return buffer;}
+   createBufferSource(){const source=super.createBufferSource(),start=source.start.bind(source);source.start=(...args)=>{if(source.buffer.duration>4.7&&source.buffer.duration<5)window.applauseStarts++;return start(...args);};return source;}
+  };
+ });
+ await page.goto('/audio/credits.html');
+ await page.evaluate(async()=>{
+  localStorage.removeItem('fairway-baron.effects-volume');const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);
+  window.g={time:0,guests:[],holes:[{id:'h',green:{x:0,z:0}}]};window.project=()=>({x:.5,y:.5,depth:0});
+  window.birdie=(id)=>{
+   const v={id,roundId:'r',holeId:'h',strokes:2,shot:{from:{x:0,z:0},time:0,putt:true},ball:{x:0,z:0},scorecard:[]};
+   g.guests=[v];g.time+=.1;effects.update(g,project);v.shot=null;g.time+=.1;v.scorecard=[{holeId:'h',strokes:2,par:3,completedAt:g.time}];effects.update(g,project);
+  };
+  effects.update(g,project);
+ });
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(5);
+ await page.evaluate(()=>{birdie(1);for(let i=0;i<100;i++){g.time+=.6;effects.update(g,project);}window.playbackTime=2;birdie(2);});
+ expect(await page.evaluate(()=>window.applauseStarts)).toBe(1);
+ // Release existing voices without resetting the elapsed playback cooldown.
+ await page.getByRole('slider',{name:'Effects volume'}).fill('35');
+ await page.evaluate(()=>{window.playbackTime=22;birdie(3);});
+ expect(await page.evaluate(()=>window.applauseStarts)).toBe(2);
+ await page.evaluate(()=>effects.dispose());
+});
