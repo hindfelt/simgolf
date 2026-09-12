@@ -110,7 +110,7 @@ document.body.innerHTML = `<main id="game">
 <div id="world"></div>
 <header class="club"><span class="crest">⚑</span><div><h1>Willow Brook <i>GC</i></h1><p id="club-detail">Your first hole</p></div></header>
 <div class="accounts"><span id="cash"></span><span id="fun"></span></div>
-<div class="top-actions"><button id="menu-button" aria-label="Club menu">☰ <span>Club menu</span></button><button id="home" aria-label="Show whole property">⌂</button><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button></div>
+<div class="top-actions"><button id="menu-button" aria-label="Club menu">☰ <span>Club menu</span></button><button id="home" aria-label="Show whole property">⌂</button><button id="rotate-left" aria-label="Rotate course left" title="Rotate course left · Q">↶</button><button id="rotate-right" aria-label="Rotate course right" title="Rotate course right · E">↷</button><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="person-label"></div>
 <section class="console" aria-label="Course controls">
@@ -1325,7 +1325,7 @@ function refresh() {
   $("#hint").textContent =
     mode === "build"
       ? tool === "inspect"
-        ? "Inspect / pan: click a building for status. Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
+        ? "Inspect / pan: click a building for status. Q / E to rotate · Space + drag to pan · right-click to remove · scroll or pinch to zoom · H opens the hole."
         : `${names[tool]} · ${RULES.costs[tool] ? `$${RULES.costs[tool]}${["tee", "green"].includes(tool) || isFacility(tool) ? " each" : " per tile"}` : "Free"} · Click to place${["fairway", "firm", "sand", "water", "path", "rough", ...EXTRA_TERRAIN].includes(tool) ? " or drag to paint" : ""}. Right-drag to pan; two fingers on touch.`
       : mode === "play"
         ? `Click a landing target when ${game.pro?.name || "Gary"} is ready. Balls bounce and roll; putting is automatic on the green.`
@@ -1492,7 +1492,18 @@ $("#open-hole").onclick = () => {
   refresh();
   save();
 };
-$("#home").onclick = () => focus({ x: -2, z: 1 }, 1);
+function rotateCourse(direction) {
+  const offset = camera.position.clone().sub(controls.target);
+  offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), direction * Math.PI / 4);
+  camera.position.copy(controls.target).add(offset);
+  controls.update();
+}
+$("#rotate-left").onclick = () => rotateCourse(-1);
+$("#rotate-right").onclick = () => rotateCourse(1);
+$("#home").onclick = () => {
+  camera.position.copy(controls.target).add(new THREE.Vector3(-50, 105, 123));
+  focus({ x: -2, z: 1 }, 1);
+};
 $("#zoom-in").onclick = () => {
   camera.zoom = Math.min(3.8, camera.zoom * 1.25);
   camera.updateProjectionMatrix();
@@ -2023,7 +2034,12 @@ function showRoster() {
   $("#roster-dialog").showModal();
 }
 addEventListener("keydown", (e) => {
-  if (e.target.matches("input,select") || $("dialog[open]")) return;
+  if (e.target.matches("input,select,textarea") || e.target.isContentEditable || $("dialog[open]")) return;
+  if (!e.ctrlKey && !e.metaKey && !e.altKey && ["q", "e"].includes(e.key.toLowerCase())) {
+    e.preventDefault();
+    rotateCourse(e.key.toLowerCase() === "q" ? -1 : 1);
+    return;
+  }
   if (e.key === "/") {
     e.preventDefault();
     beginShotAnalysis();
@@ -2388,6 +2404,7 @@ renderer.domElement.addEventListener("pointerleave", () => {
 });
 window.__gameTest = Object.freeze({
   getCameraTarget: () => controls.target.toArray(),
+  getCameraView: () => ({position:camera.position.toArray(),target:controls.target.toArray(),zoom:camera.zoom}),
   getState: () => JSON.parse(serialize(game)),
   getPropertyBoundary: () => ({
     visible: boundary.visible,
