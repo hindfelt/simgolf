@@ -1098,3 +1098,20 @@ Destination selection from 0x4290ca now reaches a watching skip or 0x429f27
 through the implemented branches. Continuous native verification of that entire
 composition is still required; actual movement/arrival, earlier departure
 integration, persistent world actors and live conversion remain unfinished.
+
+### Continuous walking-preparation verification
+
+`verify-original-walking-preparation.py` executes 500 original paths from
+0x4290ca continuously through destination preparation. All match full actor
+records, queue/follow/heading/movement/service locals, destination, RNG, shared
+search outputs, queue clock and ordered effect calls. Coverage: 464 movement
+entries, 36 watching skips, 180 cleanup calls, 357 type-7 searches, 119 type-3
+searches, 87 marked-tile searches, 28 type-6 searches, 26 type-8 searches and
+28 type-10 searches. Native heading, distance, RNG and search bodies execute;
+visitor cleanup effects are controlled and mutate actor/clock state on both
+sides. Mixed terrain, holes, actor flags, waiting and facility records vary.
+
+This closes the full destination-preparation composition check for these
+fixtures, rather than relying only on component tests. It does not cover actual
+movement beyond 0x429f27, earlier walking/departure entry, real cleanup bodies,
+complete actor scheduling, persistent live-world adaptation or release parity.
