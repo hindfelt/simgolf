@@ -1737,3 +1737,8 @@ Effects including planner, reactions, slope and projection remain controlled;
 terrain is uniform and these are short sequences. Full world-tick effects,
 long-running real-helper scenarios, tutorial handling, live-state conversion
 and hosted adoption remain open. This code is not used by the live game yet.
+
+The prior abstract-record scheduler and its native oracle are retained as
+`original-golfer-loop-boundary.js` / `verify-original-golfer-loop-boundary.py`.
+Its four Playwright boundary checks plus the actor motion check pass after
+updating the import; the integrated loop uses packed records and actual turns.

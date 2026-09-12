@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {originalGolferLoop} from '../src/simulation/original-golfer-loop.js';
+import {originalGolferLoopBoundary as originalGolferLoop} from '../src/simulation/original-golfer-loop-boundary.js';
 import {originalWorldUpdate} from '../src/simulation/original-world-update.js';
 const fresh=()=>({seed:17,clubhouseX:20,clubhouseZ:30,actors:Array.from({length:152},()=>({holeByte:0,countdown:0,x:0,z:0}))});
 test('original slot order observes changes made by earlier actors',()=>{
