@@ -37,3 +37,10 @@ test('partner progress permits a secondary facility after other service checks',
  const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
  expect(r.next).toBe('0x429f27');expect(r.serviceIndex).toBe(0);expect(r.destination).toEqual({x:24064,z:24064});expect(r.calls.map(c=>c.args[0])).toEqual([3]);
 });
+test('no selected service reaches movement with cumulative partner spacing',()=>{
+ const s=fresh(),a=new DataView(s.actors[0].buffer);a.setInt32(0xdc,0,true);s.walkingOverride=1;s.movementReady=1;new DataView(s.actors[1].buffer).setInt32(0xe4,0,true);
+ s.holes[1][1]=2;s.facilityRecords=new Uint8Array(4096);s.facilityWidths=Array(16).fill(2);
+ const h=new DataView(s.holes[1].buffer);h.setInt32(0x10,20,true);h.setInt32(0x14,20,true);
+ const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
+ expect(r.next).toBe('0x429f27');expect(r.movementReady).toBe(0);expect(new DataView(r.state.actors[0].buffer).getUint32(0x18,true)&0x800).toBe(0x800);
+});

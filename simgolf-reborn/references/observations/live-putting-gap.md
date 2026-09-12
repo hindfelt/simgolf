@@ -1082,3 +1082,19 @@ destination and continuation, with 111 newly accepted stops. Walking preparation
 connects this after type-8 handling; five composition tests pass. The remaining
 partner-spacing branch and actual movement/arrival are still unfinished, as
 are continuous full-composition verification, persistence and live integration.
+
+### Final partner spacing and destination completion
+
+`original-walking-partner-spacing.js` recovers 0x429e24–0x429f27,
+including signed hole ordering, actor ordering, partner flag/animation checks,
+and the independent override offset. Both half-tile offsets can accumulate.
+Each applied adjustment clears the movement-ready local and sets flag 0x800.
+
+1,600 native cases match full actor records, destination and movement local;
+746 apply spacing. Walking preparation now connects the no-service continuation
+to movement entry. Six composition tests pass, including cumulative spacing
+with a grounded partner (an airborne partner correctly diverts to watching).
+Destination selection from 0x4290ca now reaches a watching skip or 0x429f27
+through the implemented branches. Continuous native verification of that entire
+composition is still required; actual movement/arrival, earlier departure
+integration, persistent world actors and live conversion remain unfinished.
