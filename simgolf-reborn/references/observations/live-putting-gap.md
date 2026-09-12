@@ -863,3 +863,14 @@ locals are captured before motion reuses their native stack slots.
 This closes the new action-to-motion handoff verification gap for those cases.
 Walking/retry bodies, full world-loop integration, persistence and live conversion
 remain unfinished. The test does not imply complete actor behavior or release.
+
+### Angry departure branch
+
+`original-angry-departure.js` recovers 0x428f64–0x429024. Flagged golfers
+complain on the original actor-offset phase schedule, apply the animation/RNG
+flag, wait -99, decrement the signed value and leave when below -10. Otherwise
+the branch supplies the clubhouse-centred destination to movement at 0x429f27.
+Unflagged golfers continue explicitly at 0x429024. 1,500 native cases match
+actor bytes, RNG, destination and 497 timed complaints, including callback
+changes and signed-word wrap. Earlier departure text and later ordinary walking
+remain unrecovered; this helper is not yet wired into the complete turn.
