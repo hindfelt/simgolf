@@ -1068,3 +1068,17 @@ flags and flag storage executes normally. Five composition tests pass. Type-8
 availability and original facility tables remain explicit state inputs. Remaining
 optional service branches, arrival/movement, full composition verification and
 live integration remain unfinished.
+
+### Final optional facility check
+
+`original-walking-type10-service.js` recovers 0x429d3d–0x429e24 and
+selected-service entry 0x429e0d. It preserves eligibility, flag-dependent
+six/nine-tile distance cutoff, actor-parity interior offsets plus 2560 units,
+and flag 0x20 updates. Previously selected services reach movement at 0x429f27;
+no selection continues to partner spacing at 0x429e24.
+
+1,200 native cases match actor bytes, search calls, index, distance,
+destination and continuation, with 111 newly accepted stops. Walking preparation
+connects this after type-8 handling; five composition tests pass. The remaining
+partner-spacing branch and actual movement/arrival are still unfinished, as
+are continuous full-composition verification, persistence and live integration.

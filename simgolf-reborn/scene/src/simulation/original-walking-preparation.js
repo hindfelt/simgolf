@@ -8,6 +8,7 @@ import {originalWalkingServiceFallback} from './original-walking-service-fallbac
 import {originalWalkingPartnerService} from './original-walking-partner-service.js';
 import {originalWalkingType6Service} from './original-walking-type6-service.js';
 import {originalWalkingType8Service} from './original-walking-type8-service.js';
+import {originalWalkingType10Service} from './original-walking-type10-service.js';
 
 // Continuous preparation from 0x4290ca through ball destination selection.
 function prepare(snapshot, resolve) {
@@ -34,9 +35,16 @@ function prepare(snapshot, resolve) {
   return {...combined, ...secondary, ...optional, calls: [...combined.calls, ...secondary.calls, ...optional.calls]};
 }
 
-export function originalWalkingPreparation(snapshot, resolve) {
+function withType8(snapshot, resolve) {
   const prepared = prepare(snapshot, resolve);
   if (!['0x429b53','0x429b5f','0x429b70','0x429b76'].includes(prepared.next)) return prepared;
   const service = originalWalkingType8Service({...prepared.state, serviceEntry: prepared.next, serviceIndex: prepared.serviceIndex, destination: prepared.destination});
+  return {...prepared, ...service, calls: [...prepared.calls, ...service.calls]};
+}
+
+export function originalWalkingPreparation(snapshot, resolve) {
+  const prepared = withType8(snapshot, resolve);
+  if (!['0x429d3d','0x429e0d'].includes(prepared.next)) return prepared;
+  const service = originalWalkingType10Service({...prepared.state, serviceEntry: prepared.next, serviceIndex: prepared.serviceIndex, destination: prepared.destination});
   return {...prepared, ...service, calls: [...prepared.calls, ...service.calls]};
 }
