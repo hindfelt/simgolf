@@ -1897,3 +1897,18 @@ This closes the covered shot-preparation/planner boundary. Earlier actor
 selection and later swing/motion are not included in this uninterrupted
 comparison. Putt accounting, manual targeting, real reaction effects, search
 scratch provenance and live adoption remain open at this integration scope.
+
+
+### Green-origin real planning and putt accounting
+
+`verify-original-prepared-putt.py` extends the continuous shot-preparation
+oracle to terrain 1 with a nearby cup, three sub-tile ball positions and
+both values of tile flag 0x80. It covers six base scenarios, including a
+professional, for 36 native comparisons. The native planner executes fully;
+search is not entered on these green-origin cases.
+
+All 36 match packed actor/adjacent records, hole records, putt-stat counters,
+cache/RNG, diagnostics, metadata and unchanged search globals. This verifies
+the no-search planner path and post-planner putt accounting/delay in the
+packaged preparation function. It does not yet verify subsequent ball rolling,
+cup capture, full actor scheduling, real reaction bodies or live adoption.
