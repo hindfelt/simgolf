@@ -43,3 +43,9 @@ test('shared phase and RNG are supplied by the world, including wraparound and t
  const terminal={...initial,status:'stopped'};
  expect(originalFlatPuttStep(terminal,{phaseCounter:8,seed:99})).toEqual({state:terminal,rngState:99,draws:0});
 });
+test('stopping clears residual speed as the original stop branch does',()=>{
+ const state=start(20);state.ball.speed=65;
+ const result=originalFlatPuttStep(state,{phaseCounter:1,seed:1234});
+ expect(result.state.status).toBe('stopped');expect(result.state.ball.speed).toBe(0);
+ expect(result.rngState).toBe(1234);
+});

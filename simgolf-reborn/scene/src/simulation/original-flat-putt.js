@@ -18,6 +18,7 @@ export function originalFlatPuttStart(launch,{cupX,cupZ,eventFlag=false,rollCoef
  originalBallPositionStep(ball);
  originalGroundResponse({...ball,terrainCode:1,originTerrainCode:1,rollCoefficient,
   forwardSlope:0,crossSlope:0,boundaryFlags:0,phaseCounter:0});
+ if(originalBallStopped(ball)) ball.speed=0;
  return {version:1,ball,cupX,cupZ,eventFlag,rollCoefficient,steps:0,status:originalBallStopped(ball)?'stopped':'rolling'};
 }
 
@@ -41,6 +42,9 @@ export function originalFlatPuttStep(state,{phaseCounter,seed}) {
  const capture=originalCupCapture({...ball,cellX,cellZ,terrainCode:1,
   cellFlags:cellX===state.cupX&&cellZ===state.cupZ?128:0,club:13,eventFlag:state.eventFlag});
  if(capture)ball={...ball,...capture};
- return {state:{...state,ball,steps:state.steps+1,status:capture?'captured':originalBallStopped(ball)?'stopped':'rolling'},
+ const stopped=originalBallStopped(ball);
+ // 0x42ca97 clears residual horizontal speed when the stop predicate passes.
+ if(stopped)ball.speed=0;
+ return {state:{...state,ball,steps:state.steps+1,status:capture?'captured':stopped?'stopped':'rolling'},
   rngState:response.rngState,draws:response.draws};
 }
