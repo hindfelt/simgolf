@@ -1487,3 +1487,19 @@ fatigue; the rest tile is interior (23,24). Reaction and sound bodies remain
 controlled. Edge-memory behavior and negative-fatigue combined searches are
 not covered by this matrix. Decoration-map lookup, partner continuation and
 full live dispatch/persistence remain unfinished.
+
+### Service arrival dispatch and rest-to-partner continuation
+
+`original-service-arrival.js` dispatches at 0x42a019: nonnegative facility
+indices use facility arrivals, -2 reads the original rest-decoration map and
+executes rest placement, and negative-index arrivals continue into partner
+waiting/shot preparation. Calls and RNG consumption are accumulated in order.
+
+1,200 uninterrupted native runs from 0x42a019 match resting actor bytes,
+RNG, ordered effects and final continuations through partner handling.
+Fixtures cover interior rest tiles with mixed terrain/flags, partner hole
+and stroke states, and explicit starting-ball locals. Native adjacency,
+heading and RNG execute; reactions/audio remain controlled. Earlier walking
+must supply verified starting-ball locals before this dispatcher replaces
+all negative-index arrival continuations. Live integration, later shot/wait
+execution and remaining unhappy departures are still open.
