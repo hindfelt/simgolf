@@ -2281,3 +2281,19 @@ cannot rewrite earlier observations. Cases retain controlled reaction mutations
 and terrain callbacks; these matches do not establish every native field or
 all planner/search branches. Actual planner-to-audible-world effect composition
 and live adoption remain open.
+
+
+### Planner reaction world publication and reread
+
+`originalPlannerReactionWorld` publishes the planner's current actor/partner,
+launch values, seed, cache, diagnostics and entry-hole counter into a cloned
+world. `originalPlannerAfterReaction` reads changed actor/partner/global fields
+back while retaining local scenery references. The planning hole is explicit
+and remains fixed even if a reaction changes the actor's current hole.
+
+`verify-original-planner-reaction-world.py` routes controlled native-equivalent
+remark mutations through these packed records. All 413 reaction boundaries
+and final outputs across 240 uninterrupted direct planners match, including
+recovery's neighboring-slot byte. Two tests cover unrelated-state preservation,
+input isolation and hole changes. Actual audible effect composition, full
+world callback publication and live adoption remain open.
