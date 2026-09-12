@@ -7,7 +7,7 @@ export function createShotSoundTracker(){
   for(const v of [...g.guests,...(g.pro?[g.pro]:[])]){
    if(!v.shot)continue;
    const id=`${v.id}:${v.roundId}:${v.holeId}:${v.strokes}`;current.add(id);
-   if(continuous&&!previous.has(id)&&!v.shot.putt&&v.shot.time<=.3)events.push({id,position:{...v.shot.from}});
+   if(continuous&&!previous.has(id)&&v.shot.time<=.3)events.push({id,kind:v.shot.putt?'putt':'drive',position:{...v.shot.from}});
   }
   previous=current;lastTime=g.time;return events;
  }};

@@ -1,3 +1,4 @@
+import {helicopterPose} from "./helicopter-pose.js";
 import * as THREE from 'three';
 import { person } from '../actors.js';
 export function helicopterView(scene, height) {
@@ -22,17 +23,10 @@ export function helicopterView(scene, height) {
   craft.visible=false;
   return { update(g) {
     const h=g.helicopter; craft.visible=!!h;people.forEach(p=>p.visible=false);if(!h)return;
-    const t=g.time-h.since;let x=h.pad.x,z=h.pad.z,lift=0;
-    if(h.phase==='arriving') {
-      const u=Math.min(1,t/24);
-      if(u<.65) {const a=u/.65; x+=-75+95*a;z+=-35+30*Math.sin(a*Math.PI);lift=22;}
-      else {const a=(u-.65)/.35;x+=20*(1-a);z-=35*(1-a);lift=22*(1-a);}
-    } else if(h.phase==='departing') {
-      const u=Math.min(1,t/20);lift=Math.min(24,u*60);x+=80*u*u;z-=60*u*u;
-    }
+    const t=g.time-h.since,{x,z,lift,power}=helicopterPose(h,g.time);
     craft.position.set(x,height(h.pad.x,h.pad.z)+.3+lift,z);
     craft.rotation.y=h.phase==='departing'?Math.PI*.8:Math.PI*.3;
-    rotor.rotation.y=h.phase==='parked'?0:g.time*35;
+    rotor.rotation.y=power===0?0:g.time*35;
     if(['unloading','boarding'].includes(h.phase)) {
       const u=Math.min(1,t/5),a=h.phase==='boarding'?1-u:u;
       people.forEach((p,i)=> {p.visible=true;const px=h.pad.x+(h.entrance.x-h.pad.x)*a+(i-.5)*.8;

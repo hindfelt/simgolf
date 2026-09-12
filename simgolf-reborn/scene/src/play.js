@@ -2474,7 +2474,7 @@ function frame(now) {
   sun.intensity = 2.3 * brightness;
   ambient.intensity = dayLight.night ? 0.22 : 0.65 + brightness;
   fill.intensity = dayLight.night ? 0.08 : 0.25 + brightness * 0.15;
-  gameAudio.update(game,p=>{const v=new THREE.Vector3(p.x,height(p.x,p.z)+.5,p.z).project(camera);return {x:(v.x+1)/2,y:(1-v.y)/2,depth:v.z};},{silent:paused||!!$("dialog[open]")});
+  gameAudio.update(game,p=>{const v=new THREE.Vector3(p.x,height(p.base?.x??p.x,p.base?.z??p.z)+.5+(p.lift||0),p.z).project(camera);return {x:(v.x+1)/2,y:(1-v.y)/2,depth:v.z};},{silent:paused||!!$("dialog[open]")});
   renderer.render(scene, camera);
   remarks.update(
     [
