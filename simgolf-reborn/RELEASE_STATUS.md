@@ -60,9 +60,9 @@ and deployment inspection are required before publishing a release.
 - [Actual-renderer interface and preview](references/release/fairway-baron-interface.md)
 - [Aircraft visits](references/release/aircraft-visits.md)
 - [Live putting and recovered-engine integration gap](references/observations/live-putting-gap.md)
-- [Earlier broad live stability assessment](references/release/ruleset-83-live-regression.md)
+- [Latest broad live stability assessment](references/release/ruleset-85-live-regression.md)
 
-The earlier broad assessment predates rulesets 84/85. The regional changes have
-focused verification and successful builds; they have not received a new full
-hosted stability assessment. Original-engine modules remain separate from the
+The ruleset-85 broad local run found two hotel-renderer failures; both have
+focused passing repairs. It is not a clean full-suite rerun or a hosted stability
+assessment. Original-engine modules remain separate from the
 live simulation until their integration is explicitly verified.

@@ -2139,6 +2139,7 @@ function hover(e) {
       view.previewFacility(
         { type: tool, c: c.c, r: c.r, rotation: buildingRotation },
         check.ok,
+        game.environment,
       );
   } else if (mode === "play" && game.pro?.phase === "address" && !isPutting(game, game.pro)) {
     const preview = shotPreview(game, p, technique);

@@ -25,3 +25,21 @@ test('tropical offshore water shares its palette and hotel uses a lower lodge fo
  expect(result.lodge[1]).toBeLessThan(result.hotel[1]);expect(result.lodge[0]).toBe(result.hotel[0]);expect(result.lodge[2]).toBe(result.hotel[2]);
  await page.locator('#hotel-review').screenshot({path:'/tmp/baron-tropical-hotel.png'});
 });
+
+test('course renderer passes the environment to placed hotels and placement previews',async({page})=>{
+ await page.goto('/terrain-preview.html?seed=2002&landscape=river&environment=tropical');await expect(page.locator('#status')).toHaveCount(0);
+ const sizes=await page.evaluate(async()=>{
+  const THREE=await import('/node_modules/three/build/three.module.js');
+  const {createGame,build}=await import('/src/simulation/game.js');
+  const {buildCourseView}=await import('/src/rendering/course.js');
+  const g=createGame(2002,'classic','tropical');build(g,'hotel',22,14);
+  const scene=new THREE.Scene(),view=buildCourseView(scene);view.update(g,0);
+  const size=o=>new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).y;
+  const placed=size(scene.children.find(o=>o.userData.facilityType==='hotel'));
+  const f={type:'hotel',c:22,r:14,rotation:0};
+  view.previewFacility(f,true,'tropical');const tropical=size(scene.children.at(-1));
+  view.previewFacility(f,true,'parklands');const parklands=size(scene.children.at(-1));
+  return {placed,tropical,parklands};
+ });
+ expect(sizes.tropical).toBeCloseTo(sizes.placed);expect(sizes.parklands).toBeGreaterThan(sizes.tropical);
+});

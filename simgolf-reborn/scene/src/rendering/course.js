@@ -442,14 +442,14 @@ export function buildCourseView(scene) {
     for (const f of g.facilities) {
       let group=facilityMap.get(f.id);
       if(!group){
-        group=makeFacility(f);
+        group=makeFacility(f,g.environment);
         group.userData.facilityType=f.type;
         facilityMap.set(f.id,group);
       }
       facilityLighting(group,FACILITIES[f.type]?.scenery ? 'scenery' : connected(g,f) ? 'connected' : 'disconnected');
     }
   }
-  function makeFacility(f) {
+  function makeFacility(f,environment=null) {
     const p = center(f.c, f.r);
     let group;
     if (["building-lot", "home"].includes(f.type))
@@ -460,7 +460,7 @@ export function buildCourseView(scene) {
     else if (f.type === "church") group = church(scene, p.x, p.z);
     else if (f.type === "snack") group = snackBar(scene, p.x, p.z);
     else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z);
-    else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z, g.environment);
+    else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z, environment);
     else if (f.type === "flowerbed") group = flowerbed(scene, p.x, p.z);
     else if (["stable", "spa"].includes(f.type))
       group = regionalRecreation(scene, f.type, p.x, p.z);
@@ -536,15 +536,15 @@ export function buildCourseView(scene) {
     pickTree(raycaster) {
       return trees.pick(raycaster);
     },
-    previewFacility(f, valid = true) {
+    previewFacility(f, valid = true, environment = null) {
       if (!f) {
         if (preview) preview.visible = false;
         return;
       }
-      if (previewType !== f.type) {
+      if (previewType !== `${f.type}:${environment}`) {
         if (preview) disposeGroup(preview);
-        preview = makeFacility(f);
-        previewType = f.type;
+        preview = makeFacility(f,environment);
+        previewType = `${f.type}:${environment}`;
         preview.traverse((o) => {
           if (!o.material) return;
           o.material = Array.isArray(o.material)
