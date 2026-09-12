@@ -1549,3 +1549,17 @@ formats the signed hole value directly. Random initial record contents cover
 counter wrapping and preservation of unrelated fields. Actual name/notice/
 cleanup composition, connection to congestion decisions and authoritative live
 departure remain unfinished.
+
+### Congestion gate through departure outcome
+
+`original-congestion-outcome.js` connects difficulty-dependent congestion
+waiting and the unhappy-departure gate to complaint/record/partner cleanup.
+Non-departing actors retain the movement continuation; departing actors reach
+the tick exit. The combined result preserves congestion RNG consumption.
+
+800 uninterrupted native cases from both congestion entries match actor and
+hole/completion records, shared RNG, complaint text, message flag, calls and
+exit. Difficulty, signed mood, actor class and initial flags vary. Names,
+integer-formatting and notice/cleanup effects remain controlled. Walking
+avoidance integration and actual effect implementations/live adoption remain
+open; this composition is not a production behavior change.
