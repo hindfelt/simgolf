@@ -1399,3 +1399,5 @@ Original reaction world adapter now reads/writes packed hole and tile records wi
 Reaction outcome snapshots can now be read after speech/preamble effects and before world-counter updates.15 related tests pass, including moving to another hole/tile and preserving the effect's RNG. Full native world-backed verification, audio/social completion and live integration remain unfinished.
 
 Complete remark entry through reaction outcome now matches10763 uninterrupted native executions, including actor happiness, history flags, RNG and world counters.10 related tests pass. Social behavior after0x46806a, positional playback integration and live authoritative world wiring remain unfinished.
+
+Correction to the preceding “downstream social” label:0x46806a onward generates explanatory messages for the player, rather than verified relationship changes. Its gating now matches3960 native executions;2 tests pass. Explanation text assembly and popup completion remain, followed by complete integration and live wiring.

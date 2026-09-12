@@ -3149,3 +3149,11 @@ Fifteen related tests pass, including existing native response/adjustment fixtur
 `verify-original-reacted-remark.py` executes0x4672d0 continuously through actual entry, phrase parsing, actor naming, display, history, delta selection and outcome to0x46806a or the original early exit.10763 comparisons match complete returned actor state, phase events, preparation snapshots, voice offsets, selected/effective deltas, RNG, hole counters and terrain growth/counters. All65 standard request kinds remain represented. Native profile, score, resource, naming and RNG helpers execute; location, CRT and sound playback remain controlled boundaries. Sound is inert in this matrix, so late movement/state-refresh behavior remains separately tested rather than claimed as native-contiguous coverage here.
 
 Ten related tests pass, including positive/negative reactions, terrain growth, early exits and the late-snapshot integration cases. Downstream social behavior after0x46806a, complete positional playback composition, authoritative world integration and live gameplay wiring remain open.
+
+### Remaining block identified as explanatory messaging (2026-09-12)
+
+Inspection of0x46806a onward corrects the earlier provisional “downstream social” label: this block creates explanations quoting the golfer's remark, with text such as successfully making a tough-looking shot. The final0x468feb–0x469075 path selects a message style, checks an interface flag, calls0x40c7f0 and updates seen-kind masks/cooldown after success. Relationship effects must not be inferred from this block.
+
+`originalRemarkExplanationGate` reconstructs0x46806a–0x468148. Kind50 exits before voice lookup. Other kinds choose he/she via the actual profile voice helper, then check signed elapsed time strictly greater than500, actor word0xae zero, two seen-kind masks, and strict screen-coordinate bounds100<x<700 and100<y<400. Native x86 shift wrapping means kinds64/65 reuse bits0/1 of the high mask; this behavior is retained.
+
+3960 native comparisons and2 regression tests pass, including cooldown and screen boundaries, pronouns and high-kind masks. Explanation text assembly, final popup helper/completion and integration after reaction remain open, alongside audio/world/live wiring.
