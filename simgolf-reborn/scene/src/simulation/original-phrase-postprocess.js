@@ -1,3 +1,4 @@
+import {originalLocationDescription} from './original-location-description.js';
 import {originalActorName} from './original-actor-name.js';
 const ctext=value=>{if(typeof value!=='string')throw Error('Original phrase substitution data is unavailable.');return value.split('\0',1)[0];};
 const replaceFirst=(source,token,value)=>{const i=source.indexOf(token);return i<0?source:source.slice(0,i)+value+source.slice(i+token.length);};
@@ -28,4 +29,13 @@ export function originalPhrasePostprocess(q,expandName,describeLocation){
 }
 export function originalNamedPhrasePostprocess(q,names,describeLocation){
  return originalPhrasePostprocess(q,(event,state)=>{state.sourceText=originalActorName({...names,actorId:event.args[0],actor:state.actors[event.args[0]],sourceText:state.sourceText,appendComma:false});return state;},describeLocation);
+}
+
+export function originalDescribedPhrasePostprocess(q,names,locationContext,describeBuilding){
+ const locationEvents=[];
+ const result=originalNamedPhrasePostprocess(q,names,(event,state)=>{
+  const context=locationContext(structuredClone(state));const [c,r,type]=event.args;
+  const description=originalLocationDescription({...context,c,r,type,state},context.map,describeBuilding);locationEvents.push(...description.events);return description.state;
+ });
+ return {...result,locationEvents};
 }
