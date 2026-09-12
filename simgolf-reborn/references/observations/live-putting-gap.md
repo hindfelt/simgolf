@@ -2136,3 +2136,20 @@ reads the authoritative green coefficient 3. Eight related tests pass,
 including changing runtime metadata, invalid values and input isolation.
 This prevents one identified planning/movement mismatch at integration; live
 world adoption, cadence and actual effects remain incomplete.
+
+
+### Current cup and distinct ball/stance origins
+
+`originalPlannerInput` now reads the cup from the active hole's packed
+0x18/0x1c fields (native 0x42366b/0x423671). Scenery position comes from actor
+0x08/0x0c (native 0x424a68/0x424a7c), while targeting still uses ball 0xdc/0xe0.
+This prevents stale caller geometry from surviving a moved cup or golfer.
+
+All 36 full putt comparisons pass with deliberately incorrect context cup and
+position values; nine related tests pass, including distinct stance/ball
+coordinates, a moved cup and input isolation. The putt matrix does not exercise
+non-putter scenery sampling; its stance mapping is grounded in the native reads.
+Live schema integration and actual world/effect scheduling remain open.
+
+The six uninterrupted preparation/real-planner comparisons (clear, mixed and
+professional long-shot scenarios) also pass after this mapping change.

@@ -8,7 +8,11 @@ export function originalPlannerInput(snapshot,context){
  const partnerId=a.getInt16(0xaa,true),partner=snapshot.actors?.[partnerId];
  if(!(partner instanceof Uint8Array)||partner.length!==256)throw Error('Original planner input partner unavailable.');
  const q=structuredClone(context),x=a.getInt32(0xdc,true),z=a.getInt32(0xe0,true);
- Object.assign(q,{actorId:id});
+ // Scenery samples start at the golfer's stance (0x424a68/0x424a7c),
+ // while targeting starts at the ball. They may differ after a previous shot.
+ Object.assign(q,{actorId:id,position:{x:a.getInt32(8,true),z:a.getInt32(12,true)}});
+ const h=new DataView(hole.buffer,hole.byteOffset,hole.byteLength);
+ q.planning.cup={x:h.getInt32(0x18,true),z:h.getInt32(0x1c,true)};
  // 0x421873 reads the green's runtime coefficient even when the ball starts
  // elsewhere. Use the same terrain metadata as motion, not stale UI context.
  const green=snapshot.metadata?.[1];
