@@ -2037,3 +2037,23 @@ presentation/reaction effects are controlled. This is not an uninterrupted
 full native world run. The comparison ends before ground resolution, so it
 does not yet prove naturally planned putts rolling into cups. Live adoption,
 real effects and render cadence remain open; no deployment.
+
+
+### Planned putt through rolling termination
+
+`verify-original-prepared-putt-roll.py` extends the preparation/clearance/
+animation handoff through repeated native ground updates. The terrain includes
+the target cup's green tile and 0x80 cup flag. It retains the actual planner's
+launch values, refreshes pre-movement tile locals and advances the explicit
+phase counter each update. All 36 cases match both packed actor records,
+shared RNG, ordered effects, animation/update counts and terminal branch.
+
+All 36 reach stopped-shot accounting entry (0x42ca9d); none reaches cup capture
+(0x42c3f4). This is matching missed-putt behavior under the controlled flat-map
+fixture, not proof of a naturally holed putt. Native ground resistance/contact,
+reflection and stopping execute; terrain metadata matches the planner fixture
+(bounce 3, roll 0), while slope/height and reaction/presentation remain controlled.
+The JS comparison composes the existing motion stages and stops at the same
+pre-accounting/pre-capture boundary. The explicit two-emulator preparation
+handoff and timing limitations above still apply. Full scoring after natural
+planning, real terrain/effects and live adoption remain unfinished.
