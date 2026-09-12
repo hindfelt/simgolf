@@ -731,3 +731,16 @@ A focused actual rolling-to-cup test verifies one payment and one completion,
 with no ordinary landing accounting. The entire newly composed cup branch
 still needs its own continuous native comparison. Earlier position/sampling
 composition and live-world integration remain open.
+
+### Continuous rolling-to-scored-cup verification
+
+`verify-original-ground-cup-resolution.py` closes the composed ordinary cup
+verification gap: 1,200 executions start at 0x42c13a, run real cup eligibility
+and real ordinary hole completion, and finish at the actor skip exit. Complete
+actor/completion records, hole/stat/financial/notice tables, text, selection,
+score list and ordered effects match. Fixtures use a cup-centred low-speed
+ball with zero slopes and vary ordinary actor classes, strokes, record data,
+event mode, visual slot and callback mutations. Wider eligibility thresholds
+remain covered by the preceding decision verifier; this run verifies full
+composition for successful captures. Position/sampling and live integration
+remain unfinished; no deployment or whole-game parity claim is made.
