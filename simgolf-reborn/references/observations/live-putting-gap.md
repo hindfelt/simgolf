@@ -651,3 +651,19 @@ entry (0x42ca9d). 1,600 continuous native cases match shooter state, stop
 globals, RNG and 11,811 ordered effects. Two focused tests verify reaction
 changes reaching the stop predicate and noncontact scan bypass. Full earlier
 motion, stopped-accounting record adaptation, and live integration remain open.
+
+### Contact through stopped-shot accounting
+
+`original-contact-resolution.js` joins the contact-to-stop path with the
+recovered accounting/reaction/drop/post-landing path. Moving balls return
+without accounting. Stopped balls enter accounting exactly once. The adapter
+normalizes the older `holeRecords` naming to the motion `holes` table and
+rebuilds target coordinates from those original records before accounting;
+returned aliases point to the updated table.
+
+800 continuous native executions from 0x42c527 through the ordinary skip exit
+match actor/hole/stat records, wear, RNG and ordered effects, including 7,096
+drop candidates and 509 penalties. These fixtures exercise low-speed contacts
+with zero sampled slopes; prior broader motion verifiers remain relevant but
+do not establish the full combined input domain. Earlier flight/ground/cup
+integration and live world/actor conversion remain unfinished.
