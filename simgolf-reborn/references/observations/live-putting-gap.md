@@ -682,3 +682,13 @@ slope tests or establish the whole live trajectory integration.
 
 Earlier position/gravity and ground/cup branches still need continuous actor
 composition; the live engine remains separate.
+
+### Ordered ground-edge reflections
+
+`original-actor-ground-reflection.js` recovers 0x42c47c–0x42c527 for a ball
+that did not enter the cup. Edge audio precedes each heading reflection.
+The second-axis crossing and edge flags are reread after the first sound,
+so callback changes can suppress the second reflection. 2,000 native cases
+match complete actor records, edge flags and 954 ordered sounds, including
+controlled heading/position/edge mutations. The earlier rolling/contact/cup
+branch and continuous actor-motion integration remain unfinished.
