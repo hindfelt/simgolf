@@ -1563,3 +1563,18 @@ exit. Difficulty, signed mood, actor class and initial flags vary. Names,
 integer-formatting and notice/cleanup effects remain controlled. Walking
 avoidance integration and actual effect implementations/live adoption remain
 open; this composition is not a production behavior change.
+
+### Walking dispatch completes congestion departures
+
+`original-walking-completed-dispatch.js` executes the departure body when
+near/far walking reaches its unhappy-departure continuation, combining calls
+while preserving the walking RNG state and locals.
+
+500 uninterrupted native cases from destination preparation through tick
+exit match actor/hole/completion records, RNG, complaint/message state,
+ordered effects, cash and service income. Deliberate crowded fixtures produce
+76 departures; the matrix also contains 49 rest visits, 51 paid facility visits
+and 272 position changes. All 500 reach skip. Name/formatting, reaction,
+notice/audio and cleanup bodies remain controlled. This verifies the covered
+walking flow, not earlier actor entry, actual effects, multi-tick persistence,
+shot scheduling or live adoption; those remain unfinished.
