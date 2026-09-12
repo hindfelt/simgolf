@@ -3187,3 +3187,9 @@ Inspection of0x46806a onward corrects the earlier provisional “downstream soci
 `verify-original-popup-explanation.py` executes0x46806a–0x469075 continuously with the actual0x466fb0 name routine,0x40c7f0 popup helper and original RNG.3120 comparisons match all returned text, phase events, popup fields, masks, cooldown and RNG state. All65 kinds are represented using personal phrase overrides, varied enabled/active/pending/mode states and selected deltas. Only location and string-search calls remain controlled boundaries in this matrix.
 
 Six related tests pass, explicitly including accepted popups and attempted-but-rejected displays with no RNG/cooldown consumption. Native standard-phrase explanation coverage, reaction→explanation state transfer, remaining audio composition and live integration remain open. No production change is claimed by this verification.
+
+### Reaction and explanation adapter
+
+`originalCompleteRemark` joins the previously verified reaction and explanation modules. It preserves early returns, uses the selected delta for popup styling, and continues popup randomness from the reaction seed. Reaction counter snapshots remain separate from whole-world arrays. The caller supplies current explanation globals/difficulty through a synchronous snapshot after reaction effects; this reader must not consume randomness or execute effects. The final RNG seed is in the returned top-level state; `reaction.state` remains the intermediate reaction snapshot.
+
+Ten related tests pass, covering one outcome draw followed by two popup draws, rejection without popup draws/cooldown, early return without explanation reads, immutable input and retained typed world arrays. Existing native explanation fixture comparisons remain included. There is not yet an uninterrupted original-executable oracle for this newly joined full routine, nor a live world/UI adapter. These remain required before replacing live behavior.
