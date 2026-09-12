@@ -936,3 +936,18 @@ watching reaction and closed-hole changes reach later decisions. These are
 focused composition checks, not a continuous native verification of the whole
 composition. Destination selection at 0x42960b and full turn/live integration
 remain unfinished; no live rules changed.
+
+### Walking ball destinations
+
+`original-walking-ball-destination.js` recovers 0x42960b–0x4297c7,
+returning the destination passed to 0x429f27 or the explicit no-ball/override
+continuation. It preserves the eight native direction vectors, green stance
+offsets, actor-parity partner offsets, signed half-offset arithmetic and water
+fallback to the golfer's own ball. The original ball position local is retained.
+
+1,800 native cases match branch, follow local, ball position and destination,
+with 972 destinations. The native terrain and heading helpers execute. Fixtures
+include mixed green/rough/water, edge positions, both actor parities, missing
+balls and overrides. Walking preparation now invokes this branch after watch
+checks; both composition tests pass. No-ball/tee destinations, later service
+selection and movement at 0x429f27 remain open, as does live integration.

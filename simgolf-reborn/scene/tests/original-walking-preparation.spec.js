@@ -15,5 +15,5 @@ test('queue locals survive a real watching reaction without mutating input',()=>
 test('closed hole propagates to later partner checks and destination continuation',()=>{
  const s=fresh();s.holes[1][0]=0;s.actors[1][0x29]=0;
  const r=originalWalkingPreparation(s,()=>{throw Error('Unexpected cleanup');});
- expect(r.state.actors[0][0x29]).toBe(19);expect(r.waitingGroups).toBe(0);expect(r.next).toBe('0x42960b');expect(r.randomDraws).toBe(0);
+ expect(r.state.actors[0][0x29]).toBe(19);expect(r.waitingGroups).toBe(0);expect(r.next).toBe('0x429f27');expect(r.destination).toBeDefined();expect(r.randomDraws).toBe(0);
 });
