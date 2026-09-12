@@ -599,3 +599,18 @@ that precision too, and their 3,000-case comparisons each still pass.
 
 This closes the separate bounce-to-impact composition gap, not later landing
 scatter/reactions or live gameplay integration. No release completion is implied.
+
+### Ordered actor landing deflection
+
+`original-actor-landing-deflection.js` covers 0x42c815–0x42c9ea. Rock audio
+runs before the subsequent speed/skill/luck check. Luck audio runs before
+rereading the actor's current hole, position and heading for correction;
+remark 42 with parameter 20 follows the correction. RNG is handed through
+callbacks. Hole targets use the 520-byte original records, and luck remains
+an explicit input for the native byte beyond the actor record.
+
+3,000 native cases match full actor records, RNG draws/state and 1,198
+ordered effects. Controlled audio mutations lower speed or change the
+position/heading. Two focused tests pass. Composition into contact, the
+nearby-golfer tail and the live engine remain unfinished; this is not a
+live gameplay change or a completed fidelity audit.
