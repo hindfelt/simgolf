@@ -703,3 +703,18 @@ the refreshed actor state, followed by original green curvature and RNG.
 slope callbacks modifying heading, speed and roll coefficient. Ground-contact
 centre handling and cup routing still need actor composition; live integration
 is unfinished.
+
+### Rolling through cup decision
+
+`original-actor-ground-decision.js` composes rolling response, terrain-centre
+slowdown and cup eligibility. It updates speed/centre state but deliberately
+leaves captured ball coordinates and flags untouched for the ordered cup
+completion routine. The selected branch is 0x42c3f4 for capture or normalized
+0x42c47c for edge reflection. Cup validity reads current terrain/flags rather
+than substituting the earlier cached terrain type.
+
+2,000 continuous native cases match actor bytes, centre flag, selected branch,
+ordered slopes and RNG with varied clubs, cup flags, event mode, terrain and
+callback mutations. World-edge neighbor storage remains an explicit unsupported
+input; full ground-to-cup scoring/reflection composition and live integration
+remain open.
