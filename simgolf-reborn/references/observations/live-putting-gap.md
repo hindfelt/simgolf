@@ -2265,3 +2265,19 @@ state and shared RNG. Four tests pass including boundary-write coverage.
 The fixture uses personal phrases and controlled terrain/playback helpers;
 this is not new full-world native execution. Planner partial-state merging,
 standard-phrase coverage and live adoption remain open. No deployment.
+
+
+### Planner state at reaction entry
+
+`verify-original-planner-reaction-snapshot.py` captures native memory before
+each 0x4672d0 reaction during 240 uninterrupted direct planner runs. All 413
+boundaries match the JS callback's current actor fields, partner class/reaction,
+seed, speed, heading, vertical speed and original hole counter. Complete final
+planner results still match. This checks publication timing, not just final
+values, before introducing a world-writing reaction resolver.
+
+Captured JS observations clone partner state so a later pair-counter increment
+cannot rewrite earlier observations. Cases retain controlled reaction mutations
+and terrain callbacks; these matches do not establish every native field or
+all planner/search branches. Actual planner-to-audible-world effect composition
+and live adoption remain open.
