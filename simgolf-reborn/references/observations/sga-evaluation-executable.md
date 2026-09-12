@@ -3075,3 +3075,11 @@ The remaining standard case50 clears its text buffer and calls0x466440 with sign
 `original-cached-resource-phrase.js` reconstructs the lookup and complete cache-hit paths of0x466440. The first matching entry wins. Mode-1 appends cached text unchanged; mode1 terminates appended text at line breaks; other modes reproduce the native in-place scan/copy behavior, including multiple line breaks and preserved preexisting prefixes. Misses return an explicit load continuation without fabricating text or applying later file-loader writes.
 
 `verify-original-cached-resource-phrase.py` executes the original lookup/hit code and stops at0x46648b before file loading on a miss.2400 cases match across slots, misses, duplicate entries, modes, NUL and line-break variants. Twenty cache/standard tests pass. Standard case coverage remains64 of65: file loading, line parsing and cache population are still required for case50, followed by full contiguous phrase verification and live integration.
+
+### Complete resource phrase parser (2026-09-12)
+
+`original-resource-phrase.js` reconstructs complete0x466440 through0x4669d1, composing the recovered cache lookup with theme/file selection, pre-open slot invalidation, section/variant parsing, line-break handling, EOF, close and conditional cache population. File I/O is an explicit preloaded sequence of original CRT fgets results (null means open failure). This does not yet load browser assets or connect the final standard remark case.
+
+`verify-original-resource-phrase.py` executes the complete native function and supplies only fopen/fgets/fclose.2912 comparisons cover all eight slots, cache hits/misses, modes, missing files, blank lines, final lines without newlines, section/variant combinations and the201-processed-line early exit. Both complete state and I/O event order are compared. The native blank-line branch still checks the completed section/variant condition before another read. Malformed files can read a previously uninitialized stack line; the oracle seeds that buffer explicitly and the reconstruction requires `previousLineBuffer` if that path is reached, rather than fabricating a line. Valid parsed lines replace it normally.
+
+Standard dispatch coverage remains64/65 until case50 is wired and verified. Contiguous phrase composition and live game integration remain open.
