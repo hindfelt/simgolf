@@ -20,14 +20,14 @@ def hook(u,a,size,data):
 for a in [0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(384):
   id=i%16;record=[0]*256;record[0x18]=(i*17)%256;record[0xb6]=i%256
   profile=[-32768,-17,-8,-1,0,1,2,3,4,5,6,7,8,32767][i%14];record[0xb6:0xb8]=list(struct.pack('<h',profile))
   if i<128:record[0xb6:0xb8]=[i,0]
-  if kind in [39,49,62]:record[0xb6:0xb8]=[i%8,0]
-  if kind in [2,4,26,5,13,37,38]:
+  if kind in [28,39,49,62]:record[0xb6:0xb8]=[i%8,0]
+  if kind in [2,3,4,11,26,28,5,13,37,38]:
    record[0xae:0xb0]=list(struct.pack('<h',[-32768,-3,-1,0,1,2,3,4,5,32767][i%10]));record[0xa2:0xa4]=list(struct.pack('<h',id^1))
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
@@ -39,7 +39,7 @@ for kind in kinds:
    else:
     term=dict(name=name,type=[0,13,269,-243,255][(i//7)%5],precedingByte=[0,115,255][(i//35)%3]);q['terms']={str(value):term}
     address=0x576da0+48*value;u.mem_write(address,name.encode()+b'\0');u.mem_write(address+38,bytes([term['type']&255]));u.mem_write(address-1,bytes([term['precedingByte']]))
-  if kind in [39,49,62]:
+  if kind in [28,39,49,62]:
    profile=[0]*560;profile[0x21]=i%256;profile[0x22]=i%20;name=('Profile '+str(i%8)).encode();profile[:len(name)]=name;q['profileRecords']={str(i%8):profile};u.mem_write(0x4d5040+(i%8)*560,bytes(profile))
   if kind==62:
    q['profileRemarks']=['Profile line '+str(j) for j in range(40)]

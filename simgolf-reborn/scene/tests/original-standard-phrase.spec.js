@@ -95,3 +95,11 @@ test('time-based variation uses signed truncation around the original boundary',
  const at=n=>originalStandardPhrase({...q,originalClock:n}).state.sourceText;
  expect(at(-79)).toBe(at(0));expect(at(79)).toBe(at(0));expect(at(80)).not.toBe(at(0));expect(at(-80)).toBe(at(240));
 });
+test('partner-directed location remarks preserve the native recipient and redirection',()=>{
+ const self=new Uint8Array(256),partner=new Uint8Array(256);self[0xae]=1;self[0xa2]=1;partner[0xb6]=1;
+ const state={sourceText:'',redirected:false,actors:{0:self,1:partner}},q={actorId:0,value:256,state};
+ for(const kind of [11,28]){const result=originalDescribedStandardPhrase({...q,kind},{profileNames:['Gary','Mary']});expect(result.state.sourceText).toContain(', sugar');expect(result.state.redirected).toBe(false);expect(result.events).toContainEqual({address:0x466e30,args:[1]});}
+ self[0xae]=3;
+ const named=originalDescribedStandardPhrase({...q,kind:28},{profileNames:['Gary','Mary']});expect(named.state.sourceText).toContain(', Mary');expect(named.state.redirected).toBe(false);
+ const selfNamed=originalDescribedStandardPhrase({...q,kind:3},{profileNames:['Gary','Mary']});expect(selfNamed.state.sourceText).toContain('Gary');expect(selfNamed.state.redirected).toBe(true);
+});

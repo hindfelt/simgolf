@@ -1361,3 +1361,5 @@ F06 standard remarks now cover42 of65 cases. Added complete profile-voice helper
 F06 standard remarks now cover48 of65 cases. Added related-request/type variants, original profile-name text and profile-selected phrase banks.19968 native comparisons and23 related tests pass. Remaining cases1,3,7,10,11,19,22,23,28,30,35,50,54,58,59,60,61; full contiguous phrase verification and live integration remain open.
 
 F06 standard remarks now cover52 of65 cases. Added native terrain plural/category wording, object-name lookup and signed time-based variants.21504 native comparisons and25 related tests pass. Thirteen cases (1,3,7,11,19,23,28,30,50,54,58,59,61), contiguous phrase verification and live integration remain open.
+
+F06 standard remarks now cover55 of65 cases. Added current-golfer/partner wording and exact redirection distinctions for3/11/28.22656 native comparisons and26 related tests pass. Ten cases (1,7,19,23,30,50,54,58,59,61), contiguous phrase verification and live integration remain open.

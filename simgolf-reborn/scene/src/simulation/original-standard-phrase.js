@@ -14,6 +14,23 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===3){const a=actor(q),type=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xae,true);
+  if(type===2){append(0x4e26d0);append(0x4c2f20);call(0x466fb0,[q.actorId,0]);append(0x4c38f4);state.redirected=true;}
+  else if(type===3){append(0x4e2700);call(0x466fb0,[q.actorId,0]);append(0x4e26ec);state.redirected=true;}
+  else if(type===4){append(0x4e2704);state.redirected=true;}
+  else{append([0x4e274c,0x4e2744,0x4e273c,0x4e2734][a[0xb6]&3]);append(0x4e2724);}
+  state.remarkStyle=0x80007d08;
+ }
+ else if(kind===11){const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);
+  append(type===1?0x4e1f04:0x4e1f14);append((q.value&0x100)?0x4e1efc:0x4e1ef0);append(0x4e28f4);
+  if(type===1)call(0x466e30,[view.getInt16(0xa2,true)]);else append(0x4c3e10);
+  state.remarkStyle=0x800023e8;
+ }
+ else if(kind===28){const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);
+  if(type===1||type===3||type===5){append(0x4e1f24);const partner=view.getInt16(0xa2,true);if(type===1)call(0x466e30,[partner]);else call(0x466fb0,[partner,1]);append(0x4c38f4);}
+  else{events.push({address:0x46c140,args:[q.actorId]});const voice=originalProfileVoice({...q,state});append(voice?(a[0xb6]&1?0x4e1f8c:0x4e1f74):(a[0xb6]&1?0x4e1f5c:0x4e1f40));}
+  state.remarkStyle=0x800023e8;
+ }
  else if(kind===10||kind===60){
   const term=q.terms?.[q.value|0];if(!term)throw Error('Original terrain phrase data is unavailable.');
   if(kind===10){const name=ctext(term.name);if(!name&&!Number.isInteger(term.precedingByte))throw Error('Empty original terrain name requires its preceding byte.');append(0x4e2654);append((name?name.charCodeAt(name.length-1):term.precedingByte&255)===115?0x4e2644:0x4e264c);state.sourceText+=name;append(0x4c4b98);state.remarkStyle=0x80007d08;}
