@@ -1439,3 +1439,19 @@ Search and arrival rules execute uninterrupted; reaction/audio/notice bodies
 are controlled. This closes composition for the covered ordinary visits,
 not the negative-index arrivals, all facility types in a complete round,
 live persistence or production integration.
+
+### Partner waiting and resumption after arrival
+
+`original-arrival-partner.js` recovers 0x42a168–0x42a1f7 and
+0x42a52b–0x42a71c. It preserves partner/hole ordering, facing and wait RNG,
+starting-ball locals, phase setup and movement resets. In the late waiting
+branch the executable compares the actor's cup distance with the partner's
+Z offset from the cup, not with a second distance calculation; the module
+retains this observed behavior.
+
+1,600 native cases match both actor records, RNG and exits: 1,463 shot-setup
+continuations, 113 waits/skips and 24 later waiting continuations. Native
+heading/distance/RNG execute without effect stubs. Starting-ball coordinates
+are explicit fixture locals; their preceding caller preparation and complete
+arrival dispatch still need connection. Tile rest arrivals, subsequent shot
+execution and authoritative live actor integration remain unfinished.
