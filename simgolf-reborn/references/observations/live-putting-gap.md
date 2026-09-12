@@ -2101,3 +2101,21 @@ match or special-visitor outcomes. Height/slope and presentation/reaction/range
 helpers remain controlled. The preparation-to-motion emulator handoff and
 explicit timing limitations remain. Full native-world cadence, actual effects
 and live gameplay adoption are still required; no production change.
+
+
+### Preparation writes the same packed statistics consumed by completion
+
+`originalShotPreparation` now reads current packed statistic/hole counters
+after the planner returns and writes their incremented native-width values
+back. Optional counter projections are synchronized for the selected records;
+stale projections cannot overwrite packed counters. Existing projection-only
+callers remain supported. A present `holeRecords` alias is synchronized with
+`holes` after the putt increment.
+
+The full 36-case natural-putt completion oracle now starts with packed
+statistics before preparation and carries them through motion/completion,
+without rebuilding them from expected native putt counts. All cases pass,
+including the eight captures. The earlier 36 preparation comparisons and seven
+related tests pass, covering stale projections, callback changes, wraparound,
+input isolation and missing optional projections. Live browser/server schema
+adoption remains open; this is a recovered-engine integration change.

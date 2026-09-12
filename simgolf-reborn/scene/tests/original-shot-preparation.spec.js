@@ -26,3 +26,24 @@ test('first-hole tutorial stops explicitly and can resume after its effects',()=
  const r=originalShotPreparation(q);expect(r.next).toBe('0x42b647');expect(r.state.selectionMode).toBeUndefined();
  const resumed=originalShotPreparation(r.state,undefined,'0x42b6f8');expect(resumed.state.selectionMode).toBe(3);expect(resumed.next).toBe('skip');
 });
+
+test('packed putt counters retain post-planner changes and wrap in their native widths',()=>{
+ const q=fresh();q.statRecords=Array.from({length:32},()=>new Uint8Array(184));q.holes=Array.from({length:20},()=>new Uint8Array(520));q.holeRecords=structuredClone(q.holes);
+ q.shotStatCounts[0]=400;q.holeStrokeTotals[1]=500;
+ const before=structuredClone(q),r=originalShotPreparation(q,(_,state)=>{
+  new DataView(state.statRecords[0].buffer).setUint32(12,0xffffffff,true);
+  new DataView(state.holes[1].buffer).setUint16(0x162,0xffff,true);
+  state.statRecords[0][20]=37;return {state};
+ });
+ expect(new DataView(r.state.statRecords[0].buffer).getUint32(12,true)).toBe(0);
+ expect(new DataView(r.state.holes[1].buffer).getUint16(0x162,true)).toBe(0);
+ expect(r.state.shotStatCounts[0]).toBe(0);expect(r.state.holeStrokeTotals[1]).toBe(0);
+ expect(r.state.statRecords[0][20]).toBe(37);expect(r.state.holeRecords).toBe(r.state.holes);expect(q).toEqual(before);
+});
+test('packed records support preparation without separate counter arrays',()=>{
+ const q=fresh();delete q.shotStatCounts;delete q.holeStrokeTotals;
+ q.statRecords=Array.from({length:32},()=>new Uint8Array(184));q.holes=Array.from({length:20},()=>new Uint8Array(520));
+ const r=originalShotPreparation(q,(_,state)=>({state}));
+ expect(new DataView(r.state.statRecords[0].buffer).getUint32(12,true)).toBe(1);
+ expect(new DataView(r.state.holes[1].buffer).getUint16(0x162,true)).toBe(1);
+});

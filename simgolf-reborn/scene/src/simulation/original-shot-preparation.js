@@ -33,14 +33,28 @@ export function originalShotPreparation(snapshot,resolve,entry='0x42b55c') {
  // These are pre-planner stack locals, not potentially modified world fields.
  if(snapshot.ballTerrain===1){
   const index=a.getInt8(0xc2)+(a.getUint8(0x21)&7)*4,hole=a.getInt8(0x29),tile=snapshot.ballTile;
-  if(!(state.shotStatCounts instanceof Uint32Array)||index<0||index>=state.shotStatCounts.length||!(state.holeStrokeTotals instanceof Uint16Array)||hole<0||hole>=state.holeStrokeTotals.length||!tile||![tile.x,tile.z].every(n=>Number.isInteger(n)&&n>=0&&n<50)||!(state.tileFlags instanceof Uint16Array)||tile.x*50+tile.z>=state.tileFlags.length)throw Error('Original putt accounting context is unavailable.');
-  state.shotStatCounts[index]++;state.holeStrokeTotals[hole]++;
-  // Full actor turns also carry the packed hole record backing this counter.
+  // Packed records are authoritative when present. Re-read after planner
+  // effects so an older counter projection cannot overwrite current statistics.
+  let statRecord,holeRecord;
+  if(state.statRecords){
+   const record=state.statRecords[index];
+   if(!(record instanceof Uint8Array)||record.length!==184)throw Error('Original putt statistic record is unavailable.');
+   statRecord=new DataView(record.buffer,record.byteOffset,record.byteLength);
+   if(!(state.shotStatCounts instanceof Uint32Array))state.shotStatCounts=new Uint32Array(state.statRecords.length);
+   state.shotStatCounts[index]=statRecord.getUint32(12,true);
+  }
   if(state.holes){
    const record=state.holes[hole];
    if(!(record instanceof Uint8Array)||record.length!==520)throw Error('Original putt hole record is unavailable.');
-   new DataView(record.buffer,record.byteOffset,record.byteLength).setUint16(0x162,state.holeStrokeTotals[hole],true);
+   holeRecord=new DataView(record.buffer,record.byteOffset,record.byteLength);
+   if(!(state.holeStrokeTotals instanceof Uint16Array))state.holeStrokeTotals=new Uint16Array(state.holes.length);
+   state.holeStrokeTotals[hole]=holeRecord.getUint16(0x162,true);
   }
+  if(!(state.shotStatCounts instanceof Uint32Array)||index<0||index>=state.shotStatCounts.length||!(state.holeStrokeTotals instanceof Uint16Array)||hole<0||hole>=state.holeStrokeTotals.length||!tile||![tile.x,tile.z].every(n=>Number.isInteger(n)&&n>=0&&n<50)||!(state.tileFlags instanceof Uint16Array)||tile.x*50+tile.z>=state.tileFlags.length)throw Error('Original putt accounting context is unavailable.');
+  state.shotStatCounts[index]++;state.holeStrokeTotals[hole]++;
+  if(statRecord)statRecord.setUint32(12,state.shotStatCounts[index],true);
+  if(holeRecord)holeRecord.setUint16(0x162,state.holeStrokeTotals[hole],true);
+  if(state.holeRecords&&state.holes)state.holeRecords=state.holes;
   if(!(state.tileFlags[tile.x*50+tile.z]&0x80)){a.setInt16(0xa6,-25,true);a.setUint8(0x26,0);}
  }
  a.setInt32(0xcc,a.getInt32(0xdc,true),true);a.setInt32(0xd0,a.getInt32(0xe0,true),true);
