@@ -1,3 +1,5 @@
+import {createMenuMusic} from './menu-music.js';
+createMenuMusic(document.body);
 import {safeDestination} from './auth-destination.js';
 import './login.css';
 import './brand-login.css';

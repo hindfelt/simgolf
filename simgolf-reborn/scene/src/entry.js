@@ -1,7 +1,9 @@
 import {requireAccount, playerStorage} from "./account.js";
 import {showBootScreen} from './boot-screen.js';
 import {shouldShowStartMenu, showStartMenu, openStartDestination} from './start-menu.js';
+import {createMenuMusic} from './menu-music.js';
 const boot = showBootScreen();
+const music = createMenuMusic(document.querySelector('#boot-screen'));
 try {
   const account = await requireAccount();
   let action;
@@ -16,6 +18,11 @@ try {
   }
   boot.ready();
   openStartDestination(action);
+  const openingDialog = document.querySelector('dialog[open]');
+  if(action && action !== 'continue' && openingDialog) {
+    music.mount(openingDialog);
+    openingDialog.addEventListener('close', () => music.stop(), {once:true});
+  } else music.stop();
 } catch(error) {
   boot.fail(error);
   console.error(error);
