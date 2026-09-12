@@ -3263,3 +3263,9 @@ Verification covers a real paid round, displayed browser fee, removal after paym
 ### Cash-reserve field correction
 
 Renamed the isolated fee adapter's `totalFeeUnits` to `cashUnits` throughout its sources, native oracles and retained fixtures. The address is 0x570a24: property purchase subtracts from it and fee settlement adds to it. It is the cash reserve in internal $100 units, not a cumulative revenue metric. This corrects the model vocabulary before live field mapping; arithmetic is unchanged. All 1,152 contiguous fee cases still match native execution, and eight related tests pass.
+
+### Score recording before fee assessment
+
+`originalHoleCompletionStats` reconstructs 0x426b10–0x426be5. Actor byte +0x18==0 gates statistical updates, not the following fee calculation. For that status, it calls the read-only 0x405e80 comparison before and after incrementing the current hole histogram at +0x30+2*((actor[0x19]&15)*11+clamp(signed stroke,0,9)). Both comparison results are discarded. It then adds signed strokes to the shared performance table at index (signed actor[0xba]+4*(actor[0x19]&7))*46+signed hole, and increments index+19. All statuses copy the stroke byte into actor[hole+0x23]. Native integer widths are preserved.
+
+576 original executions match, including actual read-only comparison and clamp helpers; two tests pass. The nonzero-status branch does not require statistical records. This establishes the score-recording stage, not the external condition that invokes completion, and does not justify charging practice players based solely on actor status. Complete score/fee composition and subsequent completion progression remain open.

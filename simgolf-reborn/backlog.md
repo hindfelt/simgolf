@@ -1441,3 +1441,5 @@ Corrected original fee adapter global 0x570a24 from totalFeeUnits to cashUnits, 
 Ruleset 78 integration check: all eight local authenticated-browser/Worker/D1 tests passed, covering shared edits/reconnect/spectators, phone layouts, published courses, registration, completed/resumed tournaments, withdrawal/final standings and independent earnings-course spending. Evidence: references/release/ruleset-78-integration.md. Does not claim shared-Airstrip construction coverage, a new long earnings soak, capacity certification or deployment.
 
 Authoritative Airstrip payment regression added: D1-backed shared course completes a paid visitor round through server ticks, records the $100 bonus, gives owner/editor identical state, and preserves payment through reread and save restoration. All 75 backend tests pass (one capacity test skipped). No deployment.
+
+Recovered original pre-fee score/statistics stage: 576 native cases match and two tests pass. Actor status gates statistics but does not itself skip fees; all statuses record the stroke byte. Caller completion eligibility, subsequent progression and live original score/fee integration remain unfinished.
