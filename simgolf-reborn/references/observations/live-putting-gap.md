@@ -1763,3 +1763,22 @@ vertex fallback are supplied by previously recovered helpers but not exercised
 by this combined matrix. Planner, reaction and presentation effects remain
 controlled. Arbitrary landscapes, actual remaining effects, long-running
 world integration and live adoption remain open.
+
+
+### Automatic planner packed actor handoff
+
+`original-planner-actor.js` reads the automatic planner's actor fields from
+packed records and applies its actor/velocity outputs on a clone. Recovery at
++0x100 reads the following physical slot; the final slot requires an explicit
+actor tail. Unrelated bytes are preserved, including adjacent-slot storage.
+
+`verify-original-planner-actor.py` runs the six complete native automatic
+planner scenarios (clear/mixed terrain and professional variation), then
+compares input actor extraction and application of the recovered planner's
+results against all 512 native bytes of the actor and adjacent record. These
+comparisons pass alongside the existing full planner result comparisons.
+
+This is the packed actor conversion, not yet a scheduler planner effect.
+Shared cache/search scratch/metadata and effect state still require mapping;
+normal-turn planner invocation and live adoption remain open. Existing native
+planner fixtures retain their documented controlled helper boundaries.
