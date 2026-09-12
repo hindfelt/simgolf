@@ -2234,3 +2234,19 @@ launch, complete state, events, cache and RNG. This closes record-binding
 composition under these fixtures. Terrain/height and reaction bodies remain
 controlled; long physical search and actual live-world state still need their
 complete binding and adoption. No deployed behavior changes.
+
+
+### Explicit remark/golfer record-coordinate adapter
+
+Integration inspection confirmed that recovered remark actors are 256-byte
+views starting at 0x577f08, while golfer actors start at 0x577f00. Remark hole
+views start at 0x5744f8, eight bytes before golfer holes at 0x574500. Passing
+the same arrays directly between these modules would address different fields.
+
+`originalRemarkRecordView` and `applyOriginalRemarkRecordView` now translate
+these table views explicitly, preserving inter-record bytes, the actor tail,
+hole prefix and untouched outer edges. Full 152-actor/20-hole backing plus
+boundary bytes are required; missing backing is not fabricated. Three tests
+pass for offset identity, round-trip, writes across record boundaries and
+input isolation. This adapter is not yet composed with the full audible remark
+native oracle or adopted in live planner effects; that remains the next gate.
