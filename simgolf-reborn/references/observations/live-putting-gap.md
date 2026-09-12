@@ -1535,3 +1535,17 @@ through the real native tick exit. The 500-case complete walking dispatcher
 also passes (75 rest visits, 76 paid visits, 307 position changes), with all
 cases exiting the tick. This closes those arrival continuations, not later
 actor scheduling/shot execution, unhappy departures or live adoption.
+
+### Congestion-triggered departure
+
+`original-congestion-departure.js` recovers 0x42adac–0x42af66: paired
+complaint assembly, notice effects, hole departure counter, completion flags,
+partner ball/position clearing, cleanup and the departing actor's status.
+
+800 native cases match both actor records, hole records, completion records,
+complaint text, message flag and ordered effects. Names, integer formatting,
+notice bodies and partner cleanup are controlled in the oracle; the module
+formats the signed hole value directly. Random initial record contents cover
+counter wrapping and preservation of unrelated fields. Actual name/notice/
+cleanup composition, connection to congestion decisions and authoritative live
+departure remain unfinished.
