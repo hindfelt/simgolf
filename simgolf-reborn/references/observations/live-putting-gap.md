@@ -1912,3 +1912,21 @@ cache/RNG, diagnostics, metadata and unchanged search globals. This verifies
 the no-search planner path and post-planner putt accounting/delay in the
 packaged preparation function. It does not yet verify subsequent ball rolling,
 cup capture, full actor scheduling, real reaction bodies or live adoption.
+
+
+### Animation releases a planned swing
+
+The native phase-2 write is in the animation path at 0x414fe4, not the
+actor scheduler. `original-swing-animation.js` recovers 0x414f79–0x41503b
+for animation 16: signed club group selection, frame advance/wrap, final-frame
+phase release, missing-animation fallback, paused-frame restoration and group
+change reset/flag clearing. Animation direction, counts and the pre-update
+frame remain explicit caller inputs; browser render timing is not assumed.
+
+`verify-original-swing-animation.py` passes 1,600 native cases without helper
+stubs. Full actor bytes and frame/group selection match, with 775 phase-2
+transitions from phase 1. Counts include zero/one/multiple frames, all eight
+directions, varied signed club values and paused updates. This recovers the
+missing phase transition needed between preparation and movement. Animation
+caller cadence, asset frame-count provenance and the continuous planned-putt
+through animation/swing/motion integration remain open; no live change yet.
