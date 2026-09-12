@@ -1,9 +1,10 @@
-export const PROTOCOL_VERSION = 77;
-export const RULESET_VERSION = "prototype-marina-activity-2026-09-11";
+export const PROTOCOL_VERSION = 78;
+export const RULESET_VERSION = "original-airstrip-fee-2026-09-12";
 // Golf-only packages/replays from before post-round tennis use identical shot rules.
 export const PRE_TENNIS_RULESET = "prototype-boundary-regions-2026-09-10";
+export const PRE_AIRSTRIP_RULESET = "prototype-marina-activity-2026-09-11";
 export const PRE_MARINA_RULESET = "prototype-tennis-visits-2026-09-11";
-export const compatibleGolfRuleset = value => value===RULESET_VERSION || value===PRE_TENNIS_RULESET || value===PRE_MARINA_RULESET;
+export const compatibleGolfRuleset = value => value===RULESET_VERSION || value===PRE_TENNIS_RULESET || value===PRE_MARINA_RULESET || value===PRE_AIRSTRIP_RULESET;
 export const TICK_SECONDS = 0.05;
 export const MAX_CLIENTS = 64;
 
@@ -69,6 +70,7 @@ export function validateProtocol(p) {
 
 export function migrateProtocol(p) {
   if (
+    (p?.version === 77 && p.ruleset === PRE_AIRSTRIP_RULESET) ||
     (p?.version === 76 && p.ruleset === PRE_MARINA_RULESET) ||
     (p?.version === 75 && p.ruleset === "prototype-boundary-regions-2026-09-10") ||
     (p?.version === 74 && p.ruleset === "prototype-dogleg-routing-2026-09-10") ||

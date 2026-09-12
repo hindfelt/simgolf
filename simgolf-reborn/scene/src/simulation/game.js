@@ -42,6 +42,7 @@ import {
   happinessReaction,
   greenFee,
   airstripFeeBonus,
+  FEE_RULE,
   validateHappiness,
   validFeeSnapshot,
   appreciateApproach,
@@ -1065,6 +1066,7 @@ function finishHole(g, v) {
       par: par(g, hole.id),
       fee: greenFee(v) + airstripBonus,
       airstripBonus,
+      feeRule: FEE_RULE,
       happiness: v.pro ? 0 : v.happiness,
       completedAt: g.time,
     };

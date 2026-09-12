@@ -113,3 +113,15 @@ test('the tennis-release tournament format also migrates without changing a shot
  expect(restored.roundSnapshot('alice').pro.shot).toEqual(host.roundSnapshot('alice').pro.shot);
  expect((await restoreCompetition(restored.save())).snapshot()).toEqual(restored.snapshot());
 });
+
+test('the pre-airstrip-fee tournament format also migrates without changing a shot',async()=>{
+ const {PRE_AIRSTRIP_RULESET}=await import('../src/simulation/protocol.js');
+ const {courseDigest}=await import('../src/simulation/course-package.js');
+ const host=await setup();shoot(host,'alice');host.stepTicks(12);
+ const legacy=JSON.parse(host.save());legacy.ruleset=PRE_AIRSTRIP_RULESET;
+ legacy.config.course.content.ruleset=PRE_AIRSTRIP_RULESET;legacy.config.course.digest=await courseDigest(legacy.config.course.content);
+ for(const row of legacy.journal)if(row.type==='command')row.request.command.version=77;
+ const restored=await restoreCompetition(JSON.stringify(legacy));
+ expect(restored.roundSnapshot('alice').pro.shot).toEqual(host.roundSnapshot('alice').pro.shot);
+ expect((await restoreCompetition(restored.save())).snapshot()).toEqual(restored.snapshot());
+});

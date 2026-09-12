@@ -1,8 +1,10 @@
 // Original fee unit and +/-1 comments: Sid Meier's archived fun-rating notes.
 // Mapping the prototype mood to starting points and incident deduplication are provisional.
 export const FEE_PER_HAPPINESS = 100;
-// Manual p.20 establishes the bonus, but not its amount. Provisional calibration.
-export const AIRSTRIP_FEE_RATE = 0.25;
+// Original active Airstrip level zero adds one $100 fee unit.
+export const AIRSTRIP_FEE_BONUS = 100;
+export const FEE_RULE = "airstrip-flat-v1";
+const LEGACY_AIRSTRIP_FEE_RATE = 0.25;
 export function initialHappiness(mood) {
   return Math.max(2, Math.min(5, Math.round(mood / 20)));
 }
@@ -22,7 +24,7 @@ export function greenFee(v) {
   return v.pro ? 0 : v.happiness * FEE_PER_HAPPINESS;
 }
 export function airstripFeeBonus(v, connectedAirstrip) {
-  return connectedAirstrip ? Math.round(greenFee(v) * AIRSTRIP_FEE_RATE) : 0;
+  return connectedAirstrip && !v.pro ? AIRSTRIP_FEE_BONUS : 0;
 }
 export function validateHappiness(v) {
   if (v.pro) return;
@@ -47,6 +49,7 @@ export function validateHappiness(v) {
 }
 
 export function validFeeSnapshot(s) {
+  if (s.feeRule !== undefined && s.feeRule !== FEE_RULE) return false;
   const bonus = s.airstripBonus ?? 0;
   if (!Number.isSafeInteger(bonus) || bonus < 0) return false;
   if (s.happiness === undefined) return bonus === 0;
@@ -55,7 +58,7 @@ export function validFeeSnapshot(s) {
     Number.isSafeInteger(s.happiness) &&
     s.happiness >= 0 &&
     s.happiness <= 10000 &&
-    (bonus === 0 || bonus === Math.round(base * AIRSTRIP_FEE_RATE)) &&
+    (bonus === 0 || bonus === (s.feeRule === FEE_RULE ? AIRSTRIP_FEE_BONUS : Math.round(base * LEGACY_AIRSTRIP_FEE_RATE))) &&
     s.fee === base + bonus
   );
 }

@@ -1,3 +1,4 @@
+import {createProtocol} from "../src/simulation/protocol.js";
 import { test, expect } from "@playwright/test";
 import {
   createGame,
@@ -26,9 +27,9 @@ test("connected airstrip contributes to a real paid round and keeps its historic
   for (let i = 0; i < 16000 && !g.rounds.length; i++) update(g, 0.05);
   expect(g.rounds).toHaveLength(1);
   const s = g.rounds[0].scorecard[0];
-  expect(s.airstripBonus).toBe(s.happiness * 25);
+  expect(s.airstripBonus).toBe(100);
   expect(s.airstripBonus).toBeGreaterThan(0);
-  expect(s.fee).toBe(s.happiness * 125);
+  expect(s.fee).toBe(s.happiness * 100 + 100);
   expect(
     g.ledger.some((r) => r.amount === s.fee && r.reason.includes("green fee")),
   ).toBe(true);
@@ -76,9 +77,18 @@ test("visitor panel includes the connected Airstrip fee bonus", async ({
   await page.locator("#pause").click();
   await page.locator('[data-mode="guests"]').click();
   const expected = await page.evaluate(
-    () => window.__gameTest.getState().guests[0].happiness * 125,
+    () => window.__gameTest.getState().guests[0].happiness * 100 + 100,
   );
   await expect(page.locator("#live-details")).toContainText(
     `Current green fee $${expected}`,
   );
+});
+
+test('new fee rules reject percentage bonuses while historical snapshots remain valid',()=>{
+ expect(validFeeSnapshot({feeRule:'airstrip-flat-v1',happiness:8,fee:900,airstripBonus:100})).toBe(true);
+ expect(validFeeSnapshot({feeRule:'airstrip-flat-v1',happiness:8,fee:1000,airstripBonus:200})).toBe(false);
+ expect(validFeeSnapshot({happiness:8,fee:1000,airstripBonus:200})).toBe(true);
+ expect(validFeeSnapshot({feeRule:'unknown',happiness:8,fee:800})).toBe(false);
+ const g=createGame(),data=JSON.parse(serialize(g));data.protocol=createProtocol();data.protocol.version=77;data.protocol.ruleset='prototype-marina-activity-2026-09-11';
+ const upgraded=restore(JSON.stringify(data));expect(upgraded.protocol.version).toBe(78);expect(upgraded.protocol.ruleset).toBe('original-airstrip-fee-2026-09-12');
 });

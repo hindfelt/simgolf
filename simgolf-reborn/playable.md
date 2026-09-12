@@ -453,3 +453,7 @@ New course → Landscape → **Coastal course** generates an editable stepped sh
 Coastal courses now show open water beyond the eastern property edge. This is scenery, not additional owned land. Shared course files preserve the coastal appearance.
 
 On a Links course, **Build → Resort → Church** offers the Marina-family home-sale benefit. Connect it to the clubhouse path; its provisional 25% bonus does not stack with a Marina or Helipad.
+
+### Airstrip fee correction (ruleset 78)
+
+A connected base-level Airstrip now adds $100 to each visitor's completed-hole fee, replacing the prototype 25% bonus. Multiple Airstrips do not stack; professional practice remains free. The visitor panel and facility descriptions show the new amount. Old completed payments retain their original amounts after loading, including former percentage bonuses. Facility upgrades and the full original happiness/fee system remain unfinished.

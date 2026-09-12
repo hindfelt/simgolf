@@ -17,7 +17,7 @@ export function facilityDetails(g, f) {
     'cart-garage': 'New visitors can use golf carts.',
     marina: 'Brings additional visiting golfers by boat and adds a home-sale value bonus.',
     church: 'A connected church adds a home-sale value bonus.',
-    airstrip: 'Brings additional visiting golfers by airport transfer and adds 25% to green fees.',
+    airstrip: 'Brings additional visiting golfers by airport transfer and adds $100 to each visitor green fee.',
     flowerbed: 'Passing golfers can appreciate the flowers once per hole.',
     lighthouse: 'A coastal scenery landmark.',
   };
