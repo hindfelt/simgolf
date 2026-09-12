@@ -1168,3 +1168,20 @@ continuations and 68 reversal pauses. These fixtures verify steering, not actual
 position updates. The helper is not yet composed after arrival. Avoidance at
 0x42a793, far routing at 0x42aa30, actual walking steps and live integration
 remain open.
+
+### Near-target golfer avoidance
+
+`original-walking-avoidance.js` recovers 0x42a793–0x42aa30: ordered
+cyclic scanning from the global cursor to the current actor, hole/clock/partner
+eligibility, queue counting, ordinary and angry proximity radii, facing-based
+yielding, RNG delays and angry-golfer reactions. Congestion preserves the two
+continuations at 0x42ad32 and 0x42ad3b, including reaction-before-counter update.
+Identity/reaction helpers remain explicit synchronous effects.
+
+700 native cases match all actor records, movement/count/scan locals, RNG,
+ordered calls and branches: 520 ordinary continuations, 91 congestion entries
+and 89 complaint continuations. Fixtures include dense queues, angry actors,
+partner rules, cursor order and reaction mutations; native distance, octant and
+RNG execute, while identity/reaction bodies are controlled. The helper remains
+separate from the complete approach. Far routing, congestion continuation,
+position stepping, service arrivals and live integration remain open.
