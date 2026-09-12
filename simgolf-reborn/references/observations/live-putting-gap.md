@@ -2202,3 +2202,18 @@ profile-group comment. `verify-original-packed-profile-group.py` matches all
 indices. Five related tests pass for packed values, current-record changes,
 signed profile IDs and missing-data failures. Continuous automatic-reaction
 coverage using these packed bindings and live integration remain open.
+
+
+### Packed scenery objects and footprint tables
+
+Planner world readers now decode the 256×16-byte facility table, signed base
+sizes and expansion values. Object values come from signed dword +8. The
+native scenery branch's index -1 read requires an explicit preceding record;
+it is not converted into an empty object. The shared world map exposes these
+readers alongside terrain/profile/hole data.
+
+`verify-original-packed-object-index.py` matches 1,000 native footprint scans.
+`verify-original-packed-scenery.py` matches 300 complete native sampling loops,
+including object references, counters and RNG. Six related tests pass. Native
+map and object-table contents in these matrices are controlled fixtures; this
+does not yet prove whole-world live bindings or automatic reaction effects.

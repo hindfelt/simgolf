@@ -6,7 +6,24 @@ export function originalPlannerWorldRecords(state){
   if(!Number.isInteger(index)||index<0||!(b instanceof Uint8Array)||b.length!==size)throw Error(`Original planner ${label} unavailable.`);
   return new DataView(b.buffer,b.byteOffset,b.byteLength);
  };
+ const indexed=(array,index,Type,label)=>{
+  if(!(array instanceof Type)||!Number.isInteger(index)||index<0||index>=array.length)throw Error(`Original planner ${label} unavailable.`);
+  return array[index];
+ };
  return {
+  baseSizeAt:type=>indexed(state.objectBaseSizes,type,Int8Array,'object size'),
+  expansionAt:type=>indexed(state.objectExpansions,type,Int32Array,'object expansion'),
+  objectAt:index=>{
+   let b;
+   if(index===-1)b=state.objectPrefixRecord;
+   else{
+    if(!Number.isInteger(index)||index<0||index>=256||!(state.facilityRecords instanceof Uint8Array)||state.facilityRecords.length!==4096)throw Error('Original planner object table unavailable.');
+    b=state.facilityRecords.subarray(index*16,index*16+16);
+   }
+   if(!(b instanceof Uint8Array)||b.length!==16)throw Error('Original planner preceding object record unavailable.');
+   const v=new DataView(b.buffer,b.byteOffset,b.byteLength);
+   return {type:v.getInt16(0,true),x:v.getInt16(2,true),z:v.getInt16(4,true),value:v.getInt32(8,true)};
+  },
   // 0x424b52 reads metadata byte 7 (shape), not the catalog category.
   categoryAt:code=>{
    const shape=state.metadata?.[code]?.shape;
