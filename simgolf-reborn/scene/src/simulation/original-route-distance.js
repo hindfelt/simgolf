@@ -9,9 +9,11 @@ export function originalMapDistance(dx,dz) {
   if(Math.abs(z)>16384){z=Math.trunc(z/8);scale*=8;}
   return Math.trunc(Math.sqrt(x*x+z*z)*scale);
 }
+// Origin may be just outside the map; the verified difference bound above
+// still applies after subtracting the target centre.
 // 0x40c1a0–0x40c1e1: fixed-point origin to target tile centre.
 export function originalRouteSegment(origin,targetTile) {
-  if (!origin || !targetTile || ![origin.x,origin.z].every(n=>Number.isInteger(n)&&n>=0&&n<=51200) ||
+  if (!origin || !targetTile || ![origin.x,origin.z].every(n=>Number.isInteger(n)&&n>=-2147483648&&n<=2147483647) ||
       ![targetTile.x,targetTile.z].every(n=>Number.isInteger(n)&&n>=0&&n<50))
     throw Error('Invalid original route segment.');
   const distance=originalMapDistance(origin.x-targetTile.x*1024-512,origin.z-targetTile.z*1024-512);

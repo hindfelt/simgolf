@@ -188,3 +188,32 @@ Two thousand native cases match with original distance helpers and a controlled 
 `original-shot-line.js` recovers 0x42889c–0x428992: flag-32/speed/ball-terrain gate, source fixed-point projection, target tile or shifted fixed-point projection according to flag 0x10000000, visible-endpoint draw ordering, and final cup projection. Coordinate arguments are semantic values; pointer results return an explicit point. Projection/drawing resolvers retain state changes and may not be omitted on active paths.
 
 One thousand native dispatch cases match with controlled projection/drawing results; eight shot-line/turn-order/dispatch tests pass. This verifies the caller branch, not the tile projection cache helper 0x42f020 or a live drawing adapter. The branch is now available to bridge the recovered actor prefix to turn-order, while those adapters and subsequent state-machine branches remain work.
+
+### Continuous actor decision assembly
+
+`original-actor-decision.js` joins the actor prefix, optional shot-line branch and
+partner/turn-order branch without skipping intervening work. Early motion/skip
+exits return immediately. The ball-terrain local sampled before condition effects
+is supplied to the line gate; mutations from projection/drawing effects survive
+into turn selection. Both later addresses remain explicit continuations, not
+invented movement or shot actions.
+
+`verify-original-actor-decision.py` runs the continuous native range beginning at
+0x42819c and stops at the real outgoing branch. All 1,500 cases match whole actor
+and partner records, tracked position/visual owner state, effect ordering, RNG,
+terrain locals and turn flags. Coverage: 215 to 0x428ad1, 171 to 0x42b3f2, 211 to
+motion and 903 to skip. Native RNG and distance routines execute; lookup,
+reaction, partner refresh and projection/drawing bodies remain controlled test
+resolvers. Fifteen focused tests pass, including clipped projections continuing
+turn selection and a drawing callback changing the subsequent decision.
+
+Assembly exposed an overly restrictive origin validation in originalRouteSegment:
+a ball just outside the map can still enter native distance comparison. Signed
+integer origins are now allowed while the existing verified ±51200 component
+difference limit remains enforced. Off-map cases occur in the continuous native
+comparison; no unverified wide-distance arithmetic is enabled.
+
+This closes the gap between the previously separate prefix and turn-order stages.
+The 0x428ad1 and 0x42b3f2 bodies, real resolver implementations, raw actor save/world
+integration and live shot switch remain open. No live physics ruleset or deployed
+gameplay changed in this step.
