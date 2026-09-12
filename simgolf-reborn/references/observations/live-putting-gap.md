@@ -1636,3 +1636,18 @@ slope/audio and cleanup effects remain controlled. The prior 500-case
 completed-dispatch suite also passes after refactoring. Earlier scheduler
 locals, real effect implementations, multi-tick authoritative persistence and
 live-game adoption remain unfinished; this is not a release-completion claim.
+
+### Native actor-to-walking context
+
+`original-actor-walking-context.js` maps actual actor-decision locals into
+walking inputs. The actor terrain cached at 0x428810 supplies both the later
+walking-cost terrain and reversal test (stack 0x2c); it is not an independent
+boolean. Partner readiness supplies walkingOverride, movementReady starts at
+one at 0x4289ab, prior flags come from the motion gate, and EAX is zero at
+0x428aab before walking entry.
+
+The 1,500-case continuous actor-decision oracle passes with added native-local
+comparisons for all 208 walking entries. Cached flags, terrain, override,
+movementReady and entry value match actual registers/stack. Snapshot fields
+remain explicit; mapping into live global names and full actor-turn walking
+composition are still unfinished.
