@@ -2250,3 +2250,18 @@ boundary bytes are required; missing backing is not fabricated. Three tests
 pass for offset identity, round-trip, writes across record boundaries and
 input isolation. This adapter is not yet composed with the full audible remark
 native oracle or adopted in live planner effects; that remains the next gate.
+
+
+### Audible remarks accept golfer-loop record coordinates
+
+`originalAudibleGolferRemark` now composes the explicit record-view bridge with
+the complete audible world remark routine and maps the result back to golfer
+coordinates. Detailed reaction diagnostics/callbacks retain native remark
+coordinates; the returned world has golfer actors and holes.
+
+The retained 3,120 native cases across 65 remark kinds pass through this
+adapter, comparing actor output, counters, audio requests, final popup/message
+state and shared RNG. Four tests pass including boundary-write coverage.
+The fixture uses personal phrases and controlled terrain/playback helpers;
+this is not new full-world native execution. Planner partial-state merging,
+standard-phrase coverage and live adoption remain open. No deployment.
