@@ -1424,3 +1424,18 @@ and the notice changes ledger period to test read ordering. The actual RNG
 executes natively. Tile-service arrivals (index -2), partner continuation
 (index -1), composed dispatch and authoritative live service integration
 remain open; this does not change the deployed economy.
+
+### Walking dispatch completes ordinary facility visits
+
+Destination dispatch now executes the actual facility-arrival module for
+nonnegative service indices. Negative tile-service and partner continuations
+remain explicit. Shared RNG and ordered effects survive the transition.
+
+The 500-case continuous native dispatch matrix now includes deliberately
+nearby type-7 facilities: 90 paid service visits, 326 position changes,
+495 completed/skipped ticks and five remaining non-facility arrivals.
+Actor storage, RNG, ordered calls, cash and service-income ledger match.
+Search and arrival rules execute uninterrupted; reaction/audio/notice bodies
+are controlled. This closes composition for the covered ordinary visits,
+not the negative-index arrivals, all facility types in a complete round,
+live persistence or production integration.
