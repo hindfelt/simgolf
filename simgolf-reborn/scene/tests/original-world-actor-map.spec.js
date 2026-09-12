@@ -41,3 +41,15 @@ test('restored actor world retains strength-search hits and ring replacement wit
  runtime.strengthCache.next=9;
  expect(serializeOriginalWorld(world)).toBe(saved);
 });
+
+test('bound actor map reads runtime metadata without mixing later source-world edits',()=>{
+ const world=fresh(),runtime=originalWorldActorMap(world),point={x:20,z:20};
+ const before=runtime.map.terrainAt(point);
+ world.metadata[1].kind=7;world.metadata[1].shotClass=6;world.metadata[1].rollCoefficient=2;
+ expect(runtime.map.terrainAt(point)).toEqual(before);
+ runtime.metadata[1].shotClass=4;runtime.metadata[1].rollCoefficient=5;
+ expect(runtime.map.terrainAt(point)).toMatchObject({shotClass:4,rollCoefficient:5});
+ expect(runtime.map.planning.shotClassAt(1)).toBe(4);
+ expect(world.metadata[1].shotClass).toBe(6);
+ expect(world.metadata[1].rollCoefficient).toBe(2);
+});

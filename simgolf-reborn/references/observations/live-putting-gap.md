@@ -2405,3 +2405,15 @@ continues replacing the correct ring slot after a miss, without modifying the
 serialized source. All four actor-world checks pass, including motion/height
 restoration. This fixes another integration handoff; it does not establish full
 live planner adoption or add career records to the saved format.
+
+### Consistent runtime map metadata
+
+The saved-world map copied terrain and height arrays but retained metadata
+callbacks into the source world. That mixed revisions after source edits and
+ignored runtime actor metadata changes. Map construction now owns copied
+metadata records; the actor adapter exposes those same records to the engine.
+Tests verify source isolation and that runtime coefficients and shot-class
+changes reach map reads. Twelve actor-world, serialization and launch checks
+pass, including launched-shot completion and restored replay. Derived terrain
+still requires rebuilding after structural map/metadata flag changes, as the
+existing map contract specifies. Live schema adoption remains unfinished.
