@@ -1405,3 +1405,5 @@ Correction to the preceding “downstream social” label:0x46806a onward genera
 Explanatory-message completion now matches3168 original executions: style, enabled/text gates, successful-popup masks and cooldown updates.5 related tests pass. Popup helper implementation, explanation text assembly, full composition and live integration remain unfinished.
 
 All original explanatory suffix branches now match2144 native executions, including wording, pronouns, terrain/object names and clear-text cases.8 related tests pass. Quotation/name prefix, full helper/popup composition and live integration remain unfinished.
+
+Complete explanation flow now combines gates, quoted phrase/name, explanatory wording and popup completion.1560 native personal-phrase comparisons and10 related tests pass; actual name/location wrappers are available. Standard-phrase/full-helper native coverage, popup implementation, reaction-to-explanation composition and live wiring remain unfinished.
