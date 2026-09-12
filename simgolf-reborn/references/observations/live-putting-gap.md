@@ -2664,3 +2664,9 @@ All 1,024 native entry cases match records, reaction calls, cash, period ledger
 and branch with controlled effect helpers. Two local checks additionally cover
 post-callback period changes, source isolation and inactive/delayed slots.
 The remaining visual movement and final world callback remain open.
+
+### Visual follower branch — 12 September 2026
+
+`original-visual-follow.js` recovers 0x402b6b–0x402c6f: selected actor/ball targeting, eight slot offsets, approximate distance, facing and randomized pause. It returns the explicit common movement continuation at 0x403488; it does not implement that continuation or claim the full 0x4029e0 callback is complete. Non-following slots continue at 0x402c6f.
+
+`verify-original-visual-follow.py` compares 1,024 cases against the private executable using native heading and RNG routines. Packed records, target/delta locals, branch and seed match. Five local visual entry/follow checks pass, covering first-hole waiting, movement without random draws, pause timing and source isolation. This remains recovery/integration work, not a deployed gameplay change.
