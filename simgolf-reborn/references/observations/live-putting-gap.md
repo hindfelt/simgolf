@@ -2331,3 +2331,18 @@ world fields, unchanged planner/actor results and immutable input. The existing
 (28 stops, eight cups). That oracle retains its existing controlled effects;
 it does not verify a full scheduler/planner/audible-world native run. Current
 world readers and production schema adoption remain open. No deployment.
+
+### Current-world planner and physics readers
+
+`originalCurrentWorldShotMap` provides stable callbacks backed by a synchronous
+world reader, suitable for the audible planner adapter's `readWorld`. Each call
+binds terrain, metadata, heights and packed records from one current snapshot;
+nested physics samples therefore stay internally consistent. It does not cache
+by browser revision, which native reaction writes need not change.
+
+Eight map/record tests pass. Replacement-snapshot coverage checks extracted
+callbacks for terrain, marks, stored height, actor profile and hole records,
+plus physics-height consistency and explicit rejection of asynchronous readers
+and unsupported generated-height phases. This is adapter-level coverage, not a
+new full native planner/remark comparison. Scheduler binding composition and
+live schema adoption remain open. No production behavior changed.

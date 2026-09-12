@@ -12,3 +12,31 @@ export function originalWorldShotMap(state,{planning={},readRawTerrain}={}){
  // Extra object/social callbacks cannot replace authoritative terrain readers.
  return {...map,planning:{...planning,...originalPlannerWorldRecords(state),...map.planning}};
 }
+
+// Stable callbacks for a planner whose reactions replace its world snapshot.
+// Build each read from one snapshot, keeping nested physics sampling internally
+// consistent. Do not cache by revision: native reactions can alter packed data
+// without advancing the browser's revision counter.
+export function originalCurrentWorldShotMap(readWorld,optionsFor=()=>({})){
+ if(typeof readWorld!=='function'||typeof optionsFor!=='function')throw Error('Original current-world map requires synchronous readers.');
+ const current=()=>{
+  const state=readWorld();
+  if(!state||typeof state.then==='function')throw Error('Original current-world snapshot must be synchronous.');
+  const options=optionsFor(state);
+  if(!options||typeof options.then==='function')throw Error('Original current-world map options must be synchronous.');
+  return originalWorldShotMap(state,options);
+ };
+ const initial=current();
+ const bind=(sample,path=[])=>Object.fromEntries(Object.entries(sample).map(([key,value])=>{
+  const keys=[...path,key];
+  if(typeof value==='function')return [key,(...args)=>{
+   const map=current();let target=map;
+   for(const part of keys)target=target[part];
+   if(typeof target!=='function')throw Error('Original current-world map reader unavailable.');
+   return target(...args);
+  }];
+  if(value&&typeof value==='object')return [key,bind(value,keys)];
+  throw Error('Original current-world map options must contain callable readers.');
+ }));
+ return bind(initial);
+}
