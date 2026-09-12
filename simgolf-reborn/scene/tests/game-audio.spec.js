@@ -22,7 +22,7 @@ test('real audio decodes after a gesture, plays once, obeys volume and links shi
  });
  await page.goto('/audio/credits.html');
  await page.evaluate(async()=>{const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);window.audioState={time:0,guests:[]};window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
- await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.audioDecoded)).toBe(4);
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.audioDecoded)).toBe(5);
  await page.evaluate(()=>{window.audioState.time=.05;window.audioState.guests=[{id:1,roundId:'r',holeId:'h',strokes:1,shot:{from:{x:0,z:0},time:0,putt:false}}];window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
  expect(await page.evaluate(()=>window.audioStarts)).toBe(1);
  await page.evaluate(()=>{window.audioState.helicopter={pad:{x:0,z:0},phase:'arriving',since:0};window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
@@ -76,7 +76,7 @@ test('browser plays supported original scheduler cues and leaves unknown speech 
  };});
  await page.goto('/audio/credits.html');
  await page.evaluate(async()=>{localStorage.removeItem('fairway-baron.effects-volume');const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);});
- await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(4);
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(5);
  await page.evaluate(()=>window.effects.playOriginalEvents([
  {address:0x447a30,args:[3,100,0,0,0]},
  {address:0x447a30,args:[4,100,0,0,0]},
@@ -88,4 +88,13 @@ test('browser plays supported original scheduler cues and leaves unknown speech 
  await page.evaluate(()=>window.effects.playOriginalEvents([{address:0x447a30,args:[0,100,0,0,0]}]));
  expect(await page.evaluate(()=>window.starts)).toBe(2);
  await page.evaluate(()=>window.effects.dispose());
+});
+
+test('applause follows observed birdies, not pars or loaded results',()=>{
+ for(const par of [2,3,4]){
+  const t=createShotSoundTracker(),v={...golfer(2,true),ball:{x:2,z:3},scorecard:[]},g={time:1,guests:[v],holes:[{id:'hole-1',green:{x:2,z:3}}]};
+  t.observe(g);g.time+=.05;v.shot=null;v.scorecard.push({holeId:'hole-1',strokes:2,par,completedAt:g.time});
+  expect(t.observe(g).filter(e=>e.kind==='applause')).toHaveLength(par>2?1:0);
+  expect(t.observe(g)).toEqual([]);t.reset();expect(t.observe(g)).toEqual([]);
+ }
 });

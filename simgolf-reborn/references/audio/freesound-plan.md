@@ -47,3 +47,13 @@ Eight targeted audio/helicopter checks pass, including native MP3 decode/playbac
 ## Cup contact — 12 September 2026
 
 The CC0 inbeeld ball-in-cup recording now follows actual observed hole-outs. Scorecard completion alone is insufficient: the prior frame must contain the matching shot, the ball must finish at the green's cup, and no penalty stroke may have been added. Restores, pickups and repeated frames stay silent. Freshness checks now accommodate ordinary faster-simulation frames while still rejecting reconnect gaps. Eight focused checks pass, including a real simulated hole-out and native decoding of all four shipped effects. Remaining sound work: crowd/golfer reactions, aircraft/boat motors, environment ambience and subjective listening/mix review.
+
+## Birdie applause
+
+Imported a CC0 golf-crowd excerpt by craigsmith (Freesound 479967). The shot
+tracker adds applause only alongside an observed cup completion with strokes
+below recorded par; imported/repeated results remain silent. Playback has a
+20-second audio-clock cooldown, independent of simulation speed, and uses the
+existing volume, visibility and voice limits. Exact edits, hash and source are
+in the shipped credits/provenance. Ten audio checks and the build pass. Final
+listening review, golfer muttering, motors and environmental ambience remain.

@@ -3,9 +3,9 @@ import {createShotSoundTracker} from './shot-sounds.js';
 export function createGameAudio(host){
  const tracker=createShotSoundTracker(),voices=new Set();
  const key='fairway-baron.effects-volume';
- let volume=.4,context,loading,disposed=false,rotor;
+ let volume=.4,context,loading,disposed=false,rotor,lastApplause=-Infinity;
  const buffers={};
- const files={drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',cup:'ball-in-cup.mp3',rotor:'helicopter-rotor.mp3'};
+ const files={applause:'golf-applause.mp3',drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',cup:'ball-in-cup.mp3',rotor:'helicopter-rotor.mp3'};
  try{const saved=localStorage.getItem(key);if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(1,Number(saved)));}catch{}
  const settings=document.createElement('section');settings.className='game-audio-settings';
  settings.innerHTML='<h3>Game sound</h3><label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="100" step="5"><output></output></label><p><a href="/audio/credits.html" target="_blank" rel="noopener">Sound credits</a></p>';
@@ -30,13 +30,14 @@ export function createGameAudio(host){
  document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);document.addEventListener('visibilitychange',visibility);
  function play(kind,position,project,level=1,nativePan=null){
   const buffer=buffers[kind];
+  if(kind==='applause'&&(!context||context.currentTime-lastApplause<20))return;
   if(!buffer||context?.state!=='running'||voices.size>=(rotor?3:4)||volume===0)return;
   const p=project(position);if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.depth < -1||p.depth > 1)return;
   const distance=Math.hypot(p.x-.5,p.y-.5);if(distance>1)return;
   const gain=context.createGain();gain.gain.value=volume*level*(nativePan===null?Math.max(.05,1-distance):1);
   const source=context.createBufferSource();source.buffer=buffer;
   let pan;if(context.createStereoPanner){pan=context.createStereoPanner();pan.pan.value=nativePan??Math.max(-1,Math.min(1,(p.x-.5)*2));source.connect(gain).connect(pan).connect(context.destination);}else source.connect(gain).connect(context.destination);
-  source.onended=()=>{voices.delete(source);source.disconnect();gain.disconnect();pan?.disconnect();};voices.add(source);source.start();
+  source.onended=()=>{voices.delete(source);source.disconnect();gain.disconnect();pan?.disconnect();};voices.add(source);source.start();if(kind==='applause')lastApplause=context.currentTime;
  }
  function updateRotor(g,project){
   const h=g.helicopter;

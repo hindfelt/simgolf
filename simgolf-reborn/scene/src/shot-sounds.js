@@ -19,8 +19,10 @@ export function createShotSoundTracker(){
     if(continuous&&!previous.has(id)&&!v.shot&&green&&v.ball&&
       previous.has(`shot:${visit}:${score.holeId}:${score.strokes}`)&&
       g.time>=score.completedAt&&g.time-score.completedAt<=freshAge&&
-      Math.hypot(v.ball.x-green.x,v.ball.z-green.z)<.75)
+      Math.hypot(v.ball.x-green.x,v.ball.z-green.z)<.75){
       events.push({id,kind:'cup',position:{x:green.x,z:green.z}});
+      if(Number.isInteger(score.par)&&score.strokes<score.par)events.push({id:`applause:${visit}:${score.holeId}`,kind:'applause',position:{x:green.x,z:green.z}});
+    }
    }
   }
   previous=current;lastTime=g.time;return events;

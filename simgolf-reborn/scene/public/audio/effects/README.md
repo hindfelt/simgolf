@@ -47,3 +47,15 @@ These edits were checked for decoding, durations and runtime behavior. Subjectiv
 - Edit: excerpt 0.38–1.38 seconds, +18 dB, final 0.15-second fade-out, MP3 160 kb/s.
 - SHA-256: 4ebc814c4c58e1945d769b6a1e2ee3aca5949784c50dc34b3b59b44b8b11d1cb
 - Runtime trigger: a previously observed shot ends at the cup with a new scorecard entry and unchanged stroke count. Penalty drops, distant pickups, imported completions and repeated snapshots do not trigger it.
+
+## golf-applause.mp3
+
+- Creator: craigsmith.
+- Source: https://freesound.org/people/craigsmith/sounds/479967/
+- Public HQ preview: https://cdn.freesound.org/previews/479/479967_2524442-hq.mp3
+- Licence: CC0, https://creativecommons.org/publicdomain/zero/1.0/
+- Verified/imported: 12 September 2026.
+- Edit: first 4.8 seconds, 0.08-second fade-in, 0.8-second fade-out from 4.0 seconds, gain 0.6, MP3 160 kb/s.
+- SHA-256: 695f4684094d417620c8d0f4d09540c2f8076529d6e71d15effefcb69eb8b9b6
+- Runtime: observed birdie or better hole-out; at most once per 20 seconds of audio time. Restores do not replay applause.
+- Decode and trigger checks completed; subjective listening/mix review remains pending.
