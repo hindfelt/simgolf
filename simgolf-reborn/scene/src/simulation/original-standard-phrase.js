@@ -1,3 +1,4 @@
+import {originalScoreComment} from './original-score-comment.js';
 import {originalHoleDescription} from './original-hole-description.js';
 import {originalClubName} from './original-club-name.js';
 import {originalProfileVoice} from './original-profile-voice.js';
@@ -16,6 +17,22 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===19||kind===23){
+  const a=actor(q),h=q.holeIndex;if(!Number.isInteger(h)||h<0||h+0x23>=256)throw Error('Original score hole index is unavailable.');
+  const current=q.holeRecords?.[h],following=q.holeRecords?.[h+1];if(!(current instanceof Uint8Array)||current.length!==520||!(following instanceof Uint8Array)||following.length!==520)throw Error('Original score hole records are unavailable.');
+  const stroke=(a[0x23+h]<<24)>>24,par=(current[8]<<24)>>24,d=stroke-par,flags=new DataView(following.buffer,following.byteOffset,following.byteLength).getUint32(0,true);
+  append(d>=-4&&d<=3?[0x4e1bac,0x4e1b9c,0x4e1b94,0x4e1b88,0x4e1b80,0x4e1b78,0x4e1b68,0x4e1b58][d+4]:0x4e1b50);
+  if((flags&4)&&(d>1||q.actorId===152)){append(0x4e1b38);state.remarkStyle=0x80007d08;}
+  else if((flags&8)&&(d<0||q.actorId===152)){append(0x4e1b20);state.remarkStyle=0x80007d08;}
+  else if(kind===23){append(0x4e1b04);state.remarkStyle=0x80007d08;}
+  else{const v=(q.actorId+h)&3,mask=v<3&&(a[0x19]&(1<<v))?(0x100<<v):0;
+   if((mask&flags)&&d<=0)append({256:0x4e1a98,512:0x4e1abc,1024:0x4e1adc}[mask]);
+   else{const view=new DataView(a.buffer,a.byteOffset,a.byteLength),type=view.getInt16(0xae,true);let partnerScore=0;if(type===2||type===4)partnerScore=(actor({...q,actorId:view.getInt16(0xa2,true),state})[0x23+h]<<24)>>24;
+    if(partnerScore)append(stroke<partnerScore?0x4e1a84:0x4e1a64);
+    else{events.push({address:0x469250,args:[q.value|0,d]});state=originalScoreComment({value:q.value,relativeScore:d,state});}
+   }
+  }
+ }
  else if(kind===1){const a=actor(q);
   if(a[0xae]&1){append(0x4d2914);const partner=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xa2,true),other=actor({...q,actorId:partner,state});const odd=other[0xb6]&1;events.push({address:0x46c140,args:[partner]});const voice=originalProfileVoice({...q,actorId:partner,state});append(odd?(voice?0x4e2838:0x4e2850):(voice?0x4e2800:0x4e2820));state.redirected=true;}
   else{const v=a[0xb6]&3;if(v===3)append(0x4e27ec);else if(v===1)append(0x4e27d8);else if(v===0&&q.actorId!==-1){append(0x4e27bc);append(0x4e27b0);}else append(0x4e2794);}

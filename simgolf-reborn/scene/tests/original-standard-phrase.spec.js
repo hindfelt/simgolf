@@ -23,7 +23,7 @@ test('selected standard location phrase expands through the actual landmark desc
  expect(result.state.sourceText).toBe(selected.state.sourceText.replace('DATA','lighthouse'));expect(result.state.sourceText).not.toContain('DATA');expect(result.state.remarkStyle).toBe(0x80007d08);
 });
 test('unrecovered standard cases cannot masquerade as successful generic remarks',()=>{
- expect(()=>originalStandardPhrase({kind:19,state:{sourceText:''}})).toThrow('case 19 is not reconstructed');
+ expect(()=>originalStandardPhrase({kind:50,state:{sourceText:''}})).toThrow('case 50 is not reconstructed');
 });
 
 test('direct standard helpers resolve actual actor names and landmark records',()=>{
@@ -130,5 +130,14 @@ test('history remarks compose actual partner and custom hole names',()=>{
  const named=originalDescribedStandardPhrase(q,{profileNames:['Gary','Mary']});expect(named.state.sourceText).toContain('Mary');expect(named.state.sourceText).toContain('Seaside');
  next[0]=0;history[20]=255;expect(originalStandardPhrase(q).state.sourceText).toContain('-1');
  history[1]=1;expect(originalStandardPhrase({...q,holeRecords:{}}).state.remarkStyle).toBe(0x800023e8);
+ expect(q.state.sourceText).toBe('');
+});
+test('score remarks apply flag precedence before trait and partner comparisons',()=>{
+ const self=new Uint8Array(256),partner=new Uint8Array(256),current=new Uint8Array(520),next=new Uint8Array(520);self[0x24]=6;current[8]=4;
+ const q={kind:19,actorId:0,value:6,holeIndex:1,state:{sourceText:'',actors:{0:self,1:partner}},holeRecords:{1:current,2:next}};
+ next[0]=12;const flagged=originalStandardPhrase(q);next[0]=4;expect(originalStandardPhrase(q)).toEqual(flagged);expect(flagged.state.remarkStyle).toBe(0x80007d08);
+ next[0]=0;self[0xae]=2;self[0xa2]=1;partner[0x24]=7;
+ const better=originalStandardPhrase(q);partner[0x24]=5;const worse=originalStandardPhrase(q);expect(better.state.sourceText).not.toBe(worse.state.sourceText);expect(better.events).toEqual([]);
+ partner[0x24]=0;expect(originalStandardPhrase(q).events).toEqual([{address:0x469250,args:[6,2]}]);
  expect(q.state.sourceText).toBe('');
 });

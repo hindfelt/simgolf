@@ -7,10 +7,12 @@ from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EIP,UC_X86_REG_EBX,UC_X8
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x200000);u.mem_map(0x800000,0x40000);u.mem_map(0x100000,0x8000)
-for a,n in [(0x407050,0xc0),(0x45b2c0,0x55),(0x40a6c0,0xdc),(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
+for a,n in [(0x469250,0xd4),(0x407050,0xc0),(0x45b2c0,0x55),(0x40a6c0,0xdc),(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
 def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
 events=[]
 def hook(u,a,size,data):
+ if a==0x469250:
+  sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=list(struct.unpack('<ii',u.mem_read(sp+4,8)))));return
  if a==0x46bc8c:u.emu_stop();return
  if a==0x4acb95:
   sp=u.reg_read(UC_X86_REG_ESP);args=list(struct.unpack('<iii',u.mem_read(sp+4,12)));events.append(dict(address=a,args=args));u.mem_write(args[1],str(args[0]).encode()+b'\0');u.reg_write(UC_X86_REG_EAX,args[1]);return
@@ -25,10 +27,10 @@ def hook(u,a,size,data):
 for a in [0x4acb95,0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[1,61,59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[19,23,1,61,59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
- for i in range(640 if kind==59 else 384):
-  id=i%16;record=[0]*256;
+ for i in range(4096 if kind in [19,23] else 640 if kind==59 else 384):
+  id=152 if kind in [19,23] and i%17==16 else i%16;record=[0]*256;
   if kind==7:record[0x12]=(i//5)%256
   record[0x18]=(i*17)%256;record[0xb6]=i%256
   profile=[-32768,-17,-8,-1,0,1,2,3,4,5,6,7,8,32767][i%14];record[0xb6:0xb8]=list(struct.pack('<h',profile))
@@ -39,6 +41,8 @@ for kind in kinds:
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
+  if kind in [19,23]:
+   h=i%18;q['holeIndex']=h;par=4 if i<3072 else [3,4,5,127,128,255][i%6];stroke=(par+[-5,-4,-3,-2,-1,0,1,2,3,4][i%10])&255;record[0x23+h]=stroke;record[0x19]=(i//11)%8;record[0xae]=[0,2,4,3][(i//7)%4];partner=id^1;record[0xa2:0xa4]=list(struct.pack('<h',partner));other=[0]*256;other[0x23+h]=(i//15)%12;q['state']['actors'][str(partner)]=other;u.mem_write(0x577f08+partner*256,bytes(other));current=[0]*520;current[8]=par;following=[0]*520;flags=[0,4,8,12,256,512,1024,1792,260,520,1036,1804][(i//10)%12];following[:4]=list(struct.pack('<I',flags));q['holeRecords']={str(h):current,str(h+1):following};u.mem_write(0x5744f8+h*520,bytes(current));u.mem_write(0x5744f8+(h+1)*520,bytes(following));u.reg_write(UC_X86_REG_EBP,h);q['value']=value=[-1,0,1,2,3,4,5,6,7,8,127,128][(i//13)%12]
   if kind==1:
    record[0xb6:0xb8]=[i%4,0];record[0xae]=(i//4)%2;record[0xa2:0xa4]=list(struct.pack('<h',id^1));other=[0]*256;otherProfile=(i//8)%8;other[0xb6]=otherProfile;q['state']['actors'][str(id^1)]=other;u.mem_write(0x577f08+(id^1)*256,bytes(other));pr=[0]*560;pr[0x21]=i%256;q['profileRecords']={str(otherProfile):pr};u.mem_write(0x4d5040+otherProfile*560,bytes(pr))
   if kind==61:q['value']=value=[-2147483648,-1,0,2,3,4,5,6,7,8,2147483647][(i//2)%11]

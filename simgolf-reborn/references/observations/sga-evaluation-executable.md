@@ -3061,3 +3061,9 @@ The native standard oracle now executes those real hole-name helpers, with name 
 Case61 reproduces the original value3–7 jump table, actor parity alternatives and out-of-range fallback. Case1 checks the original actor-type low bit; the partner branch reads the signed partner index and combines that partner's profile parity with the actual profile-voice helper. Other branches use the current profile's low two bits, including the two-fragment form and original redirection/style behavior.
 
 The standard oracle now compares25600 cases. Added matrices cover both parity alternatives for every case61 value/default branch and original partner records/profile flags for case1. Thirty-two related tests pass. Coverage is62 of65 cases;19,23,50 remain, followed by contiguous full-phrase verification and live integration.
+
+### Score-to-par and partner comparisons: cases19/23 (2026-09-12)
+
+Cases19/23 now compute the signed-byte stroke/par difference, select the original score term and apply hole-flag0x4/0x8 precedence including narrator152. Case23 then uses its own completion text. Case19 checks the actor/hole-selected trait bit against the hole flags and score, then either compares a partner's nonzero signed stroke count or calls the score-comment helper. `original-score-comment.js` reconstructs complete0x469250, including value0–7 variants, the8–127 range and signed out-of-range fallback.
+
+The standard oracle executes the actual score-comment function and its jump table.33792 comparisons include4096 cases for each new branch, signed score/par boundaries, flag combinations, trait bits, actor types, partner strokes and narrator152. Thirty-three related tests pass, including precedence and partner/no-partner routes. Coverage is64 of65 standard cases. Case50 and its helper, contiguous full-phrase verification and live integration remain open.

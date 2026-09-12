@@ -1371,3 +1371,5 @@ F06 standard remarks now cover59 of65 cases. Added complete club-name helper/cas
 F06 standard remarks now cover60 of65 cases. Original golfer-history case59 now uses the recovered hole-name helpers and reloads actor state after name expansion.24832 native comparisons and32 related tests pass. Five cases (1,19,23,50,61), contiguous phrase verification and live integration remain open.
 
 F06 standard remarks now cover62 of65 cases. Added value/parity branch61 and partner-profile branch1, using actual partner records and recovered profile voice.25600 native comparisons and32 related tests pass. Cases19,23,50, contiguous phrase verification and live integration remain open.
+
+F06 standard remarks now cover64 of65 cases. Added original score-to-par cases19/23 and complete score-comment helper, including narrator, flag/trait precedence and signed partner-score comparisons.33792 native comparisons and33 related tests pass. Case50, contiguous phrase verification and live integration remain open.
