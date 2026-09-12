@@ -23,6 +23,6 @@ export function originalPhraseEntry(q){
 export function originalSelectedPhrase(q,resolve){
  const entry=originalPhraseEntry(q);
  if(entry.next!=='standard')return entry;
- const selected=originalStandardPhrase({...q,state:entry.state},resolve);
+ const selected=originalStandardPhrase({...q,holeIndex:entry.hole,state:entry.state},resolve);
  return {...selected,hole:entry.hole};
 }

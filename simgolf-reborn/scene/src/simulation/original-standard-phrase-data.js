@@ -273,5 +273,15 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e1f14": "Check out this ",
   "0x4e1f04": "Look at this ",
   "0x4e1efc": "nice ",
-  "0x4e1ef0": "beautiful "
+  "0x4e1ef0": "beautiful ",
+  "0x4e1ff8": "I love riding over this scenic bridge.",
+  "0x4e1fd0": "I love walking over this scenic bridge.",
+  "0x4e1fa8": "I think I've seen this bridge before.",
+  "0x4e244c": "Lousy, now that you mention it.",
+  "0x4e2438": "Ummm, fine thanks.",
+  "0x4e2414": "Hey, I'm trying to play golf here.",
+  "0x4e24c4": "Great, another dogleg left.",
+  "0x4e24a8": "Yawn, another dogleg right.",
+  "0x4e2490": "Wow, yet another par ",
+  "0x4e246c": "This hole is like the last hole."
 };

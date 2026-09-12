@@ -14,6 +14,17 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===7){state.sourceText='';if((q.value|0)===0){append(actor(q)[0x12]&1?0x4e1ff8:0x4e1fd0);state.remarkStyle=0x800023e8;}else append(0x4e1fa8);}
+ else if(kind===58){const value=q.value|0;if(value>=0&&value<=2)append([0x4e2414,0x4e2438,0x4e244c][value]);}
+ else if(kind===30){
+  if(!Number.isInteger(q.holeIndex))throw Error('Original phrase hole index is unavailable.');
+  const record=index=>{const r=q.holeRecords?.[index];if(!(r instanceof Uint8Array)||r.length!==520)throw Error('Original phrase hole record is unavailable.');return r;};
+  const next=record(q.holeIndex+1)[0];
+  if((next&32)&&(record(q.holeIndex)[0]&32))append(0x4e24c4);
+  else if((next&64)&&(record(q.holeIndex)[0]&64))append(0x4e24a8);
+  else{const par=record(q.holeIndex)[8];if(par===record(q.holeIndex-1)[8]){append(0x4e2490);const signed=(par<<24)>>24;events.push({address:0x4acb95,args:[signed,0x836454,10]});state.sourceText+=String(signed);append(0x4c38f4);}else append(0x4e246c);}
+  state.remarkStyle=0x80007d08;
+ }
  else if(kind===3){const a=actor(q),type=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xae,true);
   if(type===2){append(0x4e26d0);append(0x4c2f20);call(0x466fb0,[q.actorId,0]);append(0x4c38f4);state.redirected=true;}
   else if(type===3){append(0x4e2700);call(0x466fb0,[q.actorId,0]);append(0x4e26ec);state.redirected=true;}

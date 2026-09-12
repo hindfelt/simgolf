@@ -4,6 +4,7 @@ import {originalStandardPhrase,originalDescribedStandardPhrase} from '../src/sim
 import {originalSelectedPhrase} from '../src/simulation/original-phrase-entry.js';
 import {originalDescribedPhrasePostprocess} from '../src/simulation/original-phrase-postprocess.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-standard-phrase.json',import.meta.url)));
+for(const [q] of rows)if(q.holeRecords)for(const id in q.holeRecords)q.holeRecords[id]=Uint8Array.from(q.holeRecords[id]);
 for(const [q] of rows)if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);
 for(const [q,out] of rows)for(const state of [q.state,out.state])for(const id in state.actors)state.actors[id]=Uint8Array.from(state.actors[id]);
 test('supported original standard remarks and display styles match native dispatch',()=>{
@@ -102,4 +103,16 @@ test('partner-directed location remarks preserve the native recipient and redire
  self[0xae]=3;
  const named=originalDescribedStandardPhrase({...q,kind:28},{profileNames:['Gary','Mary']});expect(named.state.sourceText).toContain(', Mary');expect(named.state.redirected).toBe(false);
  const selfNamed=originalDescribedStandardPhrase({...q,kind:3},{profileNames:['Gary','Mary']});expect(selfNamed.state.sourceText).toContain('Gary');expect(selfNamed.state.redirected).toBe(true);
+});
+test('replacement dialogue discards old text while other dialogue appends',()=>{
+ const actor=new Uint8Array(256),state={sourceText:'OLD TEXT',actors:{0:actor}};
+ for(const value of [-1,0,1])expect(originalStandardPhrase({kind:7,actorId:0,value,state}).state.sourceText).not.toContain('OLD TEXT');
+ expect(originalStandardPhrase({kind:58,actorId:0,value:0,state}).state.sourceText).toContain('OLD TEXT');expect(state.sourceText).toBe('OLD TEXT');
+});
+test('hole remarks honor flag precedence and signed repeated par without mutating records',()=>{
+ const prev=new Uint8Array(520),current=new Uint8Array(520),next=new Uint8Array(520),q={kind:30,holeIndex:1,state:{sourceText:''},holeRecords:{0:prev,1:current,2:next}};
+ current[0]=next[0]=96;const both=originalStandardPhrase(q).state.sourceText;
+ current[0]=next[0]=32;expect(originalStandardPhrase(q).state.sourceText).toBe(both);
+ current[0]=next[0]=0;current[8]=prev[8]=255;
+ const signed=originalStandardPhrase(q);expect(signed.state.sourceText).toContain('-1');expect(signed.events).toEqual([{address:0x4acb95,args:[-1,0x836454,10]}]);expect(current[8]).toBe(255);
 });
