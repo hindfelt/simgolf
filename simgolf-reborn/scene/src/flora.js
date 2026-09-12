@@ -87,7 +87,8 @@ export function buildFlora(
   { editableWater = false, coastal = false, environment = null } = {},
 ) {
   const desert = environment === "desert";
-  const conifers = coastal && !desert;
+  const tropical = environment === "tropical", links = environment === "links";
+  const conifers = coastal && !desert && !tropical && !links;
   const rng = randomSource(117);
   const leaves = [],
     needles = [],
@@ -175,7 +176,13 @@ export function buildFlora(
         }
       }
     }
-    if (desert) {
+    if (tropical) {
+      branches.length=starts[1];leaves.length=starts[2];pinkLeaves.length=starts[3];
+      trunks[starts[0]].s=[size*.65,h,size*.65];
+      trunks[starts[0]].p[1]=ground+h*.5;
+      for(let n=0;n<10;n++) leaves.push({p:[x,ground+h,z],r:[0,n*Math.PI/5+(x+z),0],s:[size,size,size],c:new THREE.Color(n%2?0x719a37:0x456f29)});
+    }
+    if (desert || links) {
       // Preserve RNG consumption and tree identity so existing removals and
       // terrain edits still refer to the same plants after the visual change.
       leaves.push(...pinkLeaves.splice(starts[3]));
@@ -184,7 +191,7 @@ export function buildFlora(
         for(let i=starts[index];i<a.length;i++){
           const t=a[i];t.p=[x+(t.p[0]-x)*shrink,ground+(t.p[1]-ground)*shrink,z+(t.p[2]-z)*shrink];
           t.s=t.s.map(v=>v*shrink);
-          if(index===2)t.c=new THREE.Color(0xb6b49b);
+          if(index===2)t.c=new THREE.Color(links?0x9e9b57:0xb6b49b);
         }
       });
       // Open canopies leave visible branches, instead of dense temperate crowns.
@@ -267,12 +274,12 @@ export function buildFlora(
     treeMeshes.push(crown);
   }
   treeMeshes.push(
-    batch(scene, new THREE.PlaneGeometry(2.4, 2.4), leafMaterial, leaves),
+    batch(scene, tropical ? palmFrondGeometry() : new THREE.PlaneGeometry(2.4, 2.4), tropical ? new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.DoubleSide,roughness:1}) : leafMaterial, leaves),
   );
   treeMeshes.push(
     batch(scene, new THREE.PlaneGeometry(2.4, 2.4), pinkMaterial, pinkLeaves),
   );
-  treeMeshes[conifers ? 1 : 0].name = desert ? "desert-scrub-canopies" : "broadleaf-canopies";
+  treeMeshes[conifers ? 1 : 0].name = tropical ? "tropical-palms" : links ? "links-gorse" : desert ? "desert-scrub-canopies" : "broadleaf-canopies";
   const barkTex = makeTexture("bark");
   barkTex.repeat.set(1, 3);
   const bark = new THREE.MeshStandardMaterial({
@@ -354,10 +361,10 @@ export function buildFlora(
     const s = 0.06 + rng() * 0.14;
     grass.push({
       p: [x, height(x, z), z],
-      s: [s, s * 1.5, s],
+      s: [s, s * (links ? 4 : 1.5), s],
       r: [0, rng() * 6.28, 0],
       c: new THREE.Color()
-        .setHSL(0.19, 0.29, 0.24 + rng() * 0.17)
+        .setHSL(links ? .13 : .19, .29, (links ? .48 : .24) + rng() * .17)
         .convertSRGBToLinear(),
     });
   }
@@ -586,4 +593,15 @@ export function buildFlowers(scene) {
     false,
   );
   return { patchGroup, patch, count: flowers.length + garden.length };
+}
+
+// A feathered, arching palm frond, built as leaflets around a curved midrib.
+export function palmFrondGeometry(){
+ const v=[];
+ for(let i=0;i<16;i++){
+  const t=i/16,u=(i+1)/16,x=t*3.5,nx=u*3.5,y=Math.sin(t*Math.PI)*.75-t*.75,ny=Math.sin(u*Math.PI)*.75-u*.75;
+  const w=Math.sin((t*.9+.06)*Math.PI)*.65;
+  for(const sign of [-1,1])v.push(x,y,0,nx,ny,0,x+.42,y-.16,sign*w);
+ }
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(v,3));geometry.computeVertexNormals();return geometry;
 }

@@ -20,7 +20,7 @@ try{
  Object.assign(sun.shadow.camera,{left:-88,right:88,top:88,bottom:-88,near:1,far:210});sun.shadow.normalBias=.045;sun.shadow.bias=-.00006;scene.add(sun,sun.target);
  const fill=new THREE.DirectionalLight(0xc8d9e5,.4);fill.position.set(50,35,80);scene.add(fill);
  const terrain=buildLandscape(scene,()=>{});terrain.reshape();
- buildClubhouse(scene).scale.setScalar(.65);
+ buildClubhouse(scene,game.environment).scale.setScalar(.65);
  const bridge=buildBridge(scene);bridge.visible=!game.starterBridgeRemoved;
  const flora=buildFlora(scene,{editableWater:true,coastal:style==='coast',environment});flora.update(ground);
  const ocean=buildOcean(scene);ocean.update(ground);

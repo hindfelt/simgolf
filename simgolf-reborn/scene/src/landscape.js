@@ -444,9 +444,9 @@ export function buildLandscape(scene, painter) {
     roughness: 1,
   });
   const regionalGround = {
-    links: [0.55, 0.58, 0.31, 0.55],
+    links: [0.68, 0.64, 0.39, 0.8],
     desert: [0.78, 0.57, 0.34, 0.9],
-    tropical: [0.3, 0.6, 0.22, 0.45],
+    tropical: [0.35, 0.64, 0.24, 0.65],
   };
   const groundTint = {
     value: new THREE.Vector4(

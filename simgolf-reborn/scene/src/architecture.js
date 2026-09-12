@@ -42,7 +42,8 @@ export class Mason {
   }
 }
 
-export function buildClubhouse(scene) {
+export function buildClubhouse(scene, environment = null) {
+  if(environment === "tropical" || environment === "links") return buildRegionalClubhouse(scene,environment);
   const group = new THREE.Group();
   group.position.set(-29, height(-29, -24), -24);
   scene.add(group);
@@ -306,4 +307,26 @@ export function bench(scene, x, z, rotation = 0) {
   }
   b.finish();
   return group;
+}
+
+function buildRegionalClubhouse(scene,environment){
+ const tropical=environment==='tropical',g=new THREE.Group();g.name='clubhouse';g.userData.environment=environment;
+ g.position.set(-29,height(-29,-24),-24);scene.add(g);const b=new Mason(g);
+ const mat=(color,kind)=>new THREE.MeshStandardMaterial({color,roughness:.95,...(kind?{map:makeTexture(kind)}:{})});
+ const wall=mat(tropical?0xaa8250:0xc5c3a4,tropical?'bark':'stone'),wood=mat(0x624932,'bark'),trim=mat(tropical?0xdeb77c:0xe0ddc0),roof=mat(tropical?0xc6ab71:0x778586),glass=mat(0x294e4f);
+ b.box(27,1,20,wall,0,.5,0);b.box(23,4.7,12,wall,0,3.3,-1);
+ for(let x=-10;x<=10;x+=4){b.box(2.3,2.7,.13,glass,x,3.7,5.07);b.box(2.6,.15,.2,trim,x,2.3,5.18);b.box(.22,2.8,.18,trim,x,3.7,5.18);}
+ b.box(27,.25,6,wood,0,1.12,8);
+ for(let x=-12;x<=12;x+=4){b.box(.3,4.6,.3,wood,x,3.4,10);if(Math.abs(x)>3)b.box(3.8,.2,.2,trim,x,2.2,10);}
+ const roofPart=(x,z,w,d)=>{
+  const rise=tropical?4:2.5,half=d/2,slant=Math.hypot(half,rise),angle=Math.atan2(rise,half);
+  for(const sign of [-1,1]) b.add(new THREE.BoxGeometry(w,.28,slant),roof,x,5.7+rise/2,z+sign*half/2,sign*angle);
+  b.box(w,.25,.3,wood,x,5.7+rise,z);
+  if(tropical)for(let xx=-w/2;xx<w/2;xx+=.65)for(const sign of [-1,1])b.add(new THREE.BoxGeometry(.045,.1,slant),trim,x+xx,5.86+rise/2,z+sign*half/2,sign*angle);
+ };
+ roofPart(0,0,12,23);roofPart(-10,0,8,18);roofPart(10,0,8,18);
+ if(!tropical){for(const x of [-10,9]){b.box(1.2,3,1.3,wall,x,8,-1);b.box(1.5,.25,1.6,trim,x,9.5,-1);}}
+ else {for(const x of [-12,12])for(let n=0;n<5;n++)b.box(.4,.13,.4,trim,x,1.5+n*.65,10);}
+ for(let i=0;i<6;i++)b.box(4.7,.18*(6-i),.68,wall,0,.09*(6-i),11.25+i*.63);
+ b.finish();return g;
 }

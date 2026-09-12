@@ -281,6 +281,8 @@ export function buildCourseView(scene) {
         const muddy = kind === "path" && !connectedPaths.has(Number(k));
         ctx.fillStyle = muddy
           ? "#776847"
+          : kind === "water" && g.environment === "tropical"
+            ? "#42b8ad"
           : kind === "water" && g.landscapeStyle === "coast"
             ? COAST_WATER
             : colors[t.type];
@@ -344,7 +346,7 @@ export function buildCourseView(scene) {
       }
       // A continuous grass collar hugs the complete shape, including rounded corners.
       // Clip the stroke inward so paths and neighbouring surfaces stay unobstructed.
-      ctx.strokeStyle = kind === "path" ? "#586344" : "#456534";
+      ctx.strokeStyle = kind === "water" && g.environment === "tropical" ? "#dfd6a3" : kind === "path" ? "#586344" : "#456534";
       ctx.lineWidth = kind === "path" ? px * 0.16 : px * 0.55;
       ctx.lineJoin = "round";
       ctx.stroke(outline);

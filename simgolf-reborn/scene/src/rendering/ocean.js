@@ -78,6 +78,7 @@ export function buildOcean(scene) {
     currentGame;
   return {
     update(g) {
+      material.color.set(g.environment==='tropical'?0x71ffe2:0xffffff);
       ocean.visible = g.landscapeStyle === "coast";
       stones.visible = ocean.visible;
       continuation.visible=ocean.visible;

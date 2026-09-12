@@ -2,9 +2,10 @@ import {treeScale} from "../simulation/tree-scale.js";
 import * as THREE from "three";
 import { GRID, center } from "../simulation/world.js";
 import { height, courseHeight } from "../landscape.js";
-import { foliageTexture } from "../flora.js";
+import { foliageTexture, palmFrondGeometry } from "../flora.js";
 export function plantedTrees(scene) {
   const capacity = GRID.width * GRID.height;
+  const canopyTexture=foliageTexture();
   const trunks = new THREE.InstancedMesh(
     new THREE.CylinderGeometry(0.14, 0.26, 4.5, 6),
     new THREE.MeshStandardMaterial({ color: 0x6a573c, roughness: 1 }),
@@ -13,7 +14,7 @@ export function plantedTrees(scene) {
   const leaves = new THREE.InstancedMesh(
     new THREE.PlaneGeometry(2.2, 2.2),
     new THREE.MeshStandardMaterial({
-      map: foliageTexture(),
+      map: canopyTexture,
       alphaTest: 0.45,
       side: THREE.DoubleSide,
       roughness: 1,
@@ -36,9 +37,11 @@ export function plantedTrees(scene) {
       return p ? {...p, distance:hit.distance} : null;
     },
     update(g) {
-      const conifer=g.landscapeStyle==="coast" && g.environment!=="desert";
+      const tropical=g.environment==="tropical",links=g.environment==="links";
+      const conifer=g.landscapeStyle==="coast" && g.environment!=="desert" && !tropical && !links;
       const nextAppearance=`${g.environment}:${conifer}`;
       if (g.revision === revision && appearance===nextAppearance) return;
+      if(appearance!==nextAppearance){leaves.geometry.dispose();leaves.geometry=tropical?palmFrondGeometry():new THREE.PlaneGeometry(2.2,2.2);leaves.material.map=tropical?null:canopyTexture;leaves.material.needsUpdate=true;}
       appearance=nextAppearance;
       revision = g.revision;
       let count = 0;
@@ -59,6 +62,7 @@ export function plantedTrees(scene) {
         for(let b=0;b<6;b++) {
           const angle=b*Math.PI/3,from=new THREE.Vector3(p.x,ground+2.8,p.z),to=new THREE.Vector3(p.x+Math.cos(angle)*1.35,ground+4.8,p.z+Math.sin(angle)*1.35),direction=to.clone().sub(from);
           if(conifer){from.y=ground+2.3+b*.35;to.set(p.x+Math.cos(angle)*(.85-b*.09),from.y-.2,p.z+Math.sin(angle)*(.85-b*.09));direction.copy(to).sub(from);}
+          if(tropical){direction.set(0,0,0);}
           dummy.position.copy(from.add(to).multiplyScalar(.5));dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.clone().normalize());dummy.scale.set(.45,direction.length()/4.5,.45);dummy.updateMatrix();trunks.setMatrixAt(count*7+b+1,dummy.matrix);
         }
         dummy.scale.set(1,1,1);
@@ -86,14 +90,15 @@ export function plantedTrees(scene) {
             dummy.position.set(p.x+Math.cos(a)*radius*.65,ground+2.2+fraction*3.5,p.z+Math.sin(a)*radius*.65);
             dummy.rotation.set(-.65,a,.3*Math.sin(a));dummy.scale.set(spread,spread*.65,spread);
           }
+          if(tropical){dummy.position.set(p.x,ground+4.5,p.z);dummy.rotation.set(0,n*Math.PI/5,0);dummy.scale.setScalar(n<10?.7:0);}
           dummy.updateMatrix();
           leaves.setMatrixAt(count * 64 + n, dummy.matrix);
         }
         count++;
       }
-      leaves.material.color.set(g.environment==='desert' ? 0xb8b69a : conifer ? 0xc6d8ca : 0xffffff);
-      leaves.name=conifer?'planted-coastal-conifers':g.environment==='desert'?'planted-desert-scrub':'planted-broadleaf';
-      if(g.environment==='desert'){
+      leaves.material.color.set(tropical ? 0x608d30 : links ? 0x9e9b57 : g.environment==='desert' ? 0xb8b69a : conifer ? 0xc6d8ca : 0xffffff);
+      leaves.name=tropical?'planted-palms':links?'planted-gorse':conifer?'planted-coastal-conifers':g.environment==='desert'?'planted-desert-scrub':'planted-broadleaf';
+      if(g.environment==='desert'||links){
         const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
         for(const [mesh,parts] of [[trunks,7],[leaves,64]])for(let i=0;i<count*parts;i++){
           const base=positions[Math.floor(i/parts)],shrink=treeScale(g.environment,base.x,base.z,true);
