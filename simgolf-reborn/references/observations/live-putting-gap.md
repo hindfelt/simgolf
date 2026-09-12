@@ -372,3 +372,27 @@ The intervening 0x42cc88–0x42ceb2 wear/reaction branch and subsequent
 shot accounting. Full motion/scoring and live-world adoption remain open. This
 records original behavior; it does not replace the live game's user-requested
 out-of-bounds drop behavior or claim original rules have been deployed.
+
+### Assembled stopped-ball tail with landing and follow-up reactions
+
+`original-landing-reactions.js` recovers 0x42cc88–0x42ceb2: saturating landed-tile
+wear, the pre-reaction mood local, improved-lie recovery, poor-lie and failed
+recovery reactions. It rereads terrain/metadata/actor flags after reaction effects.
+`verify-original-landing-reactions.py` matches 2,000 native runs and 703 reaction
+calls, including callback changes to source terrain, scatter, mood and seed.
+
+`original-post-landing.js` recovers 0x42d110–0x42d23c: final lie/visual flags,
+long-drive reaction gating and follow-up reactions. It retains the landed locals
+and original mood, while subsequent actor/global reads see earlier effects.
+`verify-original-post-landing.py` matches 1,600 native cases with controlled range
+and effect callbacks, including changed mood, hole number and reaction flags.
+
+`original-stopped-shot.js` composes accounting, landing reactions, the selected
+hazard branch and final reactions. `verify-original-stopped-shot.py` matches 800
+continuous native executions from 0x42ca9d to the actor skip exit, including entire
+actor/hole/stat records, wear, seed and effect order: 7,096 drop candidates and
+509 penalties. Native lookup, distance and projection execute, with controlled
+reaction/presentation/range effects. Twelve focused stopped-tail/hazard/accounting
+tests pass. This closes the previously documented gaps on either side of the
+hazard branch. Motion-to-raw-actor binding, effect implementations, hole settlement,
+walking/tutorial branches and live saved-world integration remain open.
