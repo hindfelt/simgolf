@@ -8,7 +8,15 @@ const destination=safeDestination(new URLSearchParams(location.search).get('retu
 let codeId;
 const message=text=>status.textContent=text;
 async function post(path,body){const response=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw Error(data.error||'Sign-in could not be completed.');return data;}
-try{
+if(import.meta.env.DEV && import.meta.env.VITE_AUTH_REQUIRED!=='true'){
+ document.querySelector('h2').textContent='Local game preview';
+ const notes=document.querySelectorAll('.login-card > .quiet');
+ notes[0].textContent='Play and review this development version on this computer.';
+ notes[1].textContent='Local saves stay in this browser. Online accounts, cloud saves and multiplayer are available on the hosted site.';
+ const local=document.createElement('a');local.className='provider';local.href=destination==='/'?'/?start=1':destination;local.textContent='Open local preview';
+ const online=document.createElement('a');online.className='provider';online.href='https://simgolfer.0x4d.in/';online.textContent='Sign in to the online game';
+ document.querySelector('#providers').append(local,online);message('');
+}else try{
  const response=await fetch('/api/auth/providers',{cache:'no-store'});if(!response.ok)throw Error('Sign-in is being configured. Please try again later.');
  const {providers}=await response.json();
  for(const provider of providers){
