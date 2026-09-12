@@ -26,7 +26,7 @@ export function plantedTrees(scene) {
     scene.add(m);
   }
   const dummy = new THREE.Object3D();
-  let revision = -1;
+  let revision = -1, appearance = "";
   const positions = [];
   return {
     pick(raycaster) {
@@ -36,7 +36,10 @@ export function plantedTrees(scene) {
       return p ? {...p, distance:hit.distance} : null;
     },
     update(g) {
-      if (g.revision === revision) return;
+      const conifer=g.landscapeStyle==="coast" && g.environment!=="desert";
+      const nextAppearance=`${g.environment}:${conifer}`;
+      if (g.revision === revision && appearance===nextAppearance) return;
+      appearance=nextAppearance;
       revision = g.revision;
       let count = 0;
       positions.length = 0;
@@ -55,6 +58,7 @@ export function plantedTrees(scene) {
         trunks.setMatrixAt(count * 7, dummy.matrix);
         for(let b=0;b<6;b++) {
           const angle=b*Math.PI/3,from=new THREE.Vector3(p.x,ground+2.8,p.z),to=new THREE.Vector3(p.x+Math.cos(angle)*1.35,ground+4.8,p.z+Math.sin(angle)*1.35),direction=to.clone().sub(from);
+          if(conifer){from.y=ground+2.3+b*.35;to.set(p.x+Math.cos(angle)*(.85-b*.09),from.y-.2,p.z+Math.sin(angle)*(.85-b*.09));direction.copy(to).sub(from);}
           dummy.position.copy(from.add(to).multiplyScalar(.5));dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.clone().normalize());dummy.scale.set(.45,direction.length()/4.5,.45);dummy.updateMatrix();trunks.setMatrixAt(count*7+b+1,dummy.matrix);
         }
         dummy.scale.set(1,1,1);
@@ -76,12 +80,19 @@ export function plantedTrees(scene) {
             rand() * Math.PI,
             rand() * Math.PI,
           );
+          if(conifer){
+            const tier=Math.floor(n/8),fraction=tier/8,a=(n%8)*Math.PI/4+tier*.6;
+            const radius=1.3-fraction*1.2,spread=1.2-fraction*.85;
+            dummy.position.set(p.x+Math.cos(a)*radius*.65,ground+2.2+fraction*3.5,p.z+Math.sin(a)*radius*.65);
+            dummy.rotation.set(-.65,a,.3*Math.sin(a));dummy.scale.set(spread,spread*.65,spread);
+          }
           dummy.updateMatrix();
           leaves.setMatrixAt(count * 64 + n, dummy.matrix);
         }
         count++;
       }
-      leaves.material.color.set(g.environment==='desert' ? 0xb8b69a : 0xffffff);
+      leaves.material.color.set(g.environment==='desert' ? 0xb8b69a : conifer ? 0xc6d8ca : 0xffffff);
+      leaves.name=conifer?'planted-coastal-conifers':g.environment==='desert'?'planted-desert-scrub':'planted-broadleaf';
       if(g.environment==='desert'){
         const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
         for(const [mesh,parts] of [[trunks,7],[leaves,64]])for(let i=0;i<count*parts;i++){
