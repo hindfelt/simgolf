@@ -625,3 +625,18 @@ stop globals, RNG state and 5,367 ordered calls, including rock surfaces,
 skilled actors and controlled sound/visual effects. Two focused tests verify
 full effect order and terrain-stop suppression. The nearby-golfer scan at
 0x42c9ea, stop decision, and connection to earlier motion/live state remain open.
+
+### Nearby-golfer scan and motion stop decision
+
+`original-actor-motion-tail.js` implements 0x42c9ea–0x42ca9d and direct
+noncontact entry at 0x42ca6c. A sufficiently high rebound scans all 152 actors,
+excludes inactive/completed/same-hole golfers, checks original scaled distance
+against difficulty, and emits remark 9 with parameter 20. Reaction callbacks
+can alter later checks and the final stop decision; the scan itself is not
+cancelled by a callback reducing vertical speed. Stop requires speed below 64
+and both vertical fields exactly zero, then zeros speed before accounting.
+
+500 native cases compare the entire actor arena, difficulty, ordered reactions
+and continuation branch. Fixtures mix near and distant golfers and mutate the
+shooter's speed/vertical speed and difficulty during reactions. Continuous
+landing-to-tail composition and live integration remain unfinished.
