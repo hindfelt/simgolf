@@ -1,0 +1,21 @@
+const signedByte=n=>(n<<24)>>24;
+// Original 0x46737d–0x467408: external record processing, receiver selection,
+// pending-message fields and per-kind argument storage. Packed actor records
+// retain native field aliasing until the live actor schema is mapped.
+export function originalRemarkDispatch(q,resolve){
+ let state=structuredClone(q.state);const events=[];
+ const actor=()=>{const record=state.actors[q.actorId];if(!(record instanceof Uint8Array)||record.length!==256)throw Error('Original dispatch requires a packed actor record.');return record;};
+ const combined=signedByte(actor()[0x21])*11+signedByte(actor()[0x22]);
+ if(typeof resolve!=='function')throw Error('Original dispatch requires explicit record-processing effects.');
+ for(const event of [{address:0x469330,args:[q.kind|0,q.value|0,combined,q.actorId|0]},{address:0x406b20,args:[q.actorId|0,0]}]){
+  events.push(structuredClone(event));const reply=resolve(structuredClone(event),structuredClone(state));
+  if(!reply||typeof reply.then==='function')throw Error('Expected synchronous speculative dispatch state.');state=structuredClone(reply);
+ }
+ const source=actor(),receiver=state.redirected?new DataView(source.buffer,source.byteOffset,source.byteLength).getInt16(0xa2,true):q.actorId;
+ const target=state.actors[receiver];if(!(target instanceof Uint8Array)||target.length!==256)throw Error('Original dispatch receiver is unavailable.');
+ target[0x84]=7;target[0x85]=q.kind;target[0x86]=source[0x21]*11+source[0x22];new DataView(target.buffer,target.byteOffset,target.byteLength).setUint16(0x9c,q.value,true);
+ if(state.redirected)target[0x85]|=0x80;
+ if(!Number.isInteger(q.kind)||q.kind<0||q.kind>=state.requestValues.length)throw Error('Original dispatch request storage is unavailable.');
+ state.requestValues[q.kind]=q.value|0;
+ return {state,events,receiver};
+}
