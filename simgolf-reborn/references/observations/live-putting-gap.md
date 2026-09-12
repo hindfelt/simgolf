@@ -818,3 +818,20 @@ result without mutating the save. Actor/career record persistence, metadata
 edit synchronization during callbacks, adjacent memory data, complete mixed
 trajectories and live-world conversion remain open. This adapter does not
 convert the differently scaled browser course or activate the original engine.
+
+### Full mixed-surface actor trajectories
+
+`verify-original-actor-trajectories.py` now runs 360 continuous trajectories
+through `originalActorMotionContext` and `originalActorBallMotion`: 14,389
+steps match the original, including 397 mixed-map tile transitions (including
+final drop repositioning). Unlike the earlier pure-motion comparison, native
+execution continues through actual stopped-shot accounting and drops. Each
+step compares the full 256-byte actor record, RNG state, sound sequence and
+stop decision. Fixtures include flat/elevated, uniform/mixed surfaces, edge
+reflection, rising/falling shots and skills/luck. Height inputs and presentation
+are controlled; cup flags are absent and cup completion has separate coverage.
+
+This closes the identified full actor mixed-trajectory verification gap for
+these fixtures. Original outer actor-loop integration, persistent actor/career
+state, metadata mutation synchronization, and live-game conversion remain open.
+The test is not proof of complete original-game or release parity.
