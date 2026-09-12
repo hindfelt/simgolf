@@ -2,13 +2,15 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { height } from "../landscape.js";
 export function resortHotel(scene, x, z, environment=null) {
-  const tropical=environment==='tropical';
+  const tropical=environment==='tropical',links=environment==='links',desert=environment==='desert';
   const group = new THREE.Group();
   group.position.set(x, height(x, z), z);
   scene.add(group);
   const batches = new Map();
   function geometry(geo, color, x, y, z) {
     if(tropical)color=({[0xe1d8b9]:0xb08b5b,[0xf0e5c9]:0xe0be87,[0xece0bf]:0xe0be87,[0x81563c]:0xc9ac70})[color]??color;
+    if(links)color=({[0xe1d8b9]:0xb5b2a1,[0xf0e5c9]:0xd9d5bd,[0x81563c]:0x5f6c6d})[color]??color;
+    if(desert)color=({[0xe1d8b9]:0xcca473,[0xf0e5c9]:0xe7c99a,[0xece0bf]:0xe7c99a})[color]??color;
     geo.translate(x, y, z);
     if (!batches.has(color)) batches.set(color, []);
     batches.get(color).push(geo);
@@ -33,8 +35,15 @@ export function resortHotel(scene, x, z, environment=null) {
   const roof = new THREE.CylinderGeometry(0, 6.15, 2, 4);
   roof.rotateY(Math.PI / 4);
   roof.scale(1, 1, 0.86);
-  geometry(roof, 0x81563c, 0, tropical?5.5:7.5, 0);
-  if(!tropical)box(0.7, 2.2, 0.8, 0xa18970, -2.4, 7.7, -1);
+  if(desert){
+    roof.dispose();box(8.8,.3,7.3,0xe1d8b9,0,6.8,0);
+    for(const side of [-1,1]){box(8.8,.65,.24,0xf0e5c9,0,7.2,side*3.5);box(.24,.65,7.3,0xf0e5c9,side*4.3,7.2,0);}
+  }else geometry(roof, 0x81563c, 0, tropical?5.5:7.5, 0);
+  if(links)for(let row=0;row<15;row++){
+    box(8.02,.035,6.52,0x929183,0,.5+row*.4,0);
+    for(let x=-3.7;x<4;x+=.8)box(.025,.38,6.53,0x929183,x+(row%2)*.2,.7+row*.4,0);
+  }
+  if(!tropical&&!desert)box(0.7, 2.2, 0.8, 0xa18970, -2.4, 7.7, -1);
   if(tropical){
     // Wraparound upper veranda keeps every path entrance unobstructed.
     box(9.3,.18,8.3,0xf0e5c9,0,2.5,0);

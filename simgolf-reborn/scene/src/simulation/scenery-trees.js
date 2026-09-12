@@ -1,3 +1,4 @@
+import {isCoastal} from './coast.js';
 import { GRID, key, riverZ, inBounds, blocked } from "./world.js";
 import { coastalWater } from "./coast.js";
 import { ownsLand } from "./land-purchase.js";
@@ -7,9 +8,9 @@ import { ownsLand } from "./land-purchase.js";
 export function sceneryTreeVisible(g, c, r) {
   const inside = inBounds(c, r);
   if (inside && g.removedTrees?.[key(c, r)]) return false;
-  if (g.landscapeStyle !== "coast") return true;
+  if (!isCoastal(g.landscapeStyle)) return true;
   if (ownsLand(g, c, r)) return g.tiles[key(c, r)]?.type !== "water";
-  return (inside && blocked(c, r)) || !coastalWater(g.landSeed ?? 2002, c, r);
+  return (inside && blocked(c, r, g.landscapeStyle==='island'?{}:null)) || !coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle);
 }
 
 const cache = new Map(),
@@ -79,7 +80,7 @@ export function sceneryTrees(coastal = false) {
   return trees;
 }
 export function sceneryTreeAt(g, c, r) {
-  const coastal = g.landscapeStyle === "coast";
+  const coastal = isCoastal(g.landscapeStyle);
   sceneryTrees(coastal);
   return cells.get(coastal).has(key(c, r)) && sceneryTreeVisible(g, c, r);
 }

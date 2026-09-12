@@ -1,3 +1,4 @@
+import {isCoastal} from './simulation/coast.js';
 import {createGameAudio} from "./game-audio.js";
 import {mountClubDay} from "./ui/club-day.js";
 import {drawTerrainPreview} from './ui/terrain-preview.js';
@@ -406,7 +407,7 @@ setLandscapeState(coastalPreview(game));
 const landscape = buildLandscape(scene, () => {});
 buildClubhouse(scene,game.environment).scale.setScalar(0.65);
 const startingBridge = buildBridge(scene);
-const flora = buildFlora(scene, { editableWater: true, coastal: game.landscapeStyle === "coast", environment: game.environment });
+const flora = buildFlora(scene, { editableWater: true, coastal: isCoastal(game.landscapeStyle), environment: game.environment });
 const ocean = buildOcean(scene);
 ocean.update(coastalPreview(game));
 const view = buildCourseView(scene);
@@ -1846,7 +1847,7 @@ function describeEnvironment() {
 $("#new-environment").onchange = () => {
   // Start with the region's characteristic terrain; the landscape selector
   // remains available for players who prefer an inland property.
-  $("#new-landscape").value = ["tropical", "links"].includes($("#new-environment").value) ? "coast" : "river";
+  $("#new-landscape").value = $("#new-environment").value === "tropical" ? "island" : $("#new-environment").value === "links" ? "coast" : "river";
   describeEnvironment();
   previewLandscape();
 };

@@ -28,7 +28,7 @@ for(const environment of ['links','tropical'])test(`confirmed ${environment} gam
  await expect(page.locator('#menu-button')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>window.__gameTest?.getState().landSeed)).toBe(5678);
  const state=await page.evaluate(()=>window.__gameTest.getState());
- expect(state.environment).toBe(environment);expect(state.landscapeStyle).toBe('coast');
+ expect(state.environment).toBe(environment);expect(state.landscapeStyle).toBe(environment==='tropical'?'island':'coast');
  await page.reload();
  await expect(page.locator('#menu-button')).toBeVisible();
  await expect(page.locator('#boot-screen')).toHaveCount(0);

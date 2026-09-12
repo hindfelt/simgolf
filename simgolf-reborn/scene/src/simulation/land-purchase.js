@@ -1,3 +1,4 @@
+import {isCoastal,islandTree} from './coast.js';
 import { coastalWater } from "./coast.js";
 import { GRID, inBounds, key, blocked } from "./world.js";
 
@@ -36,8 +37,8 @@ export function buyLand(g) {
         local = r - start;
       // Flat seams join successive purchases; stepped half-level heights remain editable.
       const envelope = Math.sin((local / (PARCEL_ROWS - 1)) * Math.PI);
-      const h = g.landscapeStyle === 'coast'
-        ? 2.5 + Math.round(Math.max(0,2 * Math.sin(c / 6 + phase) * envelope)) / 2
+      const h = isCoastal(g.landscapeStyle)
+        ? (g.landscapeStyle==='island'?.5:2.5) + Math.round(Math.max(0,2 * Math.sin(c / 6 + phase) * envelope)) / 2
         : Math.round(4 * Math.sin(c / 6 + phase) * envelope) / 2;
       if (h) g.elevation[k] = h;
       const pond =
@@ -45,14 +46,14 @@ export function buyLand(g) {
         Math.abs(local - 5) <= 2 &&
         Math.abs(c - pondC) + Math.abs(local - 5) < 5;
       if (
-        (g.landscapeStyle === "coast" &&
-          !blocked(c, r) &&
-          coastalWater(g.landSeed ?? 2002, c, r)) ||
-        (g.landscapeStyle !== "coast" && pond)
+        (isCoastal(g.landscapeStyle) &&
+          !blocked(c, r, g.landscapeStyle==='island'?{}:null) &&
+          coastalWater(g.landSeed ?? 2002, c, r, g.landscapeStyle)) ||
+        (!isCoastal(g.landscapeStyle) && pond)
       ) {
         g.tiles[k] = { type: "water" };
         delete g.elevation[k];
-      }
+      }else if(g.landscapeStyle==='island'&&islandTree(g.landSeed??2002,c,r))g.tiles[k]={type:'tree'};
     }
   }
   g.landParcels = parcel + 1;
@@ -72,7 +73,7 @@ export function buyLand(g) {
 export function validateOwnership(g) {
   if (
     g.landscapeStyle !== undefined &&
-    !["classic", "rolling", "river", "coast"].includes(g.landscapeStyle)
+    !["classic", "rolling", "river", "coast", "island"].includes(g.landscapeStyle)
   )
     throw Error("Invalid landscape style.");
   if (

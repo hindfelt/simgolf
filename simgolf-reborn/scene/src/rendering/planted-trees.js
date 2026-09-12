@@ -1,3 +1,4 @@
+import {isCoastal} from '../simulation/coast.js';
 import {treeScale} from "../simulation/tree-scale.js";
 import * as THREE from "three";
 import { GRID, center } from "../simulation/world.js";
@@ -38,7 +39,7 @@ export function plantedTrees(scene) {
     },
     update(g) {
       const tropical=g.environment==="tropical",links=g.environment==="links";
-      const conifer=g.landscapeStyle==="coast" && g.environment!=="desert" && !tropical && !links;
+      const conifer=isCoastal(g.landscapeStyle) && g.environment!=="desert" && !tropical && !links;
       const nextAppearance=`${g.environment}:${conifer}`;
       if (g.revision === revision && appearance===nextAppearance) return;
       if(appearance!==nextAppearance){leaves.geometry.dispose();leaves.geometry=tropical?palmFrondGeometry():new THREE.PlaneGeometry(2.2,2.2);leaves.material.map=tropical?null:canopyTexture;leaves.material.needsUpdate=true;}

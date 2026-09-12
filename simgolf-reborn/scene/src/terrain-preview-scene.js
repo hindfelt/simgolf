@@ -1,3 +1,4 @@
+import {isCoastal} from './simulation/coast.js';
 import * as THREE from 'three';
 import {createGame} from './simulation/game.js';
 import {buildLandscape,setLandscapeState} from './landscape.js';
@@ -22,7 +23,7 @@ try{
  const terrain=buildLandscape(scene,()=>{});terrain.reshape();
  buildClubhouse(scene,game.environment).scale.setScalar(.65);
  const bridge=buildBridge(scene);bridge.visible=!game.starterBridgeRemoved;
- const flora=buildFlora(scene,{editableWater:true,coastal:style==='coast',environment});flora.update(ground);
+ const flora=buildFlora(scene,{editableWater:true,coastal:isCoastal(style),environment});flora.update(ground);
  const ocean=buildOcean(scene);ocean.update(ground);
  const course=buildCourseView(scene);course.update(game,0,[]);
  const camera=new THREE.OrthographicCamera(-60,60,45,-45,.1,400);

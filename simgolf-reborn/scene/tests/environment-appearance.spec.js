@@ -38,7 +38,7 @@ test('new-game environment selector refreshes the rendered preview without chang
   await expect(frame).toHaveAttribute('data-ready','true');
   const query=new URL(await frame.getAttribute('src'),page.url()).searchParams;
   expect(query.get('environment')).toBe(environment);
-  expect(query.get('landscape')).toBe(environment==='parklands'?'river':'coast');
+  expect(query.get('landscape')).toBe(environment==='parklands'?'river':environment==='tropical'?'island':'coast');
   views.push(await page.frameLocator('#landscape-preview').locator('canvas').screenshot({path:`/tmp/baron-new-${environment}.png`}));
   expect(await page.locator('#new-seed').inputValue()).toBe(seed);
  }

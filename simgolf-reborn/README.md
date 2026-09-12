@@ -78,3 +78,9 @@ Online tournament preview (not yet deployed): Account → Tournament registratio
 
 
 Earnings competition preview (not yet deployed): **Account → Earnings competitions** lets 2–16 players build independent resorts from identical land and $50,000 budgets. The organizer starts a shared 10–120 minute window. Highest net cash change wins, including construction and staff costs; an open hole and completed paid visitor play are required to qualify. Server-owned courses continue while browsers are closed, stop at the common cutoff and become read-only. Final totals are derived from the ledger, with equal results sharing a place. Registration invitations, independent spending, simulated full-window results and account deletion/suspension are tested locally. Hosted capacity and a full real-time browser event still need verification.
+
+### Regional new games
+
+**Environment** selects vegetation, architecture and regional ambience. **Landscape** selects the terrain layout. Tropical now defaults to **Island resort**; Links defaults to **Coastal course**. You can choose another landscape before starting. Confirming a new game enters gameplay directly. Existing saves keep their terrain.
+
+See the [worlds and polish review](references/release/worlds-polish-2026-09-12.md) for current images, sound credits, verification and remaining review items.

@@ -1,3 +1,4 @@
+import {isCoastal} from './coast.js';
 import {treeScale} from "./tree-scale.js";
 import { GRID, center, key } from "./world.js";
 import { sceneryTrees, sceneryTreeVisible } from "./scenery-trees.js";
@@ -15,8 +16,8 @@ function collisionTrees(g) {
       ...center(Number(k) % GRID.width, Math.floor(Number(k) / GRID.width)),
       ...TREE,
     }));
-  for (const tree of sceneryTrees(g.landscapeStyle === "coast")) {
-    if (g.landscapeStyle === "coast"
+  for (const tree of sceneryTrees(isCoastal(g.landscapeStyle))) {
+    if (isCoastal(g.landscapeStyle)
       ? !sceneryTreeVisible(g, tree.c, tree.r)
       : g.removedTrees?.[key(tree.c, tree.r)]) continue;
     trees.push({

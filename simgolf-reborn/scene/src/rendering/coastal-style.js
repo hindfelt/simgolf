@@ -1,10 +1,11 @@
+import {isCoastal} from '../simulation/coast.js';
 // Presentation only: changing the coast palette must not change lies or saves.
 export const COAST_WATER = "#36576b";
 export const coastWaterColor = environment => environment === "tropical" ? "#42b8ad" : COAST_WATER;
 
 // Exposed water/land edges, excluding bridges and the artificial map boundary.
 export function coastalBanks(g, grid) {
-  if (g.landscapeStyle !== "coast") return [];
+  if (!isCoastal(g.landscapeStyle)) return [];
   const banks = [];
   const wet = (c, r) => g.tiles[r * grid.width + c]?.type === "water";
   for (const [id, t] of Object.entries(g.tiles)) {
@@ -40,10 +41,10 @@ export const COAST_LAST_ROW=150;
 // Continue banks around offshore scenery and across map seams. Inside the map,
 // use actual edited tiles; outside it, use the same shoreline as the ocean mesh.
 export function exteriorCoastalBanks(g,grid){
- if(g.landscapeStyle!=='coast')return [];
+ if(!isCoastal(g.landscapeStyle))return [];
  const inside=(c,r)=>c>=0&&c<grid.width&&r>=0&&r<grid.height;
  const wet=(c,r)=>inside(c,r)?g.tiles[r*grid.width+c]?.type==='water'
-   : c>=grid.width || coastalWater(g.landSeed??2002,c,r);
+   : c>=grid.width || coastalWater(g.landSeed??2002,c,r,g.landscapeStyle);
  const bridge=(c,r)=>inside(c,r)&&!!g.bridges?.[r*grid.width+c];
  const banks=[];
  for(let r=COAST_FIRST_ROW;r<COAST_LAST_ROW;r++)for(let c=0;c<=grid.width;c++){
@@ -62,10 +63,10 @@ export function exteriorCoastalBanks(g,grid){
 // Extend the drawn union across all ocean-facing map edges. Otherwise the
 // texture's clipped top/bottom edge becomes a false sand/grass shoreline.
 export function coastalContourCells(cells,g,grid){
- if(g.landscapeStyle!=='coast')return cells;
+ if(!isCoastal(g.landscapeStyle))return cells;
  const result=cells.map(cell=>[...cell]);
  for(let c=0;c<grid.width;c++)for(const r of [-1,grid.height])
-  if(coastalWater(g.landSeed??2002,c,r))result.push([c,r]);
- for(let r=-1;r<=grid.height;r++)result.push([grid.width,r]);
+  if(coastalWater(g.landSeed??2002,c,r,g.landscapeStyle))result.push([c,r]);
+ for(let r=-1;r<=grid.height;r++){result.push([grid.width,r]);if(g.landscapeStyle==='island')result.push([-1,r]);}
  return result;
 }

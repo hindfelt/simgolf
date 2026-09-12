@@ -1,3 +1,4 @@
+import {adobeRoof} from './adobe-roof.js';
 import * as THREE from "three";
 import { height } from "../landscape.js";
 function box(group, w, h, d, color, x, y, z) {
@@ -35,26 +36,26 @@ export function golfCart(parent) {
   return g;
 }
 export function cartGarage(scene, x, z, environment=null) {
-  const tropical=environment==='tropical',links=environment==='links';
+  const tropical=environment==='tropical',links=environment==='links',desert=environment==='desert';
   const g = new THREE.Group();
   g.position.set(x, height(x, z), z);
   scene.add(g);
   box(g, 5.8, 0.12, 5.8, 0xa59879, 0, 0.06, 0);
-  box(g, 5.2, 2.5, 0.18, tropical?0xb9945b:links?0xb9b6a3:0xded1b0, 0, 1.3, -2);
+  box(g, 5.2, 2.5, 0.18, tropical?0xb9945b:links?0xb9b6a3:desert?0xc8a374:0xded1b0, 0, 1.3, -2);
   for (const px of [-2.55, 0, 2.55])
     box(g, 0.18, 2.5, 3.8, tropical?0x8e683f:links?0x9eaa99:0xc8ba97, px, 1.3, -0.15);
   box(g, 5.6, 0.2, 4.35, 0x56705a, 0, 2.65, -0.15);
-  const roofGeometry = new THREE.CylinderGeometry(0, 3.6, 1.15, 4);
-  roofGeometry.rotateY(Math.PI / 4);
-  roofGeometry.scale(1.1, 1, 0.88);
+  const roofGeometry = desert?adobeRoof(5.6,4.35):new THREE.CylinderGeometry(0, 3.6, 1.15, 4);
+  if(!desert)roofGeometry.rotateY(Math.PI / 4);
+  if(!desert)roofGeometry.scale(1.1, 1, 0.88);
   const roof = new THREE.Mesh(
     roofGeometry,
-    new THREE.MeshStandardMaterial({ color: tropical?0xcfb575:links?0x59696a:0x805e43, roughness: 1 }),
+    new THREE.MeshStandardMaterial({ color: tropical?0xcfb575:links?0x59696a:desert?0xe2c18b:0x805e43, roughness: 1 }),
   );
-  roof.position.set(0, 3.27, -0.15);
+  roof.position.set(0, desert?2.75:3.27, -0.15);
   roof.castShadow = true;
   g.add(roof);
-  for (let y = 0.35; y < 2.5; y += 0.25)
+  for (let y = 0.35; y < (desert?0:2.5); y += 0.25)
     box(g, 5.3, 0.035, 0.2, tropical?0x795935:links?0x858d82:0xc4b596, 0, y, -2);
   for (const px of [-2.55, 0, 2.55])
     box(g, 0.23, 2.55, 0.2, 0x58614a, px, 1.3, 1.8);

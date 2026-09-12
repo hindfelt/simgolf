@@ -1,3 +1,4 @@
+import {isCoastal} from '../simulation/coast.js';
 import {aircraftPose} from "../simulation/aircraft.js";
 import {practicePose} from "./practice-activity.js";
 import {tennisPose,updateTennisBall} from "./tennis-activity.js";
@@ -279,7 +280,7 @@ export function buildCourseView(scene) {
           ? "#776847"
           : kind === "water" && g.environment === "tropical"
             ? coastWaterColor(g.environment)
-          : kind === "water" && g.landscapeStyle === "coast"
+          : kind === "water" && isCoastal(g.landscapeStyle)
             ? coastWaterColor(g.environment)
             : colors[t.type];
         ctx.fillRect(c * px, r * px, px, px);
@@ -599,7 +600,7 @@ export function buildCourseView(scene) {
     },
     update(g, time, opponents = []) {
       hazards.update(g);
-      trees.update(g);
+      trees.update(coastalPreview(g));
       if (revision !== g.revision || renderedEnvironment !== g.environment) {
         revision = g.revision;renderedEnvironment=g.environment;
         rebuild(coastalPreview(g));

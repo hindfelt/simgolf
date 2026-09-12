@@ -1,3 +1,4 @@
+import {isCoastal,islandTree} from './coast.js';
 import { coastalWater } from "./coast.js";
 import { GRID, key, blocked } from "./world.js";
 import { STARTING_ROWS } from "./land-purchase.js";
@@ -6,6 +7,7 @@ export const LANDSCAPES = Object.freeze({
   classic: "Willow Brook · original study",
   rolling: "Rolling parkland · ponds and hills",
   river: "River valley · winding stream and ponds",
+  island: "Island resort · lagoons and outer islands",
   coast: "Coastal course · bays and rolling headlands",
 });
 
@@ -45,7 +47,7 @@ export function generateLandscape(seed, style) {
   const protectedCell = (c, r) => blocked(c, r) || (c < 15 && r < 23);
   for (let r = 0; r < STARTING_ROWS; r++)
     for (let c = 0; c < GRID.width; c++) {
-      if (style === "coast" && !blocked(c, r) && coastalWater(seed, c, r)) {
+      if (isCoastal(style) && !blocked(c, r, style==='island'?{}:null) && coastalWater(seed, c, r, style)) {
         wet.add(key(c, r));
         continue;
       }
@@ -57,7 +59,7 @@ export function generateLandscape(seed, style) {
         return x <= p.w && y <= p.h && x + y < p.w + p.h;
       });
       if (
-        (style !== "coast" && pond) ||
+        (!isCoastal(style) && pond) ||
         (style === "river" && Math.abs(r - reach) <= 1)
       )
         wet.add(key(c, r));
@@ -97,10 +99,11 @@ export function generateLandscape(seed, style) {
         shore *
         edge *
         approach;
-      const h = style === 'coast'
-        ? Math.round((2.5 + Math.max(0,value)) * 2) / 2
+      const h = isCoastal(style)
+        ? Math.round(((style==='island'?.5:2.5) + Math.max(0,value)) * 2) / 2
         : Math.round(value * 2) / 2;
       if (h) elevation[k] = h;
+      if(style==='island'&&islandTree(seed,c,r))tiles[k]={type:'tree'};
     }
   for (let r = 10; r <= 14; r++) tiles[key(7, r)] = { type: "path" };
   return { tiles, elevation, starterBridgeRemoved: true, editableWater: true };

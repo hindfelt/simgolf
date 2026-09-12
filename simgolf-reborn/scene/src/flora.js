@@ -389,7 +389,7 @@ export function buildFlora(
     ),
   );
   blade.computeVertexNormals();
-  batch(
+  const grassMesh = batch(
     scene,
     blade,
     new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, roughness: 1 }),
@@ -411,6 +411,12 @@ export function buildFlora(
     update(g) {
       if (revision === g.revision) return;
       revision = g.revision;
+      grass.forEach((t,i)=>{
+        const [x,,z]=t.p,c=Math.floor((x-GRID.minX)/2),r=Math.floor((z-GRID.minZ)/2);
+        dummy.position.set(x,courseHeight(g,x,z),z);dummy.rotation.set(...t.r);
+        dummy.scale.set(...(sceneryTreeVisible(g,c,r)?t.s:[0,0,0]));dummy.updateMatrix();grassMesh.setMatrixAt(i,dummy.matrix);
+      });
+      grassMesh.instanceMatrix.needsUpdate=true;grassMesh.computeBoundingSphere();
       for (const mesh of treeMeshes) {
         mesh.userData.transforms.forEach((t, i) => {
           const tree = t.tree;

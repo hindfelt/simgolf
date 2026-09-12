@@ -1,3 +1,4 @@
+import {isCoastal} from '../simulation/coast.js';
 import {coastalWater} from '../simulation/coast.js';
 import * as THREE from "three";
 import { GRID } from "../simulation/world.js";
@@ -46,12 +47,13 @@ export function buildOcean(scene) {
   const continuation=new THREE.Mesh(new THREE.BufferGeometry(),material);
   continuation.name='coast-beyond-map';continuation.receiveShadow=true;scene.add(continuation);
   let coastSeed;
-  function rebuildContinuation(seed){
+  function rebuildContinuation(seed,style){
     const vertices=[],uv=[];
     for(let r=COAST_FIRST_ROW;r<COAST_LAST_ROW;r++){
-      if(r>=0 && r<GRID.height)continue;
-      for(let c=0;c<GRID.width;c++){
-        if(!coastalWater(seed,c,r))continue;
+
+      for(let c=style==='island'?-100:0;c<GRID.width;c++){
+        if(r>=0 && r<GRID.height && c>=0)continue;
+        if(!coastalWater(seed,c,r,style))continue;
         const x=GRID.minX+c*GRID.size,z=GRID.minZ+r*GRID.size;
         for(const [dx,dz] of [[0,0],[0,2],[2,0],[2,0],[0,2],[2,2]]){
           vertices.push(x+dx,height(x+dx,z+dz)+0.047,z+dz);
@@ -83,11 +85,11 @@ export function buildOcean(scene) {
     update(g) {
       const changedAppearance=appearance!==g.environment;
       if(changedAppearance){paintWater(g.environment);texture.needsUpdate=true;appearance=g.environment;}
-      ocean.visible = g.landscapeStyle === "coast";
+      ocean.visible = isCoastal(g.landscapeStyle);
       stones.visible = ocean.visible;
       continuation.visible=ocean.visible;
-      if(ocean.visible && coastSeed!==(g.landSeed??2002)){
-        coastSeed=g.landSeed??2002;rebuildContinuation(coastSeed);
+      if(ocean.visible && coastSeed!==`${g.landSeed??2002}:${g.landscapeStyle}`){
+        coastSeed=`${g.landSeed??2002}:${g.landscapeStyle}`;rebuildContinuation(g.landSeed??2002,g.landscapeStyle);
       }
       if (currentGame === g && revision === g.revision && !changedAppearance) return;
       currentGame = g;
