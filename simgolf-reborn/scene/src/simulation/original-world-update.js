@@ -9,9 +9,14 @@ function valid(state) {
  return state;
 }
 export function originalWorldUpdate(snapshot,resolve) {
+ return runWorldCalls(snapshot,resolve,false);
+}
+// Resume after 0x428100 without repeating its prelude or scratch reset.
+export function originalWorldAfterGolfers(snapshot,resolve){return runWorldCalls(snapshot,resolve,true);}
+function runWorldCalls(snapshot,resolve,afterGolfers){
  let state=structuredClone(valid(snapshot));const calls=[];
- state.updateScratch=0; // 0x59a188 is reset even when flag 4 skips this block.
- if(state.globalFlags&4)return {state,calls,skipped:true};
+ if(!afterGolfers)state.updateScratch=0; // 0x59a188 is reset even when flag 4 skips this block.
+ if(!afterGolfers&&(state.globalFlags&4))return {state,calls,skipped:true};
  function call(address) {
   if(typeof resolve!=='function')throw Error('Original world callbacks require an explicit resolver.');
   calls.push(address);
@@ -19,7 +24,7 @@ export function originalWorldUpdate(snapshot,resolve) {
   if(!reply||typeof reply.then==='function')throw Error('Expected synchronous original world callback state.');
   state=structuredClone(valid(reply));
  }
- call(0x428100); // Entire original golfer loop, including non-shot work.
+ if(!afterGolfers)call(0x428100); // Entire original golfer loop, including non-shot work.
  call(0x4029e0);
  call(0x409980);
  if(state.modeByte===0&&state.modeCounter===0)call(0x46df40);

@@ -58,3 +58,21 @@ test('native tutorial effects precede aiming and remain in the resumed presentat
  expect(result.calls.map(e=>e.address)).toEqual([123,0x447a30,0x466fb0,0x45e9c0,0x466fb0,0x45e9c0,0x4803e0,0x45b990]);
  expect(suspended.state.selectionMode).toBeUndefined();
 });
+test('world resumption preserves planner scratch and publishes audio only after all systems finish',async()=>{
+ const {resumeOriginalWorldGolferUpdate}=await import('../src/simulation/original-world-golfer-update.js');
+ const continuation={...pending(),soundEvents:[{address:0x447a30,args:[3]}]};
+ Object.assign(continuation.state,{phaseCounter:30,globalFlags:8,modeByte:0,modeCounter:0,updateScratch:1});
+ const suspended={completed:false,continuation},before=structuredClone(suspended),seen=[];
+ const result=resumeOriginalWorldGolferUpdate(suspended,{
+  resumeTurn:turn=>originalShotPreparation(turn.state,undefined,'0x42b6f8'),
+  resolveWorld:(address,state)=>{seen.push([address,state.updateScratch,state.phaseCounter]);return {state,soundEvents:[{address:0x447a30,args:[4]}]};},
+ });
+ expect(result.completed).toBe(true);expect(result.state.phaseCounter).toBe(32);expect(result.state.updateScratch).toBe(1);
+ expect(seen).toEqual([0x4029e0,0x409980,0x46df40].map(a=>[a,1,30]));
+ expect(result.soundEvents.map(e=>e.args[0])).toEqual([3,4,4,4]);expect(suspended).toEqual(before);
+ const unresolved=resumeOriginalWorldGolferUpdate(suspended,{resumeTurn:turn=>({state:turn.state,next:turn.next,calls:[]})});
+ expect(unresolved.completed).toBe(false);expect(unresolved.state).toBeUndefined();expect(unresolved.soundEvents).toEqual([]);
+ expect(unresolved.continuation.soundEvents).toEqual(continuation.soundEvents);
+ expect(()=>resumeOriginalWorldGolferUpdate(suspended,{resumeTurn:turn=>originalShotPreparation(turn.state,undefined,'0x42b6f8'),resolveWorld:()=>{throw Error('failed');}})).toThrow('failed');
+ expect(suspended).toEqual(before);
+});

@@ -2553,3 +2553,20 @@ controlled fixture, not an observed live pairing. This supplies the browser view
 production invocation from an accepted recovered-world transaction remains open.
 Portrait artwork and the original interactive allocation mode are not implemented
 by this view.
+
+### Resumable world transaction
+
+The composed world update now returns an explicit incomplete transaction when
+its golfer pass suspends, instead of throwing away the continuation. Incomplete
+results have no publishable `state` and expose no playback batch. Resumption
+finishes the current golfer and remaining slots, then calls the remaining world
+systems without resetting planner scratch or re-running the world prelude.
+Another suspension retains speculative audio; only completed results release it.
+Consumers must check `completed` before publishing.
+
+Nineteen local loop/world/resumption checks pass. The composed resumption case
+starts from a prepared tutorial continuation, verifies retained scratch, callback
+order, single phase advancement, audio order and failure isolation. All 4,096
+existing native world-dispatch/phase cases still match after the boundary
+refactor; callback bodies remain external in that oracle. Production adoption,
+full packed-world saves and remaining world-system bodies are still open.
