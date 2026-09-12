@@ -182,3 +182,9 @@ The verifier matches 2,500 native cases with actual RNG and controlled remark mu
 `original-turn-order.js` recovers 0x428992–0x428ad1. It conditionally refreshes a missing partner through 0x425b50, rereads the resulting partner index, captures the same-hole flag-0x400 readiness difference, and compares cup distances with originalRouteSegment. Equal distances do not set the closer flag. The subsequent actor byte/flag checks choose the native 0x42b3f2 or 0x428ad1 continuation without inventing what those bodies do.
 
 Two thousand native cases match with original distance helpers and a controlled partner-refresh callback; five turn-order/dispatch tests pass. This is not yet appended directly to actor-dispatch: the intervening 0x42889c–0x428992 optional shot-line/projection branch still requires handling, as do both subsequent state-machine branches, partner-refresh body and browser integration.
+
+### Optional shot-line branch
+
+`original-shot-line.js` recovers 0x42889c–0x428992: flag-32/speed/ball-terrain gate, source fixed-point projection, target tile or shifted fixed-point projection according to flag 0x10000000, visible-endpoint draw ordering, and final cup projection. Coordinate arguments are semantic values; pointer results return an explicit point. Projection/drawing resolvers retain state changes and may not be omitted on active paths.
+
+One thousand native dispatch cases match with controlled projection/drawing results; eight shot-line/turn-order/dispatch tests pass. This verifies the caller branch, not the tile projection cache helper 0x42f020 or a live drawing adapter. The branch is now available to bridge the recovered actor prefix to turn-order, while those adapters and subsequent state-machine branches remain work.
