@@ -2670,3 +2670,9 @@ The remaining visual movement and final world callback remain open.
 `original-visual-follow.js` recovers 0x402b6b–0x402c6f: selected actor/ball targeting, eight slot offsets, approximate distance, facing and randomized pause. It returns the explicit common movement continuation at 0x403488; it does not implement that continuation or claim the full 0x4029e0 callback is complete. Non-following slots continue at 0x402c6f.
 
 `verify-original-visual-follow.py` compares 1,024 cases against the private executable using native heading and RNG routines. Packed records, target/delta locals, branch and seed match. Five local visual entry/follow checks pass, covering first-hole waiting, movement without random draws, pause timing and source isolation. This remains recovery/integration work, not a deployed gameplay change.
+
+### Visual collision and stride — 12 September 2026
+
+`original-visual-step.js` recovers 0x403634–0x40383c. It scans preceding active visual slots, records directional collision pauses, reads native terrain walking cost and path flags, applies movement modifiers, advances fixed-point coordinates and updates stride/animation counters. A newly set collision delay does not cancel this iteration's stride, matching the native control flow.
+
+The private executable comparison (`verify-original-visual-step.py`) passes 512 cases using actual distance, octant, heading, clamp and RNG helper bodies. Comparisons include every current-record byte and final seed; cases span all 64 slot indices, terrain costs, speed flags and signed counter boundaries. Eight local entry/follow/step checks pass. Target/path selection at 0x403488–0x403634 and facility branches are still required before the full visual callback can be installed. No live simulation switch or deployment is claimed.
