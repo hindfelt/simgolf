@@ -3305,3 +3305,9 @@ Integration coverage exercises normal kind-19 dispatch and kind-19-to-23 remappi
 The automatic adapter now passes the complete 3,120-case retained native audible-remark matrix, rather than relying only on manual snapshot/write-back tests. It compares every native dispatch/message field, actor state, audio event/RNG count and outcome counter after automatic write-back; all 65 kinds, early returns and popup acceptance/rejection are represented. Terrain stays intact and inputs remain unchanged.
 
 The matrix retains its prior controlled phrase/location and playback boundaries. This closes native fixture coverage for automatic world integration of an individual remark, not uninterrupted native completion across fee/remark/reset, and not adoption by the live browser/server schema.
+
+### Continuous actual completion remark through reset
+
+The new oracle executes 0x426e6b–0x426f30 and calls the actual 0x4672d0 remark routine, returning through its real epilogue into reset. All 192 cases match complete packed world state. Coverage includes +0x84 skip, ordinary kind 19, kind-23 remapping for established-hole flags/scores, different clocks, difficulties and popup states. Native audio, projection, naming, reaction and popup instructions execute; terrain reads, playback, integer formatting and location text retain controlled boundaries.
+
+Three related tests pass, including the retained native matrix and the two direct integration cases. This closes uninterrupted native coverage for the conditional remark/reset section; earlier fee-to-remark composition, the remaining completion branches and live browser/server state mapping remain unfinished.
