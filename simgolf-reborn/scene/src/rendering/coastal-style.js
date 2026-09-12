@@ -1,5 +1,6 @@
 // Presentation only: changing the coast palette must not change lies or saves.
 export const COAST_WATER = "#36576b";
+export const coastWaterColor = environment => environment === "tropical" ? "#42b8ad" : COAST_WATER;
 
 // Exposed water/land edges, excluding bridges and the artificial map boundary.
 export function coastalBanks(g, grid) {

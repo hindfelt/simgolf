@@ -35,3 +35,20 @@ Twelve focused checks pass, including actual-renderer palm selection, raised
 terrain movement and removal, regional collision cases, preview differences,
 old replay boundaries and protocol migration. The production build passes.
 This is local work, with no deployment or push.
+
+## Tropical coast and hotel
+
+Offshore and course water now share the Tropical turquoise palette directly,
+including unowned coast continuation. Switching the environment rebuilds the
+water texture and bank colors without changing simulation data. Tropical banks
+use warm coral tones; other environments retain the previous slate palette.
+
+The Tropical hotel is a lower two-storey timber lodge with an upper wraparound
+veranda, pale roof and no chimney. It keeps the existing footprint, cardinal
+entrances and hotel operation rules. Other environments retain their hotel.
+
+Actual coast and lodge renders were inspected. Four environment/palette/lodge
+checks and twelve existing coastline/hotel regressions passed, along with the
+production build. The palette check covers environment switching with the same
+revision and verifies simulation data stays intact. This remains local work;
+full regional building coverage and broader island composition are still open.

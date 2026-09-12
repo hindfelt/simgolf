@@ -2,7 +2,7 @@ import {coastalWater} from '../simulation/coast.js';
 import * as THREE from "three";
 import { GRID } from "../simulation/world.js";
 import { height, courseHeight } from "../landscape.js";
-import { COAST_WATER, coastalBanks, exteriorCoastalBanks, COAST_FIRST_ROW, COAST_LAST_ROW } from "./coastal-style.js";
+import { coastWaterColor, coastalBanks, exteriorCoastalBanks, COAST_FIRST_ROW, COAST_LAST_ROW } from "./coastal-style.js";
 
 // Decorative water outside the playable grid. Ownership and shot rules remain
 // governed by the simulation; this surface cannot be built on or ray-picked.
@@ -18,7 +18,8 @@ export function buildOcean(scene) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = COAST_WATER;
+  function paintWater(environment){
+  ctx.fillStyle = coastWaterColor(environment);
   ctx.fillRect(0, 0, 128, 128);
   const grain = ctx.getImageData(0, 0, 128, 128);
   let seed = 9173;
@@ -28,6 +29,8 @@ export function buildOcean(scene) {
     for (let channel = 0; channel < 3; channel++) grain.data[i + channel] += n;
   }
   ctx.putImageData(grain, 0, 0);
+  }
+  paintWater(null);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -75,17 +78,18 @@ export function buildOcean(scene) {
   const dummy = new THREE.Object3D();
   const shade = new THREE.Color();
   let revision = -1,
-    currentGame;
+    currentGame, appearance;
   return {
     update(g) {
-      material.color.set(g.environment==='tropical'?0x71ffe2:0xffffff);
+      const changedAppearance=appearance!==g.environment;
+      if(changedAppearance){paintWater(g.environment);texture.needsUpdate=true;appearance=g.environment;}
       ocean.visible = g.landscapeStyle === "coast";
       stones.visible = ocean.visible;
       continuation.visible=ocean.visible;
       if(ocean.visible && coastSeed!==(g.landSeed??2002)){
         coastSeed=g.landSeed??2002;rebuildContinuation(coastSeed);
       }
-      if (currentGame === g && revision === g.revision) return;
+      if (currentGame === g && revision === g.revision && !changedAppearance) return;
       currentGame = g;
       revision = g.revision;
       let count = 0;
@@ -110,7 +114,7 @@ export function buildOcean(scene) {
           dummy.rotation.set(0, jitter * Math.PI, 0);
           dummy.updateMatrix();
           stones.setMatrixAt(count, dummy.matrix);
-          shade.setHSL(0.58, 0.035, 0.38 + jitter * 0.2);
+          shade.setHSL(g.environment==='tropical'?.12:.58, g.environment==='tropical'?.21:.035, (g.environment==='tropical'?.61:.38) + jitter * .2);
           stones.setColorAt(count++, shade);
         }
       }

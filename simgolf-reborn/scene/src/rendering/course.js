@@ -5,7 +5,7 @@ import {facilityLighting} from './facility-lighting.js';
 import {coastalPreview} from './coastal-preview.js';
 import { boundaryEdges } from "./boundary-outline.js";
 import { housing } from "./housing.js";
-import { COAST_WATER } from "./coastal-style.js";
+import { coastWaterColor } from "./coastal-style.js";
 import { transportFacility } from "./transport-facilities.js";
 import { regionalRecreation } from "./regional-recreation.js";
 import { swimClub } from "./swim-club.js";
@@ -282,9 +282,9 @@ export function buildCourseView(scene) {
         ctx.fillStyle = muddy
           ? "#776847"
           : kind === "water" && g.environment === "tropical"
-            ? "#42b8ad"
+            ? coastWaterColor(g.environment)
           : kind === "water" && g.landscapeStyle === "coast"
-            ? COAST_WATER
+            ? coastWaterColor(g.environment)
             : colors[t.type];
         ctx.fillRect(c * px, r * px, px, px);
         if (["fairway", "firm", "green", "tee"].includes(t.type)) {
@@ -465,7 +465,7 @@ export function buildCourseView(scene) {
     else if (f.type === "church") group = church(scene, p.x, p.z);
     else if (f.type === "snack") group = snackBar(scene, p.x, p.z);
     else if (f.type === "cart-garage") group = cartGarage(scene, p.x, p.z);
-    else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z);
+    else if (f.type === "hotel") group = resortHotel(scene, p.x, p.z, g.environment);
     else if (f.type === "flowerbed") group = flowerbed(scene, p.x, p.z);
     else if (["stable", "spa"].includes(f.type))
       group = regionalRecreation(scene, f.type, p.x, p.z);
