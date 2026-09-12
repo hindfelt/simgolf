@@ -176,3 +176,9 @@ The verifier matches 2,500 native cases with actual RNG and controlled remark mu
 `original-actor-dispatch.js` now assembles 0x42819c–0x42889c or its early motion/skip exits: earlier actor checks, ball-cell sampling with original map bounds/code-20 behavior, condition updates, actor-cell sampling and motion gate. Ball terrain is sampled before condition callbacks. Actor coordinates for the cell local are captured before condition callbacks, but that cell's terrain is sampled afterward, so callback map changes are seen without incorrectly moving the sampled tile.
 
 `verify-original-actor-dispatch.py` matches 1,000 continuous native prefix executions, including out-of-map ball samples, high-flag cleanup, negative delay, paired/scenery effects and condition work. Ten dispatch/condition/gate/check tests pass; a targeted case changes terrain and actor position during a condition reaction to verify the distinct sample times. This is still a prefix: normal continuation from 0x42889c, full motion/score handling, effect bodies and live saved-world integration remain unfinished.
+
+### Partner and turn-order branch
+
+`original-turn-order.js` recovers 0x428992–0x428ad1. It conditionally refreshes a missing partner through 0x425b50, rereads the resulting partner index, captures the same-hole flag-0x400 readiness difference, and compares cup distances with originalRouteSegment. Equal distances do not set the closer flag. The subsequent actor byte/flag checks choose the native 0x42b3f2 or 0x428ad1 continuation without inventing what those bodies do.
+
+Two thousand native cases match with original distance helpers and a controlled partner-refresh callback; five turn-order/dispatch tests pass. This is not yet appended directly to actor-dispatch: the intervening 0x42889c–0x428992 optional shot-line/projection branch still requires handling, as do both subsequent state-machine branches, partner-refresh body and browser integration.
