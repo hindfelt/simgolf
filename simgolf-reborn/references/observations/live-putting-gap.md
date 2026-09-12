@@ -1455,3 +1455,19 @@ heading/distance/RNG execute without effect stubs. Starting-ball coordinates
 are explicit fixture locals; their preceding caller preparation and complete
 arrival dispatch still need connection. Tile rest arrivals, subsequent shot
 execution and authoritative live actor integration remain unfinished.
+
+### Tile rest arrival and standing-position retries
+
+`original-rest-arrival.js` recovers 0x42a026–0x42a168: fatigue-derived
+rest delay, decoration-dependent reaction/sound, signed mood adjustment,
+shared random cardinal direction retries, standing-position offsets,
+fatigue clearing and animation phase reset. It leaves adjacency helper
+0x4071d0 as an explicit synchronous effect.
+
+1,200 native cases match actor bytes, RNG and ordered effects, including
+signed fatigue boundaries, zero fatigue, retry exhaustion and successful
+placement after repeated rejections. Actual native RNG executes; adjacency
+results and reaction/audio effects are controlled. The fixture supplies the
+cached tile and decoration value directly. Recovering the adjacency helper,
+connecting the original decoration map, partner continuation and complete
+live arrival integration remain unfinished.
