@@ -14,6 +14,12 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===10||kind===60){
+  const term=q.terms?.[q.value|0];if(!term)throw Error('Original terrain phrase data is unavailable.');
+  if(kind===10){const name=ctext(term.name);if(!name&&!Number.isInteger(term.precedingByte))throw Error('Empty original terrain name requires its preceding byte.');append(0x4e2654);append((name?name.charCodeAt(name.length-1):term.precedingByte&255)===115?0x4e2644:0x4e264c);state.sourceText+=name;append(0x4c4b98);state.remarkStyle=0x80007d08;}
+  else{if(!Number.isInteger(term.type))throw Error('Original terrain category is unavailable.');append(0x4e2510);if((term.type&255)===13){append(0x4e2504);state.sourceText+=ctext(term.name);}append(0x4c38f4);}
+ }
+ else if(kind===22){append(0x4e25ac);state.sourceText+=ctext(q.objectNames?.[q.value|0]);append(0x4e25a0);state.remarkStyle=0x800023e8;}
  else if(kind===5||kind===37||kind===38){
   const a=actor(q),type=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xae,true);
   if(type===0||type===4){append({5:0x4e28fc,37:0x4e2920,38:0x4e2940}[kind]);append(0x4e28f4);}
@@ -47,6 +53,7 @@ export function originalStandardPhrase(q,resolve){
   if(kind===49){append(0x4e1bbc);const end=profile.indexOf(0);if(end<0)throw Error('Original profile name lacks a terminator.');state.sourceText+=String.fromCharCode(...profile.subarray(0,end));append(0x4c38f4);}
   else{events.push({address:0x46c140,args:[q.actorId]});const index=((profile[0x22]<<24)>>24)+(originalProfileVoice({...q,state})?0:20),phrase=q.profileRemarks?.[index];if(typeof phrase!=='string')throw Error('Original profile remark table is unavailable.');state.sourceText=state.sourceText.split('\0',1)[0]+phrase.split('\0',1)[0];}
  }
+ else if(kind===35){if(!Number.isInteger(q.originalClock))throw Error('Original phrase clock is unavailable.');const sum=((q.originalClock|0)+Math.imul(q.actorId,45))|0;addresses=[[0x4e21c8,0x4e2198,0x4e2174,0x4e2150][Math.trunc(sum/80)&3]];state.remarkStyle=0x80007d08;}
  else if(kind===39){events.push({address:0x46c140,args:[q.actorId]});addresses=[originalProfileVoice({...q,state})?0x4e2048:0x4e2020];state.remarkStyle=0x800023e8;}
  else if(kind===51||kind===52||kind===53){
   if(!Number.isInteger(q.originalClock))throw Error('Original phrase clock is unavailable.');
@@ -80,3 +87,5 @@ export function originalDescribedStandardPhrase(q,names,locationContext){
   return originalLocationDescription({...context,c,r,type,state},context.map).state;
  });
 }
+
+function ctext(value){if(typeof value!=='string')throw Error('Original phrase text is unavailable.');return value.split('\0',1)[0];}

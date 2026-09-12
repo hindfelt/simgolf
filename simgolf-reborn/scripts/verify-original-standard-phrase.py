@@ -20,7 +20,7 @@ def hook(u,a,size,data):
 for a in [0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
  for i in range(384):
   id=i%16;record=[0]*256;record[0x18]=(i*17)%256;record[0xb6]=i%256
@@ -32,11 +32,20 @@ for kind in kinds:
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
+  if kind in [10,22,60]:
+   value=i%23;q['value']=value;name=['tree','rocks','ROCKS','grass','s','','pond\0ignored'][i%7]
+   if kind==22:
+    q['objectNames']={str(value):name};u.mem_write(0x55c648+37*value,name.encode()+b'\0')
+   else:
+    term=dict(name=name,type=[0,13,269,-243,255][(i//7)%5],precedingByte=[0,115,255][(i//35)%3]);q['terms']={str(value):term}
+    address=0x576da0+48*value;u.mem_write(address,name.encode()+b'\0');u.mem_write(address+38,bytes([term['type']&255]));u.mem_write(address-1,bytes([term['precedingByte']]))
   if kind in [39,49,62]:
    profile=[0]*560;profile[0x21]=i%256;profile[0x22]=i%20;name=('Profile '+str(i%8)).encode();profile[:len(name)]=name;q['profileRecords']={str(i%8):profile};u.mem_write(0x4d5040+(i%8)*560,bytes(profile))
   if kind==62:
    q['profileRemarks']=['Profile line '+str(j) for j in range(40)]
    for j,line in enumerate(q['profileRemarks']):u.mem_write(0x4d45a4+68*j,line.encode()+b'\0')
+  if kind==35:
+   target=[-2147483648,-321,-320,-319,-81,-80,-79,-1,0,1,79,80,81,159,160,239,240,319,320,2147483647][i%20];clock=(target-45*id)&0xffffffff;q['originalClock']=clock if clock<2147483648 else clock-4294967296;put(0x831828,q['originalClock'])
   if kind in [51,52,53]:
    q['originalClock']=[-2147483648,-17,-1,0,1,7,8,15,2147483647][i%9];q['facilityLevels']={name:[-1,0,1,2,3,4,2147483647][(i//9+j)%7] for j,name in enumerate(['drivingRange','proShop','puttingGreen'])}
    put(0x831828,q['originalClock'])

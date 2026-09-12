@@ -244,5 +244,16 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e1e8c": "Argh, I drowned it!",
   "0x4e1e74": "Did I hear a splash ",
   "0x4c4b98": "?",
-  "0x4e1bbc": "I'm a "
+  "0x4e1bbc": "I'm a ",
+  "0x4e2654": "Must I walk through ",
+  "0x4e264c": "this ",
+  "0x4e2644": "these ",
+  "0x4e25ac": "Hey that's ",
+  "0x4e25a0": "'s house!",
+  "0x4e2510": "I'll run this ball low",
+  "0x4e2504": " under the ",
+  "0x4e21c8": "I will never play this game again!",
+  "0x4e2198": "I hate my clubs, I hate my hat, I hate my life.",
+  "0x4e2174": "I am so mad I could just scream.",
+  "0x4e2150": "Come on, you want a piece of me?"
 };

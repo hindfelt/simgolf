@@ -81,3 +81,17 @@ test('related request kinds retain their distinct original openings',()=>{
  const named=originalDescribedStandardPhrase({kind:13,actorId:0,state},{profileNames:['Gary']});
  expect(named.state.sourceText).toContain('Gary');expect(named.state.redirected).toBe(true);expect(named.state.remarkStyle).toBe(0x80007d08);
 });
+test('terrain text keeps native plural and category checks',()=>{
+ const q={kind:10,actorId:0,value:3,state:{sourceText:''}};
+ const singular=originalStandardPhrase({...q,terms:{3:{name:'rock'}}}).state.sourceText;
+ const plural=originalStandardPhrase({...q,terms:{3:{name:'rocks'}}}).state.sourceText;
+ expect(singular).not.toBe(plural.replace('rocks','rock'));
+ expect(()=>originalStandardPhrase({...q,terms:{3:{name:''}}})).toThrow('preceding byte');
+ const specialized=originalStandardPhrase({...q,kind:60,terms:{3:{name:'tree',type:13}}});expect(specialized.state.sourceText).toContain('tree');
+ const general=originalStandardPhrase({...q,kind:60,terms:{3:{type:12}}});expect(general.state.sourceText).not.toContain('tree');
+});
+test('time-based variation uses signed truncation around the original boundary',()=>{
+ const q={kind:35,actorId:0,state:{sourceText:''}};
+ const at=n=>originalStandardPhrase({...q,originalClock:n}).state.sourceText;
+ expect(at(-79)).toBe(at(0));expect(at(79)).toBe(at(0));expect(at(80)).not.toBe(at(0));expect(at(-80)).toBe(at(240));
+});
