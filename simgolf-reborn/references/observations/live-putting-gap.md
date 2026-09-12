@@ -1406,3 +1406,21 @@ identity, reaction and sound effects remain controlled. This supersedes the
 previous matrix stopping 365 cases at far-route entry. Service-arrival and
 unhappy-departure execution, earlier walking entry, persisted world mapping
 and live adoption are still incomplete.
+
+### Facility arrival behavior and income
+
+`original-facility-arrival.js` recovers 0x42a200–0x42a52b for ordinary
+facility records. Types 7, 3, 6, 8 and 10 preserve their ordered reactions,
+wait/animation/need updates, RNG, tile service flags and cash/period income.
+Service levels and ledger period are reread at their native points after
+callbacks. Independent type checks preserve potential facility changes during
+effects rather than assuming an immutable switch statement.
+
+900 native cases match actor bytes, RNG, cash, signed income ledger, period,
+service tile arrays and ordered calls. Fixtures exercise each handled type
+plus an unhandled type, level thresholds and ledger wrapping. Reaction,
+sound and money-notice bodies are controlled; reactions mutate cash/levels
+and the notice changes ledger period to test read ordering. The actual RNG
+executes natively. Tile-service arrivals (index -2), partner continuation
+(index -1), composed dispatch and authoritative live service integration
+remain open; this does not change the deployed economy.
