@@ -7,6 +7,6 @@ import {originalCurrentWorldShotMap} from './original-world-shot-map.js';
 export function originalAudiblePlannerBinding(snapshot,{context,dependencies,remarkFor,mapOptionsFor}={}){
  if(!context||!dependencies||typeof remarkFor!=='function')throw Error('Original audible planner binding requires context, dependencies and a remark resolver.');
  const effects=originalAudiblePlannerEffects(snapshot,remarkFor);
- const map=originalCurrentWorldShotMap(effects.readWorld,mapOptionsFor);
+ const map=originalCurrentWorldShotMap(effects.readWorld,mapOptionsFor,effects.readGeneration);
  return {context,dependencies:{...dependencies,map},effects};
 }

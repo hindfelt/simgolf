@@ -6,9 +6,10 @@ import {applyOriginalPlannerResult} from './original-planner-result.js';
 // during reactions must use readWorld(), rather than a captured older snapshot.
 export function originalAudiblePlannerEffects(snapshot,remarkFor){
  const id=snapshot.actorId,holeId=snapshot.actors?.[id]?.[0x29];
- let world=structuredClone(snapshot);
+ let world=structuredClone(snapshot),generation=0;
  return {
   readWorld:()=>structuredClone(world),
+  readGeneration:()=>generation,
   emit:(event,partial)=>{
    const published=originalPlannerReactionWorld(world,partial,id,holeId);
    if(typeof remarkFor!=='function')throw Error('Original audible planner remark binding unavailable.');
@@ -16,7 +17,7 @@ export function originalAudiblePlannerEffects(snapshot,remarkFor){
    if(!binding?.request||typeof binding.then==='function')throw Error('Original audible planner remark binding must be synchronous.');
    const result=originalAudibleGolferRemark({...binding.request,state:published,actorId:event.actorId,kind:event.kind,value:event.value,globalFlags:published.globalFlags},binding.options);
    const next=originalPlannerAfterReaction(partial,result.state,id,holeId);
-   world=result.state;
+   world=result.state;generation++;
    return next;
   },
   complete:result=>applyOriginalPlannerResult(world,result,id,holeId),

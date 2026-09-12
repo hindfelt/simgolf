@@ -2362,3 +2362,21 @@ world retention. The native matrix plus two scheduler completion checks pass in
 not uninterrupted scheduler-plus-planner-plus-remark native execution. Full
 live-world state publication, performance measurement and live schema adoption
 remain open. No deployment or live gameplay change.
+
+### Current-world map read cost
+
+The initial binding cloned all packed records for every map callback. The
+reproducible `scripts/benchmark-original-world-reads.mjs` compares 10,000 simple
+terrain reads with and without invocation-owned map reuse. Locally it measured
+578.99 ms uncached versus 0.64 ms cached, with identical sums. This is a read-only
+microbenchmark, not a complete planner or browser frame measurement.
+
+The audible effect owner now advances a private generation on successful
+reaction publication. Current-world maps may reuse their snapshot only while
+that generation remains unchanged; arbitrary world readers retain uncached
+behavior. The browser revision is not used. External map option dependencies
+must stay stable within an invocation generation.
+
+Six tests pass, including the 3,120 retained audible matrix, replacement-world
+reads, generation invalidation and asynchronous-reader rejection. Full planner
+performance and production schema adoption remain unverified. No deployment.

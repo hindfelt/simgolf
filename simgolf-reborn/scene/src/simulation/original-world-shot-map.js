@@ -16,15 +16,24 @@ export function originalWorldShotMap(state,{planning={},readRawTerrain}={}){
 // Stable callbacks for a planner whose reactions replace its world snapshot.
 // Build each read from one snapshot, keeping nested physics sampling internally
 // consistent. Do not cache by revision: native reactions can alter packed data
-// without advancing the browser's revision counter.
-export function originalCurrentWorldShotMap(readWorld,optionsFor=()=>({})){
+// without advancing the browser's revision counter. Optional readGeneration
+// must advance on EVERY publication by the owner (including option changes);
+// omit it for arbitrary readers whose mutations cannot be tracked.
+export function originalCurrentWorldShotMap(readWorld,optionsFor=()=>({}),readGeneration){
  if(typeof readWorld!=='function'||typeof optionsFor!=='function')throw Error('Original current-world map requires synchronous readers.');
+ if(readGeneration!==undefined&&typeof readGeneration!=='function')throw Error('Original map generation reader unavailable.');
+ let cached,previousGeneration;
  const current=()=>{
+  const generation=readGeneration?.();
+  if(readGeneration&&(!Number.isSafeInteger(generation)||generation<0))throw Error('Original map generation must be a nonnegative integer.');
+  if(readGeneration&&cached&&generation===previousGeneration)return cached;
   const state=readWorld();
   if(!state||typeof state.then==='function')throw Error('Original current-world snapshot must be synchronous.');
   const options=optionsFor(state);
   if(!options||typeof options.then==='function')throw Error('Original current-world map options must be synchronous.');
-  return originalWorldShotMap(state,options);
+  const map=originalWorldShotMap(state,options);
+  if(readGeneration){cached=map;previousGeneration=generation;}
+  return map;
  };
  const initial=current();
  const bind=(sample,path=[])=>Object.fromEntries(Object.entries(sample).map(([key,value])=>{

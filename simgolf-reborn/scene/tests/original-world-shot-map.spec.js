@@ -38,3 +38,14 @@ test('current-world reader rejects asynchronous snapshots and options',async()=>
  expect(()=>originalCurrentWorldShotMap(()=>Promise.resolve(world()))).toThrow('snapshot must be synchronous');
  expect(()=>originalCurrentWorldShotMap(world,()=>Promise.resolve({}))).toThrow('options must be synchronous');
 });
+
+test('owned generation reuses one map and invalidates after reaction publication',async()=>{
+ const {originalCurrentWorldShotMap}=await import('../src/simulation/original-world-shot-map.js');
+ let state=world(),generation=0,reads=0;
+ const map=originalCurrentWorldShotMap(()=>{reads++;return structuredClone(state);},()=>({}),()=>generation);
+ for(let i=0;i<100;i++)expect(map.planning.terrainAt(10,10)).toBe(2);
+ expect(reads).toBe(1);
+ state=structuredClone(state);state.terrain[510]=1;generation++;
+ expect(map.planning.terrainAt(10,10)).toBe(1);expect(map.terrainAt({x:10,z:10}).code).toBe(1);expect(reads).toBe(2);
+ generation=NaN;expect(()=>map.planning.terrainAt(10,10)).toThrow('generation must be');
+});
