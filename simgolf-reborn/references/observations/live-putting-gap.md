@@ -2651,3 +2651,16 @@ All 64 native whole-table cases match (16,384 records), using the executable's
 actual trig helpers and initialized table. Twelve local motion/world/session
 checks pass, including restored successive ticks. The other world callbacks,
 0x4029e0 and 0x46df40, remain external, and production adoption is still open.
+
+### Visual-slot entry stage
+
+Recovered 0x4029f3–0x402b6b for one of the 64 76-byte visual records.
+Activation, four-phase countdown, reaction selection, the two-unit payment,
+post-effect ledger update and entry delay are represented. The result explicitly
+returns either skip or 0x402b6b; the large movement body is not bypassed or claimed
+complete. This stage is not yet installed as the entire 0x4029e0 callback.
+
+All 1,024 native entry cases match records, reaction calls, cash, period ledger
+and branch with controlled effect helpers. Two local checks additionally cover
+post-callback period changes, source isolation and inactive/delayed slots.
+The remaining visual movement and final world callback remain open.
