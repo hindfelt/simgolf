@@ -2119,3 +2119,20 @@ including the eight captures. The earlier 36 preparation comparisons and seven
 related tests pass, covering stale projections, callback changes, wraparound,
 input isolation and missing optional projections. Live browser/server schema
 adoption remains open; this is a recovered-engine integration change.
+
+
+### Planner friction comes from current green metadata
+
+`originalPlannerInput` now sources `rollCoefficient` from terrain record 1
+when present, matching the absolute green-byte read at native 0x421873
+(0x576df1). This applies even when the ball starts on a different surface.
+Explicit context remains supported for older callers without that metadata;
+malformed present coefficients fail rather than silently falling back.
+
+The full 36-case preparation-through-completion oracle now supplies native
+terrain coefficients in packed world metadata and deliberately stale caller
+friction 0. All cases still match, including eight captures, because planning
+reads the authoritative green coefficient 3. Eight related tests pass,
+including changing runtime metadata, invalid values and input isolation.
+This prevents one identified planning/movement mismatch at integration; live
+world adoption, cadence and actual effects remain incomplete.

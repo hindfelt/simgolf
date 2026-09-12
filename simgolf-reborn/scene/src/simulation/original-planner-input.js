@@ -9,6 +9,13 @@ export function originalPlannerInput(snapshot,context){
  if(!(partner instanceof Uint8Array)||partner.length!==256)throw Error('Original planner input partner unavailable.');
  const q=structuredClone(context),x=a.getInt32(0xdc,true),z=a.getInt32(0xe0,true);
  Object.assign(q,{actorId:id});
+ // 0x421873 reads the green's runtime coefficient even when the ball starts
+ // elsewhere. Use the same terrain metadata as motion, not stale UI context.
+ const green=snapshot.metadata?.[1];
+ if(green&&Object.hasOwn(green,'rollCoefficient')){
+  if(!Number.isInteger(green.rollCoefficient)||green.rollCoefficient<0||green.rollCoefficient>8)throw Error('Original planner green roll coefficient unavailable.');
+  q.rollCoefficient=green.rollCoefficient;
+ }
  Object.assign(q.planning,{x,z,attitude:a.getInt8(0x3e),abilityFlags:a.getUint16(0x1e,true),
   driverValue:a.getUint8(0xfa),ironValue:a.getUint8(0xfb),abilityValue:a.getUint8(0xfc),
   drawValue:a.getUint8(0xfd),fadeValue:a.getUint8(0xfe),backspinValue:a.getUint8(0xff),recoveryValue:actor.recoveryValue});
