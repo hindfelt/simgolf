@@ -3299,3 +3299,9 @@ This is not full original completion: the actual remark engine/world integration
 `originalAudibleRemarkWorld` supplies the complete audible engine with packed-world reaction and late outcome snapshots, then uses the existing world writer to commit actor/counters and final popup RNG state. It updates the outcome actor after preamble and keeps scalar counters separate from world arrays. `originalAudibleAfterFeeCompletion` invokes that implementation for the conditional kind-19 call before profile/reset processing.
 
 Integration coverage exercises normal kind-19 dispatch and kind-19-to-23 remapping on a sufficiently established hole, checking actual reaction counters and happiness, message state, preserved typed arrays and input immutability. Phrase/name and audio terrain/playback use controlled test resources. This joins recovered implementations, not the live browser schema; uninterrupted native comparison of the new joined flow and caller/round-progression integration remain outstanding.
+
+### Automatic world adapter native matrix
+
+The automatic adapter now passes the complete 3,120-case retained native audible-remark matrix, rather than relying only on manual snapshot/write-back tests. It compares every native dispatch/message field, actor state, audio event/RNG count and outcome counter after automatic write-back; all 65 kinds, early returns and popup acceptance/rejection are represented. Terrain stays intact and inputs remain unchanged.
+
+The matrix retains its prior controlled phrase/location and playback boundaries. This closes native fixture coverage for automatic world integration of an individual remark, not uninterrupted native completion across fee/remark/reset, and not adoption by the live browser/server schema.
