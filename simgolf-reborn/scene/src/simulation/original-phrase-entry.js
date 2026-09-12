@@ -20,9 +20,9 @@ export function originalPhraseEntry(q){
 }
 
 // Personal overrides have priority; only a standard route resets remark style.
-export function originalSelectedPhrase(q,resolve){
+export function originalSelectedPhrase(q,resolve,readResource){
  const entry=originalPhraseEntry(q);
  if(entry.next!=='standard')return entry;
- const selected=originalStandardPhrase({...q,holeIndex:entry.hole,state:entry.state},resolve);
+ const selected=originalStandardPhrase({...q,holeIndex:entry.hole,state:entry.state},resolve,readResource);
  return {...selected,hole:entry.hole};
 }

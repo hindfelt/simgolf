@@ -7,10 +7,22 @@ from unicorn.x86_const import UC_X86_REG_ESP,UC_X86_REG_EIP,UC_X86_REG_EBX,UC_X8
 root=Path(__file__).resolve().parents[2];exe=root/"resources/sim golf/Sid Meier's SimGolf/golf.exe"
 assert hashlib.sha256(exe.read_bytes()).hexdigest()=='82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf'
 p=pefile.PE(str(exe));u=Uc(UC_ARCH_X86,UC_MODE_32);u.mem_map(0x400000,0x200000);u.mem_map(0x800000,0x40000);u.mem_map(0x100000,0x8000)
-for a,n in [(0x469250,0xd4),(0x407050,0xc0),(0x45b2c0,0x55),(0x40a6c0,0xdc),(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
+for a,n in [(0x466440,0x592),(0x469250,0xd4),(0x407050,0xc0),(0x45b2c0,0x55),(0x40a6c0,0xdc),(0x46c140,0x2c),(0x466e30,0x6c),(0x469330,0x2e10),(0x4c0000,0x30000)]:u.mem_write(a,p.get_data(a-0x400000,n))
 def put(a,v):u.mem_write(a,struct.pack('<I',v&0xffffffff))
-events=[]
+events=[];position=0
+def read(a):return bytes(u.mem_read(a,512)).split(b"\0")[0].decode("ascii")
 def hook(u,a,size,data):
+ global position
+ if a==0x466440:
+  sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=list(struct.unpack('<iiii',u.mem_read(sp+4,16)))));return
+ if a==0x4a58bd:
+  sp=u.reg_read(UC_X86_REG_ESP);path,mode=struct.unpack('<II',u.mem_read(sp+4,8));events.append(dict(kind='open',path=read(path),mode=read(mode)));position=0;u.reg_write(UC_X86_REG_EAX,0 if q['resourceLines'] is None else 0x101000);return
+ if a==0x4a5d5e:
+  sp=u.reg_read(UC_X86_REG_ESP);buffer,n,handle=struct.unpack('<III',u.mem_read(sp+4,12));assert n==250 and handle==0x101000;events.append(dict(kind='read',maxBytes=n))
+  if position>=len(q['resourceLines']):u.reg_write(UC_X86_REG_EAX,0)
+  else:u.mem_write(buffer,q['resourceLines'][position].encode()+b'\0');position+=1;u.reg_write(UC_X86_REG_EAX,buffer)
+  return
+ if a==0x4a580f:events.append(dict(kind='close'));u.reg_write(UC_X86_REG_EAX,0);return
  if a==0x469250:
   sp=u.reg_read(UC_X86_REG_ESP);events.append(dict(address=a,args=list(struct.unpack('<ii',u.mem_read(sp+4,8)))));return
  if a==0x46bc8c:u.emu_stop();return
@@ -24,12 +36,12 @@ def hook(u,a,size,data):
  u.mem_write(0x518f78,text.encode()+b'\0');put(0x589be8,12345)
  if kind==59 and i>=384 and a==0x466fb0:
   at=0x577f08+id*256+0xb6;u.mem_write(at,bytes([u.mem_read(at,1)[0]^1]))
-for a in [0x4acb95,0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
+for a in [0x4a58bd,0x4a5d5e,0x4a580f,0x4acb95,0x466fb0,0x4074d0]:u.mem_write(a,b'\xc3')
 u.hook_add(UC_HOOK_CODE,hook)
 rows=[]
-kinds=[19,23,1,61,59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
+kinds=[50,19,23,1,61,59,54,7,30,58,11,3,28,35,10,22,60,49,62,5,13,37,38,39,51,52,53,2,4,26,31,34,40,42,44,6,8,9,12,14,15,16,17,18,20,21,24,25,27,29,32,33,43,45,46,48,55,56,57,36,41,47,63,64,65,0,-1,66,-2147483648]
 for kind in kinds:
- for i in range(4096 if kind in [19,23] else 640 if kind==59 else 384):
+ for i in range(2048 if kind==50 else 4096 if kind in [19,23] else 640 if kind==59 else 384):
   id=152 if kind in [19,23] and i%17==16 else i%16;record=[0]*256;
   if kind==7:record[0x12]=(i//5)%256
   record[0x18]=(i*17)%256;record[0xb6]=i%256
@@ -41,6 +53,13 @@ for kind in kinds:
   prefix=['','Near ','Start\0ignored'][i%3];mode=[-1,0,1,2,2147483647][i%5];value=[-1,0,1,2,256][i%5]
   if i<128:value=[-1,0,1,256][i%4]
   q=dict(kind=kind,actorId=id,value=value,originalMode=mode,state=dict(sourceText=prefix,remarkStyle=i,redirected=bool(i%2),actors={str(id):record}))
+  if kind==50:
+   file=[-1,0,1,2,6,7][i%6];value=[-2147483648,-17,-1,0,1,2,3,15,16,17,18,33,49,2147483647][(i//6)%14];q['value']=value;record[0xb0:0xb2]=list(struct.pack('<h',file));record[0x12]=(record[0x12]&239)|(((i//84)%2)<<4)
+   slot=i%8;cache=[dict(fileId=-9,section=-8,variant=-7,text='Old '+str(j)) for j in range(8)]
+   if i%3==0:cache[(slot+3)%8]=dict(fileId=file,section=value&15,variant=value>>4,text='Cached\nAlternative')
+   q['state'].update(resourceCacheIndex=slot,resourceCache=cache);q.update(resourceFlags=0x10000000 if i%2 else 0,themeName='Current',resourceFileNames={str(file):'sample.txt'},resourceLines=None if i%13==0 else ['First\n',' A\n',' B\n',' C\n','Second\n',' D\n',' E\n','Third\n',' F\n'])
+   for j,r in enumerate(cache):u.mem_write(0x8358e0+j*268,struct.pack('<iii',r['fileId'],r['section'],r['variant'])+r['text'].encode()+b'\0')
+   put(0x8358d8,slot);put(0x59d208,q['resourceFlags']);u.mem_write(0x566238,b'Current\0');u.mem_write(0x539364+50*file,b'sample.txt\0')
   if kind in [19,23]:
    h=i%18;q['holeIndex']=h;par=4 if i<3072 else [3,4,5,127,128,255][i%6];stroke=(par+[-5,-4,-3,-2,-1,0,1,2,3,4][i%10])&255;record[0x23+h]=stroke;record[0x19]=(i//11)%8;record[0xae]=[0,2,4,3][(i//7)%4];partner=id^1;record[0xa2:0xa4]=list(struct.pack('<h',partner));other=[0]*256;other[0x23+h]=(i//15)%12;q['state']['actors'][str(partner)]=other;u.mem_write(0x577f08+partner*256,bytes(other));current=[0]*520;current[8]=par;following=[0]*520;flags=[0,4,8,12,256,512,1024,1792,260,520,1036,1804][(i//10)%12];following[:4]=list(struct.pack('<I',flags));q['holeRecords']={str(h):current,str(h+1):following};u.mem_write(0x5744f8+h*520,bytes(current));u.mem_write(0x5744f8+(h+1)*520,bytes(following));u.reg_write(UC_X86_REG_EBP,h);q['value']=value=[-1,0,1,2,3,4,5,6,7,8,127,128][(i//13)%12]
   if kind==1:
@@ -79,10 +98,14 @@ for kind in kinds:
   expected=json.loads(json.dumps(q['state']));expected['actors'][str(id)]=list(u.mem_read(0x577f08+id*256,256));expected['sourceText']=bytes(u.mem_read(0x518f78,512)).split(b'\0')[0].decode('ascii');expected['remarkStyle']=struct.unpack('<I',u.mem_read(0x589be8,4))[0]
   # With no appends, the JS buffer may retain data beyond C-string termination.
   if bytes(u.mem_read(0x518f78,512))==before:expected['sourceText']=prefix
+  if kind==50:
+   expected['resourceCacheIndex']=struct.unpack('<h',u.mem_read(0x8358d8,2))[0];expected['resourceCache']=[]
+   for j in range(8):
+    a=0x8358e0+j*268;f,s,v=struct.unpack('<iii',u.mem_read(a,12));expected['resourceCache'].append(dict(fileId=f,section=s,variant=v,text=read(a+12)))
   expected['redirected']=bool(struct.unpack('<I',u.mem_read(0x53f8b8,4))[0])
   rows.append([q,dict(state=expected,events=events,next='postprocess')])
 module=(root/'simgolf-reborn/scene/src/simulation/original-standard-phrase.js').as_uri()
-script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalStandardPhrase} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){if(q.profileHistory)for(const id in q.profileHistory)q.profileHistory[id]=Uint8Array.from(q.profileHistory[id]);if(q.holeRecords)for(const id in q.holeRecords)q.holeRecords[id]=Uint8Array.from(q.holeRecords[id]);if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);for(const s of [q.state,expected.state])for(const id in s.actors)s.actors[id]=Uint8Array.from(s.actors[id]);const got=originalStandardPhrase(q,(e,s)=>{if(q.mutateProfile&&e.address===0x466fb0)s.actors[q.actorId][0xb6]^=1;return {...s,remarkStyle:12345,sourceText:s.sourceText.split('\\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])};});if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({kind:q.kind,value:q.value,expected:{...expected,state:{...expected.state,actors:null}},got:{...got,state:{...got.state,actors:null}}}));}console.log(`${rows.length} native standard-phrase cases matched`);""".replace('MODULE',json.dumps(module))
+script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';import {originalStandardPhrase} from MODULE;const rows=JSON.parse(readFileSync(0,'utf8'));for(const [q,expected] of rows){if(q.profileHistory)for(const id in q.profileHistory)q.profileHistory[id]=Uint8Array.from(q.profileHistory[id]);if(q.holeRecords)for(const id in q.holeRecords)q.holeRecords[id]=Uint8Array.from(q.holeRecords[id]);if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);for(const s of [q.state,expected.state])for(const id in s.actors)s.actors[id]=Uint8Array.from(s.actors[id]);const got=originalStandardPhrase(q,(e,s)=>{if(q.mutateProfile&&e.address===0x466fb0)s.actors[q.actorId][0xb6]^=1;return {...s,remarkStyle:12345,sourceText:s.sourceText.split('\\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])};},()=>q.resourceLines);if(!isDeepStrictEqual(got,expected))throw Error(JSON.stringify({kind:q.kind,value:q.value,expected:{...expected,state:{...expected.state,actors:null}},got:{...got,state:{...got.state,actors:null}}}));}console.log(`${rows.length} native standard-phrase cases matched`);""".replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
 # Retain each combination that changes text/style within each dispatch case.
 seen=set();fixture=[]

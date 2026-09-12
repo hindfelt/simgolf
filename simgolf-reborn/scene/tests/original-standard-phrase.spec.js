@@ -9,7 +9,7 @@ for(const [q] of rows)if(q.holeRecords)for(const id in q.holeRecords)q.holeRecor
 for(const [q] of rows)if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);
 for(const [q,out] of rows)for(const state of [q.state,out.state])for(const id in state.actors)state.actors[id]=Uint8Array.from(state.actors[id]);
 test('supported original standard remarks and display styles match native dispatch',()=>{
- for(const [q,expected] of rows){const before=structuredClone(q);expect(originalStandardPhrase(q,(e,s)=>{if(q.mutateProfile&&e.address===0x466fb0)s.actors[q.actorId][0xb6]^=1;return {...s,remarkStyle:12345,sourceText:s.sourceText.split('\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])};})).toEqual(expected);expect(q).toEqual(before);}
+ for(const [q,expected] of rows){const before=structuredClone(q);expect(originalStandardPhrase(q,(e,s)=>{if(q.mutateProfile&&e.address===0x466fb0)s.actors[q.actorId][0xb6]^=1;return {...s,remarkStyle:12345,sourceText:s.sourceText.split('\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])};},()=>q.resourceLines)).toEqual(expected);expect(q).toEqual(before);}
 });
 test('personal phrases take precedence and preserve style while standard fallback resets it',()=>{
  const q={kind:20,actorId:0,combined:11,requestCodes:[20,-1],profilePhrases:[['My DATA']],state:{sourceText:'',remarkStyle:91,redirected:true,actors:{0:new Uint8Array(256)}}};
@@ -22,8 +22,8 @@ test('selected standard location phrase expands through the actual landmark desc
  const result=originalDescribedPhrasePostprocess({...q,state:selected.state},{profileNames:['Gary']},()=>({objects:{3:{type:4,value:7}},map:{tileAt:()=>22,detailAt:()=>3}}));
  expect(result.state.sourceText).toBe(selected.state.sourceText.replace('DATA','lighthouse'));expect(result.state.sourceText).not.toContain('DATA');expect(result.state.remarkStyle).toBe(0x80007d08);
 });
-test('unrecovered standard cases cannot masquerade as successful generic remarks',()=>{
- expect(()=>originalStandardPhrase({kind:50,state:{sourceText:''}})).toThrow('case 50 is not reconstructed');
+test('resource remarks require original actor and resource state',()=>{
+ expect(()=>originalStandardPhrase({kind:50,state:{sourceText:''}})).toThrow('actor is unavailable');
 });
 
 test('direct standard helpers resolve actual actor names and landmark records',()=>{
@@ -140,4 +140,18 @@ test('score remarks apply flag precedence before trait and partner comparisons',
  const better=originalStandardPhrase(q);partner[0x24]=5;const worse=originalStandardPhrase(q);expect(better.state.sourceText).not.toBe(worse.state.sourceText);expect(better.events).toEqual([]);
  partner[0x24]=0;expect(originalStandardPhrase(q).events).toEqual([{address:0x469250,args:[6,2]}]);
  expect(q.state.sourceText).toBe('');
+});
+
+test('all 65 standard request kinds have native reference coverage',()=>{
+ const kinds=new Set(rows.map(([q])=>q.kind));for(let kind=1;kind<=65;kind++)expect(kinds.has(kind)).toBe(true);
+});
+test('resource remarks clear existing text and forward the loader through entry and description',()=>{
+ const [q,expected]=rows.find(([q,out])=>q.kind===50&&out.events.some(e=>e.kind==='open')&&out.state.sourceText.length>0);
+ const calls=[];const loader=path=>{calls.push(path);return q.resourceLines;};
+ const result=originalDescribedStandardPhrase(q,{},()=>{throw Error('Resource phrase must not request a location');},loader);
+ expect(result).toEqual(expected);expect(calls).toEqual([expected.events.find(e=>e.kind==='open').path]);
+ const entry={...q,combined:11,requestCodes:[-2,-1],profilePhrases:[]};
+ const selected=originalSelectedPhrase(entry,undefined,loader);
+ expect(selected.state).toEqual({...expected.state,redirected:false});expect(selected.hole).toBe(1);
+ expect(selected.events).toEqual(expected.events);
 });

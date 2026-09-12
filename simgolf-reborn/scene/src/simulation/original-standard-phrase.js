@@ -1,3 +1,4 @@
+import {originalResourcePhrase} from './original-resource-phrase.js';
 import {originalScoreComment} from './original-score-comment.js';
 import {originalHoleDescription} from './original-hole-description.js';
 import {originalClubName} from './original-club-name.js';
@@ -6,9 +7,9 @@ import {originalAffectionateAddress} from './original-affectionate-address.js';
 import {originalActorName} from './original-actor-name.js';
 import {originalLocationDescription} from './original-location-description.js';
 import {ORIGINAL_FIXED_PHRASES as fixed,ORIGINAL_STANDARD_PHRASE_STRINGS as labels} from './original-standard-phrase-data.js';
-// Standard dispatch starts at 0x469380. Unrecovered cases fail explicitly;
-// they must never silently become generic phrases in the fidelity engine.
-export function originalStandardPhrase(q,resolve){
+// All 65 standard request kinds from 0x469380. Resource I/O remains explicit;
+// missing original records must never silently become generic phrases.
+export function originalStandardPhrase(q,resolve,readResource){
  let state=structuredClone(q.state);const kind=q.kind|0,events=[];
  const append=a=>{state.sourceText=state.sourceText.split('\0',1)[0]+labels['0x'+a.toString(16)];};
  const call=(address,args)=>{const event={address,args};events.push(event);if(address===0x407050){const result=originalHoleDescription({...q,holeIndex:args[0],state});state=result.state;events.push(...result.events);return;}if(address===0x466e30){state=originalAffectionateAddress({actorId:args[0],state});return;}if(typeof resolve!=='function')throw Error('Original standard phrase helper requires a resolver.');const reply=resolve(structuredClone(event),structuredClone(state));if(!reply||typeof reply.then==='function')throw Error('Expected synchronous speculative phrase state.');state=structuredClone(reply);};
@@ -17,6 +18,11 @@ export function originalStandardPhrase(q,resolve){
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===50){
+  const a=actor(q),view=new DataView(a.buffer,a.byteOffset,a.byteLength),fileId=view.getInt16(0xb0,true),value=q.value|0,section=value&15,variant=value>>4,mode=(view.getUint32(0x10,true)>>>20)&1;
+  state.sourceText='';events.push({address:0x466440,args:[fileId,section,variant,mode]});
+  const result=originalResourcePhrase({...q,fileId,section,variant,mode,state},readResource);state=result.state;events.push(...result.events);
+ }
  else if(kind===19||kind===23){
   const a=actor(q),h=q.holeIndex;if(!Number.isInteger(h)||h<0||h+0x23>=256)throw Error('Original score hole index is unavailable.');
   const current=q.holeRecords?.[h],following=q.holeRecords?.[h+1];if(!(current instanceof Uint8Array)||current.length!==520||!(following instanceof Uint8Array)||following.length!==520)throw Error('Original score hole records are unavailable.');
@@ -144,12 +150,12 @@ export function originalStandardPhrase(q,resolve){
 }
 function actor(q){const value=q.state.actors?.[q.actorId];if(!(value instanceof Uint8Array)||value.length!==256)throw Error('Original standard phrase actor is unavailable.');return value;}
 
-export function originalDescribedStandardPhrase(q,names,locationContext){
+export function originalDescribedStandardPhrase(q,names,locationContext,readResource){
  return originalStandardPhrase(q,(event,state)=>{
   if(event.address===0x466fb0){state.sourceText=originalActorName({...names,actorId:event.args[0],actor:state.actors[event.args[0]],sourceText:state.sourceText,appendComma:event.args[1]!==0});return state;}
   const context=locationContext(structuredClone(state)),[c,r,type]=event.args;
   return originalLocationDescription({...context,c,r,type,state},context.map).state;
- });
+ },readResource);
 }
 
 function ctext(value){if(typeof value!=='string')throw Error('Original phrase text is unavailable.');return value.split('\0',1)[0];}
