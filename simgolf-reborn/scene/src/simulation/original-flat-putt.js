@@ -1,6 +1,6 @@
 import {originalBallPositionStep} from './original-ball-position.js';
 import {originalGroundResponse,originalBallStopped} from './original-ground-motion.js';
-import {originalCupCapture} from './original-cup.js';
+import {originalGroundPhase} from './original-ground-phase.js';
 
 // Integration component for a flat, uninterrupted green. The caller supplies
 // an already-prepared launch: no cold-cache substitute or invented RNG draws.
@@ -31,17 +31,13 @@ export function originalFlatPuttStep(state,{phaseCounter,seed}) {
   throw Error('Flat putt needs the shared unsigned phase counter and RNG state.');
  if(state.status!=='rolling')return {state:structuredClone(state),rngState:seed,draws:0};
  const before=state.ball,position=originalBallPositionStep(before);
- const response=originalGroundResponse({...before,terrainCode:1,originTerrainCode:1,
-  rollCoefficient:state.rollCoefficient,forwardSlope:0,crossSlope:0,boundaryFlags:0,phaseCounter,seed});
- let ball={...before,...position,speed:response.speed,heading:response.heading,
-  angularOffset:response.angularOffset,seed:response.rngState};
- // Sample before movement: native block 0x4285bb stores these locals;
- // 0x42c354 uses them for cup detection (verify-original-putt-cells.py).
- // The cup flag is present only on the actual cup tile.
- const cellX=before.x>>10,cellZ=before.z>>10;
- const capture=originalCupCapture({...ball,cellX,cellZ,terrainCode:1,
-  cellFlags:cellX===state.cupX&&cellZ===state.cupZ?128:0,club:13,eventFlag:state.eventFlag});
- if(capture)ball={...ball,...capture};
+ const response=originalGroundPhase({before,ball:{...before,...position},originTerrainCode:1,
+  club:13,eventFlag:state.eventFlag,centreFlag:0,phaseCounter,seed},{
+  cellAt:(x,z)=>({code:1,rollCoefficient:state.rollCoefficient,edgeFlags:0,
+   flags:x===state.cupX&&z===state.cupZ?128:0}),slopeAt:()=>0,
+ });
+ let ball=response.ball;
+ const capture=response.captured;
  const stopped=originalBallStopped(ball);
  // 0x42ca97 clears residual horizontal speed when the stop predicate passes.
  if(stopped)ball.speed=0;
