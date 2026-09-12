@@ -21,6 +21,8 @@ export function originalMotionStep(q,world) {
  if(ball.height<=1) {
   const phase=originalGroundPhase({...q,before,ball},world);
   ({ball,centreFlag,rngState,draws,captured,reflectedX,reflectedZ}=phase);
+  if(reflectedX)sounds.push(6);
+  if(reflectedZ)sounds.push(6);
   if(captured)return {ball,centreFlag,rngState,draws,stateFlags:(stateFlags&~0x40000)>>>0,
    captured:true,stopped:true,landed:false,terrainStopped:false,luckAdjusted:false,sounds,reflectedX,reflectedZ,nearbyGolferCheck:null};
  } else {

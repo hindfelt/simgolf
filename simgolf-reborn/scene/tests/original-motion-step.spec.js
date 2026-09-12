@@ -19,3 +19,8 @@ test('ordinary rolling ticks do not execute landing-only scattering',()=>{
   {...world,cellAt:()=>({...world.cellAt(),scatterCoefficient:3})});
  expect(a.landed).toBe(false);expect(a.draws).toBe(0);expect(a.sounds).toEqual([]);
 });
+test('each reflected edge emits its collision sound before subsequent impact effects',()=>{
+ const a=originalMotionStep({...q,phaseCounter:1,ball:{...q.ball,x:21*1024-1,z:20*1024+1,height:0,verticalSpeed:0,heading:0x20000000}},
+  {...world,cellAt:()=>({...world.cellAt(),edgeFlags:5})});
+ expect(a.reflectedX).toBe(true);expect(a.reflectedZ).toBe(true);expect(a.sounds).toEqual([6,6]);
+});

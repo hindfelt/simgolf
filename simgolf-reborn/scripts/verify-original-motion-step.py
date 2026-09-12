@@ -1,4 +1,4 @@
-"""Continuous native motion block against assembled JS step on uniform terrain.
+"""Continuous native motion block against assembled JS step on uniform and mixed terrain.
 Original projection/RNG/collisions execute; height/slope are flat samples and
 presentation/scoring callbacks are no-ops. This is not the outer golfer loop.
 """
@@ -25,12 +25,18 @@ def hook(u,a,size,data):
 u.hook_add(UC_HOOK_CODE,hook)
 u.reg_write(UC_X86_REG_FPCW,0x37f);u.reg_write(UC_X86_REG_ESP,0x102000);u.emu_start(0x491380,0x4913bc,count=20000)
 rng=random.Random(2002);rows=[]
-for i in range(120):
+for i in range(240):
  code=[1,10,12,13,17][i%5];cell=dict(code=code,flags=0,edgeFlags=0,rollCoefficient=3,bounceCoefficient=4,scatterCoefficient=i%3-1)
  u.mem_write(0x570d38,bytes([code])*2500);u.mem_write(0x53ba00,b'\0'*5000);u.mem_write(0x5608b0,b'\0'*2500)
- u.mem_write(0x576dc0+code*48,bytes([4,3,cell['scatterCoefficient']&255]));u.mem_write(0x5a1f30,b'\x00')
+ mixed=i>=120
+ def cell_code(x,z):return [1,10,12,13,17][(x+z+i)%5] if mixed else code
+ if mixed:
+  u.mem_write(0x570d38,bytes(cell_code(x,z) for x in range(50) for z in range(50)))
+  u.mem_write(0x5608b0,bytes(5 if (x+z)%4==0 else 0 for x in range(50) for z in range(50)))
+ for c in [1,10,12,13,17]:u.mem_write(0x576dc0+c*48,bytes([4,3,cell['scatterCoefficient']&255]))
+ u.mem_write(0x5a1f30,b'\x00')
  b=dict(x=20992,z=20992,height=rng.choice([0,100,300]),speed=rng.randrange(100,2000),verticalSpeed=rng.choice([0,400,-400]),heading=rng.randrange(2**32),angularOffset=rng.choice([0,0x1000000,-0x1000000]),seed=17)
- q=dict(ball=b,originTerrainCode=code,club=13,eventFlag=False,centreFlag=0,stateFlags=0,skillEnabled=bool(i%2),skillMask=512,luck=60,targetTile=dict(x=20,z=20),variant=0,seed=rng.randrange(2**32),phaseCounter=0)
+ q=dict(ball=b,originTerrainCode=cell_code(20,20),club=13,eventFlag=False,centreFlag=0,stateFlags=0,skillEnabled=bool(i%2),skillMask=512,luck=60,targetTile=dict(x=20,z=20),variant=0,seed=rng.randrange(2**32),phaseCounter=0)
  write(0x577fcc,b['x']);write(0x577fd0,b['z']);u.mem_write(0x577f24,b'\x0d');write(0x59d208,0)
  u.mem_write(0x577f20,bytes([q['skillEnabled']]));u.mem_write(0x577f1e,struct.pack('<H',512));u.mem_write(0x578001,b'\x3c');u.mem_write(0x577f29,b'\x01')
  write(0x574518+520,20);write(0x57451c+520,20)
@@ -49,14 +55,15 @@ for i in range(120):
   q.update(ball=ball,stateFlags=e['stateFlags'],centreFlag=e['centreFlag'],seed=e['rngState'],phaseCounter=q['phaseCounter']+1)
   if e['stopped']:break
  assert steps[-1]['stopped'], 'Trajectory did not finish within the verification limit'
- rows.append(dict(q=initial,cell=cell,steps=steps))
+ rows.append(dict(q=initial,cell=cell,steps=steps,mixed=mixed,pattern=i))
 module=(root/'simgolf-reborn/scene/src/simulation/original-motion-step.js').as_uri()
 script="""import {readFileSync} from 'node:fs';import {isDeepStrictEqual} from 'node:util';
-const {originalMotionStep}=await import(MODULE);let count=0;
-for(const row of JSON.parse(readFileSync(0,'utf8'))){let q=row.q;const world={cellAt:()=>row.cell,heightAt:()=>0,slopeAt:()=>0};
-for(const e of row.steps){const a=originalMotionStep(q,world);count++;
+const {originalMotionStep}=await import(MODULE);let count=0,crossings=0;
+for(const row of JSON.parse(readFileSync(0,'utf8'))){let q=row.q;const world={cellAt:(x,z)=>row.mixed?{...row.cell,code:[1,10,12,13,17][(x+z+row.pattern)%5],edgeFlags:(x+z)%4===0?5:0}:row.cell,heightAt:()=>0,slopeAt:()=>0};
+for(const e of row.steps){const a=originalMotionStep(q,world);count++;if(row.mixed&&((q.ball.x>>10)!==(a.ball.x>>10)||(q.ball.z>>10)!==(a.ball.z>>10)))crossings++;
 for(const key of Object.keys(e))if(!isDeepStrictEqual(a[key],e[key]))throw Error(JSON.stringify({key,q,a,e}));
 q={...q,ball:a.ball,stateFlags:a.stateFlags,centreFlag:a.centreFlag,seed:a.rngState,phaseCounter:q.phaseCounter+1};q=JSON.parse(JSON.stringify(q));}}
-console.log(`120 trajectories / ${count} steps match continuous native motion on five uniform terrains.`);
+if(crossings===0)throw Error("No mixed terrain crossings exercised");
+console.log(`240 trajectories / ${count} steps match native motion; ${crossings} mixed-terrain tile crossings.`);
 """.replace('MODULE',json.dumps(module))
 subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(rows),text=True,check=True)
