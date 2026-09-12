@@ -36,3 +36,15 @@ test('older desert layouts remain importable but changed-physics tournament repl
  const data=await oldTournament('desert'),raw=JSON.stringify(data);const layout=await importCourse(JSON.stringify(data.config.course));expect(coursePractice(layout).environment).toBe('desert');
  await expect(restoreCompetition(raw)).rejects.toThrow('older tree physics');expect(JSON.stringify(data)).toBe(raw);
 });
+
+test('palm crown leaves clear flight below and above its visible fronds',()=>{
+ const g=createGame();g.tiles[key(26,17)]={type:'tree'};
+ const shot={from:{x:0,z:1.5},landing:{x:20,z:1.5},apex:3.5,curve:0,putt:false};
+ expect(treeCollision(g,shot)).not.toBeNull();
+ g.environment='tropical';
+ expect(treeCollision(g,shot)).toBeNull();
+ expect(treeCollision(g,{...shot,apex:4.5})).not.toBeNull();
+ expect(treeCollision(g,{...shot,apex:7})).toBeNull();
+ const from={x:0,z:1.2},to={x:20,z:1.2};
+ expect(treeGroundBlocker(g,from,to)(from,to)).toBe(true);
+});

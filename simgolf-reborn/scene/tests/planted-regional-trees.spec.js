@@ -24,3 +24,24 @@ test('coastal planting uses tapered crowns, remains pickable and switches to des
  });
  expect(result.lower).toBeGreaterThan(result.upper);expect(result.hit).toBe(true);expect(result.desert).toBe(true);expect(result.remaining).toBe(0);
 });
+
+test('palms and links scrub can be picked, raised and removed',async({page})=>{
+ await page.goto('/terrain-preview.html?seed=2002&landscape=river&environment=tropical');
+ await expect(page.locator('#status')).toHaveCount(0);
+ const result=await page.evaluate(async()=>{
+  const THREE=await import('/node_modules/three/build/three.module.js');
+  const {plantedTrees}=await import('/src/rendering/planted-trees.js');
+  const {createGame}=await import('/src/simulation/game.js');
+  const {center,key}=await import('/src/simulation/world.js');
+  const scene=new THREE.Scene(),trees=plantedTrees(scene),g=createGame(2002,'classic','tropical'),k=key(20,20),base=center(20,20);
+  g.tiles={[k]:{type:'tree'}};trees.update(g);
+  const crown=scene.getObjectByName('planted-palms'),m=new THREE.Matrix4();crown.getMatrixAt(0,m);const before=m.elements[13];
+  g.elevation={[k]:2};g.revision++;trees.update(g);crown.getMatrixAt(0,m);const delta=m.elements[13]-before;
+  scene.updateMatrixWorld(true);
+  const hit=trees.pick(new THREE.Raycaster(new THREE.Vector3(base.x,2.5,base.z+10),new THREE.Vector3(0,0,-1)));
+  g.environment='links';trees.update(g);const scrub=!!scene.getObjectByName('planted-gorse');
+  g.tiles={};g.revision++;trees.update(g);
+  return {delta,hit:!!hit,scrub,remaining:scene.children.reduce((n,m)=>n+m.count,0)};
+ });
+ expect(result.delta).toBeGreaterThan(0);expect(result.hit).toBe(true);expect(result.scrub).toBe(true);expect(result.remaining).toBe(0);
+});

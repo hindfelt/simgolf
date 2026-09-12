@@ -20,3 +20,18 @@ selection, regional planted trees, collision dimensions and replay boundaries.
 Production build passed. Actual Tropical and Links screenshots were visually
 inspected. This does not complete all regional resort architecture or the full
 approved Tonga island composition. Local implementation; not deployed or pushed.
+
+## Palm collision follow-through
+
+Protocol 85 aligns Tropical collision volumes with the shallow visible palm
+crown and bare trunk, instead of retaining the broadleaf canopy. Low offset
+shots can pass below fronds, crown-height shots collide, high shots clear the
+palm and the trunk continues blocking ground rolls. Previous Tropical course
+layouts remain importable, while old tournament replay is rejected explicitly;
+version-84 saves migrate without resetting time. Links version-84 replay remains
+compatible.
+
+Twelve focused checks pass, including actual-renderer palm selection, raised
+terrain movement and removal, regional collision cases, preview differences,
+old replay boundaries and protocol migration. The production build passes.
+This is local work, with no deployment or push.

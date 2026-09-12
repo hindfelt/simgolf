@@ -28,6 +28,13 @@ function collisionTrees(g) {
     });
   }
   for (const tree of trees) {
+    if(g.environment==='tropical'){
+      const planted=tree.size===undefined,size=planted?.7:tree.size,crown=planted?4.5:tree.height;
+      // Palm fronds occupy a shallow crown; the bare space beneath them must
+      // not retain the broadleaf tree's invisible collision volume.
+      tree.radius=3.5*size;tree.canopyBottom=crown-.95*size;tree.height=crown+.45*size;
+      tree.trunkRadius=planted?.26:.38*.65*size;
+    }
     const scale = treeScale(g.environment,tree.x,tree.z,tree.size===undefined);
     for (const name of ["radius","canopyBottom","height","trunkRadius"])tree[name]*=scale;
   }
