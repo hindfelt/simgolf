@@ -849,3 +849,17 @@ Four focused context/turn tests pass, including a real phase-3 swing path that
 advances the ball. The new whole actor-turn composition still needs a continuous
 native verifier; component and trajectory checks do not close that gap.
 Full outer-loop scheduling, live integration and persistence remain open.
+
+### Continuous actor-turn verification
+
+`verify-original-actor-turn.py` runs 1,500 native paths from 0x42819c through
+movement or the existing explicit continuations. It compares actor/partner
+records, counters, drawing state, RNG and ordered calls. Coverage: 1,207 skips,
+163 actual movement updates, 126 walking continuations, four retry continuations.
+Fixtures keep balls in-map and airborne when movement runs; condition/projection
+helpers remain controlled, and the original trig initializer executes. Turn-order
+locals are captured before motion reuses their native stack slots.
+
+This closes the new action-to-motion handoff verification gap for those cases.
+Walking/retry bodies, full world-loop integration, persistence and live conversion
+remain unfinished. The test does not imply complete actor behavior or release.
