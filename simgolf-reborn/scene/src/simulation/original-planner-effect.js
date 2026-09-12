@@ -8,10 +8,13 @@ import {applyOriginalPlannerResult} from './original-planner-result.js';
 export function originalPlannerEffect(event,snapshot,context,dependencies,effects){
  const args=event?.args;
  if(event?.address!==0x4235c0||!Array.isArray(args)||args.length!==5||!args.every(Number.isInteger)||args[0]!==snapshot.actorId||![0,1].includes(args[1])||args[2]!==-1)throw Error('Expected original automatic-target planner call.');
+ if(effects?.complete!==undefined&&typeof effects.complete!=='function')throw Error('Original planner completion must be synchronous.');
  const input=originalPlannerInput(snapshot,context);
  Object.assign(input.planning,{plannerArgument:args[2],explicitTarget:!!args[1],targetZ:args[3],curve:args[4]});
  const planner=originalAutomaticPlanner(input,dependencies,effects);
- return {state:applyOriginalPlannerResult(snapshot,planner),planner};
+ const state=effects?.complete ? effects.complete(planner) : applyOriginalPlannerResult(snapshot,planner);
+ if(!state||typeof state.then==='function')throw Error('Original planner completion must return a synchronous world.');
+ return {state,planner};
 }
 
 // Continuous shot preparation, including the post-planner facing/stance writes.

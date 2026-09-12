@@ -2316,3 +2316,18 @@ counter publication targets the entry hole. The retained fixtures still use
 controlled terrain/playback and personal phrases. This establishes the effect
 adapter, not uninterrupted native planner-plus-audio execution or live game
 adoption. Scheduler binding and current-world map readers remain to integrate.
+
+### Scheduler planner accepts reaction-owned completion
+
+`originalPlannerEffect` now invokes the supplied effect adapter's synchronous
+completion function when present, allowing `originalAudiblePlannerEffects` to
+commit onto its updated world. Callers without completion retain the existing
+packed result path. Invalid/asynchronous completion results fail explicitly.
+
+Five planner/dispatcher checks pass. The new test executes actual automatic
+planning from a retained direct fixture and confirms one completion, retained
+world fields, unchanged planner/actor results and immutable input. The existing
+36-case native prepared-putt oracle still matches through accounting/completion
+(28 stops, eight cups). That oracle retains its existing controlled effects;
+it does not verify a full scheduler/planner/audible-world native run. Current
+world readers and production schema adoption remain open. No deployment.
