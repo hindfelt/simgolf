@@ -1074,7 +1074,7 @@ function renderEvaluation() {
     parent.append(table);
   };
   const funReports = game.holes
-    .map(evaluationReport)
+    .map((hole) => evaluationReport(hole))
     .filter((r) => r.fun !== null);
   const funSummary = document.createElement("p");
   funSummary.id = "course-fun-rating";
@@ -1083,12 +1083,16 @@ function renderEvaluation() {
     : "Course fun: awaiting completed visitor holes";
   $("#evaluation-content").append(funSummary);
   for (const [index, hole] of game.holes.entries()) {
-    const report = evaluationReport(hole, {par: par(game, hole.id), difficulty: 1, combineContrasts: false}),
+    const holePar = par(game, hole.id);
+    const report = evaluationReport(hole, holePar > 0
+      ? {par: holePar, difficulty: 1, combineContrasts: false}
+      : undefined),
       section = document.createElement("section"),
       heading = document.createElement("h3"),
       summary = document.createElement("p");
-    const classification = classifyHole(report);
-    heading.textContent = `Hole ${index + 1} · Par ${par(game, hole.id)} · ${classification.name || "Unclassified"}`;
+    const classification = holePar > 0 ? classifyHole(report)
+      : {name: null, reason: "Place a tee and green before this hole can be rated."};
+    heading.textContent = `Hole ${index + 1} · ${holePar > 0 ? `Par ${holePar}` : "Not yet built"} · ${classification.name || "Unclassified"}`;
     const classificationNote = document.createElement("p");
     classificationNote.className = "classification-note";
     classificationNote.textContent = classification.reason;
