@@ -1385,3 +1385,5 @@ Original complete phrase flow: personal selection, all standard remarks and fina
 Original phrase helper integration: complete phrase API now resolves actual actor names and location/building descriptions.11255 continuous native executions with actual actor naming match, covering all65 standard kinds;29 related tests pass. Location-native composition, original resource initialization and live remark dispatch remain unfinished.
 
 Original remark dispatch composition: complete phrases now feed actual named display and recipient/pending-field updates.10763 uninterrupted native dispatch/phrase/display comparisons and12 related tests pass. Eligibility/history/adjustment/audio composition and live actor/resource initialization remain unfinished; no production behavior changed yet.
+
+Original remark eligibility now composes with complete message dispatch from packed actor/hole snapshots.10763 uninterrupted native comparisons and10 related tests pass, including suppressed-state preservation and score-kind remapping. History, happiness/social/audio composition and live initialization/wiring remain unfinished.

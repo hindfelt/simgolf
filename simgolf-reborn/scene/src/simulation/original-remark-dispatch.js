@@ -1,3 +1,4 @@
+import {originalRecordRemarkEntry} from './original-remark-entry.js';
 import {originalCompletePhrase,originalDescribedCompletePhrase} from './original-complete-phrase.js';
 import {originalNamedRemarkDisplay} from './original-remark-display.js';
 import {originalRemarkDisplay} from './original-remark-display.js';
@@ -56,4 +57,10 @@ export function originalDescribedCompleteRemarkDispatch(q,names,locationContext,
   displayEvents.push(...display.events);return display.state;
  });
  return {...result,phraseEvents,displayEvents,locationEvents};
+}
+
+export function originalEligibleRemarkDispatch(q,resolve,readResource){
+ const entry=originalRecordRemarkEntry(q);
+ if(!entry.allowed)return {allowed:false,kind:entry.kind,state:structuredClone(q.state),events:[],phraseEvents:[],displayEvents:[],receiver:null};
+ return {...originalCompleteRemarkDispatch({...q,kind:entry.kind},resolve,readResource),allowed:true,kind:entry.kind};
 }
