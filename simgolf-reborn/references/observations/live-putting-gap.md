@@ -2541,3 +2541,15 @@ of two marker modes). Local tests cover source isolation, defaults, tails and
 draw-event mapping. This verifies data extraction, not the complete native draw
 routine, its interactive allocation branch or browser card rendering. The
 remaining tutorial presentation and live integration work remains open.
+
+### Browser golfer-comparison view
+
+Added a green/gold modal for two recovered golfer-card descriptors, showing all
+ten skills in aligned columns with percentages and bars. Titles use text nodes;
+closing is presentation-only and calls its callback once. Escape and the continue
+button dismiss it. Desktop (900px) and phone (390px) screenshots were inspected;
+both browser checks pass with no horizontal overflow. The screenshot data is a
+controlled fixture, not an observed live pairing. This supplies the browser view;
+production invocation from an accepted recovered-world transaction remains open.
+Portrait artwork and the original interactive allocation mode are not implemented
+by this view.
