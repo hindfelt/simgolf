@@ -22,7 +22,7 @@ test('real audio decodes after a gesture, plays once, obeys volume and links shi
  });
  await page.goto('/audio/credits.html');
  await page.evaluate(async()=>{const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);window.audioState={time:0,guests:[]};window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
- await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.audioDecoded)).toBe(5);
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.audioDecoded)).toBe(6);
  await page.evaluate(()=>{window.audioState.time=.05;window.audioState.guests=[{id:1,roundId:'r',holeId:'h',strokes:1,shot:{from:{x:0,z:0},time:0,putt:false}}];window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
  expect(await page.evaluate(()=>window.audioStarts)).toBe(1);
  await page.evaluate(()=>{window.audioState.helicopter={pad:{x:0,z:0},phase:'arriving',since:0};window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));window.effects.update(window.audioState,()=>({x:.5,y:.5,depth:0}));});
@@ -76,7 +76,7 @@ test('browser plays supported original scheduler cues and leaves unknown speech 
  };});
  await page.goto('/audio/credits.html');
  await page.evaluate(async()=>{localStorage.removeItem('fairway-baron.effects-volume');const {createGameAudio}=await import('/src/game-audio.js');window.effects=createGameAudio(document.body);});
- await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(5);
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(6);
  await page.evaluate(()=>window.effects.playOriginalEvents([
  {address:0x447a30,args:[3,100,0,0,0]},
  {address:0x447a30,args:[4,100,0,0,0]},
@@ -119,7 +119,7 @@ test('birdie applause cooldown uses playback time rather than accelerated course
   };
   effects.update(g,project);
  });
- await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(5);
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(6);
  await page.evaluate(()=>{birdie(1);for(let i=0;i<100;i++){g.time+=.6;effects.update(g,project);}window.playbackTime=2;birdie(2);});
  expect(await page.evaluate(()=>window.applauseStarts)).toBe(1);
  // Release existing voices without resetting the elapsed playback cooldown.
@@ -127,4 +127,29 @@ test('birdie applause cooldown uses playback time rather than accelerated course
  await page.evaluate(()=>{window.playbackTime=22;birdie(3);});
  expect(await page.evaluate(()=>window.applauseStarts)).toBe(2);
  await page.evaluate(()=>effects.dispose());
+});
+
+test('coastal ambience is independent of effects and stops inland, paused and muted',async({page})=>{
+ await page.addInitScript(()=>{
+  localStorage.setItem('fairway-baron.effects-volume','0');window.decoded=0;window.starts=0;window.stops=0;
+  const Native=window.AudioContext;window.AudioContext=class extends Native{
+   async decodeAudioData(data){const b=await super.decodeAudioData(data);window.decoded++;return b;}
+   createBufferSource(){const s=super.createBufferSource(),start=s.start.bind(s),stop=s.stop.bind(s);s.start=(...a)=>{window.starts++;return start(...a);};s.stop=(...a)=>{window.stops++;return stop(...a);};return s;}
+  };
+ });
+ await page.goto('/audio/credits.html');
+ await page.evaluate(async()=>{const {createGameAudio}=await import('/src/game-audio.js');window.audio=createGameAudio(document.body);window.g={time:0,guests:[],landscapeStyle:'river'};window.step=(silent=false)=>audio.update(g,()=>({x:.5,y:.5,depth:0}),{silent});});
+ await page.locator('h1').click();await expect.poll(()=>page.evaluate(()=>window.decoded)).toBe(6);
+ await page.evaluate(()=>step());expect(await page.evaluate(()=>window.starts)).toBe(0);
+ await page.evaluate(()=>{g.landscapeStyle='coast';step();step();});expect(await page.evaluate(()=>window.starts)).toBe(1);
+ await page.evaluate(()=>step(true));expect(await page.evaluate(()=>window.stops)).toBe(1);
+ await page.evaluate(()=>{step();g.landscapeStyle='river';step();});expect(await page.evaluate(()=>window.stops)).toBe(2);
+ await page.evaluate(()=>{g.landscapeStyle='coast';step();});
+ await page.getByRole('slider',{name:'Ambience volume'}).fill('0');
+ await page.evaluate(()=>step());expect(await page.evaluate(()=>window.starts)).toBe(3);expect(await page.evaluate(()=>window.stops)).toBe(3);
+ expect(await page.evaluate(()=>localStorage.getItem('fairway-baron.ambience-volume'))).toBe('0');
+ await page.getByRole('slider',{name:'Ambience volume'}).fill('25');await page.evaluate(()=>step());
+ await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));step();});
+ expect(await page.evaluate(()=>window.stops)).toBe(4);
+ await page.evaluate(()=>{audio.dispose();});
 });

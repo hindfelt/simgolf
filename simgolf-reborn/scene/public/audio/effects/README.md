@@ -59,3 +59,13 @@ These edits were checked for decoding, durations and runtime behavior. Subjectiv
 - SHA-256: 695f4684094d417620c8d0f4d09540c2f8076529d6e71d15effefcb69eb8b9b6
 - Runtime: observed birdie or better hole-out; at most once per 20 seconds of audio time. Restores do not replay applause.
 - Decode and trigger checks completed; subjective listening/mix review remains pending.
+
+## Coastal shore
+
+Gentle Waves - Quiet Beach by Andrew Holman (amholma).
+Source: https://freesound.org/people/amholma/sounds/376795/
+License: CC0 https://creativecommons.org/publicdomain/zero/1.0/
+Public preview: https://cdn.freesound.org/previews/376/376795_6128004-hq.mp3
+Edits: 10–42 seconds; 100 Hz high-pass, gain 0.45; move first 2 seconds after remaining audio with 2-second triangular crossfade; MP3 128 kbps. Loop duration 30 seconds.
+SHA-256: 57300c26d2ebc292943def880eb14dcca44bf2cf3e6865fd2750567e68803fb2
+Subjective listening review pending.

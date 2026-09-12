@@ -3,18 +3,25 @@ import {createShotSoundTracker} from './shot-sounds.js';
 export function createGameAudio(host){
  const tracker=createShotSoundTracker(),voices=new Set();
  const key='fairway-baron.effects-volume';
+ let ambienceVolume=.25,shore;
+ const ambienceKey='fairway-baron.ambience-volume';
+ try{const saved=localStorage.getItem(ambienceKey);if(saved!==null&&Number.isFinite(Number(saved)))ambienceVolume=Math.max(0,Math.min(1,Number(saved)));}catch{}
  let volume=.4,context,loading,disposed=false,rotor,lastApplause=-Infinity;
  const buffers={};
- const files={applause:'golf-applause.mp3',drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',cup:'ball-in-cup.mp3',rotor:'helicopter-rotor.mp3'};
+ const files={shore:'coastal-shore.mp3',applause:'golf-applause.mp3',drive:'golf-ball-hit-3.mp3',putt:'putter-contact.mp3',cup:'ball-in-cup.mp3',rotor:'helicopter-rotor.mp3'};
  try{const saved=localStorage.getItem(key);if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(1,Number(saved)));}catch{}
  const settings=document.createElement('section');settings.className='game-audio-settings';
- settings.innerHTML='<h3>Game sound</h3><label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="100" step="5"><output></output></label><p><a href="/audio/credits.html" target="_blank" rel="noopener">Sound credits</a></p>';
+ settings.innerHTML='<h3>Game sound</h3><label>Effects volume <input aria-label="Effects volume" type="range" min="0" max="100" step="5"><output></output></label><label>Ambience volume <input aria-label="Ambience volume" type="range" min="0" max="100" step="5"><output></output></label><p><a href="/audio/credits.html" target="_blank" rel="noopener">Sound credits</a></p>';
  host.append(settings);const slider=settings.querySelector('input'),output=settings.querySelector('output');slider.value=String(volume*100);
  const render=()=>output.textContent=volume===0?'Off':`${Math.round(volume*100)}%`;render();
+ const ambienceSlider=settings.querySelector('[aria-label="Ambience volume"]'),ambienceOutput=ambienceSlider.nextElementSibling;
+ const renderAmbience=()=>{ambienceSlider.value=String(ambienceVolume*100);ambienceOutput.textContent=ambienceVolume===0?'Off':`${Math.round(ambienceVolume*100)}%`;};renderAmbience();
+ const stopShore=()=>{if(shore){try{shore.source.stop();}catch{}shore.source.disconnect();shore.gain.disconnect();shore=null;}};
+ ambienceSlider.addEventListener('input',()=>{ambienceVolume=Number(ambienceSlider.value)/100;try{localStorage.setItem(ambienceKey,String(ambienceVolume));}catch{}renderAmbience();if(ambienceVolume===0)stopShore();void unlock();});
  const stopRotor=()=>{if(rotor){try{rotor.source.stop();}catch{}rotor.source.disconnect();rotor.gain.disconnect();rotor.pan?.disconnect();rotor=null;}};
- const silence=()=>{stopRotor();for(const source of voices){try{source.stop();}catch{}}voices.clear();};
+ const silence=()=>{stopShore();stopRotor();for(const source of voices){try{source.stop();}catch{}}voices.clear();};
  async function unlock(){
-  if(disposed||document.hidden||volume===0)return;
+  if(disposed||document.hidden||(volume===0&&ambienceVolume===0))return;
   try{
    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
    context??=new Audio();await context.resume();
@@ -38,6 +45,14 @@ export function createGameAudio(host){
   const source=context.createBufferSource();source.buffer=buffer;
   let pan;if(context.createStereoPanner){pan=context.createStereoPanner();pan.pan.value=nativePan??Math.max(-1,Math.min(1,(p.x-.5)*2));source.connect(gain).connect(pan).connect(context.destination);}else source.connect(gain).connect(context.destination);
   source.onended=()=>{voices.delete(source);source.disconnect();gain.disconnect();pan?.disconnect();};voices.add(source);source.start();if(kind==='applause')lastApplause=context.currentTime;
+ }
+ function updateShore(g){
+  if(g.landscapeStyle!=='coast'||ambienceVolume===0||!buffers.shore||context?.state!=='running'){stopShore();return;}
+  if(!shore){
+   const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffers.shore;source.loop=true;gain.gain.value=0;
+   source.connect(gain).connect(context.destination);shore={source,gain};source.start();
+  }
+  shore.gain.gain.setTargetAtTime(ambienceVolume*.4,context.currentTime,.5);
  }
  function updateRotor(g,project){
   const h=g.helicopter;
@@ -69,6 +84,7 @@ export function createGameAudio(host){
  },update(g,project,{silent=false}={}){
   const events=tracker.observe(g);
   if(disposed||document.hidden||silent){silence();return;}
+  updateShore(g);
   updateRotor(g,project);
   for(const e of events)play(e.kind,e.position,project);
  },dispose(){if(disposed)return;disposed=true;silence();document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);document.removeEventListener('visibilitychange',visibility);void context?.close().catch(()=>{});removeEventListener('pagehide',pageHide);removeEventListener('pageshow',pageShow);settings.remove();}};

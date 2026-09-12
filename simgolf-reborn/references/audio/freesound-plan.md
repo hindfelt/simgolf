@@ -57,3 +57,14 @@ below recorded par; imported/repeated results remain silent. Playback has a
 existing volume, visibility and voice limits. Exact edits, hash and source are
 in the shipped credits/provenance. Ten audio checks and the build pass. Final
 listening review, golfer muttering, motors and environmental ambience remain.
+
+## Coastal ambience
+
+Imported Andrew Holman's CC0 Gentle Waves - Quiet Beach recording as a 30-second
+crossfaded loop. A separate remembered Ambience volume control defaults to 25%;
+coastal courses play a quiet bed independent of Effects volume. Inland courses,
+paused/modal gameplay, hidden pages and disposal stop it. The loop uses the audio
+clock, with no simulation RNG or speed coupling. Source, edit recipe and hash
+are recorded in the asset README and shipped credits. Twelve audio checks and
+the production build pass. Subjective listening/mix review and the other ambient,
+golfer and transport recordings remain open.
