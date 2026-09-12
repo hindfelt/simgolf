@@ -1,3 +1,4 @@
+import {originalRemarkDisplay} from './original-remark-display.js';
 const signedByte=n=>(n<<24)>>24;
 // Original 0x46737d–0x467408: external record processing, receiver selection,
 // pending-message fields and per-kind argument storage. Packed actor records
@@ -18,4 +19,15 @@ export function originalRemarkDispatch(q,resolve){
  if(!Number.isInteger(q.kind)||q.kind<0||q.kind>=state.requestValues.length)throw Error('Original dispatch request storage is unavailable.');
  state.requestValues[q.kind]=q.value|0;
  return {state,events,receiver};
+}
+
+// Resolve the recovered display helper during record dispatch. Phrase processing
+// and actor-name expansion remain explicit; their state changes stay ordered.
+export function originalDisplayedRemarkDispatch(q,processRecord,expandName){
+ const displayEvents=[];
+ const result=originalRemarkDispatch(q,(event,state)=>{
+  if(event.address===0x469330){if(typeof processRecord!=='function')throw Error('Original phrase processing requires a resolver.');return processRecord(event,state);}
+  const display=originalRemarkDisplay({actorId:event.args[0],priority:event.args[1],state},expandName);displayEvents.push(...display.events);return display.state;
+ });
+ return {...result,displayEvents};
 }
