@@ -1782,3 +1782,21 @@ This is the packed actor conversion, not yet a scheduler planner effect.
 Shared cache/search scratch/metadata and effect state still require mapping;
 normal-turn planner invocation and live adoption remain open. Existing native
 planner fixtures retain their documented controlled helper boundaries.
+
+
+### Automatic planner shared-state commit
+
+`applyOriginalPlannerResult` applies packed actor output together with the
+shared RNG, ten-entry strength cache, diagnostics, landing coordinates,
+pre-planner hole counter at +0x24 and explicit terrain-class restoration
+writes. Terrain byte 2's shotClass/scatterCoefficient aliases are updated
+together. Stack-only assessment locals remain on the planner result. All
+changes are made on a clone and invalid shared output is rejected.
+
+`verify-original-planner-result.py` runs six full native automatic-planning
+scenarios and compares all actor/adjacent-slot bytes, all 20 hole records,
+RNG, cache, diagnostics, landing and restored terrain classes after applying
+recovered planner output. All six pass. The prior full planner comparison
+also runs within this oracle. This establishes output persistence for the
+covered planner cases, not input-context construction, real reaction effects,
+scheduler invocation or live-game integration; those remain open.
