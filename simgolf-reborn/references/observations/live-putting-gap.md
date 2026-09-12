@@ -1620,3 +1620,19 @@ assignment cleanup execute. Clubhouse globals alias part of the packed hole
 storage, so the native and JS fixtures initialise that shared storage
 consistently. Joining this prelude to destination/movement dispatch, earlier
 scheduler provenance and live persistence remain unfinished.
+
+### Walking entry through destinations, visits and departure
+
+`original-walking-flow.js` joins the prelude to normal destination dispatch
+or direct clubhouse arrival/movement, then completes congestion departures.
+A shared post-approach dispatch avoids duplicating near/far and arrival logic.
+
+500 uninterrupted native runs from 0x428ad1 through tick exit match actor,
+hole/completion and assignment records, RNG, selection, complaints, ordered
+effects, cash and service income. Coverage includes 167 departure notices,
+201 position changes, 51 paid visits and 49 rest visits. Entry accumulator is
+zero; traversal cost is 2 and next-terrain input 1. Names/notices/reactions,
+slope/audio and cleanup effects remain controlled. The prior 500-case
+completed-dispatch suite also passes after refactoring. Earlier scheduler
+locals, real effect implementations, multi-tick authoritative persistence and
+live-game adoption remain unfinished; this is not a release-completion claim.

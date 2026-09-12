@@ -3,7 +3,9 @@ import {originalWalkingApproach} from './original-walking-approach.js';
 import {originalWalkingFarTick} from './original-walking-far-tick.js';
 import {originalWalkingNearTick} from './original-walking-near-tick.js';
 export function originalWalkingDispatch(snapshot,resolve){
- const approach=originalWalkingApproach(snapshot,resolve);
+ return originalWalkingFromApproach(originalWalkingApproach(snapshot,resolve),resolve);
+}
+export function originalWalkingFromApproach(approach,resolve){
  if(approach.next==='0x42a019'){
   const visit=originalServiceArrival(approach.state,resolve);
   return {...approach,...visit,calls:[...approach.calls,...visit.calls],randomDraws:(approach.randomDraws??0)+visit.randomDraws};
