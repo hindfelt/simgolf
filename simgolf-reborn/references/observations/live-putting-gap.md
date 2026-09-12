@@ -1297,3 +1297,19 @@ while reaction/identity/audio effects remain controlled. Separate component
 checks cover other terrain, speed and vector cases. The tick is not yet linked
 to destination/arrival dispatch; far pathfinding, departure/service bodies,
 world persistence and live integration remain unfinished.
+
+### Destination dispatch through actual near walking
+
+`original-walking-dispatch.js` connects destination/arrival processing to the
+near-target walking tick and preserves final follow-partner locals. Far-route
+and service-arrival continuations remain explicit.
+
+500 continuous native runs from 0x4290ca match full actor records, RNG, ordered
+effects and exits: 365 far-route entries, 127 completed/skipped paths, eight
+service arrivals, and 59 actual position changes. Fixtures vary mixed terrain,
+facility records, actors and queue state; next-terrain input is fixed at 1.
+Real search/direction/distance/RNG execute; cleanup, identity, reaction and
+sound effects remain controlled. This verifies the new composition for those
+cases, not full actor scheduling or pathfinding. Far routing, service arrivals,
+unhappy departures, persisted actor/world mapping and live integration remain
+unfinished.
