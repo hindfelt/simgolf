@@ -1,3 +1,4 @@
+import {originalHoleDescription} from './original-hole-description.js';
 import {originalClubName} from './original-club-name.js';
 import {originalProfileVoice} from './original-profile-voice.js';
 import {originalAffectionateAddress} from './original-affectionate-address.js';
@@ -9,12 +10,22 @@ import {ORIGINAL_FIXED_PHRASES as fixed,ORIGINAL_STANDARD_PHRASE_STRINGS as labe
 export function originalStandardPhrase(q,resolve){
  let state=structuredClone(q.state);const kind=q.kind|0,events=[];
  const append=a=>{state.sourceText=state.sourceText.split('\0',1)[0]+labels['0x'+a.toString(16)];};
- const call=(address,args)=>{const event={address,args};events.push(event);if(address===0x466e30){state=originalAffectionateAddress({actorId:args[0],state});return;}if(typeof resolve!=='function')throw Error('Original standard phrase helper requires a resolver.');const reply=resolve(structuredClone(event),structuredClone(state));if(!reply||typeof reply.then==='function')throw Error('Expected synchronous speculative phrase state.');state=structuredClone(reply);};
+ const call=(address,args)=>{const event={address,args};events.push(event);if(address===0x407050){const result=originalHoleDescription({...q,holeIndex:args[0],state});state=result.state;events.push(...result.events);return;}if(address===0x466e30){state=originalAffectionateAddress({actorId:args[0],state});return;}if(typeof resolve!=='function')throw Error('Original standard phrase helper requires a resolver.');const reply=resolve(structuredClone(event),structuredClone(state));if(!reply||typeof reply.then==='function')throw Error('Expected synchronous speculative phrase state.');state=structuredClone(reply);};
  if(typeof state.sourceText!=='string')throw Error('Original standard phrase requires a text buffer.');
  state.remarkStyle=0x80006318;
  if(((kind-1)>>>0)>64||kind===64)return {state,events,next:'postprocess'};
  const record=fixed[kind];let addresses=[];
  if(record){addresses=record.addresses;state.remarkStyle=record.style;}
+ else if(kind===59){
+  const a=actor(q),profile=new DataView(a.buffer,a.byteOffset,a.byteLength).getInt16(0xb6,true),h=q.holeIndex;
+  if(!Number.isInteger(h)||h<0||19+h>=44)throw Error('Original history hole index is unavailable.');
+  const history=q.profileHistory?.[profile];if(!(history instanceof Uint8Array)||history.length!==44)throw Error('Original golfer hole history is unavailable.');
+  if(history[h]){append(0x4e22c8);state.remarkStyle=0x800023e8;}
+  else{const next=q.holeRecords?.[h+1];if(!(next instanceof Uint8Array)||next.length!==520)throw Error('Original history hole record is unavailable.');
+   if(next[0]&1){if(next[0]&2)append(0x4e22a4);else{append(0x4e2298);call(0x466fb0,[q.actorId^1,0]);append(0x4c4244);if(actor({...q,state})[0xb6]&1){call(0x407050,[h]);append(0x4e2284);}else{append(0x4e226c);call(0x407050,[h]);append(0x4c38f4);}}}
+   else{append(0x4e2260);const score=(history[19+h]<<24)>>24;events.push({address:0x4acb95,args:[score,0x836454,10]});state.sourceText+=String(score);append(0x4e2244);}
+  }
+ }
  else if(kind===54){if(!Number.isInteger(q.originalMode))throw Error('Original phrase mode is unavailable.');append(0x4e1c5c);events.push({address:0x40a6c0,args:[q.value|0]});state=originalClubName({clubId:q.value,state});append(0x4e1c4c);if((q.originalMode|0)<=1)state.remarkStyle=0x800023e8;}
  else if(kind===7){state.sourceText='';if((q.value|0)===0){append(actor(q)[0x12]&1?0x4e1ff8:0x4e1fd0);state.remarkStyle=0x800023e8;}else append(0x4e1fa8);}
  else if(kind===58){const value=q.value|0;if(value>=0&&value<=2)append([0x4e2414,0x4e2438,0x4e244c][value]);}

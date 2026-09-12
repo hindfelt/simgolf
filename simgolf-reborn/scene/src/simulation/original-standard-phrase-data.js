@@ -285,5 +285,13 @@ export const ORIGINAL_STANDARD_PHRASE_STRINGS={
   "0x4e2490": "Wow, yet another par ",
   "0x4e246c": "This hole is like the last hole.",
   "0x4e1c5c": "I'll use my ",
-  "0x4e1c4c": " for this shot."
+  "0x4e1c4c": " for this shot.",
+  "0x4e22c8": "I've always liked this hole.",
+  "0x4e22a4": "This hole is rated in the top 18!",
+  "0x4e2298": "You know ",
+  "0x4c4244": ", ",
+  "0x4e2284": " is a top 100 hole.",
+  "0x4e226c": "they call this hole ",
+  "0x4e2260": "I had a ",
+  "0x4e2244": " on this hole last time."
 };

@@ -4,11 +4,12 @@ import {originalStandardPhrase,originalDescribedStandardPhrase} from '../src/sim
 import {originalSelectedPhrase} from '../src/simulation/original-phrase-entry.js';
 import {originalDescribedPhrasePostprocess} from '../src/simulation/original-phrase-postprocess.js';
 const rows=JSON.parse(readFileSync(new URL('./fixtures/original-standard-phrase.json',import.meta.url)));
+for(const [q] of rows)if(q.profileHistory)for(const id in q.profileHistory)q.profileHistory[id]=Uint8Array.from(q.profileHistory[id]);
 for(const [q] of rows)if(q.holeRecords)for(const id in q.holeRecords)q.holeRecords[id]=Uint8Array.from(q.holeRecords[id]);
 for(const [q] of rows)if(q.profileRecords)for(const id in q.profileRecords)q.profileRecords[id]=Uint8Array.from(q.profileRecords[id]);
 for(const [q,out] of rows)for(const state of [q.state,out.state])for(const id in state.actors)state.actors[id]=Uint8Array.from(state.actors[id]);
 test('supported original standard remarks and display styles match native dispatch',()=>{
- for(const [q,expected] of rows){const before=structuredClone(q);expect(originalStandardPhrase(q,(e,s)=>({...s,remarkStyle:12345,sourceText:s.sourceText.split('\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])}))).toEqual(expected);expect(q).toEqual(before);}
+ for(const [q,expected] of rows){const before=structuredClone(q);expect(originalStandardPhrase(q,(e,s)=>{if(q.mutateProfile&&e.address===0x466fb0)s.actors[q.actorId][0xb6]^=1;return {...s,remarkStyle:12345,sourceText:s.sourceText.split('\0',1)[0]+(e.address===0x466fb0?'Name'+e.args[0]:'Place'+e.args[2])};})).toEqual(expected);expect(q).toEqual(before);}
 });
 test('personal phrases take precedence and preserve style while standard fallback resets it',()=>{
  const q={kind:20,actorId:0,combined:11,requestCodes:[20,-1],profilePhrases:[['My DATA']],state:{sourceText:'',remarkStyle:91,redirected:true,actors:{0:new Uint8Array(256)}}};
@@ -121,4 +122,13 @@ test('club-related remarks use original names and mode-dependent style',()=>{
  const normal=originalStandardPhrase({...q,originalMode:1});expect(normal.state.sourceText).toContain('Putter');expect(normal.state.remarkStyle).toBe(0x800023e8);
  const alternate=originalStandardPhrase({...q,originalMode:2});expect(alternate.state.remarkStyle).toBe(0x80006318);
  expect(originalStandardPhrase({...q,value:-1,originalMode:1}).state.sourceText).not.toContain('Putter');
+});
+test('history remarks compose actual partner and custom hole names',()=>{
+ const self=new Uint8Array(256),partner=new Uint8Array(256);partner[0xb6]=1;
+ const history=new Uint8Array(44),current=new Uint8Array(520),next=new Uint8Array(520);current[8]=4;next[0]=1;
+ const q={kind:59,actorId:0,holeIndex:1,state:{sourceText:'',actors:{0:self,1:partner}},profileHistory:{0:history},holeRecords:{1:current,2:next},holeNameOffsets:{1:0},holeNameStrings:{0:'Seaside'}};
+ const named=originalDescribedStandardPhrase(q,{profileNames:['Gary','Mary']});expect(named.state.sourceText).toContain('Mary');expect(named.state.sourceText).toContain('Seaside');
+ next[0]=0;history[20]=255;expect(originalStandardPhrase(q).state.sourceText).toContain('-1');
+ history[1]=1;expect(originalStandardPhrase({...q,holeRecords:{}}).state.remarkStyle).toBe(0x800023e8);
+ expect(q.state.sourceText).toBe('');
 });
