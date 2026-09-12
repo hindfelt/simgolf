@@ -640,3 +640,14 @@ and both vertical fields exactly zero, then zeros speed before accounting.
 and continuation branch. Fixtures mix near and distant golfers and mutate the
 shooter's speed/vertical speed and difficulty during reactions. Continuous
 landing-to-tail composition and live integration remain unfinished.
+
+### Continuous contact-to-stop decision
+
+`original-post-contact-motion.js` connects landing to the nearby scan and
+final stop predicate. Noncontacts enter the stop predicate directly and must
+not trigger nearby reactions merely because vertical speed exceeds 200.
+The output distinguishes continued motion (0x4295ef) from stopped accounting
+entry (0x42ca9d). 1,600 continuous native cases match shooter state, stop
+globals, RNG and 11,811 ordered effects. Two focused tests verify reaction
+changes reaching the stop predicate and noncontact scan bypass. Full earlier
+motion, stopped-accounting record adaptation, and live integration remain open.
