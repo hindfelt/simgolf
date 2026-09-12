@@ -25,7 +25,7 @@ for i in range(1200):
  q=dict(actorId=id,actor=list(b),partner=list(other),holes=holes,globalFlags=flags,courseHoleCount=count,difficulty=2,adjustmentSetting=0,selectionState=3)
  u.mem_write(base,bytes(b));u.mem_write(0x577f00+partner*256,bytes(other))
  for j,n in enumerate(holes):u.mem_write(0x574500+j*520,bytes([n])+bytes(519))
- u.mem_write(0x583432,bytes(44));put(0x820344,2);put(0x542be4,0);put(0x5a4440,3);put(0x59d208,flags);put(0x5672a0,count);put(0x102034,id);calls=[];branch=None
+ u.mem_write(0x583430,bytes(44));put(0x820344,2);put(0x542be4,0);put(0x5a4440,3);put(0x59d208,flags);put(0x5672a0,count);put(0x102034,id);calls=[];branch=None
  u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,id*256);u.emu_start(0x427e25,0x400fff,count=1000)
  rows.append(dict(q=q,mutate=mutate,expected=dict(actor=list(u.mem_read(base,256)),calls=calls,next=branch,selectionState=struct.unpack('<i',u.mem_read(0x5a4440,4))[0])))
 module=(root/'simgolf-reborn/scene/src/simulation/original-resolved-next-hole.js').as_uri()

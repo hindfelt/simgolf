@@ -14,7 +14,7 @@ u.hook_add(UC_HOOK_CODE,hook);rng=random.Random(9212);rows=[]
 for i in range(2000):
  id=rng.choice([0,1,127,151]);base=0x577f00+id*256;b=bytearray(rng.randbytes(256));b[0x29]=rng.randrange(1,20);struct.pack_into('<h',b,0xbe,0)
  record=rng.randbytes(44);difficulty=rng.choice([-1,0,1,2,3,127,2147483647]);setting=rng.choice([-2,-1,0,1,20,32767,2147483647]);q=dict(actorId=id,actor=list(b),record=list(record),difficulty=difficulty,adjustmentSetting=setting)
- u.mem_write(base,bytes(b));u.mem_write(0x583432,record);put(0x820344,difficulty);put(0x542be4,setting)
+ u.mem_write(base,bytes(b));u.mem_write(0x583430,record);put(0x820344,difficulty);put(0x542be4,setting)
  u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,id*256);u.emu_start(0x427fb0,0x400fff,count=1000)
  rows.append(dict(q=q,expected=list(u.mem_read(base,256))))
 module=(root/'simgolf-reborn/scene/src/simulation/original-between-hole-state.js').as_uri()

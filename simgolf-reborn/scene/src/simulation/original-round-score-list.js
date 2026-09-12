@@ -14,7 +14,7 @@ export function originalRoundScoreList(snapshot,resolve){
   if(h<=hole){
    const strokes=a.getInt8(0x2b+h),par=view(state.holeRecords?.[h],520).getInt8(0);
    totals.playedStrokes+=strokes;totals.playedPar+=par;totals.projectedStrokes+=strokes;totals.projectedRelative+=strokes-par;
-   totals.completionBits+=view(state.completionRecords?.[a.getInt16(0xbe,true)],44).getUint8(1+h)&3;
+   totals.completionBits+=view(state.completionRecords?.[a.getInt16(0xbe,true)],44).getUint8(3+h)&3;
   }else{totals.projectedStrokes+=5;totals.projectedRelative++;}
  }
  function list(){if(!(state.scoreList instanceof Int32Array)||state.scoreList.length!==10)throw Error('Original ten-slot score list unavailable.');return state.scoreList;}

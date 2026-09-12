@@ -1,5 +1,5 @@
 // Native 0x426e6b–0x426f3b, after result presentation/settlement-value use.
-// Completion records start at 0x583432 (44-byte stride); notices at 0x5842b2.
+// Completion records start at 0x583430 (44-byte stride); notices at 0x5842b2.
 export function originalHoleCompletionState(snapshot,resolve){
  let state=structuredClone(snapshot);const calls=[],id=state.actorId;
  function view(bytes,size,name){if(!(bytes instanceof Uint8Array)||bytes.length!==size)throw Error(`Original completion ${name} is unavailable.`);return new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);}
@@ -9,7 +9,7 @@ export function originalHoleCompletionState(snapshot,resolve){
   if(typeof resolve!=='function')throw Error('Original completion reaction requires an explicit resolver.');
   const e={address:0x4672d0,args:[id,19,a.getInt16(0xac,true)]};calls.push(e);const reply=resolve(structuredClone(e),structuredClone(state));if(!reply?.state||typeof reply.then==='function')throw Error('Expected synchronous original completion state.');state=structuredClone(reply.state);a=actor();
  }
- const record=view(state.completionRecords?.[a.getInt16(0xbe,true)],44,'score record'),scoreOffset=0x14+a.getInt8(0x29);
+ const record=view(state.completionRecords?.[a.getInt16(0xbe,true)],44,'score record'),scoreOffset=0x16+a.getInt8(0x29);
  if(scoreOffset<0||scoreOffset>=44)throw Error('Original completion score position is unavailable.');
  record.setUint8(scoreOffset,a.getUint8(0x2a));
  if(!Array.isArray(state.completionNotices)||state.completionNotices.length!==64)throw Error('Original completion notices are unavailable.');

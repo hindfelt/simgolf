@@ -20,7 +20,7 @@ export function originalBetweenHoleState(snapshot){
   if(!(r instanceof Uint8Array)||r.length!==44)throw Error('Original between-hole completion record unavailable.');
   if(!signed(state.adjustmentSetting))throw Error('Original between-hole adjustment setting unavailable.');
   const rv=new DataView(r.buffer,r.byteOffset,r.byteLength);
-  const factor=(rv.getInt16(40,true)+hole+6)|0;
+  const factor=(rv.getInt16(42,true)+hole+6)|0;
   const numerator=Math.imul(Math.imul(factor,(value+state.difficulty-1)|0),(state.difficulty+1)|0);
   const denominator=(((state.adjustmentSetting+Math.imul(state.adjustmentSetting,4)+15)|0)<<3);
   if(denominator===0||(numerator===-2147483648&&denominator===-1))throw Error('Original between-hole division fault.');

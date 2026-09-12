@@ -28,7 +28,7 @@ for i in range(1500):
  scores=sorted([rng.randrange(-100,200) for _ in range(i%11)])+[0]*(10-i%11)
  flags=0x200000 if i%11==0 else 0
  q=dict(actorId=id,actor=list(b),holes=holes,record=list(record),scoreList=scores,globalFlags=flags,sourceText='previous')
- u.mem_write(base,bytes(b));u.mem_write(0x583432,record);u.mem_write(0x568f74,struct.pack('<10i',*scores));u.mem_write(0x518f78,b'previous\0');put(0x59d208,flags)
+ u.mem_write(base,bytes(b));u.mem_write(0x583430,record);u.mem_write(0x568f74,struct.pack('<10i',*scores));u.mem_write(0x518f78,b'previous\0');put(0x59d208,flags)
  for j,n in enumerate(holes):u.mem_write(0x574500+j*520,bytes([n])+bytes(519))
  put(0x102034,id);calls=[];branch=None;u.reg_write(UC_X86_REG_ESP,0x102000);u.reg_write(UC_X86_REG_EBP,id*256);u.emu_start(0x427a53,0x400fff,count=10000)
  expected=dict(scoreList=list(struct.unpack('<10i',u.mem_read(0x568f74,40))),sourceText=text(),calls=calls,next=branch)
