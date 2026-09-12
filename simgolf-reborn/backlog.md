@@ -1397,3 +1397,5 @@ Prepared remarks now connect to recovered happiness/history/terrain reaction eff
 Original reaction world adapter now reads/writes packed hole and tile records with exact offsets, preserves the kind64 alias and rejects stale location targets.48 native outcome fixtures round-trip correctly;10 related tests pass. Late world reads after speech/preamble, full reaction composition and live state ownership remain unfinished.
 
 Reaction outcome snapshots can now be read after speech/preamble effects and before world-counter updates.15 related tests pass, including moving to another hole/tile and preserving the effect's RNG. Full native world-backed verification, audio/social completion and live integration remain unfinished.
+
+Complete remark entry through reaction outcome now matches10763 uninterrupted native executions, including actor happiness, history flags, RNG and world counters.10 related tests pass. Social behavior after0x46806a, positional playback integration and live authoritative world wiring remain unfinished.
