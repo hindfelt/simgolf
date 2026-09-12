@@ -3,7 +3,8 @@
 export const FEE_PER_HAPPINESS = 100;
 // Original active Airstrip level zero adds one $100 fee unit.
 export const AIRSTRIP_FEE_BONUS = 100;
-export const FEE_RULE = "airstrip-flat-v1";
+export const FEE_RULE = "signed-happiness-v1";
+const PREVIOUS_FEE_RULE = "airstrip-flat-v1";
 const LEGACY_AIRSTRIP_FEE_RATE = 0.25;
 export function initialHappiness(mood) {
   return Math.max(2, Math.min(5, Math.round(mood / 20)));
@@ -17,7 +18,7 @@ export function happinessReaction(v, incident, delta) {
   if (v.holeReactions?.holeId === v.holeId)
     v.holeReactions[delta > 0 ? "positive" : "negative"]++;
 
-  v.happiness = Math.max(0, v.happiness + delta);
+  v.happiness = Math.max(-10, Math.min(10, v.happiness + delta));
   return true;
 }
 export function greenFee(v) {
@@ -38,8 +39,8 @@ export function validateHappiness(v) {
           v.holeReactions.shots,
         ].every((n) => Number.isSafeInteger(n) && n >= 0 && n <= 1024))) ||
     !Number.isSafeInteger(v.happiness) ||
-    v.happiness < 0 ||
-    v.happiness > 10000 ||
+    v.happiness < -10 ||
+    v.happiness > 10 ||
     !Array.isArray(v.happinessReactions) ||
     v.happinessReactions.length > 1024 ||
     v.happinessReactions.some((k) => typeof k !== "string" || k.length > 80) ||
@@ -49,16 +50,16 @@ export function validateHappiness(v) {
 }
 
 export function validFeeSnapshot(s) {
-  if (s.feeRule !== undefined && s.feeRule !== FEE_RULE) return false;
+  if (s.feeRule !== undefined && ![FEE_RULE, PREVIOUS_FEE_RULE].includes(s.feeRule)) return false;
   const bonus = s.airstripBonus ?? 0;
   if (!Number.isSafeInteger(bonus) || bonus < 0) return false;
   if (s.happiness === undefined) return bonus === 0;
   const base = s.happiness * FEE_PER_HAPPINESS;
   return (
     Number.isSafeInteger(s.happiness) &&
-    s.happiness >= 0 &&
-    s.happiness <= 10000 &&
-    (bonus === 0 || bonus === (s.feeRule === FEE_RULE ? AIRSTRIP_FEE_BONUS : Math.round(base * LEGACY_AIRSTRIP_FEE_RATE))) &&
+    s.happiness >= (s.feeRule === FEE_RULE ? -10 : 0) &&
+    s.happiness <= (s.feeRule === FEE_RULE ? 10 : 10000) &&
+    (bonus === 0 || bonus === (s.feeRule !== undefined ? AIRSTRIP_FEE_BONUS : Math.round(base * LEGACY_AIRSTRIP_FEE_RATE))) &&
     s.fee === base + bonus
   );
 }

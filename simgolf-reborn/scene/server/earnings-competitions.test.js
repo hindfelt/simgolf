@@ -1,7 +1,7 @@
 import {test,expect,beforeEach,afterEach,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {runInDurableObject,runDurableObjectAlarm} from 'cloudflare:test';
-import {createEarningsCompetition,joinEarningsCompetition,startEarningsCompetition,getEarningsCompetition,leaveEarningsCompetition,cancelEarningsCompetition} from './earnings-competitions.js';
+import {earningsResult,createEarningsCompetition,joinEarningsCompetition,startEarningsCompetition,getEarningsCompetition,leaveEarningsCompetition,cancelEarningsCompetition} from './earnings-competitions.js';
 import {getSharedCourse,executeSharedCommand,setCourseMember,listSharedCourses} from './shared-courses.js';
 import {createSession} from '../src/simulation/session.js';
 import {restore} from '../src/simulation/game.js';
@@ -26,6 +26,7 @@ test('competition capacity is atomic and every entrant starts with identical ser
 test('server competition stops at its deadline, records real fees, and idle properties cannot win',async()=>{
  let now=1800000000000;vi.spyOn(Date,'now').mockImplementation(()=>now);const event=await setup(),owned=event.entries.find(e=>e.id===a).courseId;let state=await getSharedCourse(env.DB,owned,a);
  for(const [tool,x,z] of [['tee',-29,7],['green',1,-13]]){const {c,r}=cellAt(x,z),reply=await executeSharedCommand(env.DB,owned,a,command(state,a,'build',{tool,c,r,brush:1,holeId:'hole-1'}));expect(reply.result.ok).toBe(true);state=reply.course;}
+
  const openCommand=command(state,a,'open-hole',{holeId:'hole-1'}),opened=await executeSharedCommand(env.DB,owned,a,openCommand);expect(opened.result.ok).toBe(true);
  now=event.endsAt+3600000;
  for(const entry of event.entries){let snapshot;for(let i=0;i<110;i++){snapshot=await getSharedCourse(env.DB,entry.courseId,entry.id);if(!snapshot.pendingTicks)break;}expect(snapshot.earnings.finished).toBe(true);expect(snapshot.state.protocol.tick).toBe(12000);expect(snapshot.role).toBe('spectator');}
@@ -81,4 +82,10 @@ test.each([['classic','parklands'],['rolling','desert'],['river','tropical'],['c
 test.each([{landscape:'unknown'},{landscape:null},{landscape:{}},{environment:'unknown'},{environment:{}}])('unsupported competition generation settings reject: %j',async(settings)=>{
  await expect(createEarningsCompetition(env.DB,a,{title:'Invalid',...settings})).rejects.toMatchObject({status:400});
  expect((await env.DB.prepare('SELECT count(*) AS n FROM earnings_competitions').first()).n).toBe(0);
+});
+
+test('signed fee losses do not erase paid-play qualification, and refunds alone do not qualify',()=>{
+ const game={cash:49900,ledger:[{amount:100,reason:'Alice: hole 1 green fee'},{amount:-200,reason:'Bob: hole 1 green fee'}],holes:[{open:true,tee:{},green:{}}],stats:{holesCompleted:2,fees:-100}};
+ expect(earningsResult(game)).toMatchObject({eligible:true,netCash:-100,income:100,spending:200});
+ game.cash=49800;game.ledger.shift();expect(earningsResult(game).eligible).toBe(false);
 });

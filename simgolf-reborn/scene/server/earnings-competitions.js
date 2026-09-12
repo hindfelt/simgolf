@@ -9,7 +9,7 @@ export function earningsResult(game){
  const income=game.ledger.reduce((sum,e)=>sum+Math.max(0,e.amount),0),spending=game.ledger.reduce((sum,e)=>sum-Math.min(0,e.amount),0);
  const netCash=game.cash-RULES.startingCash,openHoles=game.holes.filter(h=>h.open&&h.tee&&h.green).length;
  if(netCash!==income-spending)throw fail(503,'Competition finances do not reconcile.');
- return {netCash,income,spending,completedHoles:game.stats.holesCompleted,openHoles,eligible:openHoles>0&&game.stats.holesCompleted>0&&game.stats.fees>0};
+ return {netCash,income,spending,completedHoles:game.stats.holesCompleted,openHoles,eligible:openHoles>0&&game.stats.holesCompleted>0&&game.ledger.some(e=>e.amount>0&&/green fee$/.test(e.reason))};
 }
 export async function createEarningsCompetition(db,playerId,{title,durationMinutes=30,capacity=8,landscape='classic',environment=null}){
  const player=await active(db,playerId);

@@ -1,5 +1,5 @@
 // Describe recorded experiences, not a reconstructed balance: complaints at
-// zero happiness are clamped and old saves do not retain the starting balance.
+// the happiness bounds are clamped and old saves do not retain the starting balance.
 const experiences = {
  'great-shot': ['Enjoyed', 'good approaches'],
  flowers: ['Enjoyed', 'flowerbeds'],

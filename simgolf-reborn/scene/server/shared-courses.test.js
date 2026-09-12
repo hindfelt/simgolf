@@ -95,7 +95,7 @@ test('shared host books the flat Airstrip fee once and preserves it for both mem
  }
  expect(current.state.rounds.length).toBeGreaterThan(0);
  const score=current.state.rounds[0].scorecard[0];
- expect(score.feeRule).toBe('airstrip-flat-v1');expect(score.airstripBonus).toBe(100);expect(score.fee).toBe(score.happiness*100+100);
+ expect(score.feeRule).toBe('signed-happiness-v1');expect(score.airstripBonus).toBe(100);expect(score.fee).toBe(score.happiness*100+100);
  const paid=current.state.ledger.filter(r=>r.amount===score.fee&&r.reason.includes('green fee'));
  expect(paid.length).toBeGreaterThan(0);
  const [a,b]=await Promise.all([getSharedCourse(env.DB,course.id,owner),getSharedCourse(env.DB,course.id,editor)]);

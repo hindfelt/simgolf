@@ -68,11 +68,27 @@ test("legacy migration preserves financial history and current invalid happiness
     true,
   );
   const bad = structuredClone(g);
-  bad.guests[0].happiness = -1;
+  bad.guests[0].happiness = -11;
   expect(() => restore(JSON.stringify(bad))).toThrow(/happiness/i);
   const v = g.guests[0];
   v.happiness = 0;
   happinessReaction(v, "negative", -1);
-  expect(greenFee(v)).toBe(0);
+  expect(greenFee(v)).toBe(-100);
   expect(greenFee({ pro: true })).toBe(0);
+});
+
+test('signed happiness fees post once, reconcile and survive a mid-shot reload',()=>{
+ const g=setup(),v=g.guests[0],cup=g.holes[0].green;v.happiness=-2;
+ v.ball={x:cup.x-.5,z:cup.z};v.pos={...v.ball};v.path=[];v.phase='address';
+ expect(takeShot(g,v,cup).ok).toBe(true);const copy=restore(serialize(g)),cash=g.cash;
+ for(let i=0;i<60;i++){update(g,.05);update(copy,.05);}
+ expect(v.scorecard[0]).toMatchObject({fee:-200,happiness:-2,feeRule:'signed-happiness-v1'});
+ expect(g.cash-cash).toBe(-200);expect(g.stats.fees).toBe(-200);expect(g.holes[0].stats.fees).toBe(-200);
+ expect(serialize(copy)).toBe(serialize(g));expect(()=>restore(serialize(g))).not.toThrow();
+});
+test('reactions obey original signed bounds while historical fee snapshots stay unchanged',()=>{
+ const g=setup(),v=g.guests[0];v.happiness=10;happinessReaction(v,'upper',1);expect(v.happiness).toBe(10);
+ v.happiness=-10;happinessReaction(v,'lower',-1);expect(v.happiness).toBe(-10);
+ const old=JSON.parse(serialize(g));old.protocol={version:78,ruleset:'original-airstrip-fee-2026-09-12',tick:0,revision:0,clients:[]};old.guests[0].happiness=14;
+ expect(restore(JSON.stringify(old)).guests[0].happiness).toBe(10);
 });

@@ -2025,6 +2025,10 @@ export function restore(raw) {
       if (v.hasCart && !v.cartPosition)
         v.cartPosition = { ...v.pos, heading: v.heading || 0 };
   if (g && (!g.protocol || g.protocol.version < 51)) g.interruptedRounds ??= [];
+  if (g && (!g.protocol || g.protocol.version < 79))
+    for (const v of g.guests || [])
+      if (Number.isSafeInteger(v.happiness) && v.happiness >= 0 && v.happiness <= 10000)
+        v.happiness = Math.min(10, v.happiness);
   if (g?.protocol !== undefined) {
     migrateProtocol(g.protocol);
     validateProtocol(g.protocol);
@@ -2063,7 +2067,7 @@ export function restore(raw) {
     !Array.isArray(g.rounds) ||
     !("pro" in g) ||
     ["holesCompleted", "rounds", "strokes", "fees", "removed", "services"].some(
-      (k) => !Number.isFinite(g.stats[k]) || g.stats[k] < 0,
+      (k) => !Number.isFinite(g.stats[k]) || (k !== "fees" && g.stats[k] < 0),
     )
   )
     throw Error("Incomplete simulation state.");
@@ -2403,7 +2407,7 @@ function validateRounds(g) {
       !(h.activePair === null || Number.isInteger(h.activePair)) ||
       !h.stats ||
       ["completed", "strokes", "fees"].some(
-        (k) => !Number.isFinite(h.stats[k]) || h.stats[k] < 0,
+        (k) => !Number.isFinite(h.stats[k]) || (k !== "fees" && h.stats[k] < 0),
       ) ||
       (h.open && (!h.tee || !h.green))
     )
@@ -2424,7 +2428,7 @@ function validateRounds(g) {
       Number(h.id.slice(5)) >= g.nextHoleId ||
       !h.stats ||
       ["completed", "strokes", "fees"].some(
-        (k) => !Number.isFinite(h.stats[k]) || h.stats[k] < 0,
+        (k) => !Number.isFinite(h.stats[k]) || (k !== "fees" && h.stats[k] < 0),
       )
     )
       throw Error("Invalid retired hole.");
