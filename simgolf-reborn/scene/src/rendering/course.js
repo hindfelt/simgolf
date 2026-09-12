@@ -5,7 +5,7 @@ import {facilityLighting} from './facility-lighting.js';
 import {coastalPreview} from './coastal-preview.js';
 import { boundaryEdges } from "./boundary-outline.js";
 import { housing } from "./housing.js";
-import { coastWaterColor } from "./coastal-style.js";
+import { coastWaterColor, coastalContourCells } from "./coastal-style.js";
 import { transportFacility } from "./transport-facilities.js";
 import { regionalRecreation } from "./regional-recreation.js";
 import { swimClub } from "./swim-club.js";
@@ -261,12 +261,7 @@ export function buildCourseView(scene) {
         Number(k) % GRID.width,
         Math.floor(Number(k) / GRID.width),
       ]);
-      // Continue the contour beyond the canvas so the sea has no grass collar
-      // at the artificial edge of the buildable property.
-      if (kind === "water" && g.landscapeStyle === "coast")
-        for (const [c, r] of [...cells])
-          if (c === GRID.width - 1) cells.push([GRID.width, r]);
-      const contours = terrainContours(cells);
+      const contours = terrainContours(kind === "water" ? coastalContourCells(cells,g,GRID) : cells);
       const outline = roundedTerrainPath(
         contours,
         px,

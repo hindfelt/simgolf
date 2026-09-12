@@ -58,3 +58,14 @@ export function exteriorCoastalBanks(g,grid){
  }
  return banks;
 }
+
+// Extend the drawn union across all ocean-facing map edges. Otherwise the
+// texture's clipped top/bottom edge becomes a false sand/grass shoreline.
+export function coastalContourCells(cells,g,grid){
+ if(g.landscapeStyle!=='coast')return cells;
+ const result=cells.map(cell=>[...cell]);
+ for(let c=0;c<grid.width;c++)for(const r of [-1,grid.height])
+  if(coastalWater(g.landSeed??2002,c,r))result.push([c,r]);
+ for(let r=-1;r<=grid.height;r++)result.push([grid.width,r]);
+ return result;
+}

@@ -52,3 +52,16 @@ checks and twelve existing coastline/hotel regressions passed, along with the
 production build. The palette check covers environment switching with the same
 revision and verifies simulation data stays intact. This remains local work;
 full regional building coverage and broader island composition are still open.
+
+## False shoreline at map edge removed
+
+The water contour previously extended beyond the east canvas edge only. Its
+north/south edges therefore drew a sand or grass collar across continuous sea.
+The contour now includes the seeded exterior water rows as well, retaining
+actual island shores while moving the artificial contour outside the canvas.
+This is presentation-only and does not add water or land to saved courses.
+
+Four targeted tests pass, including three seeds with no horizontal contour
+through continuous sea, input isolation, preview/purchase agreement and the
+Tropical coast render. The updated render was inspected: the straight pale line
+across the top bay is removed. Production build passed. No push or deployment.
