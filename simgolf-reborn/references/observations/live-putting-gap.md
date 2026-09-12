@@ -803,3 +803,18 @@ The saved original-world format names metadata byte 2 `shotClass`, while
 actor accounting uses `scatterCoefficient`; an explicit full-world adapter
 must unify these and keep mutations consistent. Mixed-terrain full actor
 trajectories and live integration remain unfinished.
+
+### Saved original-world actor map adapter
+
+`originalWorldActorMap` now builds actor terrain, marks, derived edge masks,
+metadata, RNG/phase and global flags alongside the existing exact height/slope
+map. Runtime metadata byte 2 (`shotClass` in planning) is supplied as
+`scatterCoefficient` for actor motion/accounting too. The existing
+`originalWorldMap` API remains unchanged and shares the same build path.
+
+Six world/adapter tests pass. An original-format save now supplies the composed
+actor movement directly, and restoring that save produces the same movement
+result without mutating the save. Actor/career record persistence, metadata
+edit synchronization during callbacks, adjacent memory data, complete mixed
+trajectories and live-world conversion remain open. This adapter does not
+convert the differently scaled browser course or activate the original engine.
