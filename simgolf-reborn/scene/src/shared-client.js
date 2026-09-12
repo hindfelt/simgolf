@@ -16,7 +16,7 @@ export function createSharedClient({snapshot,actorId,request,onSnapshot,onResult
     if(reply.result.code==='catching-up'){onStatus('Catching up with the server…');return;}
     const completed=pending;pending=null;onResult(reply.result,completed);
    }else accept(await request(endpoint));
-   onStatus(current.pendingTicks?'Catching up with the server…':current.eventId?`Tournament · round ${current.round}/${current.totalRounds}${current.result?' · Complete':''}`:`Shared course · ${current.role}${current.role==='spectator'?' · Read only':''}`);
+   onStatus(current.pendingTicks?'Catching up with the server…':current.eventId?`Tournament · round ${current.round}/${current.totalRounds}${current.result?' · Complete':''}`:current.earnings?`Earnings competition · ${current.earnings.finished?'Finished · Read only':'Ends '+new Date(current.earnings.endsAt).toLocaleTimeString()}`:`Shared course · ${current.role}${current.role==='spectator'?' · Read only':''}`);
   }catch(error){
    if(pending&&[400,401,403,404,405,413].includes(error.status)){const rejected=pending;pending=null;onResult({ok:false,message:error.message},rejected);}
    onStatus(`Connection interrupted. ${pending?'Your pending edit will be retried. ':''}${error.message}`);

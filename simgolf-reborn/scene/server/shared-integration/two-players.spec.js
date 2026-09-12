@@ -133,3 +133,20 @@ test('completed tournament lobby preserves final standings and removes cancellat
   const summary=page.getByText('Final results — equal totals share a place.',{exact:true});await summary.scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/simgolfer-sealed-results-phone.png',fullPage:true});
  }finally{await context.close();}
 });
+
+test('two earnings entrants start equal private courses and spend independently',async({browser})=>{
+ const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
+ try{
+  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Earnings competitions',{exact:true}).click();}
+  const [a,b]=clients;await a.page.getByLabel('Earnings competition title',{exact:true}).fill('Builder earnings');await a.page.getByRole('combobox',{name:'Competition length',exact:true}).selectOption('10');await a.page.getByLabel('Competition player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create earnings competition',exact:true}).click();
+  await expect(a.page.getByRole('button',{name:'Start earnings competition',exact:true})).toBeDisabled();
+  const invitation=await a.page.getByRole('textbox',{name:'Earnings invitation link',exact:true}).inputValue();await b.page.goto(invitation);await b.page.getByRole('button',{name:'Join earnings competition',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave earnings competition',exact:true})).toBeVisible();
+  await a.page.getByRole('button',{name:'Refresh earnings competitions',exact:true}).click();await a.page.getByText('Builder earnings · registration',{exact:true}).click();await a.page.getByRole('button',{name:'Start earnings competition',exact:true}).click();await expect(a.page.getByRole('link',{name:'Open my competition course',exact:true})).toBeVisible();
+  expect(await a.page.locator('#account-dialog').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(false);await a.page.getByRole('link',{name:'Open my competition course',exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-earnings-lobby-phone.png',fullPage:true});
+  await b.page.reload();await expect(b.page.getByRole('link',{name:'Open my competition course',exact:true})).toBeVisible();
+  for(const client of clients){await client.page.getByRole('link',{name:'Open my competition course',exact:true}).click();await expect(client.page.locator('#shared-status')).toContainText('Earnings competition');expect(await client.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);}
+  expect(a.page.url()).not.toBe(b.page.url());expect(await a.page.evaluate(()=>window.__gameTest.getState().landSeed)).toBe(await b.page.evaluate(()=>window.__gameTest.getState().landSeed));
+  await a.page.setViewportSize({width:1440,height:1000});await a.page.getByRole('button',{name:'Bench',exact:true}).click();const point=await a.page.evaluate(()=>window.__gameTest.project(-19,-9));await a.page.mouse.click(point.x,point.y);await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(50000);expect(await b.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);
+  expect(errors).toEqual([]);
+ }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
+});

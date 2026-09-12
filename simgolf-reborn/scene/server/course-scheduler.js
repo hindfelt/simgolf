@@ -1,3 +1,4 @@
+import {settleEarningsCompetition} from './earnings-competitions.js';
 import {DurableObject} from 'cloudflare:workers';
 import {getSharedCourse,executeSharedCommand} from './shared-courses.js';
 import {publishCourse} from './published-courses.js';
@@ -17,7 +18,8 @@ export class CourseScheduler extends DurableObject {
     ? await getSharedCourse(this.env.DB,courseId,playerId)
     : operation==='publish'?await publishCourse(this.env.DB,courseId,playerId,payload)
     : await executeSharedCommand(this.env.DB,courseId,playerId,payload);
-   if(!(await this.start(courseId)).ok)return {ok:false,status:503,error:'Course scheduling is unavailable.'};
+   const snapshot=operation==='command'?value.course:value;
+   if(!snapshot.earnings?.finished&&!(await this.start(courseId)).ok)return {ok:false,status:503,error:'Course scheduling is unavailable.'};
    return {ok:true,value};
   }catch(error){
    // Explicit errors survive RPC without exposing database/runtime internals.
@@ -43,10 +45,13 @@ export class CourseScheduler extends DurableObject {
   // automatic alarm retries. Persisting time in D1 makes delivery idempotent.
   await this.ctx.storage.setAlarm(Date.now()+30000);
   try{
-   const owner=await this.env.DB.prepare('SELECT c.owner_id,p.disabled_at FROM shared_courses c JOIN players p ON p.id=c.owner_id WHERE c.id=?').bind(id).first();
+   const owner=await this.env.DB.prepare('SELECT c.owner_id,p.disabled_at,e.competition_id AS earnings_id,e.withdrawn,x.ends_at FROM shared_courses c JOIN players p ON p.id=c.owner_id LEFT JOIN earnings_entries e ON e.course_id=c.id LEFT JOIN earnings_competitions x ON x.id=e.competition_id WHERE c.id=?').bind(id).first();
    if(!owner){await this.ctx.storage.deleteAlarm();await this.ctx.storage.deleteAll();return;}
+   if(owner.withdrawn){await this.ctx.storage.deleteAlarm();return;}
+   if(owner.disabled_at!==null&&owner.earnings_id&&Date.now()>=owner.ends_at){await settleEarningsCompetition(this.env.DB,owner.earnings_id);await this.ctx.storage.deleteAlarm();return;}
    if(owner.disabled_at!==null){await this.ctx.storage.setAlarm(Date.now()+60000);return;}
    const state=await getSharedCourse(this.env.DB,id,owner.owner_id);
+   if(state.earnings?.finished){await this.ctx.storage.deleteAlarm();return;}
    await this.ctx.storage.setAlarm(Date.now()+(state.pendingTicks>0?100:5000));
   }catch{
    // No credentials or player data in logs. A later alarm reloads persisted time.

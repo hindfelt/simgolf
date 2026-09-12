@@ -1,3 +1,4 @@
+import {recordEarningsResult} from './earnings-competitions.js';
 import {createGame,restore,serialize} from '../src/simulation/game.js';
 import {createSession} from '../src/simulation/session.js';
 import {fail} from './security.js';
@@ -17,11 +18,13 @@ async function active(db,playerId){
 }
 async function access(db,id,playerId){
  await active(db,playerId);
- const row=await db.prepare("SELECT c.*,CASE WHEN c.owner_id=? THEN 'owner' ELSE m.role END AS role FROM shared_courses c LEFT JOIN course_members m ON m.course_id=c.id AND m.player_id=? WHERE c.id=? AND (c.owner_id=? OR m.player_id IS NOT NULL)").bind(playerId,playerId,id,playerId).first();
+ const row=await db.prepare("SELECT c.*,e.competition_id AS earnings_id,e.withdrawn AS earnings_withdrawn,x.ends_at AS earnings_ends_at,CASE WHEN c.owner_id=? THEN 'owner' ELSE m.role END AS role FROM shared_courses c LEFT JOIN course_members m ON m.course_id=c.id AND m.player_id=? LEFT JOIN earnings_entries e ON e.course_id=c.id LEFT JOIN earnings_competitions x ON x.id=e.competition_id WHERE c.id=? AND (c.owner_id=? OR m.player_id IS NOT NULL)").bind(playerId,playerId,id,playerId).first();
  if(!row)throw fail(404,'Shared course not found.');
  return row;
 }
-function snapshot(row){return {id:row.id,name:row.name,ownerId:row.owner_id,role:row.role,revision:row.revision,pendingTicks:Math.max(0,Math.floor((Date.now()-row.clock_ms)/TICK_MS)),state:JSON.parse(row.state)};}
+const ceiling=row=>row.earnings_id?(row.earnings_withdrawn?row.clock_ms:Math.min(Date.now(),row.earnings_ends_at)):Date.now();
+const readOnly=row=>row.earnings_id&&(row.earnings_withdrawn||Date.now()>=row.earnings_ends_at);
+function snapshot(row){return {id:row.id,name:row.name,ownerId:row.owner_id,role:readOnly(row)?'spectator':row.role,earnings:row.earnings_id?{id:row.earnings_id,endsAt:row.earnings_ends_at,finished:!!row.earnings_withdrawn||row.clock_ms>=row.earnings_ends_at}:null,revision:row.revision,pendingTicks:Math.max(0,Math.floor((ceiling(row)-row.clock_ms)/TICK_MS)),state:JSON.parse(row.state)};}
 export async function createSharedCourse(db,playerId,name){
  await active(db,playerId);
  if(typeof name!=='string'||!name.trim()||name.length>80)throw fail(400,'Enter a course name of 1–80 characters.');
@@ -40,6 +43,7 @@ export async function listSharedCourses(db,playerId){
 }
 export async function setCourseMember(db,id,ownerId,playerId,role){
  const row=await access(db,id,ownerId);
+ if(row.earnings_id&&role==='editor')throw fail(403,'Earnings entrants must build their own course. Spectators are allowed.');
  if(row.role!=='owner')throw fail(403,'Only the course owner can change access.');
  if(playerId===ownerId)throw fail(400,'The owner keeps ownership.');
  if(!['editor','spectator',null].includes(role))throw fail(400,'Unknown course role.');
@@ -56,24 +60,24 @@ export async function executeSharedCommand(db,id,playerId,command){
  return mutateSharedCourse(db,id,playerId,command);
 }
 async function mutateSharedCourse(db,id,playerId,command){
- const now=Date.now();
  // Compare-and-swap retries reload both state and membership. Session receipts
  // make a retransmitted action idempotent, including rule-rejected purchases.
  for(let attempt=0;attempt<5;attempt++){
-  const row=await access(db,id,playerId);
+  const now=Date.now(),row=await access(db,id,playerId);
   const game=restore(row.state),host=createSession(game);
-  const due=Math.max(0,Math.floor((now-row.clock_ms)/TICK_MS)),ticks=Math.min(due,MAX_ADVANCE_TICKS);
+  const due=Math.max(0,Math.floor((ceiling(row)-row.clock_ms)/TICK_MS)),ticks=Math.min(due,MAX_ADVANCE_TICKS);
   host.stepTicks(ticks);
   // Persist all elapsed time in bounded pieces; never discard downtime or let
   // a command run in the past ahead of overdue earnings/visitor simulation.
-  const result=command?(due>MAX_ADVANCE_TICKS
+  const closed=readOnly(row);
+  const result=command?(closed?(command.sequence===game.protocol.clients.find(p=>p.id===playerId)?.sequence?host.execute(command,{id:playerId,role:row.role}):{ok:false,code:'competition-closed',message:'The earnings competition has ended. This course is read only.'}):due>MAX_ADVANCE_TICKS
    ? {ok:false,code:'catching-up',message:'The server is catching up. Retry this same command.',revision:game.protocol.revision}
    : host.execute(command,{id:playerId,role:row.role})):null;
   const state=serialize(game);
-  if(!ticks&&state===row.state)return {result,course:snapshot(row)};
+  if(!ticks&&state===row.state){if(row.earnings_id&&!row.earnings_withdrawn&&row.clock_ms>=row.earnings_ends_at)await recordEarningsResult(db,id,game,row.revision);return {result,course:snapshot(row)};}
   const clock=row.clock_ms+ticks*TICK_MS;
-  const changed=await db.prepare('UPDATE shared_courses SET state=?,clock_ms=?,revision=revision+1,updated_at=? WHERE id=? AND revision=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) RETURNING revision').bind(state,clock,now,id,row.revision,playerId).first();
-  if(changed)return {result,course:snapshot({...row,state,clock_ms:clock,revision:changed.revision})};
+  const changed=await db.prepare('UPDATE shared_courses SET state=?,clock_ms=?,revision=revision+1,updated_at=? WHERE id=? AND revision=? AND EXISTS(SELECT 1 FROM players WHERE id=? AND disabled_at IS NULL) AND NOT EXISTS(SELECT 1 FROM earnings_entries e WHERE e.course_id=shared_courses.id AND e.withdrawn=1) AND (?=0 OR NOT EXISTS(SELECT 1 FROM earnings_entries e JOIN earnings_competitions c ON c.id=e.competition_id WHERE e.course_id=shared_courses.id AND c.ends_at<=?)) RETURNING revision').bind(state,clock,now,id,row.revision,playerId,Number(!!command&&!closed&&due<=MAX_ADVANCE_TICKS),Date.now()).first();
+  if(changed){if(row.earnings_id&&clock>=row.earnings_ends_at)await recordEarningsResult(db,id,game,changed.revision);return {result,course:snapshot({...row,state,clock_ms:clock,revision:changed.revision})};}
  }
  throw fail(409,'The course is busy. Reload and retry the same command.');
 }

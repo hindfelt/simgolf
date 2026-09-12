@@ -1,3 +1,4 @@
+import {createEarningsCompetition,getEarningsCompetition,joinEarningsCompetition,startEarningsCompetition,leaveEarningsCompetition,cancelEarningsCompetition} from './earnings-competitions.js';
 import {safeDestination,loginLocation} from '../src/auth-destination.js';
 import {requirePermanentEmail} from './email-policy.js';
 import {providers,authorization,identity} from './providers.js';
@@ -125,6 +126,8 @@ async function handle(request,env){
  if(path==='/api/account'&&request.method==='DELETE'){
   const body=await readJson(request);if(body.confirm!=='DELETE')throw fail(400,'Account deletion must be confirmed.');
   await env.DB.batch([
+   env.DB.prepare("UPDATE earnings_entries SET player_name='Former player',withdrawn=CASE WHEN result IS NULL THEN 1 ELSE withdrawn END WHERE player_id=?").bind(user.id),
+   env.DB.prepare("UPDATE earnings_competitions SET owner_id=NULL,status=CASE WHEN status='registration' THEN 'cancelled' ELSE status END WHERE owner_id=?").bind(user.id),
    expireStatement(env.DB,{playerId:user.id}),
    sealStatement(env.DB,{playerId:user.id}),
    anonymizeFinalResults(env.DB,user.id),
@@ -149,6 +152,20 @@ async function handle(request,env){
    const course=await createSharedCourse(env.DB,user.id,body.name);
    if(!(await env.COURSE_SCHEDULERS.getByName(course.id).start(course.id)).ok)throw fail(503,'Course scheduling is unavailable.');
    return json(course,201);
+  }
+ }
+ if(path==='/api/earnings-competitions'){
+  if(request.method==='GET')return json({competitions:(await env.DB.prepare('SELECT id,title,owner_id AS ownerId,status,duration_minutes AS durationMinutes,capacity,starts_at AS startsAt,ends_at AS endsAt FROM earnings_competitions ORDER BY created_at DESC,id LIMIT 100').all()).results});
+  if(request.method==='POST'){await rateLimit(env.DB,'earnings-create:'+user.id,5,3600);const body=await readJson(request,2000);if(Object.keys(body).some(k=>!['title','durationMinutes','capacity'].includes(k)))throw fail(400,'Only competition settings can be supplied.');return json(await createEarningsCompetition(env.DB,user.id,body),201);}
+ }
+ const earnings=path.match(/^\/api\/earnings-competitions\/([a-f0-9-]{36})(?:\/(join|start|leave|cancel))?$/);
+ if(earnings){const [,id,action]=earnings;
+  if(!action&&request.method==='GET')return json(await getEarningsCompetition(env.DB,id));
+  if(action&&request.method==='POST'){
+   await rateLimit(env.DB,'earnings-action:'+user.id,30,60);const body=await readJson(request,1000);if(Object.keys(body).length)throw fail(400,'Competition actions accept no identities, time or scores.');
+   const event=action==='join'?await joinEarningsCompetition(env.DB,id,user.id):action==='leave'?await leaveEarningsCompetition(env.DB,id,user.id):action==='cancel'?await cancelEarningsCompetition(env.DB,id,user.id):await startEarningsCompetition(env.DB,id,user.id);
+   if(action==='start')for(const entry of event.entries){const scheduled=await env.COURSE_SCHEDULERS.getByName(entry.courseId).start(entry.courseId);if(!scheduled.ok)throw fail(503,'Competition created; retry start to resume scheduling.');}
+   return json(event);
   }
  }
  if(path==='/api/tournaments'){

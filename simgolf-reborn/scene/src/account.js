@@ -33,6 +33,7 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
  const call=accountRequest;
  import('./shared-lobby.js').then(({mountSharedLobby})=>mountSharedLobby(dialog,call,current.user,status)).catch(()=>status('Shared courses could not be loaded.'));
  import('./tournament-lobby.js').then(({mountTournamentLobby})=>mountTournamentLobby(dialog,call,current.user,status)).catch(()=>status('Tournament registration could not be loaded.'));
+ import('./earnings-lobby.js').then(({mountEarningsLobby})=>mountEarningsLobby(dialog,call,current.user,status)).catch(()=>status('Earnings competitions could not be loaded.'));
  if(shared){for(const id of ['cloud-load','cloud-save'])dialog.querySelector('#'+id).hidden=true;dialog.querySelector('#account-import').closest('details').hidden=true;}
  if(current.user.role==='admin')import('./account-admin.js').then(({mountAdministration})=>mountAdministration(dialog,call,status)).catch(()=>status('Administration could not be loaded.'));
  fetch('/api/auth/providers').then(r=>r.json()).then(data=>{

@@ -2,7 +2,7 @@ import {test,expect} from 'vitest';
 import {safeDestination,loginLocation} from '../src/auth-destination.js';
 const id='11111111-1111-4111-8111-111111111111';
 test('sign-in destinations allow only canonical game modes',()=>{
- for(const key of ['shared','event'])expect(safeDestination(`/?${key}=${id}`)).toBe(`/?${key}=${id}`);
+ for(const key of ['shared','event','earnings'])expect(safeDestination(`/?${key}=${id}`)).toBe(`/?${key}=${id}`);
  expect(safeDestination(`/?tournament=${id}&round=3`)).toBe(`/?tournament=${id}&round=3`);
  expect(safeDestination('/index.html?testing=1')).toBe('/?testing=1');
  expect(safeDestination(`/?event=${id}&next=https://evil.example`)).toBe(`/?event=${id}`);

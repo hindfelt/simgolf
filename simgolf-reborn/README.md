@@ -5,7 +5,7 @@ The approved dimensional art direction and subsequent tile-based course/path ref
 - [Player guide](PLAYER_GUIDE.md): what the game is about and how to build, manage and play.
 - [Development guide](DEVELOPMENT.md): setup, tests and project structure.
 - [Player accounts and administration](ACCOUNT_SETUP.md): sign-in providers, private saves, account linking and operator setup.
-- [Build backlog](backlog.md): full-game completion and the requested future multiplayer features.
+- [Build backlog](backlog.md): full-game completion and the requested multiplayer features.
 - [Architecture](architecture.md): command authority, deterministic simulation and multiplayer boundaries.
 - [First playable milestone](playable.md): implemented behavior, controls, provisional rules and remaining work.
 - [Graphics approval](graphics/README.md): concept approval and subsequent render reviews.
@@ -73,4 +73,7 @@ Completed hole wagers update your saved resort account as you play. The match wa
 
 This is the initial career implementation. Original invitation timing, complete opponent-arrival behavior and a discrepancy between the original advertised and internal match payments remain under investigation. SGA invitations, tournament prizes and retirement are not complete.
 
-Online tournament preview (not yet deployed): Account → Tournament registration lets an organizer choose a published course, accept entrants and close registration. Entrants then use Play / resume round to submit shots to the server. Rounds use standard skills and pause during manual thinking time; completed scorecards and standings are server-derived. Later rounds unlock in order. This remains separate from local championships and personal resort finances. Hosted capacity, full browser event completion and broader tournament rules are still release work.
+Online tournament preview (not yet deployed): Account → Tournament registration lets an organizer choose a published course, accept entrants and close registration. Entrants then use Play / resume round to submit shots to the server. Rounds use standard skills and pause during manual thinking time; completed scorecards and standings are server-derived. Later rounds unlock in order. This remains separate from local championships and personal resort finances. Two players completing two rounds is verified locally. Hosted capacity, full-course event verification and broader tournament rules remain release work.
+
+
+Earnings competition preview (not yet deployed): **Account → Earnings competitions** lets 2–16 players build independent resorts from identical land and $50,000 budgets. The organizer starts a shared 10–120 minute window. Highest net cash change wins, including construction and staff costs; an open hole and completed paid visitor play are required to qualify. Server-owned courses continue while browsers are closed, stop at the common cutoff and become read-only. Final totals are derived from the ledger, with equal results sharing a place. Registration invitations, independent spending, simulated full-window results and account deletion/suspension are tested locally. Hosted capacity and a full real-time browser event still need verification.
