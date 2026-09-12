@@ -1742,3 +1742,24 @@ The prior abstract-record scheduler and its native oracle are retained as
 `original-golfer-loop-boundary.js` / `verify-original-golfer-loop-boundary.py`.
 Its four Playwright boundary checks plus the actor motion check pass after
 updating the import; the integrated loop uses packed records and actual turns.
+
+
+### Golfer scheduler uses recovered terrain height and slope
+
+`original-actor-terrain-effect.js` dispatches height (0x42f110) and slope
+(0x40c140) queries through the existing original shot-map, corner-height and
+stored-height implementations. `original-golfer-terrain-loop.js` supplies these
+real effects to the integrated scheduler while keeping other effects explicit.
+The snapshot carries source heights and derived terrain arrays, not functions.
+Phase zero still requires the original generated-height implementation and is
+rejected explicitly rather than assuming stored heights.
+
+`verify-original-golfer-terrain-loop.py` passes 300 three-tick native sequences
+(900 scans) with real native height/slope routines, nonzero cached corners
+with varying elevations and metadata flags zero. No height/slope return values
+are stubbed. Full actors/holes, assignments, counters, flags, tracking, RNG and
+ordered calls match. This covers cached terrain queries; uncached corner and
+vertex fallback are supplied by previously recovered helpers but not exercised
+by this combined matrix. Planner, reaction and presentation effects remain
+controlled. Arbitrary landscapes, actual remaining effects, long-running
+world integration and live adoption remain open.
