@@ -1471,3 +1471,19 @@ results and reaction/audio effects are controlled. The fixture supplies the
 cached tile and decoration value directly. Recovering the adjacency helper,
 connecting the original decoration map, partner continuation and complete
 live arrival integration remain unfinished.
+
+### Rest visits use actual terrain adjacency
+
+`original-rest-adjacency.js` recovers 0x4071d0–0x407267, including
+terrain-class gates, excluded rest surfaces, neighboring path/service flags,
+and the final bounds/terrain-20 rejection. Raw neighboring reads precede
+bounds rejection; out-of-storage reads require explicit prefix/suffix arrays.
+`original-rest-visit.js` uses this helper within the arrival retry loop.
+
+1,200 uninterrupted native rest visits match actor state, RNG and ordered
+calls with the native adjacency helper running. Fixtures vary terrain codes
+1/2/7/17/20/21/22, signed metadata classes, path/service flags and positive
+fatigue; the rest tile is interior (23,24). Reaction and sound bodies remain
+controlled. Edge-memory behavior and negative-fatigue combined searches are
+not covered by this matrix. Decoration-map lookup, partner continuation and
+full live dispatch/persistence remain unfinished.
