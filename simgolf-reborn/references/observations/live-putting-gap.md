@@ -2600,3 +2600,12 @@ Seventeen checkpoint/loop/world checks pass. Saving and restoring an actual
 suspended first-hole turn produces the identical completed world and ordered
 sound batch. Aliased holes and overlapping actor memory survive reload. Live
 save-menu persistence, career record population and engine adoption remain open.
+
+### Browser storage checkpoint verification
+
+The packed checkpoint now also has a real browser localStorage/reload check.
+A normal actor turn suspends, its transaction is serialized to browser storage,
+the page reloads, and the recovered turn resumes. The complete serialized result
+matches the uninterrupted result by SHA-256. All six checkpoint checks pass.
+This verifies storage transport in a controlled browser fixture; it does not wire
+the codec into the production save menu or validate the complete career schema.

@@ -36,3 +36,28 @@ test('signed zero and floating scratch preserve bit-sensitive continuation value
  expect(Object.is(restored.angle,-0)).toBe(true);expect(Object.is(restored.scratch[0],-0)).toBe(true);expect(restored.scratch).toEqual(state.scratch);
  expect(()=>serializeOriginalRuntime({angle:NaN})).toThrow('checkpoint');
 });
+test('browser reload retains a suspended world and resumes identically from local storage',async({page})=>{
+ await page.goto('/audio/credits.html');
+ const expected=await page.evaluate(async()=>{
+  const {aimingWorld}=await import('/tests/helpers/original-aiming-world.js');
+  const {originalWorldGolferUpdate,resumeOriginalWorldGolferUpdate}=await import('/src/simulation/original-world-golfer-update.js');
+  const {resumeOriginalAimingTurn}=await import('/src/simulation/original-aiming-tutorial.js');
+  const {serializeOriginalRuntime}=await import('/src/simulation/original-runtime-checkpoint.js');
+  const resolve=(event,state)=>{if(event.address===0x466fb0)state.sourceText='Player'+event.args[0];return {state,value:0,result:0,point:{x:0,y:0,visible:false}};};
+  const pending=originalWorldGolferUpdate(aimingWorld(),{resolve});
+  localStorage.setItem('original-runtime-test',serializeOriginalRuntime(pending));
+  const result=resumeOriginalWorldGolferUpdate(pending,{resolve,resumeTurn:resumeOriginalAimingTurn,resolveWorld:(_,state)=>({state})});
+  const bytes=new TextEncoder().encode(serializeOriginalRuntime(result));return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)));
+ });
+ await page.reload();
+ const actual=await page.evaluate(async()=>{
+  const {restoreOriginalRuntime,serializeOriginalRuntime}=await import('/src/simulation/original-runtime-checkpoint.js');
+  const {resumeOriginalWorldGolferUpdate}=await import('/src/simulation/original-world-golfer-update.js');
+  const {resumeOriginalAimingTurn}=await import('/src/simulation/original-aiming-tutorial.js');
+  const pending=restoreOriginalRuntime(localStorage.getItem('original-runtime-test'));
+  const resolve=(event,state)=>{if(event.address===0x466fb0)state.sourceText='Player'+event.args[0];return {state,value:0,result:0,point:{x:0,y:0,visible:false}};};
+  const result=resumeOriginalWorldGolferUpdate(pending,{resolve,resumeTurn:resumeOriginalAimingTurn,resolveWorld:(_,state)=>({state})});
+  const bytes=new TextEncoder().encode(serializeOriginalRuntime(result));return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)));
+ });
+ expect(actual).toEqual(expected);
+});

@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This is the current local development checkpoint through the regional/audio work in `882d1cf`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `f8148ab`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -20,7 +20,8 @@ summarizes what still remains; it does not replace the requirements in
 - Regional snack bars, pro shops, homes, marina buildings, cart garages, swim
   pavilions and range shelters; building caches refresh on regional/layout changes.
 - Contact, putt, cup, rotor and occasional birdie-applause recordings with credits.
-  Speech, ambient recordings and final listening/mix review remain open.
+  Coastal ambience has its own saved volume control. Speech, other ambience and
+  final listening/mix review remain open.
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
@@ -59,7 +60,7 @@ Uncommitted workspace changes are excluded from that push.
   remaining differences for each requirement before claiming parity.
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
   CI and the final repository revision, then deploy and smoke-test the actual
-  hosted revision. The current development branch and documentation are pushed.
+  hosted revision. Recent local development and documentation are not yet pushed.
 
 ## Evidence and limitations
 
