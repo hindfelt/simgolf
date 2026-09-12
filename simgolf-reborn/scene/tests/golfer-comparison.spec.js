@@ -23,22 +23,26 @@ test('completed world tutorial supplies the comparison without publishing a susp
  await page.goto('/audio/credits.html');
  const result=await page.evaluate(async()=>{
   const {aimingWorld}=await import('/tests/helpers/original-aiming-world.js');
-  const {originalWorldGolferUpdate,resumeOriginalWorldGolferUpdate}=await import('/src/simulation/original-world-golfer-update.js');
+  const {createOriginalRuntimeSession}=await import('/src/simulation/original-runtime-session.js');
   const {resumeOriginalAimingTurn}=await import('/src/simulation/original-aiming-tutorial.js');
   const {originalTutorialGolferCard}=await import('/src/simulation/original-golfer-card.js');
   const {showGolferComparison}=await import('/src/ui/golfer-comparison.js');
-  const state=aimingWorld();state.defaultSkills=new Uint8Array(10).fill(4);const cards=[];
+  const state=aimingWorld();state.defaultSkills=new Uint8Array(10).fill(4);
   const resolve=(event,state)=>{
    if(event.address===0x466fb0)state.sourceText=event.args[0]===2?'George':'Frances';
-   if(event.address===0x45e9c0)cards.push(originalTutorialGolferCard(event,state));
-   return {state,value:0,result:0,point:{x:0,y:0,visible:false}};
+   const presentationEvents=event.address===0x45e9c0?[{kind:'golfer-card',card:originalTutorialGolferCard(event,state)}]:[];
+   return {state,presentationEvents,value:0,result:0,point:{x:0,y:0,visible:false}};
   };
-  const pending=originalWorldGolferUpdate(state,{resolve});
+  const session=createOriginalRuntimeSession(state,{resolve,resumeTurn:resumeOriginalAimingTurn,resolveWorld:(_,state)=>({state})},{ruleset:'test-aiming'});
+  const pending=session.step();
   if(pending.completed||document.querySelector('dialog'))throw Error('Unexpected publication');
-  const completed=resumeOriginalWorldGolferUpdate(pending,{resolve,resumeTurn:resumeOriginalAimingTurn,resolveWorld:(_,state)=>({state})});
+  if(session.drainPresentation().length)throw Error('Speculative cards escaped');
+  const completed=session.resume();
   if(!completed.completed)throw Error('Unfinished tutorial');
+  const cards=session.drainPresentation().map(e=>e.card);
+  if(session.drainPresentation().length)throw Error('Cards repeated');
   showGolferComparison(document.body,cards);
-  return {phase:completed.state.phaseCounter,actor:completed.state.selectedActor,cards:cards.length};
+  return {phase:session.read().phaseCounter,actor:session.read().selectedActor,cards:cards.length};
  });
  expect(result).toEqual({phase:31,actor:2,cards:2});
  await expect(page.getByRole('columnheader',{name:'Frances',exact:true})).toBeVisible();

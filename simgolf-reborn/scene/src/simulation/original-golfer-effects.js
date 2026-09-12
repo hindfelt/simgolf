@@ -5,11 +5,15 @@ import {originalPlannerEffect} from './original-planner-effect.js';
 // Bindings are synchronous: map readers and search scratch must describe that
 // same revision. Animation cadence and presentation remain outside this layer.
 export function originalGolferEffects(resolve,plannerFor){
- const soundEvents=[];
+ const soundEvents=[],presentationEvents=[];
  const capture=reply=>{
   if(reply?.soundEvents!==undefined){
    if(!Array.isArray(reply.soundEvents))throw Error('Original golfer sound events must be synchronous.');
    soundEvents.push(...structuredClone(reply.soundEvents));
+  }
+  if(reply?.presentationEvents!==undefined){
+   if(!Array.isArray(reply.presentationEvents))throw Error('Original golfer presentation must be an event array.');
+   presentationEvents.push(...structuredClone(reply.presentationEvents));
   }
   return reply;
  };
@@ -26,5 +30,6 @@ export function originalGolferEffects(resolve,plannerFor){
  };
  // Presentation is transient: draining never changes the simulated world.
  dispatch.drainSoundEvents=()=>soundEvents.splice(0);
+ dispatch.drainPresentationEvents=()=>presentationEvents.splice(0);
  return dispatch;
 }

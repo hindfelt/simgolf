@@ -17,11 +17,11 @@ function own(saved,bindings){
  serializeOriginalRuntime(saved);
  if(!saved.state||!Array.isArray(saved.state.actors)||saved.state.actors.length!==152||saved.state.actors.some(b=>!(b instanceof Uint8Array)||b.length!==256)||
   (saved.pending!==null&&(saved.pending?.completed!==false||!saved.pending.continuation)))throw Error('Invalid original runtime session state.');
- let queue=[];
+ let queue=[],presentation=[];
  function accept(result){
   if(result.completed){
    if(saved.revision>=Number.MAX_SAFE_INTEGER)throw Error('Original runtime revision exhausted.');
-   saved.state=result.state;saved.pending=null;saved.revision++;queue.push(...structuredClone(result.soundEvents));
+   saved.state=result.state;saved.pending=null;saved.revision++;queue.push(...structuredClone(result.soundEvents));presentation.push(...structuredClone(result.presentationEvents));
   }else saved.pending=result;
   return {completed:result.completed,revision:saved.revision,...(result.completed?{}:{actorId:result.continuation.state.actorId,next:result.continuation.next})};
  }
@@ -33,6 +33,7 @@ function own(saved,bindings){
   // Completed sounds are transient and excluded from saves to avoid replay.
   // Sounds belonging to a pending transaction remain in its checkpoint.
   drainSounds(){const sounds=queue;queue=[];return sounds;},
+  drainPresentation(){const events=presentation;presentation=[];return events;},
   checkpoint:()=>serializeOriginalRuntime(saved),
  };
 }

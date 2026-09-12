@@ -2623,3 +2623,18 @@ Nine runtime-session/checkpoint checks pass, covering actual aiming suspension,
 retry, independent read snapshots, reload and historical-audio suppression. This
 is local ownership infrastructure; it still requires complete world validation,
 remaining effect bodies and production game-loop/save/network wiring.
+
+### Committed presentation delivery
+
+Presentation events now travel through golfer effects, suspended/resumed passes,
+world completion and the runtime owner alongside the existing audio batch.
+Incomplete or failed updates release no UI events. Completed events drain once
+and are excluded from historical saved state. The browser comparison integration
+check now consumes the owner's committed queue, rather than collecting cards in
+an external mutable array during speculative callbacks.
+
+Eleven effects/session/browser checks pass, including failed-world retry with
+exactly two cards, no duplicates and no historical replay. The fifteen preceding
+loop/world/session checks also passed after queue propagation. This connects the
+presentation endpoint to runtime ownership in the controlled integration; the
+production game loop still uses its current simulation and remains to be wired.

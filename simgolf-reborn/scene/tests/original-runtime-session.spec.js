@@ -24,3 +24,12 @@ test('failed later system leaves committed state and pending retry unchanged',()
  deps.resolveWorld=(_,state)=>({state});expect(session.resume().completed).toBe(true);expect(session.drainSounds()).toHaveLength(1);
  const copy=session.read();copy.actors[2][0]=99;expect(session.read().actors[2][0]).not.toBe(99);
 });
+test('failed speculative presentation is discarded and retried cards release once',()=>{
+ const deps=bindings(),base=deps.resolve;
+ deps.resolve=(event,state)=>({...base(event,state),presentationEvents:event.address===0x45e9c0?[{kind:'card',actorId:event.args[3]}]:[]});
+ const session=createOriginalRuntimeSession(aimingWorld(),deps,options);session.step();
+ deps.resolveWorld=()=>{throw Error('failed');};expect(()=>session.resume()).toThrow('failed');expect(session.drainPresentation()).toEqual([]);
+ deps.resolveWorld=(_,state)=>({state});session.resume();
+ expect(session.drainPresentation()).toEqual([{kind:'card',actorId:3},{kind:'card',actorId:2}]);expect(session.drainPresentation()).toEqual([]);
+ const restored=restoreOriginalRuntimeSession(session.checkpoint(),bindings(),options);expect(restored.drainPresentation()).toEqual([]);
+});
