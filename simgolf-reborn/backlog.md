@@ -1391,3 +1391,5 @@ Original remark eligibility now composes with complete message dispatch from pac
 Original remark history preparation now follows complete message dispatch, preserving kind19 early return and kind35 speech-before-repeat-check ordering.2080 native stage comparisons and7 related tests pass. Full continuous preparation composition, downstream reactions/social/audio and live initialization/wiring remain unfinished.
 
 Continuous remark eligibility→phrase→display→history verification now matches10763 original executions;7 related tests pass. Prepared actor snapshots and voice offsets are checked at the adjustment boundary. Downstream adjustment state mapping, remaining social/audio logic and live integration remain unfinished.
+
+Prepared remarks now connect to recovered happiness/history/terrain reaction effects using original profile records and a post-preparation world snapshot.8 related tests pass. Updated world counters are returned for an authoritative writer; full continuous native reaction verification, world write-back, social/audio completion and live integration remain unfinished.
