@@ -3163,3 +3163,9 @@ Inspection of0x46806a onward corrects the earlier provisional “downstream soci
 `originalRemarkExplanationDisplay` reconstructs0x468feb–0x469075. Popup style uses the selected delta from stack0x18, not its later reduced happiness delta. The interface bit4 and nonempty C-string gates precede0x40c7f0(style,-8,actorId). Only a nonzero result marks the kind as seen and stores the current clock; returned popup state is reloaded first, retaining changes to masks, text and clock. The original modulo32 mask behavior is preserved.
 
 3168 native comparisons cover selected-delta/difficulty boundaries, empty/NUL text, disabled messages, callback failure/success and callback state mutations. Five explanation tests pass, including retry eligibility after failure and current-clock bookkeeping after success. The popup helper itself remains an explicit unresolved boundary. Explanation text assembly, complete explanation integration and live gameplay wiring remain unfinished.
+
+### All explanation suffix branches (2026-09-12)
+
+`original-explanation-text.js` reconstructs0x4681dc–0x468feb, after the quotation/name prefix. The native jump table shares42 branches across the65 remark kinds. `verify-original-explanation-text.py` records original copy sources as literal/pronoun/terrain/object operations and name/location calls, asserts the operation sequence is stable across input variants, then compares the JS operation interpreter against native output and helper events. Data is reproducibly extracted from the hash-checked executable. Kinds without explanatory text clear the source buffer, as does out-of-range dispatch.
+
+2144 native comparisons cover kinds0–66, signed location values, original wording, pronouns, NUL prefixes, object versus terrain names and state-changing helper boundaries. Eight related tests pass. Quoted-remark prefix assembly, actual helper composition, popup implementation and full live explanation integration remain open.
