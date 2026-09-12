@@ -127,3 +127,32 @@ test('published version history requests only that course and selects the older 
  await expect(history).toContainText('design revision 0');await expect(history).toContainText('selected publication');
  await history.getByRole('button',{name:'Practise this version'}).last().click();await expect.poll(()=>chosen).toBe('older');await expect(page.locator('#account-status')).toContainText('Test stopped before loading geometry');
 });
+test('sign out switches all tabs to login and preserves separate players saves',async({context,page})=>{
+ let active=user;
+ const first=serialize(createGame()),secondGame=createGame();build(secondGame,'bench',12,12);const second=serialize(secondGame);
+ await context.addInitScript(({first,second})=>{
+  if(localStorage.getItem('logout-fixture'))return;
+  localStorage.setItem('logout-fixture','1');localStorage.setItem('simgolfer.player.player-one.simgolf-reborn.course.v1',first);localStorage.setItem('simgolfer.player.player-two.simgolf-reborn.course.v1',second);
+ },{first,second});
+ await context.route('**/api/auth/me',r=>active?reply(r,{user:active,csrf:'token'}):reply(r,{error:'Sign in'},401));
+ await context.route('**/api/auth/providers',r=>reply(r,available));
+ await context.route('**/api/auth/logout',r=>{expect(r.request().method()).toBe('POST');expect(r.request().headers()['x-csrf-token']).toBe('token');active=null;return reply(r,{ok:true});});
+ await page.goto('/?start=1');await expect(page.locator('.start-identity')).toContainText('First Player');
+ const other=await context.newPage();await other.goto('/?start=1');await expect(other.locator('#start-sign-out')).toBeVisible();
+ await page.locator('#start-sign-out').click();
+ await expect(page).toHaveURL(/login/);await expect(other).toHaveURL(/login/);
+ expect(await page.evaluate(()=>localStorage.getItem('simgolfer.player.player-one.simgolf-reborn.course.v1'))).toBe(first);
+ active={...user,id:'player-two',name:'Second Player'};
+ await page.goto('/?start=1');await expect(page.locator('.start-identity')).toContainText('Second Player');
+ await page.getByRole('button',{name:'Continue',exact:true}).click();await page.waitForFunction(()=>window.__gameTest);
+ expect(await page.evaluate(()=>window.__gameTest.getState().cash)).toBe(secondGame.cash);
+ await page.locator('#player-account').click();await expect(page.locator('#account-logout')).toBeVisible();
+ await other.close();
+});
+test('failed logout keeps the start menu usable and reports the error',async({page})=>{
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token'}));
+ await page.route('**/api/auth/logout',r=>reply(r,{error:'Account server unavailable. Try again.'},503));
+ await page.goto('/?start=1');await page.locator('#start-sign-out').click();
+ await expect(page.locator('.boot-status')).toContainText('Account server unavailable');
+ await expect(page.locator('#start-sign-out')).toBeEnabled();await expect(page.getByRole('button',{name:'New Game',exact:true})).toBeEnabled();
+});

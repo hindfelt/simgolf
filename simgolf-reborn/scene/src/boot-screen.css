@@ -10,3 +10,6 @@
 #boot-screen .start-actions button{width:100%;background:linear-gradient(#739e3c,#376328);box-shadow:inset 0 1px #d6e78c,0 3px #102d19}
 #boot-screen .start-actions button:disabled{opacity:.5;cursor:default}
 @media(max-width:520px){#boot-screen{padding:18px;background-position:35% center}#boot-screen .boot-content{padding:18px 14px}}
+
+#boot-screen .start-identity{font:13px/1.6 system-ui;color:#e5dfbf;margin:14px 0}
+#boot-screen #start-sign-out{margin-top:8px;background:#193d2c;border:1px solid #c3ab67;padding:9px 22px;min-height:44px;color:#f9e5ad;font:600 13px system-ui;cursor:pointer}

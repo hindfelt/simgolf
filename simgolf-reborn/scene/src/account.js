@@ -6,6 +6,12 @@ export async function accountRequest(path,options={}){
  const response=await fetch(path,{...options,headers:{'content-type':'application/json','x-csrf-token':current.csrf,'x-player-id':current.user.id,...options.headers}});
  const body=await response.json();if(!response.ok){const error=Error(body.error||'Request failed.');error.status=response.status;throw error;}return body;
 }
+// Keep account-owned saves intact when another player takes over this browser.
+export async function signOutAccount(){
+ await accountRequest('/api/auth/logout',{method:'POST',body:'{}'});
+ try{localStorage.setItem('simgolfer.signed-out',JSON.stringify({id:current.user.id,nonce:crypto.randomUUID()}));}catch{}
+ location.replace(loginLocation('/'));
+}
 export function accountStorage(storage,id){
  if(!id)return storage;
  const prefix=`simgolfer.player.${id}.`;
@@ -18,6 +24,11 @@ export async function requireAccount(){
  if(response.status===401){location.replace(loginLocation(location.pathname+location.search));await new Promise(()=>{});}
  if(!response.ok)throw Error('Account service unavailable. Reload to try again.');
  current=await response.json();if(!current.user?.id)throw Error('Please sign in again.');
+ window.addEventListener('storage',event=>{
+  if(event.key==='simgolfer.signed-out'&&event.newValue){
+   try{if(JSON.parse(event.newValue).id===current.user.id)location.replace(loginLocation('/'));}catch{}
+  }
+ });
  return current;
 }
 export function mountAccount({storage=playerStorage(),testing=false,shared=false}={}){
@@ -26,7 +37,7 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
  document.querySelector('.top-actions')?.append(button);
  const dialog=document.createElement('dialog');dialog.id='account-dialog';
  dialog.innerHTML=`<form method="dialog"><button class="close" aria-label="Close account">×</button></form><h2>Your player account</h2><p id="account-name"></p><p>Your local games are kept separately for this account. Cloud saves let you continue on another device.</p><button id="cloud-load">Load cloud course</button> <button id="cloud-save">Save course to cloud</button><p id="account-status" role="status"></p><details><summary>Bring in an older course</summary><p>If this browser has your course from before accounts, import a copy into this account. This replaces the current local course with a copy; the current save is backed up. Your original save stays unchanged.</p><button id="account-import">Import this browser’s old course</button></details><h3>Connect another sign-in</h3><p>Connect providers here to keep the same player account.</p><div id="account-links"></div><hr><button id="account-logout">Sign out</button><details><summary>Delete account</summary><p>This permanently removes your account and cloud saves.</p><label>Type DELETE <input id="delete-confirm" autocomplete="off"></label><button id="delete-account">Delete account permanently</button></details>`;
- document.body.append(dialog);dialog.querySelector('#account-name').textContent=current.user.name;
+ document.body.append(dialog);dialog.querySelector('#account-name').after(dialog.querySelector('#account-logout'));dialog.querySelector('#account-name').textContent=current.user.name;
  if(testing)dialog.querySelector('h2').textContent='Your player account · Playtesting copy';
  button.onclick=()=>dialog.showModal();const status=message=>dialog.querySelector('#account-status').textContent=message;
  const key='simgolf-reborn.course.v1',endpoint=testing?'/api/saves/testing-course':'/api/saves/course',returnTo=testing?'/?testing=1':'/';let revision=storage.getItem("simgolfer.cloud-revision");revision=revision===null?null:Number(revision);
@@ -53,7 +64,7 @@ export function mountAccount({storage=playerStorage(),testing=false,shared=false
   const raw=localStorage.getItem(key);if(!raw)throw Error('No older course was found in this browser.');
   const {restore,serialize}=await import('./simulation/game.js');const next=serialize(restore(raw));const prior=storage.getItem(key);if(prior)storage.setItem(key+".previous",prior);storage.setItem(key,next);location.assign(returnTo);
  }catch(e){status(e.message);}};
- dialog.querySelector('#account-logout').onclick=async()=>{try{await call('/api/auth/logout',{method:'POST',body:'{}'});location.replace(loginLocation(location.pathname+location.search));}catch(e){status(e.message);}};
+ dialog.querySelector('#account-logout').onclick=async()=>{const button=dialog.querySelector('#account-logout');button.disabled=true;try{await signOutAccount();}catch(e){status(e.message);button.disabled=false;}};
  dialog.querySelector('#delete-account').onclick=async()=>{try{
   if(dialog.querySelector('#delete-confirm').value!=='DELETE')throw Error('Type DELETE to confirm.');
   await call('/api/account',{method:'DELETE',body:JSON.stringify({confirm:'DELETE'})});

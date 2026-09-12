@@ -8,7 +8,7 @@ try {
   const account = await requireAccount();
   let action;
   if (shouldShowStartMenu(location.search, import.meta.env.DEV)) {
-    action = await showStartMenu({hasSave:!!playerStorage().getItem('simgolf-reborn.course.v1'), signedIn:!!account});
+    action = await showStartMenu({hasSave:!!playerStorage().getItem('simgolf-reborn.course.v1'), signedIn:!!account, playerName:account?.user?.name});
   }
   boot.preparing();
   if (import.meta.env.DEV && new URLSearchParams(location.search).get("mode") === "art") {
