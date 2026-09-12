@@ -692,3 +692,14 @@ so callback changes can suppress the second reflection. 2,000 native cases
 match complete actor records, edge flags and 954 ordered sounds, including
 controlled heading/position/edge mutations. The earlier rolling/contact/cup
 branch and continuous actor-motion integration remain unfinished.
+
+### Ordered actor rolling response
+
+`original-actor-ground-response.js` recovers 0x42c13a–0x42c27b with ordered
+forward/cross slope queries. Resistance is captured between samples; origin
+terrain and the green override are read afterward. Heading/speed updates use
+the refreshed actor state, followed by original green curvature and RNG.
+2,000 native cases match complete actor bytes, query order and RNG, including
+slope callbacks modifying heading, speed and roll coefficient. Ground-contact
+centre handling and cup routing still need actor composition; live integration
+is unfinished.
