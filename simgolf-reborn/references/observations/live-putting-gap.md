@@ -1858,3 +1858,21 @@ comparisons it checks 0x59d208, 0x59a188, 0x5a870c, 0x4c1e0c, 0x5a8730,
 No values are substituted for these native output globals. Actual scheduler
 planner invocation, scratch input provenance, reactions and live integration
 remain unfinished.
+
+
+### Automatic planner resolver interface
+
+`originalPlannerEffect` now accepts the scheduler's 0x4235c0 event, builds
+input from current packed records, runs the actual recovered automatic planner,
+and returns committed actor/shared/search state through the resolver interface.
+It validates the actor and automatic-target sentinel rather than treating
+unsupported exact-target requests as automatic shots. Caller map, scratch and
+reaction dependencies remain explicit and must match the snapshot revision.
+
+`verify-original-planner-effect.py` passes six full native planning scenarios
+through this complete effect, comparing actor/adjacent bytes, hole records,
+cache/RNG, metadata restoration and search publication. The cases use mode-zero
+scheduler-shaped events with the automatic-target sentinel and controlled
+reaction effects. This proves the effect interface for those cases, not the
+complete actor-loop-to-planner native chain, manual targeting, real reactions,
+scratch provenance or live-game adoption. Those remain open.
