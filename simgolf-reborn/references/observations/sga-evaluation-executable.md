@@ -3293,3 +3293,9 @@ This verifies the completion prefix only. The caller eligibility rule, subsequen
 `originalHoleCompletionPrefix` composes 0x426b10–0x426f30, retaining fee metadata/events and using post-remark world state for reset. All 1,152 continuous native cases match, with actual score comparison, fee popup, RNG and money helpers; speech, name/formatting and the completion remark remain controlled. The retained matrix test also checks input immutability and that remarks observe the already-recorded score. The oracle keeps the profile tier intact when initializing the 44-byte completion profile record, because these share native storage.
 
 This is not full original completion: the actual remark engine/world integration, external eligibility and branches after 0x426f30 remain required. No live or production behavior was changed.
+
+### Actual remark world integration at completion
+
+`originalAudibleRemarkWorld` supplies the complete audible engine with packed-world reaction and late outcome snapshots, then uses the existing world writer to commit actor/counters and final popup RNG state. It updates the outcome actor after preamble and keeps scalar counters separate from world arrays. `originalAudibleAfterFeeCompletion` invokes that implementation for the conditional kind-19 call before profile/reset processing.
+
+Integration coverage exercises normal kind-19 dispatch and kind-19-to-23 remapping on a sufficiently established hole, checking actual reaction counters and happiness, message state, preserved typed arrays and input immutability. Phrase/name and audio terrain/playback use controlled test resources. This joins recovered implementations, not the live browser schema; uninterrupted native comparison of the new joined flow and caller/round-progression integration remain outstanding.
