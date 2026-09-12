@@ -1233,3 +1233,18 @@ identity effects are controlled. Fixtures use one near-target vector with
 varied crowd/actor state; separate steering tests cover other vectors. Actual
 walking steps at 0x42af66, far pathfinding, service arrival bodies, departure
 completion and live integration remain unfinished.
+
+### Actual walking position update
+
+`original-walking-position-step.js` recovers 0x42b17c–0x42b2b2:
+world-rate adjustment, distance cap, difficulty/fast-walking/diagonal scaling,
+slow-step flag, actual actor X/Z update and signed route-budget decrement.
+Entering water from a non-water cached tile clears that budget. This uses the
+native direction vectors and integer arithmetic rather than elapsed-time lerp.
+
+1,600 native cases match the full actor record and computed step distance,
+with real clamp and terrain lookup execution. Fixtures cover all eight facings,
+rate/distance bounds, difficulty, fast walking, world slowdown, mixed water and
+signed budgets. Earlier rate selection at 0x42af66–0x42b17c and later walking
+fatigue/animation remain unfinished; this position helper is not yet connected
+to a complete walking tick or live gameplay.
