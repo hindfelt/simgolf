@@ -1313,3 +1313,19 @@ sound effects remain controlled. This verifies the new composition for those
 cases, not full actor scheduling or pathfinding. Far routing, service arrivals,
 unhappy departures, persisted actor/world mapping and live integration remain
 unfinished.
+
+### Pathfinder direction selection and bridge centering
+
+`original-pathfinder-selection.js` recovers 0x42e327–0x42e556,
+consuming an explicit original 50×50 visited-cost wavefront. It preserves
+strict score comparisons, preferred-direction weighting, exclusion of terrain
+20, bridge diagonal restrictions, sub-tile bridge centering and the signed
+no-route fallback. The real 0x40bc50 helper excludes terrain 20 in addition to
+checking map bounds; treating it as bounds-only would be incorrect.
+
+1,800 native comparisons match returned directions and world flags, including
+31 new bridge-centering flags and 69 no-direction results. Fixtures vary map
+edges, visited costs (including 0 and 255), terrain, bridge flags, preferred
+masks and sub-tile positions. The native map helper executes without a stub.
+These supplied wavefront fixtures do not verify wavefront generation, complete
+pathfinding or live walking. Those integrations remain unfinished.
