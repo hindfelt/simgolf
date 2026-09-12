@@ -1,3 +1,4 @@
+import {advanceClubDay, clubTime, initializeClubDay, recordClubArrival, validateClubDay} from "./club-day.js";
 import {stepMarinas,validateMarinas} from "./marina-activity.js";
 import {scheduleTennis, stepTennisVisit, validateTennis} from "./tennis-visits.js";
 import { stepChallengeCareer, validateChallengeCareer } from "./challenge-career.js";
@@ -230,6 +231,7 @@ export function createGame(
   // Bare property: no tee, green or fairway is prebuilt.
   for (let i = 0; i < 24; i++) spawnWeed(g);
   initializeVisitorPool(g);
+  initializeClubDay(g);
   event(
     g,
     "Welcome to Willow Brook. Place a tee and green to begin your first hole.",
@@ -873,6 +875,7 @@ function arrivals(g, arrivalPoint = entrance, transport) {
     if (candidate.record) v.comment = "Good to be back for another round!";
     if (queueForHole(g, v, i)) {
       g.guests.push(v);
+      recordClubArrival(g);
       arrived.push(v.id);
       rememberGuest(g, v);
       chooseService(g, v, "start");
@@ -1672,12 +1675,16 @@ export function startPractice(g, holeId = g.holes[0]?.id) {
   };
 }
 export function update(g, dt, runResort = true) {
+  if (!runResort) return stepSimulation(g, dt, false);
+  advanceClubDay(g, dt, part => stepSimulation(g, part, true));
+}
+function stepSimulation(g, dt, runResort) {
   g.time += dt;
   if (runResort) {
-    stepMarinas(g,dt,{connected,entrance:connectedEntrance,ready:()=>firstHoleReadyForArrivals(g),arrive:p=>arrivals(g,p,"marina")});
+    stepMarinas(g,dt,{connected,entrance:connectedEntrance,ready:()=>!clubTime(g.time).night && firstHoleReadyForArrivals(g),arrive:p=>arrivals(g,p,"marina")});
     for (const f of g.facilities) if(f.type==="airstrip" && connected(g,f)) {
       f.nextFlight ??= g.time+240;
-      if(g.time>=f.nextFlight && firstHoleReadyForArrivals(g)) {
+      if(g.time>=f.nextFlight && !clubTime(g.time).night && firstHoleReadyForArrivals(g)) {
         const p=connectedEntrance(g,f);
         const ids=p ? arrivals(g,p,"airstrip") : [];
         f.nextFlight=g.time+(ids.length?480:30);
@@ -1702,13 +1709,13 @@ export function update(g, dt, runResort = true) {
       g.nextWage += RULES.wageInterval;
     }
     stepHelicopter(g, {
-      ready: () => firstHoleReadyForArrivals(g),
+      ready: () => !clubTime(g.time).night && firstHoleReadyForArrivals(g),
       entrance: f => connectedEntrance(g, f),
       arrive: p => arrivals(g, p, "helipad"),
       money: (amount, reason) => money(g, amount, reason),
       event: message => event(g, message),
     });
-    if (g.time >= g.nextArrival && !['arriving', 'unloading'].includes(g.helicopter?.phase) && firstHoleReadyForArrivals(g)) {
+    if (!clubTime(g.time).night && g.time >= g.nextArrival && !['arriving', 'unloading'].includes(g.helicopter?.phase) && firstHoleReadyForArrivals(g)) {
       arrivals(g);
       g.nextArrival = g.time + RULES.arrivalRetryDelay;
     }
@@ -2091,6 +2098,7 @@ export function restore(raw) {
     )
       throw Error("Invalid turf maintenance state.");
   }
+  validateClubDay(g);
   for (const row of g.ledger)
     if (!row || !Number.isFinite(row.amount) || typeof row.reason !== "string")
       throw Error("Invalid transaction in save.");

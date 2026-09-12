@@ -1,4 +1,4 @@
-import {createProtocol} from "../src/simulation/protocol.js";
+import {createProtocol,PROTOCOL_VERSION,RULESET_VERSION} from "../src/simulation/protocol.js";
 import { test, expect } from "@playwright/test";
 import {
   createGame,
@@ -90,5 +90,5 @@ test('new fee rules reject percentage bonuses while historical snapshots remain 
  expect(validFeeSnapshot({happiness:8,fee:1000,airstripBonus:200})).toBe(true);
  expect(validFeeSnapshot({feeRule:'unknown',happiness:8,fee:800})).toBe(false);
  const g=createGame(),data=JSON.parse(serialize(g));data.protocol=createProtocol();data.protocol.version=77;data.protocol.ruleset='prototype-marina-activity-2026-09-11';
- const upgraded=restore(JSON.stringify(data));expect(upgraded.protocol.version).toBe(79);expect(upgraded.protocol.ruleset).toBe('original-signed-happiness-2026-09-12');
+ const upgraded=restore(JSON.stringify(data));expect(upgraded.protocol.version).toBe(PROTOCOL_VERSION);expect(upgraded.protocol.ruleset).toBe(RULESET_VERSION);
 });

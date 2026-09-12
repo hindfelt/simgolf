@@ -98,3 +98,8 @@ html.baron-ui { --baron-ink:#163725; --baron-panel:#203e2e; --baron-line:#9d9158
 @media(max-width:650px){.baron-ui .baron-dialog-actions #confirm-new{flex:1 0 100%;white-space:nowrap}.baron-ui .baron-dialog-actions #cancel-new{white-space:nowrap}}
 
 .baron-ui iframe#landscape-preview{width:100%;aspect-ratio:1.4;height:auto;display:block;min-height:260px}
+/* Daily rhythm: report stays non-modal so the ten-second night can advance. */
+#club-clock{position:fixed;left:16px;top:146px;z-index:8;padding:8px 14px;font-size:13px}
+#night-report{position:fixed;z-index:35;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 32px));max-height:80dvh;overflow:auto;box-sizing:border-box;padding:24px;background:#173b2e;color:#fff2cc;border:1px solid #bca96c;border-radius:20px;box-shadow:0 18px 70px #0008}
+#night-report[hidden]{display:none}#night-report h2{margin-top:0}#night-report dl div,#daily-history dl div{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #bca96c33}#night-report dd,#daily-history dd{margin:0;text-align:right}#night-report footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+#daily-history{max-width:560px;max-height:80dvh;overflow:auto}#daily-history h2{margin-top:28px}#daily-history form{position:sticky;bottom:0;padding-top:12px;background:#173b2e}

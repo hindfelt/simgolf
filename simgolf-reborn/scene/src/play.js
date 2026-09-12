@@ -1,3 +1,4 @@
+import {mountClubDay} from "./ui/club-day.js";
 import {drawTerrainPreview} from './ui/terrain-preview.js';
 import {playerStorage,mountAccount,signedInAccount,accountRequest} from "./account.js";
 import {createSharedClient} from "./shared-client.js";
@@ -380,7 +381,8 @@ controls.mouseButtons = {
   RIGHT: THREE.MOUSE.PAN,
 };
 controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
-scene.add(new THREE.HemisphereLight(0xe2ebdf, 0x6f7552, 1.65));
+const ambient = new THREE.HemisphereLight(0xe2ebdf, 0x6f7552, 1.65);
+scene.add(ambient);
 const sun = new THREE.DirectionalLight(0xffe4b2, 2.3);
 sun.position.set(-48, 80, -38);
 sun.castShadow = true;
@@ -2402,6 +2404,7 @@ const opponentViews = () =>
     : [];
 const remarks = golferRemarks($("#game"));
 let remarksBottom = innerHeight;
+const dailyUI = mountClubDay();
 let completionShown = false;
 let landscapeRevision = -1;
 let last = performance.now(),
@@ -2455,6 +2458,11 @@ function frame(now) {
     mode === "staff" ? game.staff.find((s) => s.id === selectedStaffId) : null,
     staffRangePreview,
   );
+  const dayLight = dailyUI.update(game);
+  const brightness = dayLight.night ? 0.14 : 0.35 + 0.65 * Math.sin(Math.PI * dayLight.progress);
+  sun.intensity = 2.3 * brightness;
+  ambient.intensity = dayLight.night ? 0.22 : 0.65 + brightness;
+  fill.intensity = dayLight.night ? 0.08 : 0.25 + brightness * 0.15;
   renderer.render(scene, camera);
   remarks.update(
     [
