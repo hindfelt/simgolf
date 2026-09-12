@@ -2,9 +2,9 @@ import './shared-lobby.css';
 import {playerStorage} from './account.js';
 export function mountSharedLobby(dialog,request,player,status){
  const section=document.createElement('details');section.id='shared-courses';section.style.overflowWrap='anywhere';
- section.innerHTML='<summary>Shared courses</summary><p>Build together as owner or editor, or watch as a spectator. Shared golf tournaments are still being built.</p><p>Shared resorts keep running when you close the browser.</p><p>Your player ID: <code class="player-id"></code></p><form class="create-course"><label>New shared course name <input maxlength="80" required></label><button>Create shared course</button></form><button class="refresh-courses">Refresh courses</button><div class="course-list"></div>';
+ section.innerHTML='<summary>Shared courses</summary><p>Build together as owner or editor, or watch as a spectator. Create or join scored events under Tournament registration.</p><p>Shared resorts keep running when you close the browser.</p><p>Your player ID: <code class="player-id"></code></p><form class="create-course"><label>New shared course name <input maxlength="80" required></label><button>Create shared course</button></form><button class="refresh-courses">Refresh courses</button><div class="course-list"></div>';
  section.querySelector('.player-id').textContent=player.id;dialog.append(section);
- const library=document.createElement('details');library.innerHTML='<summary>Published courses</summary><p>Practise a fixed course version made by another player. This is local practice; online tournament scoring is still being built.</p><button class="refresh-published">Refresh published courses</button><div class="published-list"></div>';section.append(library);
+ const library=document.createElement('details');library.innerHTML='<summary>Published courses</summary><p>Practise a fixed course version made by another player. For scored online play, enter an event under Tournament registration.</p><button class="refresh-published">Refresh published courses</button><div class="published-list"></div>';section.append(library);
  async function loadPublished(){
   try{
    const {courses}=await request('/api/published-courses'),list=library.querySelector('.published-list');list.replaceChildren();
@@ -30,6 +30,7 @@ export function mountSharedLobby(dialog,request,player,status){
     const link=document.createElement('a');link.href='/?shared='+encodeURIComponent(course.id);link.textContent=`${course.name} · ${course.role}`;row.append(link);
     if(course.role==='owner'){
      const details=document.createElement('details');details.innerHTML='<summary>Manage access</summary><p>Ask the other player for the player ID shown in their Account panel. Give them access here, then share the course link above.</p><form><label>Player ID <input required pattern="[a-f0-9-]{36}" maxlength="36"></label><label>Access <select aria-label="Course access"><option value="editor">Editor</option><option value="spectator">Spectator</option><option value="remove">Remove access</option></select></label><button>Update access</button></form>';
+     if(course.earningsId){details.querySelector('option[value=editor]').remove();details.querySelector('p').textContent='Competition entrants build independently. You can invite spectators using the player ID in their Account panel.';}
      details.querySelector('form').onsubmit=async event=>{event.preventDefault();const button=details.querySelector('button');button.disabled=true;try{const role=details.querySelector('select').value;await request(`/api/courses/${course.id}/members`,{method:'PUT',body:JSON.stringify({playerId:details.querySelector('input').value.trim(),role:role==='remove'?null:role})});status('Course access updated.');}catch(error){status(error.message);}finally{button.disabled=false;}};
      row.append(details);
      const publish=document.createElement('button'),notice=document.createElement('p');

@@ -135,6 +135,7 @@ test('completed tournament lobby preserves final standings and removes cancellat
 });
 
 test('two earnings entrants start equal private courses and spend independently',async({browser})=>{
+ const fullEvent=process.env.SIMGOLF_EARNINGS_FULL==='1';if(fullEvent)test.setTimeout(720000);
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
  try{
   for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Account',exact:true}).click();await page.getByText('Earnings competitions',{exact:true}).click();}
@@ -147,6 +148,25 @@ test('two earnings entrants start equal private courses and spend independently'
   for(const client of clients){await client.page.getByRole('link',{name:'Open my competition course',exact:true}).click();await expect(client.page.locator('#shared-status')).toContainText('Earnings competition');expect(await client.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);}
   expect(a.page.url()).not.toBe(b.page.url());expect(await a.page.evaluate(()=>window.__gameTest.getState().landSeed)).toBe(await b.page.evaluate(()=>window.__gameTest.getState().landSeed));
   await a.page.setViewportSize({width:1440,height:1000});await a.page.getByRole('button',{name:'Bench',exact:true}).click();const point=await a.page.evaluate(()=>window.__gameTest.project(-19,-9));await a.page.mouse.click(point.x,point.y);await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().cash)).toBeLessThan(50000);expect(await b.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(50000);
+  if(fullEvent){
+   for(const client of clients){
+    await client.page.setViewportSize({width:1440,height:1000});
+    for(const [tool,x,z] of [['Tee',-29,7],['Green',1,-13]]){await client.page.getByRole('button',{name:tool,exact:true}).click();const point=await client.page.evaluate(({x,z})=>window.__gameTest.project(x,z),{x,z});await client.page.mouse.click(point.x,point.y);await expect.poll(()=>client.page.evaluate(({tool})=>!!window.__gameTest.getState().holes[0][tool==='Tee'?'tee':'green'],{tool})).toBe(true);}
+    await client.page.getByRole('button',{name:'Open hole · H',exact:true}).click();await expect.poll(()=>client.page.evaluate(()=>window.__gameTest.getState().holes[0].open)).toBe(true);
+   }
+   const deadline=Date.now()+660000;let samples=0;
+   while(Date.now()<deadline){
+    const states=await Promise.all(clients.map(c=>c.page.evaluate(()=>{const g=window.__gameTest.getState();return {time:g.time,cash:g.cash,fees:g.stats.fees,completed:g.stats.holesCompleted,guests:g.guests.length,ticks:g.protocol.tick};})));
+    console.log('Earnings wall-clock sample',JSON.stringify({sample:samples++,...{players:states}}));
+    if((await Promise.all(clients.map(c=>c.page.locator('#shared-status').textContent()))).every(s=>s.includes('Finished')))break;
+    await new Promise(resolve=>setTimeout(resolve,30000));
+   }
+   for(const client of clients)await expect(client.page.locator('#shared-status')).toContainText('Finished · Read only');
+   const eventId=new URL(invitation).searchParams.get('earnings'),response=await a.page.request.get('/api/earnings-competitions/'+eventId),event=await response.json();expect(event.status).toBe('complete');
+   for(let i=0;i<clients.length;i++){const state=await clients[i].page.evaluate(()=>window.__gameTest.getState()),entry=event.entries.find(e=>e.id===players[i].id);expect(state.protocol.tick).toBe(12000);expect(entry.result.netCash).toBe(state.cash-50000);expect(entry.result.completedHoles).toBe(state.stats.holesCompleted);expect(entry.result.eligible).toBe(true);expect(entry.rank).not.toBeNull();}
+   const cash=await a.page.evaluate(()=>window.__gameTest.getState().cash);await a.page.reload();await expect(a.page.locator('#shared-status')).toContainText('Finished · Read only');expect(await a.page.evaluate(()=>window.__gameTest.getState().cash)).toBe(cash);
+   await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByText('Earnings competitions',{exact:true}).click();await a.page.getByText('Builder earnings · complete',{exact:true}).click();await a.page.setViewportSize({width:390,height:844});await a.page.getByRole('link',{name:'View my finished course',exact:true}).scrollIntoViewIfNeeded();await a.page.screenshot({path:'/tmp/simgolfer-earnings-full-results-phone.png',fullPage:true});
+  }
   expect(errors).toEqual([]);
  }finally{await Promise.allSettled(clients.map(c=>c.context.close()));}
 });

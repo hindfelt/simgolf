@@ -2,7 +2,7 @@ import {test,expect,beforeEach,afterEach,vi} from 'vitest';
 import {env} from 'cloudflare:workers';
 import {runInDurableObject,runDurableObjectAlarm} from 'cloudflare:test';
 import {createEarningsCompetition,joinEarningsCompetition,startEarningsCompetition,getEarningsCompetition,leaveEarningsCompetition,cancelEarningsCompetition} from './earnings-competitions.js';
-import {getSharedCourse,executeSharedCommand,setCourseMember} from './shared-courses.js';
+import {getSharedCourse,executeSharedCommand,setCourseMember,listSharedCourses} from './shared-courses.js';
 import {createSession} from '../src/simulation/session.js';
 import {restore} from '../src/simulation/game.js';
 import {cellAt} from '../src/simulation/world.js';
@@ -17,6 +17,7 @@ test('competition capacity is atomic and every entrant starts with identical ser
  const e=await createEarningsCompetition(env.DB,a,{title:'Equal start',durationMinutes:10,capacity:2});
  const joins=await Promise.allSettled([b,c].map(id=>joinEarningsCompetition(env.DB,e.id,id)));expect(joins.filter(r=>r.status==='fulfilled')).toHaveLength(1);
  const event=await startEarningsCompetition(env.DB,e.id,a),first=await getSharedCourse(env.DB,event.entries[0].courseId,event.entries[0].id),second=await getSharedCourse(env.DB,event.entries[1].courseId,event.entries[1].id);
+ expect((await listSharedCourses(env.DB,a)).find(c=>c.id===first.id)).toMatchObject({earningsId:event.id,role:'owner'});
  expect(first.state.cash).toBe(50000);expect(first.state).toEqual(second.state);expect(first.id).not.toBe(second.id);
  const retry=await startEarningsCompetition(env.DB,e.id,a);expect(retry.startsAt).toBe(event.startsAt);expect(retry.endsAt).toBe(event.endsAt);
  await expect(setCourseMember(env.DB,first.id,a,event.entries[1].id,'editor')).rejects.toMatchObject({status:403});

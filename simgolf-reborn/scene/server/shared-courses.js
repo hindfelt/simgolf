@@ -38,7 +38,7 @@ export async function createSharedCourse(db,playerId,name){
 export async function getSharedCourse(db,id,playerId){return (await mutateSharedCourse(db,id,playerId)).course;}
 export async function listSharedCourses(db,playerId){
  await active(db,playerId);
- const rows=await db.prepare("SELECT c.id,c.name,c.owner_id AS ownerId,c.revision,CASE WHEN c.owner_id=? THEN 'owner' ELSE m.role END AS role FROM shared_courses c LEFT JOIN course_members m ON m.course_id=c.id AND m.player_id=? WHERE c.owner_id=? OR m.player_id IS NOT NULL ORDER BY c.created_at DESC,c.id LIMIT 100").bind(playerId,playerId,playerId).all();
+ const rows=await db.prepare("SELECT c.id,c.name,c.owner_id AS ownerId,c.revision,e.competition_id AS earningsId,CASE WHEN c.owner_id=? THEN 'owner' ELSE m.role END AS role FROM shared_courses c LEFT JOIN course_members m ON m.course_id=c.id AND m.player_id=? LEFT JOIN earnings_entries e ON e.course_id=c.id WHERE c.owner_id=? OR m.player_id IS NOT NULL ORDER BY c.created_at DESC,c.id LIMIT 100").bind(playerId,playerId,playerId).all();
  return rows.results;
 }
 export async function setCourseMember(db,id,ownerId,playerId,role){

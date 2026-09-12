@@ -56,3 +56,10 @@ test('an invitation survives the sign-in screen and opens registration without a
  await page.locator('#email').fill('invited@proton.me');await page.getByRole('button',{name:'Send sign-in code'}).click();await page.locator('#code').fill('12345678');await page.getByRole('button',{name:'Sign in and play'}).click();
  await expect(page).toHaveURL(new RegExp('event='+id));await expect(page.locator('#account-dialog')).toBeVisible();await expect(page.getByRole('button',{name:'Join tournament',exact:true})).toBeVisible();expect(joins).toBe(0);
 });
+
+test('competition access offers spectators while cooperative courses retain editors',async({page})=>{
+ await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
+ await page.route('**/api/courses',r=>reply(r,{courses:[{id:'competition-course',name:'My competition',role:'owner',earningsId:'event-one'},{id:'cooperative-course',name:'Our resort',role:'owner',earningsId:null}]}));
+ await page.goto('/');await page.waitForFunction(()=>window.__gameTest);await page.locator('#player-account').click();await page.getByText('Shared courses',{exact:true}).click();
+ const access=page.getByLabel('Course access');await expect(access).toHaveCount(2);await expect(access.nth(0).locator('option[value=editor]')).toHaveCount(0);await expect(access.nth(0).locator('option[value=spectator]')).toHaveCount(1);await expect(access.nth(1).locator('option[value=editor]')).toHaveCount(1);
+});
