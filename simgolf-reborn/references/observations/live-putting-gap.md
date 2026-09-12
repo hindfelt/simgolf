@@ -744,3 +744,18 @@ event mode, visual slot and callback mutations. Wider eligibility thresholds
 remain covered by the preceding decision verifier; this run verifies full
 composition for successful captures. Position/sampling and live integration
 remain unfinished; no deployment or whole-game parity claim is made.
+
+### Actor ball-motion composition
+
+`original-actor-ball-motion.js` connects position/gravity, post-movement
+subcell/edge sampling and the ground/air branches. Original pre-movement
+cell/terrain locals remain supplied by the actor loop. Ground captures use
+ordinary recovered scoring; air stops share the stopped-accounting handoff
+extracted as `originalResolveStoppedMotion` without rerunning contact.
+
+1,200 continuous native executions from 0x42bdc3 through scored-cup exit match
+the full earlier scoring comparison, using original trig initialization.
+The 800 contact-to-accounting comparisons still pass after the shared handoff
+refactor. These successful-cup fixtures do not verify the whole new update's
+airborne/mixed-terrain domain; those continuous checks and live integration
+remain open. Original map-edge neighbor storage still requires implementation.

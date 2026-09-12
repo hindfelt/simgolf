@@ -5,7 +5,9 @@ import {originalStoppedShot} from './original-stopped-shot.js';
 export function originalContactResolution(snapshot,resolve){
  const initial=structuredClone(snapshot);
  if(initial.holeRecords)initial.holes=initial.holeRecords;
- const motion=originalPostContactMotion(initial,resolve);
+ return originalResolveStoppedMotion(originalPostContactMotion(initial,resolve),resolve);
+}
+export function originalResolveStoppedMotion(motion,resolve){
  if(!motion.stopped)return {...motion,accounted:false};
  const state=motion.state;
  state.holeRecords=state.holes;
