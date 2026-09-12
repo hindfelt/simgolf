@@ -2609,3 +2609,17 @@ the page reloads, and the recovered turn resumes. The complete serialized result
 matches the uninterrupted result by SHA-256. All six checkpoint checks pass.
 This verifies storage transport in a controlled browser fixture; it does not wire
 the codec into the production save menu or validate the complete career schema.
+
+### Runtime session ownership
+
+Added an owner for committed packed state and its pending world transaction.
+Stepping while suspended is rejected; resumption commits only after the whole
+world boundary succeeds. A failed later callback leaves the prior state and
+checkpoint intact for retry. Completed sounds drain once and are excluded from
+saved history; pending sounds remain in the saved transaction until completion.
+An explicit matching ruleset is required when restoring a session.
+
+Nine runtime-session/checkpoint checks pass, covering actual aiming suspension,
+retry, independent read snapshots, reload and historical-audio suppression. This
+is local ownership infrastructure; it still requires complete world validation,
+remaining effect bodies and production game-loop/save/network wiring.
