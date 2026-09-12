@@ -1713,3 +1713,27 @@ shared state, counters, RNG and ordered calls remain equal. The genuine
 first-hole tutorial remains at 0x42b647; outer actor-slot scheduling,
 real effect implementations, multi-tick persistence and live adoption remain
 unfinished.
+
+
+### Native golfer loop and successive ticks
+
+`original-golfer-loop.js` recovers 0x428100–0x42960a around the actor turn:
+it visits 152 slots in order, skips hole byte zero, executes the special
+0xff slot's countdown/reposition draws, and runs normal slots through the
+recovered actor turn. It returns unresolved turn continuations with their
+locals instead of skipping them. First-facility coordinates remain explicit.
+
+`verify-original-golfer-loop.py` compares 300 three-tick sequences (900 full
+native scans), carrying actor/world/RNG state between scans while advancing
+the phase counter. All sequences reach the native loop return. Fixtures mix
+three normal slots with inactive and 0xff waiting slots across the remaining
+149 records. All actor and hole bytes, assignments, counters, shared flags,
+selection/tracking, RNG and ordered calls match. The matrix includes 55
+sequences entering walking, 52 calling the controlled planner and 29 changing
+the first actor's position. Prior single-scan comparisons also passed before
+the same oracle was extended to successive scans.
+
+Effects including planner, reactions, slope and projection remain controlled;
+terrain is uniform and these are short sequences. Full world-tick effects,
+long-running real-helper scenarios, tutorial handling, live-state conversion
+and hosted adoption remain open. This code is not used by the live game yet.
