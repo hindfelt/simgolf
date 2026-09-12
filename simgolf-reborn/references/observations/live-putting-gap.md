@@ -2153,3 +2153,19 @@ Live schema integration and actual world/effect scheduling remain open.
 
 The six uninterrupted preparation/real-planner comparisons (clear, mixed and
 professional long-shot scenarios) also pass after this mapping change.
+
+
+### Golfer-loop planner effect binding
+
+`originalGolferEffects` now routes terrain queries to the recovered map reader
+and optionally routes 0x4235c0 to the actual planner. `originalGolferTerrainLoop`
+accepts a synchronous `plannerFor` binding that is refreshed from the current
+actor/world for each invocation; older explicit effect resolvers remain valid.
+Binding construction cannot mutate the input and missing/async bindings fail.
+
+The 36-case natural-putt oracle now uses this dispatcher for preparation and
+retains all completion matches. Eight related tests pass. The existing 300
+three-tick real-terrain golfer-loop comparisons also pass; their planner
+outputs remain controlled, so they do not prove a full real-planner world run.
+A current-world binding for all map/social/search dependencies, animation
+cadence and live schema adoption are still required. No deployment.
