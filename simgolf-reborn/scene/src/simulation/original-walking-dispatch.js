@@ -1,11 +1,11 @@
-import {originalFacilityArrival} from './original-facility-arrival.js';
+import {originalServiceArrival} from './original-service-arrival.js';
 import {originalWalkingApproach} from './original-walking-approach.js';
 import {originalWalkingFarTick} from './original-walking-far-tick.js';
 import {originalWalkingNearTick} from './original-walking-near-tick.js';
 export function originalWalkingDispatch(snapshot,resolve){
  const approach=originalWalkingApproach(snapshot,resolve);
- if(approach.next==='0x42a019'&&approach.state.serviceIndex>=0){
-  const visit=originalFacilityArrival(approach.state,resolve);
+ if(approach.next==='0x42a019'){
+  const visit=originalServiceArrival(approach.state,resolve);
   return {...approach,...visit,calls:[...approach.calls,...visit.calls],randomDraws:(approach.randomDraws??0)+visit.randomDraws};
  }
  if(approach.next!=='0x42a71c')return approach;

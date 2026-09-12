@@ -1503,3 +1503,21 @@ heading and RNG execute; reactions/audio remain controlled. Earlier walking
 must supply verified starting-ball locals before this dispatcher replaces
 all negative-index arrival continuations. Live integration, later shot/wait
 execution and remaining unhappy departures are still open.
+
+### All arrival branches connected to destination dispatch
+
+Confirmed starting-ball locals are the cached own ball at 0x429639/0x429642,
+or the selected tee centre at 0x429842/0x42985d before stance offsets.
+Walking approach now carries these locals, current waiting-group count and
+movement-ready state into arrival handling. Dispatch executes ordinary,
+rest-tile and partner arrivals using the combined service dispatcher.
+
+500 uninterrupted native destination-through-walking/arrival cases match
+actor records, RNG, calls, cash and service income: 75 rest visits, 76 paid
+facility visits, 307 position changes, 76 shot-setup continuations and 424
+completed/skipped ticks. Deliberate rest scenarios supplement mixed random
+layouts. Native route/rest helpers execute; selected reaction/audio/notice
+and cleanup effects remain controlled. The verifier distinguishes the shared
+0x42b3d8 address reached from arrival from movement's own passage through it.
+Later shot/wait continuations, unhappy departures, earlier actor entry and
+live world/persistence adoption remain unfinished.
