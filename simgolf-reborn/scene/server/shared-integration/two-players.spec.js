@@ -1,8 +1,20 @@
-import {test,expect} from '@playwright/test';
+import {test,expect,chromium} from '@playwright/test';
+import {browserRuntime} from '../../browser-runtime.js';
 import {readFileSync} from 'node:fs';
 // These scenarios intentionally continue the course/publication/event created above.
 // Stop after a prerequisite fails instead of reporting downstream missing fixtures.
 test.describe.configure({mode:'serial'});
+// Separate devices must not compete through one software GPU command queue.
+async function clientContext(browser,options){
+ if(!process.env.CI)return browser.newContext(options);
+ const device=await chromium.launch({channel:'chrome',headless:browserRuntime.headless,...browserRuntime.launchOptions});
+ try{
+  const context=await device.newContext(options),close=context.close.bind(context);
+  context.close=async()=>{try{await close();}finally{await device.close();}};
+  return context;
+ }catch(error){await device.close();throw error;}
+}
+
 // Scene creation/first shader compilation is separate from network/UI convergence.
 // Two real Linux software-rendered clients can take 45–75 seconds to initialize.
 async function readyGame(page){
@@ -14,7 +26,7 @@ test('two authenticated browsers share edits, reconnect and enforce spectator ac
  // Linux measured over three minutes before reaching the first reload.
  if(process.env.CI)test.setTimeout(480000);
  const [owner,editor]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
- async function client(player){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);return {context,page:await context.newPage()};}
+ async function client(player){const context=await clientContext(browser,{viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);return {context,page:await context.newPage()};}
  const a=await client(owner),b=await client(editor),errors=[];a.page.setDefaultTimeout(process.env.CI?30000:10000);b.page.setDefaultTimeout(process.env.CI?30000:10000);
  a.page.on('pageerror',e=>errors.push(e.message));b.page.on('pageerror',e=>errors.push(e.message));
  try{
@@ -50,7 +62,7 @@ test('two authenticated browsers share edits, reconnect and enforce spectator ac
 });
 test('shared-course lobby remains usable on a phone',async({browser})=>{
  const [owner]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
- const context=await browser.newContext({viewport:{width:390,height:844}});
+ const context=await clientContext(browser,{viewport:{width:390,height:844}});
  await context.addCookies([{name:'__Host-simgolfer_session',value:owner.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);
  const page=await context.newPage();
  try{
@@ -74,7 +86,7 @@ test('another registered player can practise an immutable published course',asyn
 });
 test('two accounts register once, view the roster and close registration on a phone',async({browser})=>{
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[];
- for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+ for(const player of players){const context=await clientContext(browser,{viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
  const [a,b]=clients;
  try{
   await a.page.getByLabel('Tournament title',{exact:true}).fill('Players cup');await a.page.getByRole('combobox',{name:'Playing window',exact:true}).selectOption('72');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('combobox',{name:'Rounds',exact:true}).selectOption('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
@@ -89,7 +101,7 @@ test('two browser entrants complete a tournament, resume shots and see final ser
  test.setTimeout(240000);
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
  try{
-  for(const player of players){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();await page.getByText('Players cup · 2/2 · locked',{exact:true}).click();await page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(page).toHaveURL(/tournament=/);await readyGame(page);await expect(page.locator('#shared-status')).toContainText('Tournament · round 1/2');await expect(page.locator('[data-mode="build"]')).toBeHidden();}
+  for(const player of players){const context=await clientContext(browser,{viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();await page.getByText('Players cup · 2/2 · locked',{exact:true}).click();await page.getByRole('button',{name:'Play / resume round 1',exact:true}).click();await expect(page).toHaveURL(/tournament=/);await readyGame(page);await expect(page.locator('#shared-status')).toContainText('Tournament · round 1/2');await expect(page.locator('[data-mode="build"]')).toBeHidden();}
   const [a,b]=clients,point=await a.page.evaluate(()=>{const g=window.__gameTest.getState(),green=g.holes[0].green;return window.__gameTest.project(green.x,green.z);});await a.page.mouse.click(point.x,point.y);
   await expect.poll(()=>a.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBeGreaterThan(0);
   expect(await b.page.evaluate(()=>window.__gameTest.getState().pro.strokes)).toBe(0);
@@ -121,7 +133,7 @@ test('two browser entrants complete a tournament, resume shots and see final ser
 test('phone withdrawal is explicit, survives reload and leaves the other entrant able to play',async({browser})=>{
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
  try{
-  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
+  for(const player of players){const context=await clientContext(browser,{viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();}
   const [a,b]=clients;
   await a.page.getByLabel('Tournament title',{exact:true}).fill('Withdrawal cup');await a.page.getByLabel('Player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create registration',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Tournament registration created.');
   await b.page.getByRole('button',{name:'Refresh tournaments',exact:true}).click();await b.page.getByText('Withdrawal cup · 1/2 · registration',{exact:true}).click();await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave tournament',exact:true})).toBeVisible();
@@ -136,7 +148,7 @@ test('phone withdrawal is explicit, survives reload and leaves the other entrant
 
 test('completed tournament lobby preserves final standings and removes cancellation controls',async({browser})=>{
  const [player]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
- const context=await browser.newContext({viewport:{width:390,height:844}});
+ const context=await clientContext(browser,{viewport:{width:390,height:844}});
  try{
   await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();
   await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Tournament registration',{exact:true}).click();
@@ -150,7 +162,7 @@ test('two earnings entrants start equal private courses and spend independently'
  const fullEvent=process.env.SIMGOLF_EARNINGS_FULL==='1';if(fullEvent)test.setTimeout(720000);
  const players=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8')),clients=[],errors=[];
  try{
-  for(const player of players){const context=await browser.newContext({viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Earnings competitions',{exact:true}).click();}
+  for(const player of players){const context=await clientContext(browser,{viewport:{width:390,height:844}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));clients.push({context,page});await page.goto('http://localhost:8789/');await page.getByRole('button',{name:'Multiplayer',exact:true}).click();await page.getByText('Earnings competitions',{exact:true}).click();}
   const [a,b]=clients;await a.page.getByLabel('Earnings competition title',{exact:true}).fill('Builder earnings');await a.page.getByRole('combobox',{name:'Competition length',exact:true}).selectOption('10');await a.page.getByLabel('Competition player limit',{exact:true}).fill('2');await a.page.getByRole('button',{name:'Create earnings competition',exact:true}).click();
   await expect(a.page.getByRole('button',{name:'Start earnings competition',exact:true})).toBeDisabled();
   const invitation=await a.page.getByRole('textbox',{name:'Earnings invitation link',exact:true}).inputValue();await b.page.goto(invitation);await b.page.getByRole('button',{name:'Join earnings competition',exact:true}).click();await expect(b.page.getByRole('button',{name:'Leave earnings competition',exact:true})).toBeVisible();
