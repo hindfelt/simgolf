@@ -14,7 +14,7 @@ export function recordClubArrival(g) { initializeClubDay(g).visitors++; }
 export function collectClubDay(g,dt) {
   const d=initializeClubDay(g);
   for (const row of g.ledger.slice(d.cursor)) {
-    if(/green fee$|^Snack bar sale$/.test(row.reason)) d.visitorSpend+=row.amount;
+    if(/green fee$|^Snack bar sale$/.test(row.reason)||(g.liveBehaviorVersion===1&&row.reason==='Training facility sale')) d.visitorSpend+=row.amount;
     if(row.amount >= 0) {
       d.income+=row.amount;
     } else if (/^Build |^Buy land parcel /.test(row.reason)) d.construction-=row.amount;

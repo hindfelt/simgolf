@@ -1,0 +1,102 @@
+[
+  {
+    "maintained": false,
+    "rounds": 64,
+    "services": 64,
+    "weeds": 180,
+    "reports": [
+      {
+        "day": 1,
+        "from": 0,
+        "to": 480,
+        "partial": false,
+        "income": 1410,
+        "operating": 21000,
+        "construction": 7484,
+        "net": -27074,
+        "visitors": 26,
+        "visitorChange": null,
+        "happiness": -4.162036626135994,
+        "averageSpend": -761.1538461538462
+      },
+      {
+        "day": 2,
+        "from": 480,
+        "to": 970,
+        "partial": false,
+        "income": 85,
+        "operating": 31400,
+        "construction": 0,
+        "net": -31315,
+        "visitors": 14,
+        "visitorChange": -12,
+        "happiness": -9.050047740297316,
+        "averageSpend": -2236.785714285714
+      },
+      {
+        "day": 3,
+        "from": 970,
+        "to": 1460,
+        "partial": false,
+        "income": 325,
+        "operating": 45800,
+        "construction": 0,
+        "net": -45475,
+        "visitors": 24,
+        "visitorChange": 10,
+        "happiness": -8.962359459025148,
+        "averageSpend": -1903.125
+      }
+    ]
+  },
+  {
+    "maintained": true,
+    "rounds": 75,
+    "services": 75,
+    "weeds": 2,
+    "reports": [
+      {
+        "day": 1,
+        "from": 0,
+        "to": 480,
+        "partial": false,
+        "income": 14720,
+        "operating": 1246,
+        "construction": 7484,
+        "net": 5990,
+        "visitors": 26,
+        "visitorChange": null,
+        "happiness": 2.563141943089098,
+        "averageSpend": 520
+      },
+      {
+        "day": 2,
+        "from": 480,
+        "to": 970,
+        "partial": false,
+        "income": 20125,
+        "operating": 696,
+        "construction": 0,
+        "net": 19429,
+        "visitors": 24,
+        "visitorChange": -2,
+        "happiness": 3.5621013342262255,
+        "averageSpend": 805.2083333333334
+      },
+      {
+        "day": 3,
+        "from": 970,
+        "to": 1460,
+        "partial": false,
+        "income": 19620,
+        "operating": 1496,
+        "construction": 0,
+        "net": 18124,
+        "visitors": 26,
+        "visitorChange": 2,
+        "happiness": 3.6051335453563884,
+        "averageSpend": 700.7692307692307
+      }
+    ]
+  }
+]

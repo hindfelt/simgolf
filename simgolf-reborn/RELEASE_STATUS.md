@@ -32,11 +32,10 @@ were required; migrations 0004–0011 were applied in the earlier deployment. Th
 JavaScript/CSS assets matched the local build exactly. Authenticated production
 play and physical-device acceptance remain separate release gates.
 
-The game changes are committed locally. GitHub rejected the branch push because
-the `hindfelt` OAuth credential lacks `workflow` scope; the active
-`trihack_admin` credential has no repository write access. The newer CI workflow
-has therefore not run remotely. Unrelated dirty workspace files are excluded.
-See [latest deployment evidence](references/release/production-visitors-2026-09-13.md).
+The game and deployment documentation were pushed successfully to
+`codex/simgolf-reborn-v1` after GitHub workflow permission was refreshed.
+Repository CI is active. The release validation pass adds account and multiplayer
+checks to CI; see [validation evidence](references/release/release-validation-2026-09-13.md).
 
 ## Deployed gameplay integration
 

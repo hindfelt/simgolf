@@ -3,6 +3,7 @@ import {createGame,build,serialize} from '../../src/simulation/game.js';
 const available={providers:[{id:'google',name:'Google'},{id:'apple',name:'Apple'},{id:'github',name:'GitHub'},{id:'microsoft',name:'Microsoft'},{id:'email',name:'Email code'}]};
 const user={id:'player-one',name:'First Player',email:'first@proton.me',role:'player'};
 const reply=(route,data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
+test.beforeEach(async({page})=>{await page.route('**/api/tournament-awards',r=>reply(r,{awards:[]}));});
 test('sign-in is required before the game starts, even in testing mode',async({page})=>{
  await page.route('**/api/auth/me',r=>reply(r,{user:null},401));await page.route('**/api/auth/providers',r=>reply(r,available));
  await page.goto('/?testing=1');await expect(page).toHaveURL(/login.html/);await expect(page.locator('canvas')).toHaveCount(0);
@@ -95,8 +96,9 @@ test('published library appends older courses and retries failed pages without l
  await page.getByRole('button',{name:'Refresh published courses'}).click();await expect(page.getByRole('button',{name:'Practise this version'})).toHaveCount(1);await expect(page.getByRole('button',{name:'Load more courses'})).toBeVisible();
 });
 
-test('tournament picker retains an older course across refresh and submits its immutable publication',async({page})=>{
+test('tournament picker survives unavailable medals, retains an older course and submits its immutable publication',async({page})=>{
  await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
+ await page.route('**/api/tournament-awards',r=>reply(r,{error:'Temporarily unavailable'},503));
  let created=null;
  await page.route('**/api/tournaments',r=>{if(r.request().method()==='POST')created=r.request().postDataJSON();return reply(r,{tournaments:[]});});
  await page.route('**/api/published-courses*',r=>{
@@ -105,6 +107,7 @@ test('tournament picker retains an older course across refresh and submits its i
  });
  await page.goto('/');await page.locator('#player-account').click();await page.getByText('Tournament registration',{exact:true}).click();
  const select=page.getByLabel('Published course',{exact:true});await expect(select).toHaveValue('new-publication');
+ await expect(page.getByText('Medals are temporarily unavailable. Refresh tournaments to retry.',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Load more published courses'}).click();await expect(select.locator('option')).toHaveCount(2);await expect(select).toHaveValue('new-publication');
  await select.selectOption('old-publication');await page.getByRole('button',{name:'Refresh tournaments'}).click();await expect(select).toHaveValue('old-publication');
  await page.getByRole('button',{name:'Load more published courses'}).click();await expect(select.locator('option')).toHaveCount(2);

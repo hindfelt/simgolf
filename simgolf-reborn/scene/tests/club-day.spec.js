@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {advanceClubDay,clubTime,initializeClubDay,recordClubArrival,validateClubDay} from '../src/simulation/club-day.js';
+import {advanceClubDay,collectClubDay,closeClubDay,clubTime,initializeClubDay,recordClubArrival,validateClubDay} from '../src/simulation/club-day.js';
 import {createGame,update,serialize,restore} from '../src/simulation/game.js';
 const empty=()=>({time:0,ledger:[],guests:[]});
 test('sunset reports exactly once, night lasts ten seconds and a large step crosses both boundaries',()=>{
@@ -62,4 +62,13 @@ test('unhappy golfers and negative green fees remain signed through save validat
 test('legacy saves opened during night identify their first accounting period as partial',()=>{
  const g=empty();g.time=485;initializeClubDay(g);advanceClubDay(g,485,dt=>g.time+=dt);
  expect(g.clubDay.reports[0]).toMatchObject({day:2,from:485,to:970,partial:true});
+});
+
+test('current visitor spending includes training fees and excludes transport landing income',()=>{
+ const g={time:0,guests:[],ledger:[],liveBehaviorVersion:1};
+ initializeClubDay(g);g.clubDay.visitors=2;
+ g.ledger.push({reason:'Training facility sale',amount:8},{reason:'Snack bar sale',amount:5},{reason:'Helicopter landing fee',amount:200});
+ collectClubDay(g,0);closeClubDay(g,1);
+ expect(g.clubDay.reports[0].income).toBe(213);
+ expect(g.clubDay.reports[0].averageSpend).toBe(6.5);
 });

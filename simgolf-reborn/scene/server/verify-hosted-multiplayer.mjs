@@ -1,5 +1,8 @@
 // Explicit review deployment only. Credentials come from a private fixture file;
 // never point this harness at the production player database.
+import {createSession} from '../src/simulation/session.js';
+import {restore} from '../src/simulation/game.js';
+import {RULESET_VERSION} from '../src/simulation/protocol.js';
 import {chromium} from 'playwright-core';
 import {readFileSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
@@ -15,6 +18,17 @@ try{
   const api=async(path,body)=>{const r=await context.request.fetch(origin+path,{method:body?'POST':'GET',headers:{origin,'x-csrf-token':p.csrf},...(body?{data:body}:{})});const data=await r.json();assert(r.ok(),JSON.stringify({path,status:r.status(),data}));return data;};clients.push({context,page,api});
  }
  const [a,b]=clients;
+ let course=await a.api('/api/courses',{name:'Release validation '+new Date().toISOString()});
+ for(const [tool,c,r] of [['tee',7,20],['green',22,10]]){
+  const command=createSession(restore(JSON.stringify(course.state))).nextCommand(fixture.players[0].id,'build',{tool,c,r,brush:1,holeId:'hole-1'});
+  const reply=await a.api('/api/courses/'+course.id+'/commands',command);
+  assert.equal(reply.result.ok,true);course=reply.course;
+ }
+ const publication=await a.api('/api/courses/'+course.id+'/publish',{expectedRevision:course.state.protocol.revision});
+ assert.equal(publication.ruleset,RULESET_VERSION);
+ fixture.publicationId=publication.id;
+ evidence.ruleset=RULESET_VERSION;
+ evidence.checks.push('Fresh server-created course and publication use current gameplay rules');
  const cup=await a.api('/api/tournaments',{title:'Hosted scheduled review',publicationId:fixture.publicationId,rounds:1,capacity:2,durationHours:1,startsAt:Date.now()+75000});
  fixture.eventId=cup.id;writeFileSync('.wrangler/hosted-review/players.json',JSON.stringify(fixture),{mode:0o600});
  await b.page.goto(origin+'/?event='+cup.id);await b.page.getByRole('button',{name:'Join tournament',exact:true}).click();await b.page.getByRole('button',{name:'Leave tournament',exact:true}).waitFor();
@@ -26,7 +40,7 @@ try{
  // No event requests or open game page during the scheduled start.
  await Promise.all(clients.map(c=>c.page.goto('about:blank')));
  console.log('Invitation and calendar passed; waiting for the scheduled background alarm.');
- await new Promise(r=>setTimeout(r,Math.max(0,cup.startsAt-Date.now()+6000)));
+ while(Date.now()<cup.startsAt+6000)await new Promise(r=>setTimeout(r,Math.min(30000,cup.startsAt+6000-Date.now())));
  console.log('Scheduled time elapsed; reading hosted result.');
  const started=await a.api('/api/tournaments/'+cup.id);assert.equal(started.status,'locked');assert.equal(started.endsAt,cup.startsAt+3600000);
  evidence.checks.push('Scheduled start and advertised deadline match on hosted service');

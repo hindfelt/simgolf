@@ -27,7 +27,8 @@ export function mountTournamentLobby(dialog,request,player,status){
  async function load(){
   const generation=++courseGeneration;moreCourses.disabled=true;
   try{
-   const [coursePage,{tournaments},{awards}]=await Promise.all([request('/api/published-courses'),request('/api/tournaments'),request('/api/tournament-awards')]);
+   const [coursePage,{tournaments},awardPage]=await Promise.all([request('/api/published-courses'),request('/api/tournaments'),request('/api/tournament-awards').catch(()=>null)]);
+   const awards=awardPage?.awards;
    if(generation!==courseGeneration)return;
    const {courses}=coursePage;courseCursor=coursePage.nextCursor||null;moreCourses.hidden=!courseCursor;
    if(invited&&!tournaments.some(e=>e.id===invited)){const event=await request('/api/tournaments/'+invited);tournaments.unshift({...event,entrants:event.entrants.length});}
@@ -36,7 +37,7 @@ export function mountTournamentLobby(dialog,request,player,status){
    if(selected&&!courses.some(c=>c.id===previous))courseSelect.append(selected);
    if(previous)courseSelect.value=previous;
    section.querySelector('form button:not([type="button"])').disabled=!courseSelect.options.length;
-   const list=section.querySelector('.tournament-list');list.replaceChildren();const trophy=document.createElement('p');trophy.textContent=awards?.length?'Your tournament medals: '+awards.map(a=>`${a.medal} · ${a.title}`).join(' · '):'Complete tournaments to earn Gold, Silver and Bronze medals. Tied places share the same medal.';list.append(trophy);if(!tournaments.length)list.textContent='No tournaments yet.';
+   const list=section.querySelector('.tournament-list');list.replaceChildren();const trophy=document.createElement('p');trophy.textContent=!awardPage?'Medals are temporarily unavailable. Refresh tournaments to retry.':awards?.length?'Your tournament medals: '+awards.map(a=>`${a.medal} · ${a.title}`).join(' · '):'Complete tournaments to earn Gold, Silver and Bronze medals. Tied places share the same medal.';list.append(trophy);if(!tournaments.length){const empty=document.createElement('p');empty.textContent='No tournaments yet.';list.append(empty);}
    for(const event of tournaments){
     const details=document.createElement('details'),summary=document.createElement('summary'),body=document.createElement('div');summary.textContent=`${event.title} · ${event.entrants}/${event.capacity} · ${event.status}`;details.append(summary,body);list.append(details);
     async function view(){
