@@ -54,7 +54,11 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chrome
       - run: npm run build
-      - run: npm run test:live -- --workers=2
+      - name: Linux graphics smoke test
+        run: npm run test:live -- tests/art-test.spec.js --workers=1 --reporter=line
+        env:
+          SIMGOLF_PUBLIC_TESTS: '1'
+      - run: npm run test:live -- --workers=2 --reporter=line
         env:
           SIMGOLF_PUBLIC_TESTS: '1'
       - run: npm run test:accounts
