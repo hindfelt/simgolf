@@ -1,13 +1,13 @@
 # Fairway Baron — remaining work and release status
 
-This checkpoint includes regional/audio work and recovered-runtime integration through `e9ac192`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `c9ad46e`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
 summarizes what still remains; it does not replace the requirements in
 [whattobuild.md](whattobuild.md).
 
-## Implemented locally, awaiting hosted release verification
+## Deployed preview, with remaining acceptance checks
 
 - Green/gold opening flow, dialogs and controls; new-game preview rendered by
   the game, with camera rotation and zoom.
@@ -25,14 +25,18 @@ summarizes what still remains; it does not replace the requirements in
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
-These statements describe local code and recorded tests, not deployed features.
-Committed development work through `f616844` has been pushed to the
-`codex/simgolf-reborn-v1` branch and the remote comparison matched. The existing GitHub CI passed for `c227e27`, but covered only the older root
-application. The separate Fairway Baron job is committed locally, but GitHub
-rejected its publication because the hindfelt credential lacks `workflow` scope.
-The remote remains at `c227e27`; newer local commits are not published.
-Production has not been deployed.
-Uncommitted workspace changes are excluded from that push.
+Production was updated on 2026-09-13 from game commit `c9ad46e` at
+https://simgolfer.0x4d.in/. Cloudflare version:
+`e6a699e2-49b9-4a3d-9486-48928624dd61`. Database migrations 0004–0011
+applied successfully. The live login loaded without browser errors and all 25
+JavaScript/CSS assets matched the local build exactly. Authenticated production
+play and physical-device acceptance remain separate release gates.
+
+The game changes are committed locally. GitHub rejected the branch push because
+the `hindfelt` OAuth credential lacks `workflow` scope; the active
+`trihack_admin` credential has no repository write access. The newer CI workflow
+has therefore not run remotely. Unrelated dirty workspace files are excluded.
+See [deployment evidence](references/release/production-deploy-2026-09-13.md).
 
 ## Remaining completion checklist
 
@@ -60,7 +64,8 @@ Uncommitted workspace changes are excluded from that push.
   remaining differences for each requirement before claiming parity.
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
   CI and the final repository revision, then deploy and smoke-test the actual
-  hosted revision. Recent local development and documentation are not yet pushed.
+  hosted revision. Production now contains the committed game; GitHub publication
+  and remote CI remain blocked by credential scope.
 
 ## Evidence and limitations
 
@@ -77,3 +82,7 @@ private-reference skips (528 total, 5.7 minutes). The private-reference suites
 also passed separately with local files available. This is not a hosted stability
 assessment. Original-engine modules remain separate from the
 live simulation until their integration is explicitly verified.
+
+The 2026-09-13 release run reported all 559 live cases passing, but hung during
+worker shutdown and was interrupted. This supersedes the older local test count
+above without claiming a clean full-suite exit. See deployment evidence.
