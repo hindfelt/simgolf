@@ -97,7 +97,7 @@ New games use recovered shot selection, shaped flight, ground release and puttin
 plus recovered walking costs, golfer reaction history/outcomes and facility
 selection/payments. These run together through complete visitor rounds, with
 saved mid-shot and mid-service replay. Protocol 91 preserves older saves and
-published course rules. Start a fresh local game to use the latest visitor rules.
+published course rules. Start a fresh game to use the latest visitor rules.
 
 Live coordinates, terrain costs, service duration, incident triggers and sound
 presentation remain explicit browser adaptations; this is not a claim of exact

@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This checkpoint includes regional/audio work and recovered-runtime integration through `c9ad46e`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `e856c65`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -25,10 +25,10 @@ summarizes what still remains; it does not replace the requirements in
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
-Production was updated on 2026-09-13 from game commit `c9ad46e` at
+Production was updated on 2026-09-13 from game commit `e856c65` at
 https://simgolfer.0x4d.in/. Cloudflare version:
-`e6a699e2-49b9-4a3d-9486-48928624dd61`. Database migrations 0004–0011
-applied successfully. The live login loaded without browser errors and all 25
+`d6c3f467-fd48-40ad-9368-ceb889196246`. No new database migrations
+were required; migrations 0004–0011 were applied in the earlier deployment. The live login loaded without browser errors and all 25
 JavaScript/CSS assets matched the local build exactly. Authenticated production
 play and physical-device acceptance remain separate release gates.
 
@@ -36,20 +36,20 @@ The game changes are committed locally. GitHub rejected the branch push because
 the `hindfelt` OAuth credential lacks `workflow` scope; the active
 `trihack_admin` credential has no repository write access. The newer CI workflow
 has therefore not run remotely. Unrelated dirty workspace files are excluded.
-See [deployment evidence](references/release/production-deploy-2026-09-13.md).
+See [latest deployment evidence](references/release/production-visitors-2026-09-13.md).
 
-## New local gameplay integration after deployment
+## Deployed gameplay integration
 
 Protocol 90 adds recovered draw/fade motion and velocity-driven ground release,
 contour-aware live putting, and golfer targeting that predicts full flight and
 roll. New games use this version; old saves and version-89 course packages retain
-their previous motion. The deployed preview above is unchanged.
+their previous motion. This motion is included in the deployed preview.
 
 Protocol 91 connects recovered routing costs, remark history/selection/outcomes,
 and nearest-facility search/service payments to live visitors. Complete rounds
 now exercise these together with shots, release, putting and score settlement.
 New games enable the new visitor rules; older saves and published courses retain
-their rules for replay compatibility. This is local work, not another deployment.
+their rules for replay compatibility. This is included in the deployed preview.
 See [visitor integration evidence](references/release/live-visitors-2026-09-13.md)
 and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
 
