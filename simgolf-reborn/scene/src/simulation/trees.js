@@ -48,11 +48,13 @@ export function treeCollision(g, shot) {
   const trees = collisionTrees(g);
   // Exclude trees beyond the flight envelope before stepping the trajectory.
   const margin = Math.abs(shot.curve) + 3;
+  const points=shot.nativeFlight?.impact?shot.nativeFlight.samples:[shot.from,shot.landing];
+  const bounds={minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z))};
   const candidates = trees.filter((t) =>
-    t.x >= Math.min(shot.from.x, shot.landing.x) - margin &&
-    t.x <= Math.max(shot.from.x, shot.landing.x) + margin &&
-    t.z >= Math.min(shot.from.z, shot.landing.z) - margin &&
-    t.z <= Math.max(shot.from.z, shot.landing.z) + margin,
+    t.x >= bounds.minX - margin &&
+    t.x <= bounds.maxX + margin &&
+    t.z >= bounds.minZ - margin &&
+    t.z <= bounds.maxZ + margin,
   );
   if (!candidates.length) return null;
   const dx = shot.landing.x - shot.from.x,
@@ -99,10 +101,13 @@ export function treeCollision(g, shot) {
 // Test each ground segment against trunk footprints. Filter against a ray,
 // not just the intended endpoint: faster turf can extend the roll beyond it.
 export function treeGroundBlocker(g, from, proposed) {
+  const allDirections=proposed===null;
+  proposed??={x:from.x+1,z:from.z};
   const dx = proposed.x - from.x, dz = proposed.z - from.z;
   const length = Math.hypot(dx, dz);
   if (!length) return () => false;
   const trees = collisionTrees(g).filter(tree => {
+    if(allDirections)return true;
     const x = tree.x - from.x, z = tree.z - from.z;
     return (x * dx + z * dz) / length >= -tree.trunkRadius &&
       Math.abs(x * dz - z * dx) / length <= tree.trunkRadius;

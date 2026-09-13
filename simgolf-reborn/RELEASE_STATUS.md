@@ -38,6 +38,18 @@ the `hindfelt` OAuth credential lacks `workflow` scope; the active
 has therefore not run remotely. Unrelated dirty workspace files are excluded.
 See [deployment evidence](references/release/production-deploy-2026-09-13.md).
 
+## New local gameplay integration after deployment
+
+Protocol 90 adds recovered draw/fade motion and velocity-driven ground release,
+contour-aware live putting, and golfer targeting that predicts full flight and
+roll. New games use this version; old saves and version-89 course packages retain
+their previous motion. The deployed preview above is unchanged.
+
+The complete recovered reaction, walking-route and facility state machines are
+still not installed in the live world. End-to-end tests exercise the current
+mixed implementation; they do not establish original-game parity.
+See [live motion scope and evidence](references/release/live-shaped-motion-2026-09-13.md).
+
 ## Remaining completion checklist
 
 - [ ] **Adopt the recovered simulation in live gameplay.** Finish current-world

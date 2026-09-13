@@ -11,9 +11,9 @@ test('actual automatic putting runs recovered motion and survives a mid-roll sav
  for(let i=0;i<1500&&g.pro.phase!=='finished';i++){update(g,.05);update(copy,.05);}
  expect(g.pro.phase).toBe('finished');expect(serialize(copy)).toBe(serialize(g));expect(g.pro.scorecard).toHaveLength(1);
 });
-test('sloped greens do not masquerade as the flat recovered physics',()=>{
+test('sloped greens use explicitly marked live contour forces with native putting',()=>{
  const g=course();startPractice(g);const cup=g.holes[0].green;g.pro.ball={x:cup.x-1,z:cup.z};g.pro.pos={...g.pro.ball};g.elevation={[key(22,10)]:2};
- takeShot(g,g.pro,cup);expect(g.pro.shot.putt).toBe(true);expect(g.pro.shot.nativePutt).toBeUndefined();
+ takeShot(g,g.pro,cup);expect(g.pro.shot.putt).toBe(true);expect(g.pro.shot.nativePutt.contours).toBe(true);
 });
 test('a live paid visitor round uses original club selection through scoring and fee settlement',()=>{
  const g=course();openHole(g);let nativeShots=0;

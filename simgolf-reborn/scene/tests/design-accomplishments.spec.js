@@ -11,8 +11,9 @@ import { createSession } from "../src/simulation/session.js";
 function course() {
   const g = createGame(8);
   build(g, "tee", 7, 20);
-  build(g, "green", 23, 17);
-  for (let c = 9; c <= 21; c++) build(g, "fairway", c, 19);
+  // Longer layout retains a real length-skill challenge under native release.
+  build(g, "green", 40, 17);
+  for (let c = 9; c <= 39; c++) build(g, "fairway", c, 19);
   return g;
 }
 function observations(g, advantages) {
@@ -45,7 +46,7 @@ function observations(g, advantages) {
 test("actual visitor scores earn a design accomplishment, retained through exact future replay", () => {
   const g = course();
   openHole(g);
-  for (let i = 0; i < 4000 && !g.accomplishments.length; i++) update(g, 0.05);
+  for (let i = 0; i < 8000 && !g.accomplishments.length; i++) update(g, 0.05);
   expect(g.accomplishments.map((r) => r.id)).toContain("first-challenge");
   expect(g.holes[0].stats.completed).toBeGreaterThan(0);
   expect(g.proProfile.points).toBe(13);
@@ -109,7 +110,7 @@ test("phone report includes a design award earned by real visitors", async ({
 }) => {
   const g = course();
   openHole(g);
-  for (let i = 0; i < 4000 && !g.accomplishments.length; i++) update(g, 0.05);
+  for (let i = 0; i < 8000 && !g.accomplishments.length; i++) update(g, 0.05);
   await page.addInitScript((save) => {
     if (!localStorage.getItem("simgolf-reborn.course.v1"))
       localStorage.setItem("simgolf-reborn.course.v1", save);

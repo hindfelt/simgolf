@@ -14,6 +14,11 @@ export function airbornePoint(shot, t) {
     lift:4*shot.apex*t*(1-t)};
 }
 export function releasePoint(shot,t) {
+  if(shot.nativeRelease){
+    const samples=shot.nativeRelease.samples,index=Math.max(0,Math.min(samples.length-1,t*(samples.length-1)));
+    const a=samples[Math.floor(index)],b=samples[Math.min(samples.length-1,Math.floor(index)+1)],u=index-Math.floor(index);
+    return {x:a.x+(b.x-a.x)*u,z:a.z+(b.z-a.z)*u,lift:a.lift+(b.lift-a.lift)*u};
+  }
   const u=1-(1-t)**2;
   let lift=0;
   if(t<.2)lift=Math.sin(t/.2*Math.PI)*(shot.bounce??.35);

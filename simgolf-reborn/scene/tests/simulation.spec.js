@@ -101,14 +101,15 @@ test("Gary flight lands, bounces, rolls to rest and can be restored mid-shot", (
   expect(g.pro.ballHeight).toBeGreaterThan(0);
   const saved = restore(serialize(g));
   const s = g.pro.shot;
-  advance(g, s.duration - 1 + 0.65);
+  const release=s.nativeRelease?.duration??1.8;
+  advance(g, s.duration - 1 + release*.1);
   const atLanding = { ...g.pro.ball };
-  advance(g, 0.6);
+  advance(g, release*.5);
   expect(
     Math.hypot(g.pro.ball.x - atLanding.x, g.pro.ball.z - atLanding.z),
   ).toBeGreaterThan(0.01);
   advance(g, 10);
-  advance(saved, s.duration - 1 + 0.65 + 0.6 + 10);
+  advance(saved, s.duration - 1 + release*.6 + 10);
   expect(g.pro.shot).toBeNull();
   expect(g.pro.ballHeight).toBe(0);
   expect(g.pro.ball.x).toBeCloseTo(saved.pro.ball.x, 8);

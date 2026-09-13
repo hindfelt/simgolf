@@ -28,6 +28,10 @@ export function planShotWith(
   const range = shotLimit(game, golfer);
   const angle = Math.atan2(cup.z - golfer.ball.z, cup.x - golfer.ball.x);
   const candidates = [{ x: cup.x, z: cup.z }];
+  if(game.liveFlightVersion===2)for(const factor of [1.1,1.25]){
+    const length=Math.min(range,distance*factor);
+    candidates.push({x:golfer.ball.x+Math.cos(angle)*length,z:golfer.ball.z+Math.sin(angle)*length});
+  }
   for (const fraction of fractions)
     for (const degree of degrees) {
       const a = angle + (degree * Math.PI) / 180;

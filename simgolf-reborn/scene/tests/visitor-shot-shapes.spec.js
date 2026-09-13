@@ -37,7 +37,8 @@ test("Imagination changes a real visitor shot to a clear curved flight, without 
   update(ordinary, 0.05);
   update(imaginative, 0.05);
   expect(ordinary.guests[0].shot.curve).toBe(0);
-  expect(ordinary.guests[0].shot.obstruction).toBeTruthy();
+  // Even an ordinary golfer now avoids a predicted collision with a straight layup.
+  expect(ordinary.guests[0].shot.obstruction).toBeUndefined();
   expect(Math.abs(imaginative.guests[0].shot.curve)).toBeGreaterThan(0);
   expect(imaginative.guests[0].shot.obstruction).toBeUndefined();
   expect(imaginative.guests[0].shot.waterLanding).toBe(false);

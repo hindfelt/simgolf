@@ -38,5 +38,5 @@ test('browser loop completes a saved recovered flight using its calculated landi
  await expect.poll(()=>page.evaluate(()=>window.__gameTest.getState().pro.shot)).toBeNull();
  const state=await page.evaluate(()=>window.__gameTest.getState());
  expect(state.pro.ball.x).toBeCloseTo(end.x,8);expect(state.pro.ball.z).toBeCloseTo(end.z,8);
- expect(state.liveFlightVersion).toBe(1);expect(errors).toEqual([]);
+ expect(state.liveFlightVersion).toBe(2);expect(errors).toEqual([]);
 });

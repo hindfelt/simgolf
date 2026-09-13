@@ -43,7 +43,8 @@ test("compatibility changes actual starting happiness without changing skills, m
     update(loaded, 0.05);
   }
   expect(serialize(loaded)).toBe(serialize(similar));
-  expect(similar.stats.fees).toBeGreaterThan(0);
+  // Signed happiness can produce a refund on this rough, difficult layout.
+  expect(similar.ledger.filter(r=>r.reason.includes("green fee")).length).toBeGreaterThan(0);
   expect(
     similar.ledger
       .filter((r) => r.reason.includes("green fee"))

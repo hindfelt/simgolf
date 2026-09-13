@@ -1,3 +1,4 @@
+import {liveOriginalRelease,validateLiveRelease} from './live-original-release.js';
 import {liveOriginalFlight,validateLiveFlight} from './live-original-flight.js';
 import {airbornePoint,releasePoint} from './shot-motion.js';
 import {startLiveOriginalPutt,stepLiveOriginalPutt,validateLiveOriginalPutt,validateLiveStrengthCache} from './live-original-putting.js';
@@ -190,7 +191,7 @@ export function createGame(
     landscapeStyle: landscape,
     landSeed: seed >>> 0,
     liveSimulationVersion:1,
-    liveFlightVersion:1,
+    liveFlightVersion:2,
     landParcels: 0,
     time: 0,
     rng: seed >>> 0,
@@ -919,7 +920,22 @@ export function chooseTarget(g, v) {
   let ratio = Math.min(1, d < 11 ? 1 : range / d),
     x = v.ball.x + (cup.x - v.ball.x) * ratio,
     z = v.ball.z + (cup.z - v.ball.z) * ratio;
-  if (v.skills.imagination || isOut(g, {x,z}) || ["water", "blocked"].includes(lie(g,{x,z}))) {
+  let predictedRisk=false;
+  if(g.liveFlightVersion===2&&!isPutting(g,v)&&d>.2){
+    // Aim using the motion model, not its old carry-only endpoint. Independent
+    // dispersion samples keep tactical planning from reading the next live RNG.
+    const probe=structuredClone(g),actor=structuredClone(v);probe.rng=17;
+    if(takeShot(probe,actor,{x,z}).ok){
+      const advance=((actor.shot.end.x-v.ball.x)*(cup.x-v.ball.x)+(actor.shot.end.z-v.ball.z)*(cup.z-v.ball.z))/d;
+      if(d<range&&advance>.2){
+        const corrected=Math.min(range,d*d/advance);
+        x=v.ball.x+(cup.x-v.ball.x)*corrected/d;z=v.ball.z+(cup.z-v.ball.z)*corrected/d;
+      }
+      actor.shot=null;actor.phase='address';probe.rng=17;
+      if(takeShot(probe,actor,{x,z}).ok)predictedRisk=actor.shot.waterLanding||isOut(probe,actor.shot.end)||!!actor.shot.obstruction;
+    }
+  }
+  if (v.skills.imagination || predictedRisk || isOut(g, {x,z}) || ["water", "blocked"].includes(lie(g,{x,z}))) {
     const planned = planShotWith(
       g,
       v,
@@ -979,8 +995,8 @@ export function takeShot(g, v, target, technique = "straight") {
       (random(g) - 0.5) * spread * accuracyFactor,
   };
   const nativePutt=putt&&g.liveSimulationVersion===1?startLiveOriginalPutt(g,v,cup,{lie,height:elevationAt,skill:proSkill(v,"putter"),blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)}):null;
-  const nativeFlight=!putt&&technique==='straight'&&g.liveFlightVersion===1&&g.liveSimulationVersion===1
-    ?liveOriginalFlight(g,from,landing,carry,shotLimit(g,v),lie(g,from),elevationAt,aim):null;
+  const nativeFlight=!putt&&(g.liveFlightVersion===2||(technique==='straight'&&g.liveFlightVersion===1))&&g.liveSimulationVersion===1
+    ?liveOriginalFlight(g,from,landing,carry,shotLimit(g,v),lie(g,from),elevationAt,aim,technique,v.proSkills?proSkill(v,technique):1):null;
   if(nativeFlight){const last=nativeFlight.samples.at(-1);landing.x=last.x;landing.z=last.z;}
   const rise =
     elevationAt(g, landing.x, landing.z) - elevationAt(g, from.x, from.z);
@@ -1018,7 +1034,13 @@ export function takeShot(g, v, target, technique = "straight") {
     treeGroundBlocker(g, rollFrom, endpoint), p => isOut(g, p));
   endpoint.x = ground.end.x;
   endpoint.z = ground.end.z;
-  const waterLanding = ground.water;
+  const nativeRelease=nativeFlight?.impact?liveOriginalRelease(landing,nativeFlight.impact,{
+    surfaceAt:p=>lie(g,p),heightAt:p=>elevationAt(g,p.x,p.z),outOfBounds:p=>isOut(g,p),
+    blocked:treeGroundBlocker(g,landing,null),
+    backspin:technique==='backspin'?(v.proSkills?proSkill(v,'backspin'):1):0,
+  }):null;
+  if(nativeRelease){endpoint.x=nativeRelease.end.x;endpoint.z=nativeRelease.end.z;}
+  const waterLanding = nativeRelease?.water ?? ground.water;
   beginObservation(g, v);
   recordEvaluationShot(g, v, putt);
   v.strokes++;
@@ -1026,6 +1048,7 @@ export function takeShot(g, v, target, technique = "straight") {
   v.shot = {
     ...(nativePutt?{nativePutt}:{}),
     ...(nativeFlight?{nativeFlight}:{}),
+    ...(nativeRelease?{nativeRelease}:{}),
     club:nativeFlight?.club ?? launch.club,
     strengthYards:launch.strengthYards,
     from,
@@ -1193,7 +1216,7 @@ function stepShot(g, v, dt) {
     const sample=airbornePoint(s,s.time/s.duration);
     point={x:sample.x,z:sample.z};lift=sample.lift;
   } else {
-    const sample=releasePoint(s,clamp((s.time-s.duration)/1.8,0,1));
+    const sample=releasePoint(s,clamp((s.time-s.duration)/(s.nativeRelease?.duration??1.8),0,1));
     point={x:sample.x,z:sample.z};lift=sample.lift;
   }
   v.ball = point;
@@ -1204,7 +1227,7 @@ function stepShot(g, v, dt) {
       ? s.duration * s.obstruction.t + 0.8
       : s.putt
         ? s.duration
-        : s.duration + 1.8)
+        : s.duration + (s.nativeRelease?.duration??1.8))
   )
     return;
   v.shot = null;
@@ -1948,7 +1971,7 @@ export function restore(raw) {
     throw Error("Save is too large or unreadable.");
   const g = JSON.parse(raw);
   if(g.liveStrengthCache!==undefined)validateLiveStrengthCache(g.liveStrengthCache);
-  if(g.liveFlightVersion!==undefined&&g.liveFlightVersion!==1)throw Error("Unsupported live flight version.");
+  if(g.liveFlightVersion!==undefined&&![1,2].includes(g.liveFlightVersion))throw Error("Unsupported live flight version.");
   if(g.liveSimulationVersion!==undefined&&g.liveSimulationVersion!==1)throw Error("Unsupported live simulation version.");
   if (g?.version === 1) migrateSingleHole(g);
   if (g?.version === 2) {
@@ -2138,11 +2161,16 @@ export function restore(raw) {
     )
       throw Error("Invalid golfer in save.");
     if(v.shot?.nativeFlight){
-      if(g.liveFlightVersion!==1||g.liveSimulationVersion!==1||v.shot.putt)throw Error('Invalid live flight context.');
+      if(![1,2].includes(g.liveFlightVersion)||g.liveSimulationVersion!==1||v.shot.putt)throw Error('Invalid live flight context.');
       validateLiveFlight(v.shot.nativeFlight,v.shot);
+    }
+    if(v.shot?.nativeRelease){
+      if(g.liveFlightVersion!==2||!v.shot.nativeFlight||v.shot.putt)throw Error('Invalid live release context.');
+      validateLiveRelease(v.shot.nativeRelease,v.shot);
     }
     if(v.shot?.nativePutt){
       if(g.liveSimulationVersion!==1||!v.shot.putt||v.shot.waterLanding)throw Error("Invalid live putt context.");
+      if(v.shot.nativePutt.contours&&g.liveFlightVersion!==2)throw Error('Invalid contour putt context.');
       validateLiveOriginalPutt(v.shot.nativePutt);
     }
     if (v.phase === "shot" && !v.shot) throw Error("Missing shot in save.");
