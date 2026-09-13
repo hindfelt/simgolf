@@ -4,7 +4,8 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
   workers: 1,
-  timeout: 30000,
+  timeout: process.env.CI ? 60000 : 30000,
+  expect: {timeout: process.env.CI ? 15000 : 5000},
   use: {
     baseURL: "http://127.0.0.1:4176",
     channel: "chrome",

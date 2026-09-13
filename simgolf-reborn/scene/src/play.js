@@ -1,3 +1,4 @@
+import { renderQuality } from "./render-quality.js";
 import {rerollTerrain} from './simulation/terrain-reroll.js';
 import {isCoastal} from './simulation/coast.js';
 import {createGameAudio} from "./game-audio.js";
@@ -355,7 +356,8 @@ try {
     "This game needs WebGL. Open it in a browser with hardware acceleration enabled.";
   throw error;
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+const quality = renderQuality(renderer, devicePixelRatio);
+renderer.setPixelRatio(quality.pixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -389,7 +391,7 @@ scene.add(ambient);
 const sun = new THREE.DirectionalLight(0xffe4b2, 2.3);
 sun.position.set(-48, 80, -38);
 sun.castShadow = true;
-sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize);
 Object.assign(sun.shadow.camera, {
   left: -88,
   right: 88,

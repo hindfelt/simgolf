@@ -1,3 +1,4 @@
+import { renderQuality } from "./render-quality.js";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { buildLandscape, height, riverZ } from "./landscape.js";
@@ -22,7 +23,8 @@ try {
     "<h2>This scene needs WebGL</h2><p>Please open it in a browser with hardware acceleration enabled.</p>";
   throw error;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+const quality = renderQuality(renderer, devicePixelRatio);
+renderer.setPixelRatio(quality.pixelRatio);
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -59,7 +61,7 @@ scene.add(new THREE.HemisphereLight(0xe2ebdf, 0x6f7552, 1.65));
 const sun = new THREE.DirectionalLight(0xffe4b2, 2.3);
 sun.position.set(-48, 80, -38);
 sun.castShadow = true;
-sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize);
 Object.assign(sun.shadow.camera, {
   left: -88,
   right: 88,

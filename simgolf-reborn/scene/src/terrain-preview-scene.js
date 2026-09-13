@@ -1,3 +1,4 @@
+import { renderQuality } from "./render-quality.js";
 import {isCoastal} from './simulation/coast.js';
 import * as THREE from 'three';
 import {createGame} from './simulation/game.js';
@@ -13,11 +14,11 @@ try{
  const game=createGame(seed,style,environment),ground=coastalPreview(game);
  setLandscapeState(ground);
  scene=new THREE.Scene();scene.background=new THREE.Color(0x83917a);
- renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+ renderer=new THREE.WebGLRenderer({antialias:true});const quality=renderQuality(renderer,devicePixelRatio);renderer.setPixelRatio(Math.min(quality.pixelRatio,1.5));
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
  document.body.prepend(renderer.domElement);
  scene.add(new THREE.HemisphereLight(0xe2ebdf,0x6f7552,1.65));
- const sun=new THREE.DirectionalLight(0xffe4b2,2.3);sun.position.set(-48,80,-38);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+ const sun=new THREE.DirectionalLight(0xffe4b2,2.3);sun.position.set(-48,80,-38);sun.castShadow=true;sun.shadow.mapSize.set(Math.min(quality.shadowSize,2048),Math.min(quality.shadowSize,2048));
  Object.assign(sun.shadow.camera,{left:-88,right:88,top:88,bottom:-88,near:1,far:210});sun.shadow.normalBias=.045;sun.shadow.bias=-.00006;scene.add(sun,sun.target);
  const fill=new THREE.DirectionalLight(0xc8d9e5,.4);fill.position.set(50,35,80);scene.add(fill);
  const terrain=buildLandscape(scene,()=>{});terrain.reshape();

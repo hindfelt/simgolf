@@ -1,6 +1,6 @@
 {
   "origin": "https://fairway-baron-multiplayer-review.hindfelt.workers.dev",
-  "startedAt": "2026-09-13T14:49:57.130Z",
+  "startedAt": "2026-09-13T14:58:04.166Z",
   "checks": [
     "Fresh server-created course and publication use current gameplay rules",
     "Authenticated invitation acceptance on phone viewport; calendar download; no horizontal overflow",
@@ -21,6 +21,8 @@
       "strokes": 3
     }
   ],
-  "finishedAt": "2026-09-13T14:51:45.749Z",
-  "browserErrors": []
+  "finishedAt": "2026-09-13T14:59:50.759Z",
+  "browserErrors": [],
+  "deploymentVersion": "2074bece-bb1f-4943-bc41-cc52e53f9b6b",
+  "gameCommit": "9ab4c8b"
 }

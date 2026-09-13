@@ -8,7 +8,7 @@
 - Eight authenticated local D1/browser integration tests passed: cooperative
   edits, reload/reconnect, spectator permissions, immutable publication practice,
   registration, two entrants completing rounds, withdrawal and earnings isolation.
-- Hosted review deployment `ba739bc9-93cb-4a3b-ac77-ee3a8a45ccf8` uses the
+- Hosted review deployment `2074bece-bb1f-4943-bc41-cc52e53f9b6b` uses the
   production gameplay source with a separate database and test identities.
 - A new server-created protocol-91 course was published. Two independent Chrome
   contexts (desktop and phone viewport) accepted an invitation, downloaded the
@@ -49,3 +49,9 @@ Phone viewport testing is not physical-phone performance testing. Hosted test
 sessions exercise authenticated authorization and gameplay, not Apple/Google
 OAuth consent on a real user account. Production player saves were not changed.
 Final physical-device and production OAuth acceptance remain open.
+
+## Production publication
+
+Fixes from `9ab4c8b` deployed to `simgolfer.0x4d.in` as Cloudflare version
+`2ec92ffd-ccbb-4c98-85e2-62baba43c698`. The final hosted multiplayer rerun
+uses the same game source. No production player data was changed by testing.

@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This checkpoint includes regional/audio work and recovered-runtime integration through `e856c65`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `9ab4c8b`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -25,9 +25,9 @@ summarizes what still remains; it does not replace the requirements in
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
-Production was updated on 2026-09-13 from game commit `e856c65` at
+Production was updated on 2026-09-13 from game commit `9ab4c8b` at
 https://simgolfer.0x4d.in/. Cloudflare version:
-`d6c3f467-fd48-40ad-9368-ceb889196246`. No new database migrations
+`2ec92ffd-ccbb-4c98-85e2-62baba43c698`. No new database migrations
 were required; migrations 0004–0011 were applied in the earlier deployment. The live login loaded without browser errors and all 25
 JavaScript/CSS assets matched the local build exactly. Authenticated production
 play and physical-device acceptance remain separate release gates.
