@@ -47,6 +47,8 @@ jobs:
     timeout-minutes: 35
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      # Bound llvmpipe workers so concurrent clients leave CPU for JS and D1.
+      LP_NUM_THREADS: '2'
     defaults:
       run:
         working-directory: simgolf-reborn/scene
@@ -84,6 +86,8 @@ jobs:
     timeout-minutes: 30
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      # Bound llvmpipe workers so concurrent clients leave CPU for JS and D1.
+      LP_NUM_THREADS: '2'
     defaults:
       run:
         working-directory: simgolf-reborn/scene
