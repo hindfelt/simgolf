@@ -43,6 +43,8 @@ The four requested areas remain open. This checkpoint closes only the initial cl
 
 ## Local soak
 
+The September 13 expanded soak adds a normally purchased, connected snack bar and checks that both holes receive actual shots, recovered putts execute, visitors complete facility service and sales settle. It also forks an active recovered putt into uninterrupted and restored simulations and compares their full state after another minute. Over 7,260 simulated seconds it completed 302 rounds, 304 services, nine helicopter landing fees and 12 reload cycles, with exact replay equality. Shot-key counts identify distinct visitor/hole/stroke combinations, not total shots across repeat visits. [Expanded machine-readable result](live-simulation-soak-2026-09-13.json). This validates the current mix of recovered and browser behavior, not complete original-game integration.
+
 The existing `node scripts/stability-soak.mjs` scenario ran 7,260 simulated seconds, completing 320 rounds with 12 reload cycles and nine $200 helicopter landing charges. After the reload sequence, another minute of uninterrupted and restored simulation matched exactly. This exercises the live resort loop; it is not hosted or physical-device verification. [Machine-readable result](live-simulation-soak-2026-09-12.json).
 
 The broad run also exposed stale tests for guaranteed long-putt success, old-course replay setup, and pre-variation coastlines. Cart collection now uses a short tap-in; legacy competitions are created with old pinned rules before playing; coast tests use the saved generation and construct an explicit water ring for the island route scenario. Assertions still require cart behavior, identical replay, continuous banks and playable bridge access.
