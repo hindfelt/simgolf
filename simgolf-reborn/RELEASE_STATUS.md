@@ -82,7 +82,8 @@ and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
   CI and the final repository revision, then deploy and smoke-test the actual
   hosted revision. Production contains `9ab4c8b`; GitHub permissions are fixed.
-  Expanded remote CI exposed software-rendering timeouts and remains under review.
+  Expanded remote CI failed on software-rendering timing and job limits;
+  run `34765776218` is not green. The rendering fallback remains undeployed.
 
 ## Evidence and limitations
 
@@ -103,3 +104,9 @@ live simulation until their integration is explicitly verified.
 The 2026-09-13 release run reported all 559 live cases passing, but hung during
 worker shutdown and was interrupted. This supersedes the older local test count
 above without claiming a clean full-suite exit. See deployment evidence.
+
+
+Latest source validation (`1debf6d`): **578 live tests passed with a clean exit**
+in 7.2 minutes locally. Linux CI remains failing, as detailed in the
+[September 13 validation report](references/release/release-validation-2026-09-13.md).
+This supersedes the older interrupted local-run count above.

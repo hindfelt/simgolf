@@ -55,3 +55,34 @@ Final physical-device and production OAuth acceptance remain open.
 Fixes from `9ab4c8b` deployed to `simgolfer.0x4d.in` as Cloudflare version
 `2ec92ffd-ccbb-4c98-85e2-62baba43c698`. The final hosted multiplayer rerun
 uses the same game source. No production player data was changed by testing.
+
+## Software rendering and final local regression
+
+Revision `1debf6d` passed all 578 live-game tests with a clean exit (7.2 minutes).
+The software renderer fallback retains scene geometry and shadows but uses a
+1024-pixel shadow map and caps device pixel ratio at one for SwiftShader,
+llvmpipe and softpipe. Hardware and privacy-masked renderers retain prior quality.
+Six software-rendered art checks pass locally, including the phone capture; the
+Linux graphics smoke checks also pass. Full Linux CI did not pass (run `34765776218`). The CI
+suite uses four shards with one worker each, keeping software renderers from
+competing within a runner; assertions remain unchanged.
+
+
+## Linux CI outcome
+
+Run `34765776218` tested source `1debf6d`. The root application job and six
+art smoke checks passed. Live shard 2 finished with 139 passes and three failures:
+preview readiness exceeded 15 seconds, a simulation-time golfer remark did not
+expire within the test's wall-clock allowance, and the landscape screenshot
+exceeded the total test budget. Shards 1, 3 and 4 hit the 25-minute job limit.
+The account/integration stages after shard 1 consequently did not run in this CI
+attempt; their local and isolated-hosted evidence above remains valid.
+
+This is not a green release pipeline. Next work is to make timed UI tests respect
+simulation time and give graphics-heavy tests a measured, sufficient runner
+budget. A local software-rendered new-game/preview check took 47.9 seconds versus
+6.5 seconds with normal rendering. The detailed art scene measured about one
+frame per second under software rendering on the local machine. Physical device
+performance acceptance and software-rendering responsiveness remain open.
+
+The rendering fallback is committed but has not replaced production `9ab4c8b`.
