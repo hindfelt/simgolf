@@ -38,7 +38,11 @@ jobs:
       - run: npm run build
 
   fairway-baron:
-    name: Fairway Baron live game
+    name: Fairway Baron live game (${{ matrix.shard }}/4)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
@@ -55,19 +59,23 @@ jobs:
       - run: npx playwright install --with-deps chrome
       - run: npm run build
       - name: Linux graphics smoke test
+        if: matrix.shard == 1
         run: npm run test:live -- tests/art-test.spec.js --workers=1 --reporter=line
         env:
           SIMGOLF_PUBLIC_TESTS: '1'
-      - run: npm run test:live -- --workers=2 --reporter=line
+      - run: npm run test:live -- --shard=${{ matrix.shard }}/4 --workers=1 --reporter=line
         env:
           SIMGOLF_PUBLIC_TESTS: '1'
       - run: npm run test:accounts
+        if: matrix.shard == 1
       - run: npm run test:account-browser
+        if: matrix.shard == 1
       - run: npm run test:shared-integration
+        if: matrix.shard == 1
       - name: Save browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: fairway-baron-browser-failures
+          name: fairway-baron-browser-failures-${{ matrix.shard }}
           path: simgolf-reborn/scene/test-results/
           retention-days: 7

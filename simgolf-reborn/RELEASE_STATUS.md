@@ -71,8 +71,9 @@ and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
   verification, Apple/Microsoft credentials and email delivery; complete hosted
   account lifecycle checks.
 - [ ] **Finish multiplayer release gates.** Hosted multi-device sessions,
-  scheduling and awards, invitation flows, full event completion, capacity and
-  resource measurements. Local shared-building tests are not production proof.
+  physical-device acceptance, capacity and resource measurements. Scheduling,
+  invitations, reload, two entrant rounds and persistent awards passed on the
+  isolated hosted deployment; see the September 13 validation evidence.
 - [ ] **Complete release stability assessment.** Broad regression on the final
   revision, prolonged hosted sessions, physical-phone performance, reconnect,
   save migration and recovery.
@@ -80,8 +81,8 @@ and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
   remaining differences for each requirement before claiming parity.
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
   CI and the final repository revision, then deploy and smoke-test the actual
-  hosted revision. Production now contains the committed game; GitHub publication
-  and remote CI remain blocked by credential scope.
+  hosted revision. Production contains `9ab4c8b`; GitHub permissions are fixed.
+  Expanded remote CI exposed software-rendering timeouts and remains under review.
 
 ## Evidence and limitations
 
