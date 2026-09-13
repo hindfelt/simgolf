@@ -46,7 +46,7 @@ function observations(g, advantages) {
 test("actual visitor scores earn a design accomplishment, retained through exact future replay", () => {
   const g = course();
   openHole(g);
-  for (let i = 0; i < 8000 && !g.accomplishments.length; i++) update(g, 0.05);
+  for (let i = 0; i < 14000 && !g.accomplishments.length; i++) update(g, 0.05);
   expect(g.accomplishments.map((r) => r.id)).toContain("first-challenge");
   expect(g.holes[0].stats.completed).toBeGreaterThan(0);
   expect(g.proProfile.points).toBe(13);
@@ -110,7 +110,7 @@ test("phone report includes a design award earned by real visitors", async ({
 }) => {
   const g = course();
   openHole(g);
-  for (let i = 0; i < 8000 && !g.accomplishments.length; i++) update(g, 0.05);
+  for (let i = 0; i < 14000 && !g.accomplishments.length; i++) update(g, 0.05);
   await page.addInitScript((save) => {
     if (!localStorage.getItem("simgolf-reborn.course.v1"))
       localStorage.setItem("simgolf-reborn.course.v1", save);

@@ -91,6 +91,14 @@ In Multiplayer → Tournament registration, choose a published course, playing w
 
 See [multiplayer verification](references/release/multiplayer-scheduling-2026-09-12.md) for the separate hosted review environment and remaining physical-device checks.
 
-### Live simulation integration — 12 September 2026
+### Live simulation integration — 13 September 2026
 
-New games use the recovered club selector and recovered flat-green putt motion, including cup capture and a saved strength-search cache. Existing saves and older published tournament courses retain their previous shot model. New straight shots also use recovered launch velocity, gravity and drag, with their sampled path shared by animation and collision checks. This is a partial integration: curved shots, landing release, sloped/edge putting, routing, reactions and facility decisions still use browser behavior. The live coordinate/height binding and accuracy policy are adaptations. [Integration evidence and remaining work](references/release/live-straight-flight-2026-09-13.md).
+New games use recovered shot selection, shaped flight, ground release and putting,
+plus recovered walking costs, golfer reaction history/outcomes and facility
+selection/payments. These run together through complete visitor rounds, with
+saved mid-shot and mid-service replay. Protocol 91 preserves older saves and
+published course rules. Start a fresh local game to use the latest visitor rules.
+
+Live coordinates, terrain costs, service duration, incident triggers and sound
+presentation remain explicit browser adaptations; this is not a claim of exact
+original-game parity. See [live visitor scope and tests](references/release/live-visitors-2026-09-13.md).

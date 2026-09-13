@@ -1,3 +1,5 @@
+import {nearestLiveFacility,liveFacilityArrival} from './live-original-facilities.js';
+import {liveOriginalRoute} from './live-original-routing.js';
 import {liveOriginalRelease,validateLiveRelease} from './live-original-release.js';
 import {liveOriginalFlight,validateLiveFlight} from './live-original-flight.js';
 import {airbornePoint,releasePoint} from './shot-motion.js';
@@ -192,6 +194,7 @@ export function createGame(
     landSeed: seed >>> 0,
     liveSimulationVersion:1,
     liveFlightVersion:2,
+    liveBehaviorVersion:1,
     landParcels: 0,
     time: 0,
     rng: seed >>> 0,
@@ -597,6 +600,10 @@ export function route(g, from, to) {
     }
     return best;
   }
+  if(g.liveBehaviorVersion===1)return liveOriginalRoute({width:GRID.width,height:GRID.height,start,end,from,to,
+    surfaceAt:(c,r)=>tile(g,c,r),walkingCost:s=>terrainRule(s).walk,
+    heightAt:(c,r)=>{const p=center(c,r);return elevationAt(g,p.x,p.z);},center,
+    edgeAllowed:tile(g,start.c,start.r)==="tree" ? (a,b)=>!treeGroundBlocker(g,a,b)(a,b) : undefined});
   const total = GRID.width * GRID.height,
     dist = new Float64Array(total).fill(Infinity),
     parent = new Int32Array(total).fill(-1),
@@ -1268,6 +1275,7 @@ function stepShot(g, v, dt) {
       v,
       s,
       turf?.type === "green" && turf.holeId === v.holeId,
+      g,
     );
   }
   if ((s.nativePutt ? s.nativePutt.state.status === "captured" : distance(v.ball, golferHole(g, v).green) < 0.75) || v.strokes >= 12) {
@@ -1333,7 +1341,7 @@ function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
     const f=options[v.id%Math.max(1,options.length)],dest=f&&facilityEntrance(g,f);
     if(dest && setRoute(g,v,dest,'service')) {v.serviceId=f.id;v.practiceFacilityId=f.id;v.wait=0;return;}
   }
-  const facility = g.facilities.find(
+  const candidates = g.facilities.filter(
     (f) =>
       connected(g, f) &&
       ((f.type === "bench" && v.energy < 80) ||
@@ -1343,6 +1351,7 @@ function chooseService(g, v, continuation = v.serviceContinuation || "exit") {
           wantsBallwash(v)) ||
         wantsTraining(v, f.type)),
   );
+  const facility=g.liveBehaviorVersion===1 ? nearestLiveFacility(candidates.filter(f=>{const p=facilityEntrance(g,f);return p&&route(g,v.pos,p);}),v.pos) : candidates[0];
   if (facility) {
     const dest = facilityEntrance(g, facility);
     if (dest && setRoute(g, v, dest, "service")) {
@@ -1371,8 +1380,8 @@ function facilityEntrance(g, f) {
   return connectedEntrance(g, f);
 }
 function complain(g, v, incident) {
-  if (!happinessReaction(v, incident, -1) || g.weeds.length >= 180) return;
-  if (random(g, "weedRng") >= RULES.complaintWeedChance) return;
+  if (!happinessReaction(v, incident, -1, g) || g.weeds.length >= 180) return;
+  if(g.liveBehaviorVersion===1 ? !v.nativeReactions?.growth : random(g, "weedRng") >= RULES.complaintWeedChance) return;
   const patch = spawnWeed(g, v.pos);
   // The same complaint cannot immediately become another complaint about
   // its own new patch. Other golfers can still notice it normally.
@@ -1862,7 +1871,20 @@ function stepSimulation(g, dt, runResort) {
       delete v.refreshmentStaffId;
     }
     if (v.phase === "walking") {
-      const next = v.path?.[0];
+      let next = v.path?.[0];
+      if(g.liveBehaviorVersion===1 && next){
+        const surface=lie(g,next);
+        const blocked=["water","blocked"].includes(surface) || (surface==="tree"&&treeGroundBlocker(g,v.pos,next)(v.pos,next));
+        if(blocked){
+          v.wait+=dt;
+          if(v.wait>=1){
+            const replacement=route(g,v.pos,v.path.at(-1));
+            v.wait=0;
+            if(replacement){v.path=replacement;next=v.path[0];}
+            else {v.comment="Please restore a walking route.";continue;}
+          }else continue;
+        }
+      }
       if (
         !v.pro &&
         !v.paid &&
@@ -1912,10 +1934,14 @@ function stepSimulation(g, dt, runResort) {
       }
       if (v.wait > (v.practiceFacilityId===f.id ? 24 : 3)) {
         if(v.practiceFacilityId===f.id){
+          if(g.liveBehaviorVersion===1){const visit=liveFacilityArrival(g,v,f);if(visit.income)money(g,visit.income,"Training facility sale");}
           delete v.practiceFacilityId;f.served++;g.stats.services++;
           v.comment='Enjoyed a little extra practice before heading home.';
           chooseService(g,v);continue;
         }
+        if(g.liveBehaviorVersion===1 && f.type==="bench")happinessReaction(v, `service:${f.type}:${v.holeId}`, 1, g);
+        const native=g.liveBehaviorVersion===1 ? liveFacilityArrival(g,v,f,()=>happinessReaction(v, `service:${f.type}:${v.holeId}`, 1, g)) : null;
+        if(native?.income)money(g,native.income,f.type==="snack"?"Snack bar sale":"Training facility sale");
         if (f.type === "bench") {
           v.energy = 100;
           v.comment = "That bench was just what I needed.";
@@ -1923,14 +1949,14 @@ function stepSimulation(g, dt, runResort) {
           v.hunger = 0;
           v.thirst = 0;
           v.comment = "Refreshed and ready for more golf.";
-          money(g, 3, "Snack bar sale");
+          if(!native)money(g, 3, "Snack bar sale");
         } else if (f.type === "ballwasher") {
           completeBallwash(v);
         } else {
           completeTraining(v, f.type);
         }
         if (f.type !== "ballwasher") {
-          happinessReaction(v, `service:${f.type}:${v.holeId}`, 1);
+          if(g.liveBehaviorVersion!==1)happinessReaction(v, `service:${f.type}:${v.holeId}`, 1, g);
           v.mood = clamp(v.mood + 8, 0, 100);
         }
         f.served++;
@@ -1971,6 +1997,7 @@ export function restore(raw) {
     throw Error("Save is too large or unreadable.");
   const g = JSON.parse(raw);
   if(g.liveStrengthCache!==undefined)validateLiveStrengthCache(g.liveStrengthCache);
+  if(g.liveBehaviorVersion!==undefined&&g.liveBehaviorVersion!==1)throw Error("Unsupported live behavior version.");
   if(g.liveFlightVersion!==undefined&&![1,2].includes(g.liveFlightVersion))throw Error("Unsupported live flight version.");
   if(g.liveSimulationVersion!==undefined&&g.liveSimulationVersion!==1)throw Error("Unsupported live simulation version.");
   if (g?.version === 1) migrateSingleHole(g);

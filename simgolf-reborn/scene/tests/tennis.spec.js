@@ -21,6 +21,7 @@ function course(link) {
   expect(build(g, "tennis-court", 22, 15).ok).toBe(true);
   if (link)
     for (let c = 8; c <= 22; c++) expect(build(g, "path", c, 11).ok).toBe(true);
+  g.nextId=1000; // First pair includes a below-floor arrival, before repeat visits.
   return g;
 }
 test("connected court floors starting attitude, does not lower positive mood or stack", () => {

@@ -1,3 +1,4 @@
+import {originalPathCost} from './original-path-cost.js';
 import {originalHeading} from './original-heading.js';
 import {originalWalkingOctant} from './original-walking-near-steering.js';
 import {originalPathfinderSelection} from './original-pathfinder-selection.js';
@@ -28,18 +29,11 @@ export function originalPathfinder(snapshot){
   const current=x*50+z,currentCost=visited[current];
   if(currentCost<=limit)for(let d=0;d<8;d++){
    const nx=x+DX[d],nz=z+DZ[d];if(nx<0||nx>=50||nz<0||nz>=50)continue;
-   const i=nx*50+nz,previous=visited[i],code=terrain[i];let cost=traversalCosts[i]+(d&1);
-   if(nx===partner.x&&nz===partner.z)cost+=2;
-   if(!(d&1)&&(tileFlags[i]&0x420)===32&&(tileFlags[current]&32)){
-    const a=nx-destination.x,b=nz-destination.z,cardinal=Math.abs(a)>Math.abs(b)?(a>0?2:6):(b>0?4:0);
-    cost=d===cardinal?0:1;
-   }
-   if((state.worldFlags&256)||own.getUint8(0x29)===19){
-    if(code>=128)throw Error('Signed terrain metadata before table is unavailable.');
-    cost=code===0||code===1||code===2||metadataClass[code]===7?cost+1:(cost+1)>>1;
-   }
-   if((code===17||code===20)&&!(tileFlags[i]&32)&&currentCost<64)cost+=16;
-   cost+=currentCost;if((previous!==0&&previous<=cost)||cost>255)continue;
+   const i=nx*50+nz,previous=visited[i],code=terrain[i];if(((state.worldFlags&256)||own.getUint8(0x29)===19)&&code>=128)throw Error('Signed terrain metadata before table is unavailable.');
+   const cost=originalPathCost({traversalCost:traversalCosts[i],diagonal:!!(d&1),occupied:nx===partner.x&&nz===partner.z,
+    flags:tileFlags[i],currentFlags:tileFlags[current],direction:d,x:nx,z:nz,destination,
+    worldFlags:state.worldFlags,departing:own.getUint8(0x29)===19,code,metadataClass:metadataClass[code],currentCost});
+   if((previous!==0&&previous<=cost)||cost>255)continue;
    visited[i]=cost;queueX[tail]=nx;queueZ[tail]=nz;tail=(tail+1)&1023;
    if(nx===origin.x&&nz===origin.z)limit=cost;
   }

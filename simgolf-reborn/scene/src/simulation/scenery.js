@@ -12,7 +12,7 @@ export function enjoyFlowers(g, v) {
   );
   if (!bed) return false;
   v.flowerHoleId = v.holeId;
-  happinessReaction(v, `flowers:${v.holeId}`, 1);
+  happinessReaction(v, `flowers:${v.holeId}`, 1, g);
   v.mood = Math.min(100, v.mood + 4);
   v.comment = "Lovely flowers along the course.";
   return true;

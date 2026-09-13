@@ -14,9 +14,9 @@ export function stepGreeter(g, s, dt, walk) {
       Math.hypot(v.pos.x - s.pos.x, v.pos.z - s.pos.z) > RULES.clubProRadius
     )
       continue;
-    const welcome = happinessReaction(v, "club-pro-welcome", 1);
+    const welcome = happinessReaction(v, "club-pro-welcome", 1, g);
     const celebrity =
-      s.role === "celebrity" && happinessReaction(v, "celebrity-welcome", 1);
+      s.role === "celebrity" && happinessReaction(v, "celebrity-welcome", 1, g);
     if (welcome || celebrity) {
       v.comment =
         s.role === "celebrity"

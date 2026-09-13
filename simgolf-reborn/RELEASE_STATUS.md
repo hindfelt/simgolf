@@ -45,16 +45,21 @@ contour-aware live putting, and golfer targeting that predicts full flight and
 roll. New games use this version; old saves and version-89 course packages retain
 their previous motion. The deployed preview above is unchanged.
 
-The complete recovered reaction, walking-route and facility state machines are
-still not installed in the live world. End-to-end tests exercise the current
-mixed implementation; they do not establish original-game parity.
-See [live motion scope and evidence](references/release/live-shaped-motion-2026-09-13.md).
+Protocol 91 connects recovered routing costs, remark history/selection/outcomes,
+and nearest-facility search/service payments to live visitors. Complete rounds
+now exercise these together with shots, release, putting and score settlement.
+New games enable the new visitor rules; older saves and published courses retain
+their rules for replay compatibility. This is local work, not another deployment.
+See [visitor integration evidence](references/release/live-visitors-2026-09-13.md)
+and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
 
 ## Remaining completion checklist
 
-- [ ] **Adopt the recovered simulation in live gameplay.** Finish current-world
-  map/effect bindings, shot planning, putting slopes, motion, audible reactions
-  and completion. Isolated native comparisons do not prove live adoption.
+- [x] **Connect the core live gameplay loop.** Shots, putting, reactions,
+  routing, facility visits and completed rounds run through tested live adapters.
+- [ ] **Finish original-game fidelity and audio acceptance.** Live world scale,
+  service durations, some incident triggers and sound presentation remain browser
+  adaptations. This checkpoint does not establish bit-for-bit retail parity.
 - [ ] **Complete original career progression.** SGA evaluation, eligibility,
   rankings, tournament prizes, accomplishments, progression and retirement.
 - [ ] **Complete resort fidelity.** Original facility gates/upgrades, staff

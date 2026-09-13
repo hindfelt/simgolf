@@ -52,7 +52,7 @@ assert.ok(midReleaseReplay,'Live ground release and mid-release replay were not 
 assert.ok(putts.size>0&&midPuttReplay,'Recovered putting and mid-putt replay were not exercised.');
 assert.ok(game.stats.services>0,'No live facility visits completed.');
 assert.ok(game.facilities.find(f=>f.type==='snack').served>0,'The snack facility served no visitors.');
-assert.ok(game.ledger.some(e=>e.reason==='Snack bar sale'&&e.amount===3),'No snack purchase was settled.');
+assert.ok(game.ledger.some(e=>e.reason==='Snack bar sale'&&e.amount===(game.liveBehaviorVersion===1?5:3)),'No snack purchase was settled.');
 const fees=game.ledger.filter(entry=>entry.reason==='Helicopter landing fee');
 assert.ok(fees.length>1,'Repeated helicopter lifecycles were not exercised.');
 assert.ok(fees.every(entry=>entry.amount===200),'Incorrect helicopter landing fee.');

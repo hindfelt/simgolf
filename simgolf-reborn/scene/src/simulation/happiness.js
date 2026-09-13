@@ -1,3 +1,4 @@
+import {liveReaction,validateNativeReactions} from './live-original-reactions.js';
 // Original fee unit and +/-1 comments: Sid Meier's archived fun-rating notes.
 // Mapping the prototype mood to starting points and incident deduplication are provisional.
 export const FEE_PER_HAPPINESS = 100;
@@ -9,16 +10,17 @@ const LEGACY_AIRSTRIP_FEE_RATE = 0.25;
 export function initialHappiness(mood) {
   return Math.max(2, Math.min(5, Math.round(mood / 20)));
 }
-export function happinessReaction(v, incident, delta) {
+export function happinessReaction(v, incident, delta, g) {
   if (v.pro || v.paid) return false;
   v.happiness ??= initialHappiness(v.mood);
   v.happinessReactions ??= [];
   if (v.happinessReactions.includes(incident)) return false;
   v.happinessReactions.push(incident);
-  if (v.holeReactions?.holeId === v.holeId)
+  if(g?.liveBehaviorVersion===1)delta=liveReaction(g,v,incident,delta);
+  if (delta!==0 && v.holeReactions?.holeId === v.holeId)
     v.holeReactions[delta > 0 ? "positive" : "negative"]++;
 
-  v.happiness = Math.max(-10, Math.min(10, v.happiness + delta));
+  if(g?.liveBehaviorVersion!==1)v.happiness = Math.max(-10, Math.min(10, v.happiness + delta));
   return true;
 }
 export function greenFee(v) {
@@ -28,6 +30,7 @@ export function airstripFeeBonus(v, connectedAirstrip) {
   return connectedAirstrip && !v.pro ? AIRSTRIP_FEE_BONUS : 0;
 }
 export function validateHappiness(v) {
+  validateNativeReactions(v);
   if (v.pro) return;
   if (
     (v.holeReactions !== undefined &&
@@ -66,7 +69,7 @@ export function validFeeSnapshot(s) {
 
 // Provisional great-shot recognition: a clean approach of at least 40 yards
 // that holds the golfer's own green. Exact original snap-shot criteria are unknown.
-export function appreciateApproach(v, shot, ownGreen) {
+export function appreciateApproach(v, shot, ownGreen, g) {
   if (
     !ownGreen ||
     shot.putt ||
@@ -75,7 +78,7 @@ export function appreciateApproach(v, shot, ownGreen) {
     Math.hypot(v.ball.x - shot.from.x, v.ball.z - shot.from.z) < 10
   )
     return false;
-  if (!happinessReaction(v, `great-shot:${v.holeId}`, 1)) return false;
+  if (!happinessReaction(v, `great-shot:${v.holeId}`, 1, g)) return false;
   v.comment = "What a lovely approach! Right onto the green.";
   return true;
 }

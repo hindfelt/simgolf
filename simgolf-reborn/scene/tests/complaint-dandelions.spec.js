@@ -19,6 +19,7 @@ function tired() {
   g.weedRevision++;
   g.nextWeed = 10000;
   g.weedRng = 0;
+  g.rng = 0; // Native outcome draw selects growth.
   const v = g.guests[0];
   v.energy = 29;
   v.pos = { x: 12, z: 12 };
@@ -28,12 +29,12 @@ function tired() {
   v.seenWeeds = [];
   return { g, v };
 }
-test("one distinct complaint creates local dandelions without repeating each frame or consuming shot RNG", () => {
+test("one distinct complaint creates local dandelions without repeating each frame; native RNG and history replay exactly", () => {
   const { g, v } = tired(),
     rng = g.rng;
   update(g, 0.05);
   expect(g.weeds).toHaveLength(1);
-  expect(g.rng).toBe(rng);
+  expect(g.rng).toBe((Math.imul(rng,0x41c64e6d)+0x3039)>>>0);
   const w = g.weeds[0],
     origin = cellAt(v.pos.x, v.pos.z);
   expect(Math.abs(w.c - origin.c)).toBeLessThanOrEqual(3);

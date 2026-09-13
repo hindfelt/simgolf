@@ -46,6 +46,7 @@ export function stepVendor(g, s, dt, setRoute, walk) {
           v,
           `${s.role === "consultant" ? "consultant" : "vendor"}:${v.holeId}`,
           1,
+          g,
         );
         v.comment =
           s.role === "consultant"

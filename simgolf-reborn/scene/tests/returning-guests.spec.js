@@ -75,7 +75,7 @@ test("happy visitor returns with identity and trained skills, fresh round and un
 test("unhappy visitors return later and older missing profiles are not invented", () => {
   const g = setup(),
     v = g.guests[0];
-  leave(g, v, 10);
+  leave(g, v, 40); // Unhappy, but above the separate rage/early-departure threshold.
   expect(g.guestRoster.find((p) => p.id === v.id).nextVisitAt).toBeGreaterThan(
     g.time + RETURN_POLICY.delay,
   );
