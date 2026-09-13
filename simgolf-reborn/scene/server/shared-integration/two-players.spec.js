@@ -4,6 +4,9 @@ import {readFileSync} from 'node:fs';
 // Stop after a prerequisite fails instead of reporting downstream missing fixtures.
 test.describe.configure({mode:'serial'});
 test('two authenticated browsers share edits, reconnect and enforce spectator access against real D1',async({browser})=>{
+ // Two software-rendered clients, several reloads and permission round-trips.
+ // Linux measured over three minutes before reaching the first reload.
+ if(process.env.CI)test.setTimeout(480000);
  const [owner,editor]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
  async function client(player){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);return {context,page:await context.newPage()};}
  const a=await client(owner),b=await client(editor),errors=[];a.page.setDefaultTimeout(process.env.CI?30000:10000);b.page.setDefaultTimeout(process.env.CI?30000:10000);
