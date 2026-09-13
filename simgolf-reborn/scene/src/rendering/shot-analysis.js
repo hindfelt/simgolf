@@ -1,3 +1,4 @@
+import {airbornePoint} from '../simulation/shot-motion.js';
 import * as THREE from "three";
 export const ANALYSIS_COLORS = ["#fff5a4", "#f39783", "#80d7ff", "#d7a0ff"];
 export function analysisOverlay(scene, height) {
@@ -13,23 +14,10 @@ export function analysisOverlay(scene, height) {
   function show(rows) {
     clear();
     rows.forEach((row, index) => {
-      const s = row.samples[0],
-        dx = s.landing.x - s.from.x,
-        dz = s.landing.z - s.from.z,
-        len = Math.hypot(dx, dz) || 1,
-        points = [];
-      for (let i = 0; i <= 40; i++) {
-        const t = (i / 40) * (s.obstruction?.t ?? 1),
-          bend = Math.sin(Math.PI * t) * s.curve,
-          x = s.from.x + dx * t - (dz / len) * bend,
-          z = s.from.z + dz * t + (dx / len) * bend;
-        points.push(
-          new THREE.Vector3(
-            x,
-            height(x, z) + 0.2 + 4 * s.apex * t * (1 - t),
-            z,
-          ),
-        );
+      const s=row.samples[0],points=[];
+      for(let i=0;i<=40;i++) {
+        const sample=airbornePoint(s,i/40*(s.obstruction?.t??1));
+        points.push(new THREE.Vector3(sample.x,height(sample.x,sample.z)+.2+sample.lift,sample.z));
       }
       points.push(
         new THREE.Vector3(s.end.x, height(s.end.x, s.end.z) + 0.2, s.end.z),

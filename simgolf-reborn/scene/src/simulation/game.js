@@ -1,3 +1,4 @@
+import {airbornePoint,releasePoint} from './shot-motion.js';
 import {startLiveOriginalPutt,stepLiveOriginalPutt,validateLiveOriginalPutt,validateLiveStrengthCache} from './live-original-putting.js';
 import {liveOriginalLaunch} from './live-original-launch.js';
 import {stepAircraft,validateAircraft} from "./aircraft.js";
@@ -1179,26 +1180,11 @@ function stepShot(g, v, dt) {
       z: s.from.z + (s.end.z - s.from.z) * t,
     };
   } else if (s.time < s.duration) {
-    const t = s.time / s.duration,
-      bend = Math.sin(t * Math.PI) * s.curve,
-      dx = s.landing.x - s.from.x,
-      dz = s.landing.z - s.from.z,
-      len = Math.hypot(dx, dz) || 1;
-    point = {
-      x: s.from.x + dx * t - (dz / len) * bend,
-      z: s.from.z + dz * t + (dx / len) * bend,
-    };
-    lift = 4 * s.apex * t * (1 - t);
+    const sample=airbornePoint(s,s.time/s.duration);
+    point={x:sample.x,z:sample.z};lift=sample.lift;
   } else {
-    const t = clamp((s.time - s.duration) / 1.8, 0, 1),
-      u = 1 - (1 - t) ** 2;
-    point = {
-      x: s.landing.x + (s.end.x - s.landing.x) * u,
-      z: s.landing.z + (s.end.z - s.landing.z) * u,
-    };
-    if (t < 0.2) lift = Math.sin((t / 0.2) * Math.PI) * (s.bounce ?? 0.35);
-    else if (t < 0.33)
-      lift = Math.sin(((t - 0.2) / 0.13) * Math.PI) * (s.bounce ?? 0.35) * 0.28;
+    const sample=releasePoint(s,clamp((s.time-s.duration)/1.8,0,1));
+    point={x:sample.x,z:sample.z};lift=sample.lift;
   }
   v.ball = point;
   v.ballHeight = lift;

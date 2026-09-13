@@ -1,3 +1,4 @@
+import {airbornePoint} from './shot-motion.js';
 import {isCoastal} from './coast.js';
 import {treeScale} from "./tree-scale.js";
 import { GRID, center, key } from "./world.js";
@@ -62,13 +63,8 @@ export function treeCollision(g, shot) {
     Math.ceil((len + Math.abs(shot.curve) * 4) / 0.12),
   );
   for (let i = 1; i <= steps; i++) {
-    const t = i / steps,
-      bend = Math.sin(t * Math.PI) * shot.curve;
-    const point = {
-        x: shot.from.x + dx * t - (dz / len) * bend,
-        z: shot.from.z + dz * t + (dx / len) * bend,
-      },
-      height = 4 * shot.apex * t * (1 - t);
+    const t=i/steps, sample=airbornePoint(shot,t);
+    const point={x:sample.x,z:sample.z},height=sample.lift;
     for (const tree of candidates) {
       const relativeHeight = height +
         elevationAt(g, point.x, point.z) - elevationAt(g, tree.x, tree.z);
