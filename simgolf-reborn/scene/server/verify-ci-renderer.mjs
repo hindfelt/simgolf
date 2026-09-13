@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {browserRuntime} from '../browser-runtime.js';
-const browser=await chromium.launch({channel:'chrome',...browserRuntime});
+const browser=await chromium.launch({channel:'chrome',headless:browserRuntime.headless,...browserRuntime.launchOptions});
 try {
  const page=await browser.newPage();
  page.on('console',message=>console.log(message.type(),message.text()));

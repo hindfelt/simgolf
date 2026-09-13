@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chrome
       - run: sudo apt-get install -y libgl1-mesa-dri xvfb
-      - run: xvfb-run -a node server/verify-ci-renderer.mjs
+      - run: DEBUG=pw:browser xvfb-run -a node server/verify-ci-renderer.mjs
       - run: npm run build
       - name: Linux graphics smoke test
         if: matrix.shard == 1
