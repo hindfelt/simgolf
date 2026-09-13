@@ -1,16 +1,19 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
+// These scenarios intentionally continue the course/publication/event created above.
+// Stop after a prerequisite fails instead of reporting downstream missing fixtures.
+test.describe.configure({mode:'serial'});
 test('two authenticated browsers share edits, reconnect and enforce spectator access against real D1',async({browser})=>{
  const [owner,editor]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
  async function client(player){const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'__Host-simgolfer_session',value:player.token,domain:'localhost',path:'/',secure:true,httpOnly:true,sameSite:'Lax'}]);return {context,page:await context.newPage()};}
- const a=await client(owner),b=await client(editor),errors=[];a.page.setDefaultTimeout(10000);b.page.setDefaultTimeout(10000);
+ const a=await client(owner),b=await client(editor),errors=[];a.page.setDefaultTimeout(process.env.CI?30000:10000);b.page.setDefaultTimeout(process.env.CI?30000:10000);
  a.page.on('pageerror',e=>errors.push(e.message));b.page.on('pageerror',e=>errors.push(e.message));
  try{
   await a.page.goto('http://localhost:8789/');await a.page.getByRole('button',{name:'Multiplayer',exact:true}).click();await a.page.getByText('Shared courses',{exact:true}).click();
   await a.page.getByLabel('New shared course name').fill('Two-player links');await a.page.getByRole('button',{name:'Create shared course',exact:true}).click();await expect(a.page).toHaveURL(/shared=/);await expect(a.page.locator('#shared-status')).toContainText('owner');
   const url=a.page.url();const original=await a.page.evaluate(()=>localStorage.getItem(Object.keys(localStorage).find(k=>k.endsWith('.simgolf-reborn.course.v1'))));
   await a.page.getByRole('button',{name:'Account',exact:true}).click();await a.page.getByText('Shared courses',{exact:true}).click();await a.page.getByText('Manage access',{exact:true}).click();await a.page.getByLabel('Player ID',{exact:true}).fill(editor.id);await a.page.getByRole('button',{name:'Update access',exact:true}).click();await expect(a.page.locator('#account-status')).toHaveText('Course access updated.');await a.page.getByRole('button',{name:'Close account',exact:true}).click();
-  await b.page.goto(url);await expect(b.page.locator('#shared-status')).toContainText('editor');
+  await b.page.goto(url);await b.page.waitForFunction(()=>window.__gameTest);await expect(b.page.locator('#shared-status')).toContainText('editor');
   for(const [tool,x,z,field] of [['Tee',-29,7,'tee'],['Green',1,-13,'green']]){
    await a.page.getByRole('button',{name:tool,exact:true}).click();const point=await a.page.evaluate(({x,z})=>window.__gameTest.project(x,z),{x,z});await a.page.mouse.click(point.x,point.y);
    await expect.poll(()=>a.page.evaluate(field=>!!window.__gameTest.getState().holes[0][field],field)).toBe(true);
