@@ -40,7 +40,7 @@ test('two authenticated browsers share edits, reconnect and enforce spectator ac
   expect(await b.page.evaluate(()=>window.__gameTest.getState().holes.length)).toBe(2);
   expect(await a.page.evaluate(()=>localStorage.getItem(Object.keys(localStorage).find(k=>k.endsWith('.simgolf-reborn.course.v1'))))).toBe(original);
   expect(errors).toEqual([]);
- }catch(error){console.log('Shared integration failure:',error.message);throw error;}finally{await Promise.allSettled([a.context.close(),b.context.close()]);}
+ }catch(error){console.log('Shared integration failure:',error.message);console.log('Browser errors:',errors);for(const client of [a,b])console.log('Client startup:',await client.page.evaluate(()=>({url:location.href,visibility:document.visibilityState,ready:!!window.__gameTest})).catch(()=>null));throw error;}finally{await Promise.allSettled([a.context.close(),b.context.close()]);}
 });
 test('shared-course lobby remains usable on a phone',async({browser})=>{
  const [owner]=JSON.parse(readFileSync('.wrangler/shared-integration/players.json','utf8'));
