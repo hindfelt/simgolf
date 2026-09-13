@@ -20,7 +20,7 @@ export function startLiveOriginalPutt(g,v,cup,{lie,height,skill,blocked=()=>fals
  const puttingSkill=Math.round(Math.max(0,Math.min(1,skill))*8);
  const aim=originalPuttingAim({distanceYards:Math.round(d*RULES.yardsPerUnit),windowBeforeGreen:originalPuttingWindow({stateFlags:0,adjustmentLevel:0,golferFlags:0,golferType:0,skillFlags:puttingSkill?16:0,puttingSkill}),attitude:0,seed:g.rng});
  // Use the recovered ring cache across golfers and saves. Airborne launch
- // searches remain outside this adapter, so full retail cache order is pending.
+ // searches share it in liveFlightVersion 1; full retail launch order is pending.
  const strength=originalStrengthSearch({distance:Math.round(d*RULES.yardsPerUnit)+2,verticalSpeed:0,mode:1,rollCoefficient:3},g.liveStrengthCache??originalStrengthCache());
  g.liveStrengthCache=strength.cache;
  const rng=originalRandom(aim.rngState),bound=Math.trunc(strength.speed/8);
@@ -49,5 +49,5 @@ export function validateLiveOriginalPutt(p){
 }
 
 export function validateLiveStrengthCache(c){
- if(!c||!Number.isInteger(c.next)||c.next<0||c.next>=10||!Array.isArray(c.entries)||c.entries.length!==10||!c.entries.every(e=>e&&Number.isInteger(e.distance)&&e.distance>=0&&e.distance<=50&&e.verticalSpeed===0&&Number.isInteger(e.speed)&&e.speed>=0&&e.speed<=100000))throw Error('Invalid live strength cache.');
+ if(!c||!Number.isInteger(c.next)||c.next<0||c.next>=10||!Array.isArray(c.entries)||c.entries.length!==10||!c.entries.every(e=>e&&Number.isInteger(e.distance)&&e.distance>=0&&e.distance<=330&&Number.isInteger(e.verticalSpeed)&&e.verticalSpeed>=0&&e.verticalSpeed<=100000&&Number.isInteger(e.speed)&&e.speed>=0&&e.speed<=100000))throw Error('Invalid live strength cache.');
 }

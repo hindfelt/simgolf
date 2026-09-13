@@ -1,3 +1,4 @@
+import {liveOriginalFlight,validateLiveFlight} from './live-original-flight.js';
 import {airbornePoint,releasePoint} from './shot-motion.js';
 import {startLiveOriginalPutt,stepLiveOriginalPutt,validateLiveOriginalPutt,validateLiveStrengthCache} from './live-original-putting.js';
 import {liveOriginalLaunch} from './live-original-launch.js';
@@ -189,6 +190,7 @@ export function createGame(
     landscapeStyle: landscape,
     landSeed: seed >>> 0,
     liveSimulationVersion:1,
+    liveFlightVersion:1,
     landParcels: 0,
     time: 0,
     rng: seed >>> 0,
@@ -977,9 +979,12 @@ export function takeShot(g, v, target, technique = "straight") {
       (random(g) - 0.5) * spread * accuracyFactor,
   };
   const nativePutt=putt&&g.liveSimulationVersion===1?startLiveOriginalPutt(g,v,cup,{lie,height:elevationAt,skill:proSkill(v,"putter"),blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)}):null;
+  const nativeFlight=!putt&&technique==='straight'&&g.liveFlightVersion===1&&g.liveSimulationVersion===1
+    ?liveOriginalFlight(g,from,landing,carry,shotLimit(g,v),lie(g,from),elevationAt,aim):null;
+  if(nativeFlight){const last=nativeFlight.samples.at(-1);landing.x=last.x;landing.z=last.z;}
   const rise =
     elevationAt(g, landing.x, landing.z) - elevationAt(g, from.x, from.z);
-  if (!putt && rise) {
+  if (!putt && !nativeFlight && rise) {
     const f = Math.max(0.6, Math.min(1.15, 1 - rise / Math.max(10, carry)));
     landing.x = from.x + (landing.x - from.x) * f;
     landing.z = from.z + (landing.z - from.z) * f;
@@ -1020,7 +1025,8 @@ export function takeShot(g, v, target, technique = "straight") {
   if (v.holeReactions?.holeId === v.holeId) v.holeReactions.shots++;
   v.shot = {
     ...(nativePutt?{nativePutt}:{}),
-    club:launch.club,
+    ...(nativeFlight?{nativeFlight}:{}),
+    club:nativeFlight?.club ?? launch.club,
     strengthYards:launch.strengthYards,
     from,
     landing,
@@ -1029,7 +1035,7 @@ export function takeShot(g, v, target, technique = "straight") {
     waterLanding: nativePutt ? false : waterLanding,
     end: endpoint,
     time: 0,
-    duration: putt ? 1.3 : 1.2 + carry * 0.028,
+    duration: nativeFlight?.duration ?? (putt ? 1.3 : 1.2 + carry * 0.028),
     apex: putt
       ? 0
       : carry *
@@ -1942,6 +1948,7 @@ export function restore(raw) {
     throw Error("Save is too large or unreadable.");
   const g = JSON.parse(raw);
   if(g.liveStrengthCache!==undefined)validateLiveStrengthCache(g.liveStrengthCache);
+  if(g.liveFlightVersion!==undefined&&g.liveFlightVersion!==1)throw Error("Unsupported live flight version.");
   if(g.liveSimulationVersion!==undefined&&g.liveSimulationVersion!==1)throw Error("Unsupported live simulation version.");
   if (g?.version === 1) migrateSingleHole(g);
   if (g?.version === 2) {
@@ -2130,6 +2137,10 @@ export function restore(raw) {
       ].includes(v.phase)
     )
       throw Error("Invalid golfer in save.");
+    if(v.shot?.nativeFlight){
+      if(g.liveFlightVersion!==1||g.liveSimulationVersion!==1||v.shot.putt)throw Error('Invalid live flight context.');
+      validateLiveFlight(v.shot.nativeFlight,v.shot);
+    }
     if(v.shot?.nativePutt){
       if(g.liveSimulationVersion!==1||!v.shot.putt||v.shot.waterLanding)throw Error("Invalid live putt context.");
       validateLiveOriginalPutt(v.shot.nativePutt);

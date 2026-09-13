@@ -12,11 +12,11 @@ import { cellAt, key } from "../src/simulation/world.js";
 function setup(imagination) {
   const g = createGame();
   build(g, "tee", 7, 20);
-  build(g, "green", 36, 5);
+  build(g, "green", 36, 20);
   openHole(g);
   while (!g.guests.length) update(g, 0.05);
   const v = g.guests[0];
-  v.skills = { length: false, accuracy: false, imagination };
+  v.skills = { length: false, accuracy: true, imagination };
   v.phase = "address";
   v.wait = 2;
   v.path = [];

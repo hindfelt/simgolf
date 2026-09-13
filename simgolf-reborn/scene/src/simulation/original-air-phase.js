@@ -10,9 +10,7 @@ export function originalAirPhase({ball,previousTerrainHeight,terrainHeight,cellX
   ![ball.heading,stateFlags].every(n=>Number.isInteger(n)&&n>=0&&n<=0xffffffff)||
   typeof skillEnabled!=='boolean'||!Number.isInteger(skillMask)||skillMask<0||skillMask>65535||
   !Number.isInteger(luck)||luck<0||luck>255)throw Error('Invalid original airborne phase.');
- let next={...ball,height:(ball.height+((previousTerrainHeight-terrainHeight)|0))|0,
-  speed:(ball.speed-Math.trunc((ball.speed>>4)/2))|0,
-  heading:(ball.heading+Math.trunc(ball.angularOffset/2))>>>0};
+ let next=originalAirMotion(ball,previousTerrainHeight,terrainHeight);
  const obstacle=originalObstacleHeight({terrainCode,height:next.height,variant,terrainFlags,seed});
  const rng=originalRandom(obstacle.seed);
  let hit=false,sound=null;
@@ -31,4 +29,12 @@ export function originalAirPhase({ball,previousTerrainHeight,terrainHeight,cellX
  }
  next.seed=rng.state;
  return {ball:next,stateFlags,hit,sound,rngState:rng.state,draws:obstacle.draws+rng.draws};
+}
+
+// Recovered unobstructed motion arithmetic, also used by the live flight adapter.
+// Obstacle policy stays with the caller; no synthetic native terrain is supplied.
+export function originalAirMotion(ball,previousTerrainHeight,terrainHeight) {
+ return {...ball,height:(ball.height+((previousTerrainHeight-terrainHeight)|0))|0,
+  speed:(ball.speed-Math.trunc((ball.speed>>4)/2))|0,
+  heading:(ball.heading+Math.trunc(ball.angularOffset/2))>>>0};
 }

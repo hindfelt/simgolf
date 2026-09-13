@@ -40,7 +40,7 @@ test("coastal hole plays and shared course preserves shoreline geometry", async 
   // Course sharing intentionally omits live turf wear from played shots.
   expect(copy.tiles).toEqual(
     Object.fromEntries(
-      Object.entries(g.tiles).map(([k, { wear, ...surface }]) => [k, surface]),
+      Object.entries(g.tiles).map(([k, { wear, neglectedSince, ...surface }]) => [k, surface]),
     ),
   );
   expect(copy.elevation).toEqual(g.elevation);

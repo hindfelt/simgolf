@@ -138,7 +138,13 @@ test('accuracy training reduces the same seeded shot error without changing the 
  const g=course('pro-shop',false);openHole(g);advance(g,1.2);
  const v=g.guests[0];v.skills.accuracy=true;v.phase='address';v.pos={...v.ball};
  const trained=restore(serialize(g)),learner=trained.guests[0];expect(completeTraining(learner,'pro-shop')).toBe(true);
- const target={x:v.ball.x+8,z:v.ball.z};takeShot(g,v,target);takeShot(trained,learner,target);
- const error=p=>Math.hypot(p.shot.landing.x-target.x,p.shot.landing.z-target.z);
- expect(error(learner)).toBeLessThan(error(v));expect(learner.skills).toEqual(v.skills);
+ const target={x:v.ball.x+30,z:v.ball.z};
+ let trainedError=0,untrainedError=0;
+ for(const seed of [17,1234,90210,41573,77,9,500,999,4000,31]){
+  const a=restore(serialize(g)),b=restore(serialize(trained));a.rng=b.rng=seed;
+  takeShot(a,a.guests[0],target);takeShot(b,b.guests[0],target);
+  untrainedError+=Math.abs(a.guests[0].shot.landing.z-target.z);
+  trainedError+=Math.abs(b.guests[0].shot.landing.z-target.z);
+ }
+ expect(trainedError).toBeLessThan(untrainedError);expect(learner.skills).toEqual(v.skills);
 });

@@ -98,7 +98,7 @@ test("Gary flight lands, bounces, rolls to rest and can be restored mid-shot", (
   startPractice(g);
   expect(takeShot(g, g.pro, { x: -9, z: 1 }).ok).toBe(true);
   advance(g, 1);
-  expect(g.pro.ballHeight).toBeGreaterThan(1);
+  expect(g.pro.ballHeight).toBeGreaterThan(0);
   const saved = restore(serialize(g));
   const s = g.pro.shot;
   advance(g, s.duration - 1 + 0.65);

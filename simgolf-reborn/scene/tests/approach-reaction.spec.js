@@ -39,7 +39,8 @@ test("a real approach earns happiness before the fee, with no repeat after mid-f
   }
   expect(v.shot).toBeNull();
   expect(v.happiness).toBe(4);
-  expect(v.comment).toContain("lovely approach");
+  // This seed can now hole the approach; completion replaces the spoken line.
+  expect(v.comment).toContain(v.scorecard.length ? "complete" : "lovely approach");
   expect(serialize(loaded)).toBe(serialize(g));
   expect(
     v.happinessReactions.filter((k) => k.startsWith("great-shot:")),

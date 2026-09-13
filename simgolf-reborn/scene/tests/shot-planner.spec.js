@@ -88,8 +88,9 @@ for (const [fraction, technique] of [
   [0.45, "fade"],
   [0.55, "draw"],
 ])
-  test(`uses ${technique} to negotiate an obstructed approach`, () => {
+  test(`legacy uses ${technique} to negotiate an obstructed approach`, () => {
     const g = setup();
+    delete g.liveFlightVersion;
     g.pro.proSkills.draw = 5;
     g.pro.proSkills.fade = 5;
     const end = projected(g),
@@ -114,8 +115,9 @@ for (const [fraction, technique] of [
     expect(g.pro.shot.waterLanding).toBe(false);
   });
 
-test("uses backspin to finish closer on a short approach", () => {
+test("legacy uses backspin to finish closer on a short approach", () => {
   const g = setup();
+  delete g.liveFlightVersion;
   g.pro.proSkills.backspin = 5;
   const cup = g.holes[0].green;
   g.pro.ball = { x: cup.x - 16, z: cup.z };

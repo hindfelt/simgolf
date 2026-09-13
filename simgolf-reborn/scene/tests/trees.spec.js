@@ -8,8 +8,8 @@ test('canopy catches a normal flight while high, low and curved shots can clear 
  const s={from:{x:0,z:0},landing:{x:20,z:0},apex:5,curve:0,putt:false};
  expect(treeCollision(g,s)).not.toBeNull();expect(treeCollision(g,{...s,apex:12})).toBeNull();expect(treeCollision(g,{...s,apex:1})).toBeNull();expect(treeCollision(g,{...s,curve:5})).toBeNull();
 });
-test('a planted tree changes the actual ball path, drops to ground and survives reload',()=>{
- const g=createGame();build(g,'tee',7,20);build(g,'green',36,5);expect(build(g,'tree',12,20).ok).toBe(true);startPractice(g);
+for(const native of [false,true])test(`${native?'Recovered':'Legacy'} planted-tree flight drops to reachable ground and survives reload`,()=>{
+ const g=createGame();if(!native)delete g.liveFlightVersion;build(g,'tee',7,20);build(g,'green',36,5);expect(build(g,'tree',12,20).ok).toBe(true);startPractice(g);
  expect(takeShot(g,g.pro,{x:-9,z:7}).ok).toBe(true);const hit=g.pro.shot.obstruction;expect(hit).toBeTruthy();
  for(let i=0;i<15;i++)update(g,.05);const copy=restore(serialize(g));for(let i=0;i<40;i++){update(g,.05);update(copy,.05);}
  expect(serialize(copy)).toBe(serialize(g));expect(g.pro.shot).toBeNull();expect(g.pro.ballHeight).toBe(0);expect(g.pro.ball.x).toBeCloseTo(hit.point.x);expect(g.pro.strokes).toBe(1);

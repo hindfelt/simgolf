@@ -79,6 +79,7 @@ function designGame(content, seed = 2002) {
   )
     fail();
   const g = createGame(seed);
+  if(golfProtocolVersion(content.ruleset)<89)delete g.liveFlightVersion;
   if(golfProtocolVersion(content.ruleset)<88)delete g.liveSimulationVersion;
   g.removedTrees = structuredClone(content.removedTrees);
   g.landscapeStyle = content.landscapeStyle;

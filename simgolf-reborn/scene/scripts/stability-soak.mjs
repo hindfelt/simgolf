@@ -5,13 +5,22 @@ import {build,serialize,restore,update} from '../src/simulation/game.js';
 let game=createPlaytestCourse();
 assert.ok(build(game,'snack',9,13).ok);
 for(let r=11;r<=13;r++)assert.ok(build(game,'path',7,r).ok);
-const shots=new Set(),putts=new Set(),holes=new Set();
-let midPuttReplay=false;
+const shots=new Set(),putts=new Set(),flights=new Set(),holes=new Set();
+let midPuttReplay=false,midFlightReplay=false;
 const start=performance.now();
 for(let tick=0;tick<144000;tick++){
  update(game,.05);
  for(const v of game.guests){
   if(v.shot?.club!==undefined)shots.add(`${v.id}:${v.holeId}:${v.strokes}`);
+  if(v.shot?.nativeFlight){
+   flights.add(`${v.id}:${v.holeId}:${v.strokes}`);
+   if(!midFlightReplay&&v.shot.time>0){
+    const control=structuredClone(game),restored=restore(serialize(game));
+    for(let n=0;n<1200;n++){update(control,.05);update(restored,.05);}
+    assert.equal(serialize(restored),serialize(control),'Mid-flight reload changed the live resort outcome.');
+    midFlightReplay=true;
+   }
+  }
   if(v.shot?.nativePutt){
    putts.add(`${v.id}:${v.holeId}:${v.strokes}`);
    if(!midPuttReplay&&v.shot.nativePutt.state.steps>0){
@@ -32,6 +41,7 @@ assert.ok(game.stats.rounds>0,'No rounds completed during the soak.');
 assert.ok(Number.isFinite(game.cash),'Non-finite resort balance.');
 assert.ok(game.holes.every(h=>h.stats.completed>0),'A hole received no completed rounds.');
 assert.equal(holes.size,game.holes.length,'A hole received no live shots.');
+assert.ok(flights.size>0&&midFlightReplay,'Recovered flight was not exercised.');
 assert.ok(putts.size>0&&midPuttReplay,'Recovered putting and mid-putt replay were not exercised.');
 assert.ok(game.stats.services>0,'No live facility visits completed.');
 assert.ok(game.facilities.find(f=>f.type==='snack').served>0,'The snack facility served no visitors.');
@@ -43,4 +53,5 @@ console.log(JSON.stringify({simulatedSeconds:game.time,restoreCycles:12,
  elapsedMs:performance.now()-start,checkpointBytes:Buffer.byteLength(checkpoint),
  completedRounds:game.stats.rounds,landingFees:fees.length,replayEqual:true,
  distinctShotKeys:shots.size,distinctPuttKeys:putts.size,holesWithShots:[...holes],
- services:game.stats.services,midPuttReplayEqual:midPuttReplay},null,2));
+ services:game.stats.services,midPuttReplayEqual:midPuttReplay,
+ distinctFlightKeys:flights.size,midFlightReplayEqual:midFlightReplay},null,2));

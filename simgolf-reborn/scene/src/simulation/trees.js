@@ -69,6 +69,19 @@ export function treeCollision(g, shot) {
       const relativeHeight = height +
         elevationAt(g, point.x, point.z) - elevationAt(g, tree.x, tree.z);
       const d = Math.hypot(point.x - tree.x, point.z - tree.z);
+      if(shot.nativeFlight&&relativeHeight>=0&&relativeHeight<tree.canopyBottom&&d<tree.trunkRadius){
+        // Contact must remain outside solid wood. A sampled point just inside
+        // the trunk becomes unreachable and incorrectly triggers a penalty.
+        const previous=airbornePoint(shot,(i-1)/steps);
+        const vx=point.x-previous.x,vz=point.z-previous.z;
+        const ax=previous.x-tree.x,az=previous.z-tree.z;
+        const a=vx*vx+vz*vz,b=2*(ax*vx+az*vz),c=ax*ax+az*az-tree.trunkRadius**2;
+        if(a>0&&c>=0){
+          const contact=Math.max(0,Math.min(1,(-b-Math.sqrt(Math.max(0,b*b-4*a*c)))/(2*a)));
+          const u=Math.max(0,contact-.0001/Math.sqrt(a));
+          return {t:(i-1+u)/steps,point:{x:previous.x+vx*u,z:previous.z+vz*u},height:previous.lift+(height-previous.lift)*u};
+        }
+      }
       if (
         (relativeHeight <= tree.height &&
           relativeHeight >= tree.canopyBottom &&

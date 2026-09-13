@@ -142,3 +142,14 @@ test('the pre-signed-happiness tournament format also migrates without changing 
  expect(restored.roundSnapshot('alice').pro.shot).toEqual(host.roundSnapshot('alice').pro.shot);
  expect((await restoreCompetition(restored.save())).snapshot()).toEqual(restored.snapshot());
 });
+
+test('protocol 88 events retain flat putting without adopting new airborne motion',async()=>{
+ const a=await setup('live-native-launch-putting-2026-09-12');
+ shoot(a,'alice');
+ expect(a.roundSnapshot('alice').liveSimulationVersion).toBe(1);
+ expect(a.roundSnapshot('alice').liveFlightVersion).toBeUndefined();
+ expect(a.roundSnapshot('alice').pro.shot.nativeFlight).toBeUndefined();
+ a.stepTicks(10);const b=await restoreCompetition(a.save());
+ for(let i=0;i<30;i++){a.stepTicks(20);b.stepTicks(20);}
+ expect(b.save()).toEqual(a.save());
+});
