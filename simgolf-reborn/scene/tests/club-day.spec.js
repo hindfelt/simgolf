@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceTicks} from './helpers/simulation-clock.js';
 import {test,expect} from '@playwright/test';
 import {advanceClubDay,collectClubDay,closeClubDay,clubTime,initializeClubDay,recordClubArrival,validateClubDay} from '../src/simulation/club-day.js';
 import {createGame,update,serialize,restore} from '../src/simulation/game.js';
@@ -30,6 +31,7 @@ test('daily report state rejects corrupted counters and retains a bounded histor
  g.clubDay.reports[0].net=42;expect(()=>validateClubDay(g)).toThrow();
 });
 test('night report appears without pausing play, clears at sunrise, and remains in history on a phone',async({page})=>{
+ await useSimulationClock(page);
  const g=createGame();update(g,480);
  await page.setViewportSize({width:390,height:844});
  await page.addInitScript(raw=>localStorage.setItem('simgolf-reborn.course.v1',raw),serialize(g));
@@ -37,7 +39,11 @@ test('night report appears without pausing play, clears at sunrise, and remains 
  await page.goto('/');await expect(page.locator('#night-report')).toBeVisible();
  await expect(page.locator('#night-report')).toContainText('Day 1');
  await page.screenshot({path:'/tmp/fairway-night-report.png'});
- await expect(page.locator('#night-report')).toBeHidden({timeout:15000});
+ expect((await page.evaluate(()=>window.__gameTest.getState())).time).toBe(480);
+ await advanceTicks(page,199);
+ await expect(page.locator('#night-report')).toBeVisible();
+ await advanceTicks(page,1);
+ await expect(page.locator('#night-report')).toBeHidden();
  await expect(page.locator('#club-clock')).toContainText('Day 2');
  await page.locator('#club-clock').click();await expect(page.locator('#daily-history')).toContainText('Day 1');
  expect(errors).toEqual([]);

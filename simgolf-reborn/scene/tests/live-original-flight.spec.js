@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceUntil} from './helpers/simulation-clock.js';
 import {test,expect} from '@playwright/test';
 import {createGame,build,startPractice,takeShot,update,serialize,restore} from '../src/simulation/game.js';
 import {shotPreview} from '../src/simulation/shot-preview.js';
@@ -30,12 +31,13 @@ test('older saves retain their flight and malformed new flight data is rejected'
 });
 
 test('browser loop completes a saved recovered flight using its calculated landing',async({page})=>{
+ await useSimulationClock(page);
  const g=course();takeShot(g,g.pro,g.holes[0].green);
  const end=g.pro.shot.end,errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(raw=>localStorage.setItem('simgolf-reborn.course.v1',raw),serialize(g));
  await page.goto('/?start=0');await page.locator('#loading').waitFor({state:'hidden'});
- await expect.poll(()=>page.evaluate(()=>window.__gameTest.getState().pro.shot)).toBeNull();
+ await advanceUntil(page,g=>g.pro.shot===null,1200);
  const state=await page.evaluate(()=>window.__gameTest.getState());
  expect(state.pro.ball.x).toBeCloseTo(end.x,8);expect(state.pro.ball.z).toBeCloseTo(end.z,8);
  expect(state.liveFlightVersion).toBe(2);expect(errors).toEqual([]);

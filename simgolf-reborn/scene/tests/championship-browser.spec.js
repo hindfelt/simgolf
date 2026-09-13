@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceTicks} from './helpers/simulation-clock.js';
 import { test, expect } from "@playwright/test";
 import { createGame, build, serialize } from "../src/simulation/game.js";
 
@@ -6,6 +7,7 @@ for (const kind of ["championship", "pro-challenge"]) {
     page,
   }) => {
     test.setTimeout(90000);
+    await useSimulationClock(page);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     const game = createGame();
@@ -57,7 +59,7 @@ for (const kind of ["championship", "pro-challenge"]) {
         );
         await page.mouse.click(p.x, p.y);
       }
-      await page.waitForTimeout(500);
+      await advanceTicks(page,20);
     }
     await expect(page.locator("#fun")).toHaveText("Event complete", {
       timeout: 10000,

@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceUntil} from './helpers/simulation-clock.js';
 import { test, expect } from "@playwright/test";
 async function ready(page) {
   await page.goto("/");
@@ -16,6 +17,7 @@ test("build through the canvas, open, save a round, reload, and hire staff", asy
   page,
 }) => {
   test.setTimeout(65000);
+  await useSimulationClock(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await ready(page);
@@ -48,22 +50,10 @@ test("build through the canvas, open, save a round, reload, and hire staff", asy
     .getByRole("button", { name: "Resume simulation", exact: true })
     .click();
   await page.locator("#speed").click();
-  await expect
-    .poll(
-      async () =>
-        page.evaluate(() => window.__gameTest.getState().guests.length),
-      { timeout: 10000 },
-    )
-    .toBeGreaterThan(0);
+  await advanceUntil(page,g=>g.guests.length>0);
   await page.locator('[data-mode="staff"]').click();
   await page.locator("#hire").click();
-  await expect
-    .poll(
-      async () =>
-        page.evaluate(() => window.__gameTest.getState().stats.rounds),
-      { timeout: 40000 },
-    )
-    .toBeGreaterThan(0);
+  await advanceUntil(page,g=>g.stats.rounds>0);
   await page
     .getByRole("button", { name: "Pause simulation", exact: true })
     .click();
@@ -112,6 +102,7 @@ test("build a second hole, select either one, and inspect a complete course scor
   page,
 }) => {
   test.setTimeout(65000);
+  await useSimulationClock(page);
   await ready(page);
   await page.locator("#pause").click();
   await place(page, "tee", -29, 7);
@@ -129,17 +120,7 @@ test("build a second hole, select either one, and inspect a complete course scor
   await page.locator("#home").click();
   await page.locator("#pause").click();
   await page.locator("#speed").click();
-  await expect
-    .poll(
-      () =>
-        page.evaluate(() =>
-          window.__gameTest
-            .getState()
-            .rounds.some((r) => r.scorecard.length === 2),
-        ),
-      { timeout: 40000 },
-    )
-    .toBe(true);
+  await advanceUntil(page,g=>g.rounds.some(r=>r.scorecard.length===2));
   await page.locator("#scorecard").click();
   await expect(page.locator("#score-dialog")).toBeVisible();
   await expect(page.locator("#score-content table").first()).toContainText(

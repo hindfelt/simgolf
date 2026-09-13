@@ -34,6 +34,15 @@ test("scene renders without script, shader or resource errors", async ({
   await openScene(page);
   await page.waitForFunction(() => window.__artTest.getState().fps > 0);
   const s = await state(page);
+  if (process.env.CI) {
+    const renderer = await page.evaluate(() => {
+      const gl = document.querySelector('canvas').getContext('webgl2');
+      const debug = gl.getExtension('WEBGL_debug_renderer_info');
+      return gl.getParameter(debug.UNMASKED_RENDERER_WEBGL);
+    });
+    console.log(`CI WebGL renderer: ${renderer}`);
+    expect(renderer).toMatch(/llvmpipe/i);
+  }
   expect(s.triangles).toBeGreaterThan(100000);
   expect(s.drawCalls).toBeLessThan(200);
   expect(errors).toEqual([]);

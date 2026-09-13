@@ -1,3 +1,4 @@
+import {browserRuntime} from "./browser-runtime.js";
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
@@ -9,7 +10,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4176",
     channel: "chrome",
-    launchOptions: process.env.CI ? {args:["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]} : {},
+    ...browserRuntime,
     viewport: { width: 1440, height: 1000 },
   },
   webServer: {

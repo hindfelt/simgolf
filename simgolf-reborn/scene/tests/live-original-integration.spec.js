@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceUntil} from './helpers/simulation-clock.js';
 import {test,expect} from '@playwright/test';
 import {createGame,build,startPractice,openHole,update,takeShot,serialize,restore} from '../src/simulation/game.js';
 import {key} from '../src/simulation/world.js';
@@ -37,13 +38,14 @@ test('a stopped putt outside the native cup stays live even inside the old gimme
  const restored=restore(serialize(g));expect(restored.liveStrengthCache).toEqual(cache);
  restored.liveStrengthCache.entries[0].speed=-1;expect(()=>restore(serialize(restored))).toThrow(/strength cache/);
 });
-test('native putting is driven by the browser game loop through the visible round result',async({page})=>{
+test('native putting advances through live simulation ticks to the visible round result',async({page})=>{
  const g=course();startPractice(g);const cup=g.holes[0].green;
  g.pro.ball={x:cup.x-1,z:cup.z};g.pro.pos={...g.pro.ball};g.rng=1234;takeShot(g,g.pro,cup);
+ await useSimulationClock(page);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(raw=>localStorage.setItem('simgolf-reborn.course.v1',raw),serialize(g));
  await page.goto('/?start=0');await page.locator('#loading').waitFor({state:'hidden'});
- await expect.poll(()=>page.evaluate(()=>window.__gameTest.getState().pro.phase)).toBe('finished');
+ await advanceUntil(page,g=>g.pro.phase==='finished',1200);
  const state=await page.evaluate(()=>window.__gameTest.getState());
  expect(state.pro.scorecard).toHaveLength(1);expect(state.liveStrengthCache.entries.some(e=>e.distance>0)).toBe(true);
  await page.locator('#scorecard').click();await expect(page.locator('#score-content')).toContainText(String(state.pro.totalStrokes));

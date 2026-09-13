@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceTicks} from './helpers/simulation-clock.js';
 import {test,expect} from '@playwright/test';
 import {createGame,build,startPractice,update,serialize,restore,hire} from '../src/simulation/game.js';
 function neglected(){
@@ -17,6 +18,7 @@ test('dandelion reaction happens once, survives reload and cleanup removes the p
  expect(resumed.pro.seenWeeds.filter(id=>id===patch)).toHaveLength(1);
 });
 test('actual golfer complaint appears above the course then expires without blocking input',async({page})=>{
+ await useSimulationClock(page);
  const g=neglected();update(g,.05);
  await page.goto('/');
  await page.evaluate(save=>localStorage.setItem('simgolf-reborn.course.v1',save),serialize(g));
@@ -26,5 +28,8 @@ test('actual golfer complaint appears above the course then expires without bloc
  await expect(remark).toContainText('Gary Golf');
  expect(await page.locator('.golfer-remarks').evaluate(e=>getComputedStyle(e).pointerEvents)).toBe('none');
  await page.screenshot({path:'../graphics/samples/dandelion-remark.png'});
- await expect(remark).toBeHidden({timeout:10000});
+ await advanceTicks(page,119);
+ await expect(remark).toBeVisible();
+ await advanceTicks(page,2);
+ await expect(remark).toBeHidden();
 });

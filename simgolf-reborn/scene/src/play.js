@@ -2404,7 +2404,15 @@ renderer.domElement.addEventListener("pointerleave", () => {
   cursor.visible = aiming.visible = aimTargetLine.visible = false;
   stroke = false;
 });
+const manualSimulation = import.meta.env.DEV && globalThis.__manualSimulationClock === true && !remote;
 window.__gameTest = Object.freeze({
+  ...(import.meta.env.DEV ? {advanceTicks: (ticks) => {
+    if (!manualSimulation) throw new Error("Manual simulation clock is not enabled");
+    if (!Number.isInteger(ticks) || ticks < 0 || ticks > 20000) throw new Error("Invalid tick count");
+    if (paused || document.hidden || $("dialog[open]")) throw new Error("Simulation is paused or obscured");
+    for (let i = 0; i < ticks; i++) stepSimulationTick();
+    return JSON.parse(serialize(game));
+  }} : {}),
   getCameraTarget: () => controls.target.toArray(),
   getCameraView: () => ({position:camera.position.toArray(),target:controls.target.toArray(),zoom:camera.zoom}),
   getState: () => JSON.parse(serialize(game)),
@@ -2474,28 +2482,31 @@ let last = performance.now(),
   accumulator = 0,
   lastUI = 0,
   lastSave = last;
+function stepSimulationTick() {
+  if (competition) {
+    const rival = competition.roundSnapshot("club-rival");
+    if (rival.pro.phase === "address" && rival.pro.wait >= 1) {
+      const target = planShot(rival, rival.pro);
+      if (target)
+        competition.execute(
+          competition.nextCommand("club-rival", "shot", target),
+          { id: "club-rival", role: "golfer" },
+        );
+    }
+    competition.stepTicks();
+    rivalView = competition.roundSnapshot("club-rival").pro;
+    game = competition.roundSnapshot(localPlayer.id);
+    selectedHoleId = game.pro.holeId;
+  } else session.stepTicks();
+}
 function frame(now) {
   if(!remote)void syncLiveChallengeWagers();
   const dt = Math.min((now - last) / 1000, 0.15);
   last = now;
-  if (!remote && !paused && !document.hidden && !$("dialog[open]")) {
+  if (!manualSimulation && !remote && !paused && !document.hidden && !$("dialog[open]")) {
     accumulator += dt * speed;
     while (accumulator >= 0.05) {
-      if (competition) {
-        const rival = competition.roundSnapshot("club-rival");
-        if (rival.pro.phase === "address" && rival.pro.wait >= 1) {
-          const target = planShot(rival, rival.pro);
-          if (target)
-            competition.execute(
-              competition.nextCommand("club-rival", "shot", target),
-              { id: "club-rival", role: "golfer" },
-            );
-        }
-        competition.stepTicks();
-        rivalView = competition.roundSnapshot("club-rival").pro;
-        game = competition.roundSnapshot(localPlayer.id);
-        selectedHoleId = game.pro.holeId;
-      } else session.stepTicks();
+      stepSimulationTick();
       accumulator -= 0.05;
     }
   }

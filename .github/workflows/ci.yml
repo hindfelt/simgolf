@@ -44,7 +44,9 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
     defaults:
       run:
         working-directory: simgolf-reborn/scene
@@ -57,20 +59,21 @@ jobs:
           cache-dependency-path: simgolf-reborn/scene/package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chrome
+      - run: sudo apt-get install -y libgl1-mesa-dri xvfb
       - run: npm run build
       - name: Linux graphics smoke test
         if: matrix.shard == 1
-        run: npm run test:live -- tests/art-test.spec.js --workers=1 --reporter=line
+        run: xvfb-run -a npm run test:live -- tests/art-test.spec.js --workers=1 --reporter=line
         env:
           SIMGOLF_PUBLIC_TESTS: '1'
-      - run: npm run test:live -- --shard=${{ matrix.shard }}/4 --workers=1 --reporter=line
+      - run: xvfb-run -a npm run test:live -- --shard=${{ matrix.shard }}/4 --workers=1 --reporter=line
         env:
           SIMGOLF_PUBLIC_TESTS: '1'
       - run: npm run test:accounts
         if: matrix.shard == 1
-      - run: npm run test:account-browser
+      - run: xvfb-run -a npm run test:account-browser
         if: matrix.shard == 1
-      - run: npm run test:shared-integration
+      - run: xvfb-run -a npm run test:shared-integration
         if: matrix.shard == 1
       - name: Save browser failure diagnostics
         if: failure()

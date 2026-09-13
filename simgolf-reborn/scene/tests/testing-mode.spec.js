@@ -65,7 +65,7 @@ test('prepared simulation starts through the testing panel',async({page})=>{
  await page.goto('/?testing=1');await page.locator('#loading').waitFor({state:'hidden'});
  await page.locator('#testing-feedback').click();
  await page.getByText('Start a prepared simulation',{exact:true}).click();
- await page.locator('#testing-scenario').click();
+ await Promise.all([page.waitForEvent('load'),page.locator('#testing-scenario').click()]);
  await page.waitForURL('**/?testing=1');
  await expect.poll(()=>page.evaluate(()=>window.__gameTest?.getState().holes.length)).toBe(2);
 });

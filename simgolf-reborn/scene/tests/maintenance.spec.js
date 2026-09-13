@@ -1,3 +1,4 @@
+import {useSimulationClock,advanceUntil} from './helpers/simulation-clock.js';
 import { test, expect } from "@playwright/test";
 import {
   createGame,
@@ -108,6 +109,7 @@ test("two technicians cannot claim the same turf job; removed turf cancels work"
 });
 test('staff controls unlock from a six-hole import and show completed turf work',async({page})=>{
  test.setTimeout(30000);
+ await useSimulationClock(page);
  await page.goto('/');await page.waitForFunction(()=>window.__gameTest);
  await page.locator('[data-mode="staff"]').click();await expect(page.locator('#hire-technician')).toBeDisabled();
  const g=neglected();advance(g,62);
@@ -115,7 +117,7 @@ test('staff controls unlock from a six-hole import and show completed turf work'
  await page.waitForFunction(()=>window.__gameTest?.getState().holes.length===6);
  await page.locator('[data-mode="staff"]').click();await expect(page.locator('#hire-technician')).toBeEnabled();
  await page.locator('#hire-technician').click();
- await expect.poll(()=>page.evaluate(()=>window.__gameTest.getState().staff[0]?.repaired),{timeout:20000}).toBe(4);
+ await advanceUntil(page,g=>g.staff[0]?.repaired===4,1200);
  await expect(page.locator('#live-details')).toContainText('4 divots repaired');
  await page.screenshot({path:'../graphics/samples/turf-technician.png'});
  await page.locator('#menu-button').click(); await page.locator('#new').click(); await page.locator('#confirm-new').click();
