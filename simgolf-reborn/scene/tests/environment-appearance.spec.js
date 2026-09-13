@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import {treeScale} from '../src/simulation/tree-scale.js';
 import {compatibleGolfRuleset,PRE_LINKS_RULESET,PRE_PALMS_RULESET,RULESET_VERSION,migrateProtocol,PROTOCOL_VERSION} from '../src/simulation/protocol.js';
 test('environments produce distinct actual-renderer previews for the same property',async({page})=>{
- test.setTimeout(60000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ if(!process.env.CI)test.setTimeout(60000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setViewportSize({width:940,height:660});const views=[];
  for(const environment of ['parklands','tropical','links']){
   await page.goto(`/terrain-preview.html?seed=1356996279&landscape=river&environment=${environment}`);
@@ -26,7 +26,7 @@ test('palm physics revisions migrate saves but retain explicit tournament bounda
 });
 
 test('new-game environment selector refreshes the rendered preview without changing the seed',async({page})=>{
- test.setTimeout(60000);
+ if(!process.env.CI)test.setTimeout(60000);
  await page.goto('/?start=1');
  await page.getByRole('button',{name:'New Game',exact:true}).click();
  await page.locator('#loading').waitFor({state:'hidden'});
