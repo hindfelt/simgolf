@@ -25,7 +25,7 @@ test('accounts have separate local saves and legacy imports preserve a backup',a
  await page.addInitScript(({mine,legacy})=>{if(localStorage.getItem('seeded'))return;localStorage.setItem('seeded','yes');localStorage.setItem('simgolfer.player.player-one.simgolf-reborn.course.v1',mine);localStorage.setItem('simgolf-reborn.course.v1',legacy);},{mine:serialize(mine),legacy:serialize(legacy)});
  await page.route('**/api/auth/me',r=>reply(r,{user,csrf:'token',expiresAt:Date.now()+100000}));await page.route('**/api/auth/providers',r=>reply(r,available));
  await page.goto('/');await page.waitForFunction(()=>window.__gameTest);await page.locator('#pause').click();expect(await page.evaluate(()=>window.__gameTest.getState().cash)).toBe(mine.cash);
- await page.locator('#player-account').click();await page.getByText('Bring in an older course',{exact:true}).click();await page.locator('#account-import').click();await page.waitForFunction(()=>window.__gameTest);
+ await page.locator('#player-account').click();await page.getByText('Bring in an older course',{exact:true}).click();await Promise.all([page.waitForEvent('load'),page.locator('#account-import').click()]);await page.waitForFunction(()=>window.__gameTest);
  expect(await page.evaluate(()=>localStorage.getItem('simgolf-reborn.course.v1'))).toBe(serialize(legacy));
  await expect.poll(()=>page.evaluate(()=>!!localStorage.getItem('simgolfer.player.player-one.simgolf-reborn.course.v1.previous'))).toBe(true);
 });

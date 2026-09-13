@@ -108,7 +108,6 @@ test("two technicians cannot claim the same turf job; removed turf cancels work"
   expect(() => restore(JSON.stringify(bad))).toThrow();
 });
 test('staff controls unlock from a six-hole import and show completed turf work',async({page})=>{
- test.setTimeout(30000);
  await useSimulationClock(page);
  await page.goto('/');await page.waitForFunction(()=>window.__gameTest);
  await page.locator('[data-mode="staff"]').click();await expect(page.locator('#hire-technician')).toBeDisabled();
