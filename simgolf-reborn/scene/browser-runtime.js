@@ -2,5 +2,5 @@
 // SwiftShader backend. Tests retain their real viewport and scene rendering.
 export const browserRuntime = process.env.CI ? {
  headless: false,
- launchOptions: {args: ['--use-gl=angle', '--use-angle=gl']},
+ launchOptions: {args: ['--use-gl=angle', '--use-angle=gl', '--ignore-gpu-blocklist']},
 } : {};

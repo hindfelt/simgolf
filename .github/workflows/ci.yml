@@ -60,6 +60,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chrome
       - run: sudo apt-get install -y libgl1-mesa-dri xvfb
+      - run: xvfb-run -a node server/verify-ci-renderer.mjs
       - run: npm run build
       - name: Linux graphics smoke test
         if: matrix.shard == 1
