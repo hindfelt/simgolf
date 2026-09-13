@@ -1158,13 +1158,17 @@ function advanceRound(g, v) {
   v.phase = "finished";
   v.wait = 0;
 }
+// Preview and live play must use the same native-green boundary policy.
+export function advanceLivePutt(g, shot, dt) {
+  return stepLiveOriginalPutt(g,shot,dt,{lie,height:elevationAt,blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)});
+}
 function stepShot(g, v, dt) {
   const s = v.shot;
   s.time += dt;
   let lift = 0,
     point;
   if(s.nativePutt){
-    const step=stepLiveOriginalPutt(g,s,dt,{lie,height:elevationAt,blocked:(a,b)=>isOut(g,b)||treeGroundBlocker(g,a,b)(a,b)});point=step.point;
+    const step=advanceLivePutt(g,s,dt);point=step.point;
     if(!step.done){v.ball=point;v.ballHeight=0;return;}
     s.end={...point};s.time=s.duration;
   } else if (s.obstruction && s.time >= s.duration * s.obstruction.t) {

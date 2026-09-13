@@ -27,6 +27,12 @@ The focused integration suite passes all six tests. Account/server checks pass 8
 
 ## Remaining delivery sequence
 
+### September 13 integration follow-up
+
+Flight animation, tree collision sampling, aiming and shot analysis now share the same airborne sampling function. Ground release animation and aiming also share a sampler. This preserves existing browser flight arithmetic; it does not replace it with recovered airborne physics. The focused flight/preview/tree/replay/integration run passed 20 tests.
+
+Flat recovered putting previews now step the same native-green motion and boundary checks as live play, using a copied clock, RNG and strength cache. A regression checks each preview point against the actual live ball and verifies no preview mutation. All eight preview/live-integration tests and the production build pass. Simultaneous golfers can consume shared RNG after a forecast, so a preview is not a guarantee of an identical future result. These changes remain local.
+
 1. **Live integration:** explicit original map and actor bindings for flight/collisions, sloped putting, full reaction state, walking routes and facility visits; verify complete rounds and resort visits, not only native fixtures. Do not infer packed fields from similarly named browser UI values.
 2. **Career:** connect measured SGA inputs, accreditation, rankings, prizes, accomplishments and retirement. Current challenge wagering and early accomplishments do not complete career progression.
 3. **Resort:** facility upgrades, staff experience, membership/housing/celebrity follow-through and visitor spending. Distinguish original measured rules from product balance choices.
