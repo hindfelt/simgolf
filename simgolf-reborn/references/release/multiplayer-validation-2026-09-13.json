@@ -1,0 +1,28 @@
+{
+  "origin": "https://fairway-baron-multiplayer-review.hindfelt.workers.dev",
+  "startedAt": "2026-09-13T14:58:04.166Z",
+  "checks": [
+    "Fresh server-created course and publication use current gameplay rules",
+    "Authenticated invitation acceptance on phone viewport; calendar download; no horizontal overflow",
+    "Scheduled start and advertised deadline match on hosted service",
+    "Two independent hosted rounds completed, survived reload, sealed final standings and retained repeatable account medals",
+    "No browser page errors"
+  ],
+  "ruleset": "live-native-visitors-2026-09-13",
+  "standings": [
+    {
+      "name": "Review host",
+      "rank": 1,
+      "strokes": 3
+    },
+    {
+      "name": "Review guest",
+      "rank": 1,
+      "strokes": 3
+    }
+  ],
+  "finishedAt": "2026-09-13T14:59:50.759Z",
+  "browserErrors": [],
+  "deploymentVersion": "2074bece-bb1f-4943-bc41-cc52e53f9b6b",
+  "gameCommit": "9ab4c8b"
+}

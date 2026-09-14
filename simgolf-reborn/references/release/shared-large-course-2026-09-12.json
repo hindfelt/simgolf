@@ -1,0 +1,267 @@
+{
+  "scope": "Local Node CPU proxy, excludes D1/network and hosted CPU accounting",
+  "holes": 18,
+  "batchTicks": 120,
+  "samples": [
+    {
+      "minute": 0,
+      "visitors": 0,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 43604,
+      "medianMs": 11.88095899999999,
+      "p95Ms": 15.634833,
+      "maxMs": 26.386500000000005
+    },
+    {
+      "minute": 1,
+      "visitors": 6,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 61200,
+      "medianMs": 22.04058299999997,
+      "p95Ms": 27.482875000000035,
+      "maxMs": 28.94683299999997
+    },
+    {
+      "minute": 2,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 82477,
+      "medianMs": 75.23987500000021,
+      "p95Ms": 87.1678750000001,
+      "maxMs": 87.37316699999974
+    },
+    {
+      "minute": 3,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 98333,
+      "medianMs": 56.92995900000005,
+      "p95Ms": 59.144916000000194,
+      "maxMs": 62.455291999999645
+    },
+    {
+      "minute": 4,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 110299,
+      "medianMs": 63.136333999999806,
+      "p95Ms": 73.62387500000023,
+      "maxMs": 74.42795800000022
+    },
+    {
+      "minute": 5,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 0,
+      "snapshotBytes": 119692,
+      "medianMs": 47.16125000000011,
+      "p95Ms": 51.295624999999745,
+      "maxMs": 54.720792000000074
+    },
+    {
+      "minute": 6,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 2,
+      "snapshotBytes": 134659,
+      "medianMs": 65.61745900000096,
+      "p95Ms": 70.21450000000004,
+      "maxMs": 77.69670899999983
+    },
+    {
+      "minute": 7,
+      "visitors": 10,
+      "staff": 16,
+      "rounds": 4,
+      "snapshotBytes": 140036,
+      "medianMs": 11.862209000000803,
+      "p95Ms": 13.000874999999724,
+      "maxMs": 14.48383400000057
+    },
+    {
+      "minute": 8,
+      "visitors": 6,
+      "staff": 16,
+      "rounds": 8,
+      "snapshotBytes": 137523,
+      "medianMs": 28.22175000000061,
+      "p95Ms": 29.591207999999824,
+      "maxMs": 29.714250000000902
+    },
+    {
+      "minute": 9,
+      "visitors": 2,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 125587,
+      "medianMs": 8.243207999999868,
+      "p95Ms": 9.36908399999993,
+      "maxMs": 10.357249999999112
+    },
+    {
+      "minute": 10,
+      "visitors": 4,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 130646,
+      "medianMs": 45.52204100000017,
+      "p95Ms": 46.4848750000001,
+      "maxMs": 46.64099999999962
+    },
+    {
+      "minute": 11,
+      "visitors": 6,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 138244,
+      "medianMs": 48.00025000000096,
+      "p95Ms": 53.61712500000067,
+      "maxMs": 57.66095900000073
+    },
+    {
+      "minute": 12,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 146668,
+      "medianMs": 52.06737500000054,
+      "p95Ms": 65.32195800000045,
+      "maxMs": 65.4359999999997
+    },
+    {
+      "minute": 13,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 160559,
+      "medianMs": 57.10329199999978,
+      "p95Ms": 69.17304200000217,
+      "maxMs": 71.25204200000007
+    },
+    {
+      "minute": 14,
+      "visitors": 12,
+      "staff": 16,
+      "rounds": 12,
+      "snapshotBytes": 168820,
+      "medianMs": 78.24012500000026,
+      "p95Ms": 92.45991700000013,
+      "maxMs": 97.0224589999998
+    },
+    {
+      "minute": 15,
+      "visitors": 10,
+      "staff": 16,
+      "rounds": 14,
+      "snapshotBytes": 173372,
+      "medianMs": 54.20879200000127,
+      "p95Ms": 54.70474999999715,
+      "maxMs": 55.06620800000019
+    },
+    {
+      "minute": 16,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 16,
+      "snapshotBytes": 174412,
+      "medianMs": 70.97983300000124,
+      "p95Ms": 71.5647089999984,
+      "maxMs": 71.77729100000215
+    },
+    {
+      "minute": 17,
+      "visitors": 6,
+      "staff": 16,
+      "rounds": 18,
+      "snapshotBytes": 175832,
+      "medianMs": 51.271082999999635,
+      "p95Ms": 53.01841699999932,
+      "maxMs": 54.07566600000064
+    },
+    {
+      "minute": 18,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 18,
+      "snapshotBytes": 185670,
+      "medianMs": 32.276583000002574,
+      "p95Ms": 34.034749999998894,
+      "maxMs": 34.85679199999868
+    },
+    {
+      "minute": 19,
+      "visitors": 4,
+      "staff": 16,
+      "rounds": 24,
+      "snapshotBytes": 181876,
+      "medianMs": 30.912333000000217,
+      "p95Ms": 32.36583299999984,
+      "maxMs": 32.98029200000019
+    },
+    {
+      "minute": 20,
+      "visitors": 4,
+      "staff": 16,
+      "rounds": 24,
+      "snapshotBytes": 185257,
+      "medianMs": 51.90729199999987,
+      "p95Ms": 52.18329099999755,
+      "maxMs": 52.44195899999977
+    },
+    {
+      "minute": 21,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 24,
+      "snapshotBytes": 193502,
+      "medianMs": 83.0057080000006,
+      "p95Ms": 86.843832999999,
+      "maxMs": 91.46649999999863
+    },
+    {
+      "minute": 22,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 24,
+      "snapshotBytes": 200083,
+      "medianMs": 63.942833000000974,
+      "p95Ms": 69.84745800000019,
+      "maxMs": 72.85941599999933
+    },
+    {
+      "minute": 23,
+      "visitors": 10,
+      "staff": 16,
+      "rounds": 26,
+      "snapshotBytes": 209548,
+      "medianMs": 63.59791699999914,
+      "p95Ms": 67.27358399999503,
+      "maxMs": 67.49762500000361
+    },
+    {
+      "minute": 24,
+      "visitors": 10,
+      "staff": 16,
+      "rounds": 28,
+      "snapshotBytes": 222218,
+      "medianMs": 39.379083000007086,
+      "p95Ms": 41.20933399999922,
+      "maxMs": 44.865459000000556
+    },
+    {
+      "minute": 25,
+      "visitors": 8,
+      "staff": 16,
+      "rounds": 28,
+      "snapshotBytes": 217843,
+      "medianMs": 35.26033399999869,
+      "p95Ms": 36.51483400000143,
+      "maxMs": 37.8234999999986
+    }
+  ]
+}

@@ -1,0 +1,2292 @@
+{
+  "source": "Themes/Standard/progolfers.dta",
+  "sourceSha256": "866a3c50b54af514fa0bb63a2b6c86f436aa81ec939658f94c68473d6c738f4a",
+  "golfers": [
+    {
+      "name": "Joe Pro",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "3213222241",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 2,
+        "driver": 1,
+        "irons": 3,
+        "putter": 2,
+        "draw": 2,
+        "fade": 2,
+        "backspin": 2,
+        "recovery": 4,
+        "luck": 1
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Sid Amateur",
+      "appearance": {
+        "body": 3,
+        "skin": 0,
+        "hat": 1,
+        "shirt": 0,
+        "pants": 2
+      },
+      "skillCapCode": "1111111111",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 1,
+        "irons": 1,
+        "putter": 1,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 1
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Bing Amateur",
+      "appearance": {
+        "body": 1,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 4,
+        "pants": 9
+      },
+      "skillCapCode": "1111111111",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 1,
+        "irons": 1,
+        "putter": 1,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 1
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Susan Amateur",
+      "appearance": {
+        "body": 7,
+        "skin": 3,
+        "hat": 5,
+        "shirt": 6,
+        "pants": 4
+      },
+      "skillCapCode": "1111111111",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 1,
+        "irons": 1,
+        "putter": 1,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 1
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Big Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "5500000000",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 5,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Iron Hands Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 1,
+        "hat": 1,
+        "shirt": 1,
+        "pants": 1
+      },
+      "skillCapCode": "00A0000000",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 10,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Hooker Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 2,
+        "hat": 2,
+        "shirt": 2,
+        "pants": 2
+      },
+      "skillCapCode": "00000A0000",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 10,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Slicer Hacker",
+      "appearance": {
+        "body": 7,
+        "skin": 3,
+        "hat": 3,
+        "shirt": 3,
+        "pants": 3
+      },
+      "skillCapCode": "000000A000",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 10,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Bush W. Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 0,
+        "hat": 5,
+        "shirt": 5,
+        "pants": 8
+      },
+      "skillCapCode": "00000000A0",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 10,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Luckystiff Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 1,
+        "hat": 8,
+        "shirt": 6,
+        "pants": 4
+      },
+      "skillCapCode": "000000000A",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 10
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Soft Hands Hacker",
+      "appearance": {
+        "body": 5,
+        "skin": 3,
+        "hat": 6,
+        "shirt": 8,
+        "pants": 8
+      },
+      "skillCapCode": "0000A00000",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 10,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Popfly Hacker",
+      "appearance": {
+        "body": 3,
+        "skin": 2,
+        "hat": 4,
+        "shirt": 5,
+        "pants": 3
+      },
+      "skillCapCode": "0000000A00",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 10,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jumbo Jet Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "9900000000",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 9,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Juseeme Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "0009000900",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 9,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 9,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jay Walker Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "1000099000",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 9,
+        "fade": 9,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Judicious Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 3,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "0199000000",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 1,
+        "driver": 9,
+        "irons": 9,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jubilation Pro",
+      "appearance": {
+        "body": 6,
+        "skin": 2,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "1100000099",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 9,
+        "luck": 9
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jortgame Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "0110900009",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 1,
+        "driver": 1,
+        "irons": 0,
+        "putter": 9,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 9
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Juice Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 2,
+        "hat": 2,
+        "shirt": 2,
+        "pants": 2
+      },
+      "skillCapCode": "700000F000",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 15,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jetstream Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 1,
+        "shirt": 1,
+        "pants": 1
+      },
+      "skillCapCode": "0000000F25",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 15,
+        "recovery": 2,
+        "luck": 5
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Journeyman Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 7,
+        "shirt": 1,
+        "pants": 8
+      },
+      "skillCapCode": "0122333334",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 1,
+        "driver": 2,
+        "irons": 2,
+        "putter": 3,
+        "draw": 3,
+        "fade": 3,
+        "backspin": 3,
+        "recovery": 3,
+        "luck": 4
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jailbait Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 2,
+        "shirt": 1,
+        "pants": 2
+      },
+      "skillCapCode": "000000005A",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 0,
+        "irons": 0,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 5,
+        "luck": 10
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Junkyard Pro",
+      "appearance": {
+        "body": 0,
+        "skin": 0,
+        "hat": 5,
+        "shirt": 5,
+        "pants": 8
+      },
+      "skillCapCode": "0077700010",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 0,
+        "driver": 7,
+        "irons": 7,
+        "putter": 7,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 1,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Steady Eddie",
+      "appearance": {
+        "body": 0,
+        "skin": 0,
+        "hat": 3,
+        "shirt": 3,
+        "pants": 3
+      },
+      "skillCapCode": "3333333333",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 3,
+        "driver": 3,
+        "irons": 3,
+        "putter": 3,
+        "draw": 3,
+        "fade": 3,
+        "backspin": 3,
+        "recovery": 3,
+        "luck": 3
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "FF Hooker",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 1,
+        "shirt": 6,
+        "pants": 1
+      },
+      "skillCapCode": "3322491222",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 3,
+        "driver": 2,
+        "irons": 2,
+        "putter": 4,
+        "draw": 9,
+        "fade": 1,
+        "backspin": 2,
+        "recovery": 2,
+        "luck": 2
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "AA Slicer",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 7,
+        "shirt": 3,
+        "pants": 8
+      },
+      "skillCapCode": "3322419222",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 3,
+        "driver": 2,
+        "irons": 2,
+        "putter": 4,
+        "draw": 1,
+        "fade": 9,
+        "backspin": 2,
+        "recovery": 2,
+        "luck": 2
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Paula Putter",
+      "appearance": {
+        "body": 4,
+        "skin": 3,
+        "hat": 1,
+        "shirt": 8,
+        "pants": 1
+      },
+      "skillCapCode": "1142F11113",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 4,
+        "irons": 2,
+        "putter": 15,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 3
+      },
+      "sourceSuffix": "30"
+    },
+    {
+      "name": "Long Jim",
+      "appearance": {
+        "body": 3,
+        "skin": 3,
+        "hat": 1,
+        "shirt": 2,
+        "pants": 8
+      },
+      "skillCapCode": "9921222233",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 9,
+        "driver": 2,
+        "irons": 1,
+        "putter": 2,
+        "draw": 2,
+        "fade": 2,
+        "backspin": 2,
+        "recovery": 3,
+        "luck": 3
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Lucky Lindy",
+      "appearance": {
+        "body": 7,
+        "skin": 2,
+        "hat": 4,
+        "shirt": 5,
+        "pants": 3
+      },
+      "skillCapCode": "12115111AC",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 2,
+        "driver": 1,
+        "irons": 1,
+        "putter": 5,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 10,
+        "luck": 12
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Get Back Jack",
+      "appearance": {
+        "body": 3,
+        "skin": 1,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 9
+      },
+      "skillCapCode": "11333116C4",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 3,
+        "irons": 3,
+        "putter": 3,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 6,
+        "recovery": 12,
+        "luck": 4
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Spin Martin",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 2,
+        "shirt": 4,
+        "pants": 6
+      },
+      "skillCapCode": "4511122F63",
+      "skillCaps": {
+        "power": 4,
+        "longDrive": 5,
+        "driver": 1,
+        "irons": 1,
+        "putter": 1,
+        "draw": 2,
+        "fade": 2,
+        "backspin": 15,
+        "recovery": 6,
+        "luck": 3
+      },
+      "sourceSuffix": "40"
+    },
+    {
+      "name": "Colin Calamadee",
+      "appearance": {
+        "body": 1,
+        "skin": 0,
+        "hat": 6,
+        "shirt": 5,
+        "pants": 6
+      },
+      "skillCapCode": "2221000BBB",
+      "skillCaps": {
+        "power": 2,
+        "longDrive": 2,
+        "driver": 2,
+        "irons": 1,
+        "putter": 0,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 11,
+        "recovery": 11,
+        "luck": 11
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Yuquo Yamashi",
+      "appearance": {
+        "body": 0,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "01AAA00333",
+      "skillCaps": {
+        "power": 0,
+        "longDrive": 1,
+        "driver": 10,
+        "irons": 10,
+        "putter": 10,
+        "draw": 0,
+        "fade": 0,
+        "backspin": 3,
+        "recovery": 3,
+        "luck": 3
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Mashie Marvin",
+      "appearance": {
+        "body": 1,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "CC22266111",
+      "skillCaps": {
+        "power": 12,
+        "longDrive": 12,
+        "driver": 2,
+        "irons": 2,
+        "putter": 2,
+        "draw": 6,
+        "fade": 6,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 1
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Jose Canyacee",
+      "appearance": {
+        "body": 2,
+        "skin": 2,
+        "hat": 9,
+        "shirt": 2,
+        "pants": 9
+      },
+      "skillCapCode": "BBB2220000",
+      "skillCaps": {
+        "power": 11,
+        "longDrive": 11,
+        "driver": 11,
+        "irons": 2,
+        "putter": 2,
+        "draw": 2,
+        "fade": 0,
+        "backspin": 0,
+        "recovery": 0,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Mulcahy O'Meegish",
+      "appearance": {
+        "body": 0,
+        "skin": 0,
+        "hat": 3,
+        "shirt": 3,
+        "pants": 3
+      },
+      "skillCapCode": "55AA111192",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 5,
+        "driver": 10,
+        "irons": 10,
+        "putter": 1,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 1,
+        "recovery": 9,
+        "luck": 2
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Sleepy Feler",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 5,
+        "shirt": 8,
+        "pants": 5
+      },
+      "skillCapCode": "3340C88255",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 3,
+        "driver": 4,
+        "irons": 0,
+        "putter": 12,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 2,
+        "recovery": 5,
+        "luck": 5
+      },
+      "sourceSuffix": "50"
+    },
+    {
+      "name": "Boom Boom Bunyan",
+      "appearance": {
+        "body": 2,
+        "skin": 3,
+        "hat": 1,
+        "shirt": 3,
+        "pants": 0
+      },
+      "skillCapCode": "FF02355113",
+      "skillCaps": {
+        "power": 15,
+        "longDrive": 15,
+        "driver": 0,
+        "irons": 2,
+        "putter": 3,
+        "draw": 5,
+        "fade": 5,
+        "backspin": 1,
+        "recovery": 1,
+        "luck": 3
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Sweet Game Sims",
+      "appearance": {
+        "body": 7,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "113FF11850",
+      "skillCaps": {
+        "power": 1,
+        "longDrive": 1,
+        "driver": 3,
+        "irons": 15,
+        "putter": 15,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 8,
+        "recovery": 5,
+        "luck": 0
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Johnnie Bones",
+      "appearance": {
+        "body": 1,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "8755555555",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 7,
+        "driver": 5,
+        "irons": 5,
+        "putter": 5,
+        "draw": 5,
+        "fade": 5,
+        "backspin": 5,
+        "recovery": 5,
+        "luck": 5
+      },
+      "sourceSuffix": "55"
+    },
+    {
+      "name": "Billy Bullseye",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 7,
+        "shirt": 6,
+        "pants": 2
+      },
+      "skillCapCode": "55AAA11571",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 5,
+        "driver": 10,
+        "irons": 10,
+        "putter": 10,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 5,
+        "recovery": 7,
+        "luck": 1
+      },
+      "sourceSuffix": "55"
+    },
+    {
+      "name": "Betsy Ford",
+      "appearance": {
+        "body": 7,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "23979115F3",
+      "skillCaps": {
+        "power": 2,
+        "longDrive": 3,
+        "driver": 9,
+        "irons": 7,
+        "putter": 9,
+        "draw": 1,
+        "fade": 1,
+        "backspin": 5,
+        "recovery": 15,
+        "luck": 3
+      },
+      "sourceSuffix": null
+    },
+    {
+      "name": "Sirius Pak",
+      "appearance": {
+        "body": 5,
+        "skin": 1,
+        "hat": 8,
+        "shirt": 1,
+        "pants": 5
+      },
+      "skillCapCode": "3597755658",
+      "skillCaps": {
+        "power": 3,
+        "longDrive": 5,
+        "driver": 9,
+        "irons": 7,
+        "putter": 7,
+        "draw": 5,
+        "fade": 5,
+        "backspin": 6,
+        "recovery": 5,
+        "luck": 8
+      },
+      "sourceSuffix": "60"
+    },
+    {
+      "name": "Billy Ghost",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "4445857968",
+      "skillCaps": {
+        "power": 4,
+        "longDrive": 4,
+        "driver": 4,
+        "irons": 5,
+        "putter": 8,
+        "draw": 5,
+        "fade": 7,
+        "backspin": 9,
+        "recovery": 6,
+        "luck": 8
+      },
+      "sourceSuffix": "60"
+    },
+    {
+      "name": "Clark Darin",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 5,
+        "shirt": 5,
+        "pants": 5
+      },
+      "skillCapCode": "5776645778",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 7,
+        "driver": 7,
+        "irons": 6,
+        "putter": 6,
+        "draw": 4,
+        "fade": 5,
+        "backspin": 7,
+        "recovery": 7,
+        "luck": 8
+      },
+      "sourceSuffix": "62"
+    },
+    {
+      "name": "Sam Seed",
+      "appearance": {
+        "body": 0,
+        "skin": 0,
+        "hat": 8,
+        "shirt": 6,
+        "pants": 2
+      },
+      "skillCapCode": "4564A4677C",
+      "skillCaps": {
+        "power": 4,
+        "longDrive": 5,
+        "driver": 6,
+        "irons": 4,
+        "putter": 10,
+        "draw": 4,
+        "fade": 6,
+        "backspin": 7,
+        "recovery": 7,
+        "luck": 12
+      },
+      "sourceSuffix": "65"
+    },
+    {
+      "name": "Karrie Internet",
+      "appearance": {
+        "body": 5,
+        "skin": 0,
+        "hat": 7,
+        "shirt": 1,
+        "pants": 8
+      },
+      "skillCapCode": "458885466B",
+      "skillCaps": {
+        "power": 4,
+        "longDrive": 5,
+        "driver": 8,
+        "irons": 8,
+        "putter": 8,
+        "draw": 5,
+        "fade": 4,
+        "backspin": 6,
+        "recovery": 6,
+        "luck": 11
+      },
+      "sourceSuffix": "65"
+    },
+    {
+      "name": "Annika Sorehands",
+      "appearance": {
+        "body": 7,
+        "skin": 0,
+        "hat": 1,
+        "shirt": 0,
+        "pants": 4
+      },
+      "skillCapCode": "557985564B",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 5,
+        "driver": 7,
+        "irons": 9,
+        "putter": 8,
+        "draw": 5,
+        "fade": 5,
+        "backspin": 6,
+        "recovery": 4,
+        "luck": 11
+      },
+      "sourceSuffix": "65"
+    },
+    {
+      "name": "Dora Lavvies",
+      "appearance": {
+        "body": 5,
+        "skin": 0,
+        "hat": 3,
+        "shirt": 3,
+        "pants": 3
+      },
+      "skillCapCode": "5668866569",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 6,
+        "driver": 6,
+        "irons": 8,
+        "putter": 8,
+        "draw": 6,
+        "fade": 6,
+        "backspin": 5,
+        "recovery": 6,
+        "luck": 9
+      },
+      "sourceSuffix": "65"
+    },
+    {
+      "name": "Nott Begah",
+      "appearance": {
+        "body": 2,
+        "skin": 3,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "8897675668",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 8,
+        "driver": 9,
+        "irons": 7,
+        "putter": 6,
+        "draw": 7,
+        "fade": 5,
+        "backspin": 6,
+        "recovery": 6,
+        "luck": 8
+      },
+      "sourceSuffix": "70"
+    },
+    {
+      "name": "Miguel Diablo",
+      "appearance": {
+        "body": 2,
+        "skin": 2,
+        "hat": 7,
+        "shirt": 0,
+        "pants": 7
+      },
+      "skillCapCode": "7887877966",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 8,
+        "irons": 7,
+        "putter": 8,
+        "draw": 7,
+        "fade": 7,
+        "backspin": 9,
+        "recovery": 6,
+        "luck": 6
+      },
+      "sourceSuffix": "70"
+    },
+    {
+      "name": "Bjorn Denmark",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 7
+      },
+      "skillCapCode": "AA47B45568",
+      "skillCaps": {
+        "power": 10,
+        "longDrive": 10,
+        "driver": 4,
+        "irons": 7,
+        "putter": 11,
+        "draw": 4,
+        "fade": 5,
+        "backspin": 5,
+        "recovery": 6,
+        "luck": 8
+      },
+      "sourceSuffix": "70"
+    },
+    {
+      "name": "Mai Tai Rodriguez",
+      "appearance": {
+        "body": 2,
+        "skin": 2,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "77A657585C",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 7,
+        "driver": 10,
+        "irons": 6,
+        "putter": 5,
+        "draw": 7,
+        "fade": 5,
+        "backspin": 8,
+        "recovery": 5,
+        "luck": 12
+      },
+      "sourceSuffix": "72"
+    },
+    {
+      "name": "John Weekly",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 8,
+        "pants": 5
+      },
+      "skillCapCode": "FF47962555",
+      "skillCaps": {
+        "power": 15,
+        "longDrive": 15,
+        "driver": 4,
+        "irons": 7,
+        "putter": 9,
+        "draw": 6,
+        "fade": 2,
+        "backspin": 5,
+        "recovery": 5,
+        "luck": 5
+      },
+      "sourceSuffix": "73"
+    },
+    {
+      "name": "John Dallas",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "7877986869",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 7,
+        "irons": 7,
+        "putter": 9,
+        "draw": 8,
+        "fade": 6,
+        "backspin": 8,
+        "recovery": 6,
+        "luck": 9
+      },
+      "sourceSuffix": "75"
+    },
+    {
+      "name": "Eastly Wood",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 4,
+        "shirt": 4,
+        "pants": 4
+      },
+      "skillCapCode": "BB47959757",
+      "skillCaps": {
+        "power": 11,
+        "longDrive": 11,
+        "driver": 4,
+        "irons": 7,
+        "putter": 9,
+        "draw": 5,
+        "fade": 9,
+        "backspin": 7,
+        "recovery": 5,
+        "luck": 7
+      },
+      "sourceSuffix": "75"
+    },
+    {
+      "name": "Craig Wally Russ",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 6,
+        "pants": 0
+      },
+      "skillCapCode": "897766884C",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 7,
+        "putter": 6,
+        "draw": 6,
+        "fade": 8,
+        "backspin": 8,
+        "recovery": 4,
+        "luck": 12
+      },
+      "sourceSuffix": "75"
+    },
+    {
+      "name": "Curtis Weird",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 4,
+        "pants": 2
+      },
+      "skillCapCode": "6787977979",
+      "skillCaps": {
+        "power": 6,
+        "longDrive": 7,
+        "driver": 8,
+        "irons": 7,
+        "putter": 9,
+        "draw": 7,
+        "fade": 7,
+        "backspin": 9,
+        "recovery": 7,
+        "luck": 9
+      },
+      "sourceSuffix": "76"
+    },
+    {
+      "name": "Harry Paddaington",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 3,
+        "shirt": 8,
+        "pants": 8
+      },
+      "skillCapCode": "558C879A77",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 5,
+        "driver": 8,
+        "irons": 12,
+        "putter": 8,
+        "draw": 7,
+        "fade": 9,
+        "backspin": 10,
+        "recovery": 7,
+        "luck": 7
+      },
+      "sourceSuffix": "78"
+    },
+    {
+      "name": "Sevestros Ballet",
+      "appearance": {
+        "body": 2,
+        "skin": 3,
+        "hat": 8,
+        "shirt": 9,
+        "pants": 3
+      },
+      "skillCapCode": "5688E5778C",
+      "skillCaps": {
+        "power": 5,
+        "longDrive": 6,
+        "driver": 8,
+        "irons": 8,
+        "putter": 14,
+        "draw": 5,
+        "fade": 7,
+        "backspin": 7,
+        "recovery": 8,
+        "luck": 12
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Fuzzy Navel",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "78677A887C",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 6,
+        "irons": 7,
+        "putter": 7,
+        "draw": 10,
+        "fade": 8,
+        "backspin": 8,
+        "recovery": 7,
+        "luck": 12
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Mike Canada",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 1
+      },
+      "skillCapCode": "8878A77898",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 8,
+        "driver": 7,
+        "irons": 8,
+        "putter": 10,
+        "draw": 7,
+        "fade": 7,
+        "backspin": 8,
+        "recovery": 9,
+        "luck": 8
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Joseph Mary Ole'",
+      "appearance": {
+        "body": 2,
+        "skin": 2,
+        "hat": 1,
+        "shirt": 1,
+        "pants": 5
+      },
+      "skillCapCode": "88679576BD",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 8,
+        "driver": 6,
+        "irons": 7,
+        "putter": 9,
+        "draw": 5,
+        "fade": 7,
+        "backspin": 6,
+        "recovery": 11,
+        "luck": 13
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Woozie Namnam",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 7,
+        "shirt": 0,
+        "pants": 7
+      },
+      "skillCapCode": "976B76787C",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 7,
+        "driver": 6,
+        "irons": 11,
+        "putter": 7,
+        "draw": 6,
+        "fade": 7,
+        "backspin": 8,
+        "recovery": 7,
+        "luck": 12
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Elsie Erns",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "897878688B",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 8,
+        "putter": 7,
+        "draw": 8,
+        "fade": 6,
+        "backspin": 8,
+        "recovery": 8,
+        "luck": 11
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Pick Nice",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "68979878A8",
+      "skillCaps": {
+        "power": 6,
+        "longDrive": 8,
+        "driver": 9,
+        "irons": 7,
+        "putter": 9,
+        "draw": 8,
+        "fade": 7,
+        "backspin": 8,
+        "recovery": 10,
+        "luck": 8
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Retief Duckwalk",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 5
+      },
+      "skillCapCode": "BC5A685859",
+      "skillCaps": {
+        "power": 11,
+        "longDrive": 12,
+        "driver": 5,
+        "irons": 10,
+        "putter": 6,
+        "draw": 8,
+        "fade": 5,
+        "backspin": 8,
+        "recovery": 5,
+        "luck": 9
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Ben Scrimshaw",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 2,
+        "pants": 2
+      },
+      "skillCapCode": "788897679B",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 8,
+        "irons": 8,
+        "putter": 9,
+        "draw": 7,
+        "fade": 6,
+        "backspin": 7,
+        "recovery": 9,
+        "luck": 11
+      },
+      "sourceSuffix": "80"
+    },
+    {
+      "name": "Fred Pairs",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 1
+      },
+      "skillCapCode": "897A68588E",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 10,
+        "putter": 6,
+        "draw": 8,
+        "fade": 5,
+        "backspin": 8,
+        "recovery": 8,
+        "luck": 14
+      },
+      "sourceSuffix": "83"
+    },
+    {
+      "name": "Bernie Longer",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 2,
+        "shirt": 7,
+        "pants": 0
+      },
+      "skillCapCode": "897A87988B",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 10,
+        "putter": 8,
+        "draw": 7,
+        "fade": 9,
+        "backspin": 8,
+        "recovery": 8,
+        "luck": 11
+      },
+      "sourceSuffix": "85"
+    },
+    {
+      "name": "Cal Markaveckia",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "8978A888A9",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 8,
+        "putter": 10,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 8,
+        "recovery": 10,
+        "luck": 9
+      },
+      "sourceSuffix": "85"
+    },
+    {
+      "name": "Angel Cabeza",
+      "appearance": {
+        "body": 2,
+        "skin": 2,
+        "hat": 3,
+        "shirt": 1,
+        "pants": 4
+      },
+      "skillCapCode": "FF48A35799",
+      "skillCaps": {
+        "power": 15,
+        "longDrive": 15,
+        "driver": 4,
+        "irons": 8,
+        "putter": 10,
+        "draw": 3,
+        "fade": 5,
+        "backspin": 7,
+        "recovery": 9,
+        "luck": 9
+      },
+      "sourceSuffix": "85"
+    },
+    {
+      "name": "Faulk Niddoe",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "89D7A7966A",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 13,
+        "irons": 7,
+        "putter": 10,
+        "draw": 7,
+        "fade": 9,
+        "backspin": 6,
+        "recovery": 6,
+        "luck": 10
+      },
+      "sourceSuffix": "85"
+    },
+    {
+      "name": "Sal Hutton",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "78EA6B8A56",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 14,
+        "irons": 10,
+        "putter": 6,
+        "draw": 11,
+        "fade": 8,
+        "backspin": 10,
+        "recovery": 5,
+        "luck": 6
+      },
+      "sourceSuffix": "85"
+    },
+    {
+      "name": "J.V. Singbird",
+      "appearance": {
+        "body": 2,
+        "skin": 3,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 0
+      },
+      "skillCapCode": "9979D7977D",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 9,
+        "driver": 7,
+        "irons": 9,
+        "putter": 13,
+        "draw": 7,
+        "fade": 9,
+        "backspin": 7,
+        "recovery": 7,
+        "luck": 13
+      },
+      "sourceSuffix": "87"
+    },
+    {
+      "name": "Seve Garcia",
+      "appearance": {
+        "body": 3,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "89A889789B",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 10,
+        "irons": 8,
+        "putter": 8,
+        "draw": 9,
+        "fade": 7,
+        "backspin": 8,
+        "recovery": 9,
+        "luck": 11
+      },
+      "sourceSuffix": "87"
+    },
+    {
+      "name": "Jobby Bones",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 6,
+        "shirt": 4,
+        "pants": 9
+      },
+      "skillCapCode": "45ACE886AA",
+      "skillCaps": {
+        "power": 4,
+        "longDrive": 5,
+        "driver": 10,
+        "irons": 12,
+        "putter": 14,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 6,
+        "recovery": 10,
+        "luck": 10
+      },
+      "sourceSuffix": "87"
+    },
+    {
+      "name": "Reg Gorman",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "CD779968B9",
+      "skillCaps": {
+        "power": 12,
+        "longDrive": 13,
+        "driver": 7,
+        "irons": 7,
+        "putter": 9,
+        "draw": 9,
+        "fade": 6,
+        "backspin": 8,
+        "recovery": 11,
+        "luck": 9
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Bailey Myfault",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 0,
+        "pants": 9
+      },
+      "skillCapCode": "78B9A788CA",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 11,
+        "irons": 9,
+        "putter": 10,
+        "draw": 7,
+        "fade": 8,
+        "backspin": 8,
+        "recovery": 12,
+        "luck": 10
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "David Izzinlove",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 3,
+        "pants": 6
+      },
+      "skillCapCode": "DD6988687C",
+      "skillCaps": {
+        "power": 13,
+        "longDrive": 13,
+        "driver": 6,
+        "irons": 9,
+        "putter": 8,
+        "draw": 8,
+        "fade": 6,
+        "backspin": 8,
+        "recovery": 7,
+        "luck": 12
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Floydman Ray",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 2,
+        "shirt": 7,
+        "pants": 1
+      },
+      "skillCapCode": "89899978AD",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 8,
+        "irons": 9,
+        "putter": 9,
+        "draw": 9,
+        "fade": 7,
+        "backspin": 8,
+        "recovery": 10,
+        "luck": 13
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Falling Nickdough",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 1
+      },
+      "skillCapCode": "89D7A69C6A",
+      "skillCaps": {
+        "power": 8,
+        "longDrive": 9,
+        "driver": 13,
+        "irons": 7,
+        "putter": 10,
+        "draw": 6,
+        "fade": 9,
+        "backspin": 12,
+        "recovery": 6,
+        "luck": 10
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Dr. Male Gorgon",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 1
+      },
+      "skillCapCode": "78A9DAA84B",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 10,
+        "irons": 9,
+        "putter": 13,
+        "draw": 10,
+        "fade": 10,
+        "backspin": 8,
+        "recovery": 4,
+        "luck": 11
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Doctor Hoch",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 2,
+        "shirt": 6,
+        "pants": 0
+      },
+      "skillCapCode": "78C7CAA879",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 12,
+        "irons": 7,
+        "putter": 12,
+        "draw": 10,
+        "fade": 10,
+        "backspin": 8,
+        "recovery": 7,
+        "luck": 9
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Fill Nickelsworth",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 0,
+        "pants": 7
+      },
+      "skillCapCode": "9A79C59A6D",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 10,
+        "driver": 7,
+        "irons": 9,
+        "putter": 12,
+        "draw": 5,
+        "fade": 9,
+        "backspin": 10,
+        "recovery": 6,
+        "luck": 13
+      },
+      "sourceSuffix": "90"
+    },
+    {
+      "name": "Duvid Daval",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "CD89A8887C",
+      "skillCaps": {
+        "power": 12,
+        "longDrive": 13,
+        "driver": 8,
+        "irons": 9,
+        "putter": 10,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 8,
+        "recovery": 7,
+        "luck": 12
+      },
+      "sourceSuffix": "95"
+    },
+    {
+      "name": "Tree Levino",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "78A8A8A9AF",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 10,
+        "irons": 8,
+        "putter": 10,
+        "draw": 8,
+        "fade": 10,
+        "backspin": 9,
+        "recovery": 10,
+        "luck": 15
+      },
+      "sourceSuffix": "95"
+    },
+    {
+      "name": "Watt Thomson",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "9BAB88879E",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 11,
+        "driver": 10,
+        "irons": 11,
+        "putter": 8,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 7,
+        "recovery": 9,
+        "luck": 14
+      },
+      "sourceSuffix": "95"
+    },
+    {
+      "name": "Monty Monty Gummy",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 9,
+        "shirt": 1,
+        "pants": 6
+      },
+      "skillCapCode": "AB7CA78A8F",
+      "skillCaps": {
+        "power": 10,
+        "longDrive": 11,
+        "driver": 7,
+        "irons": 12,
+        "putter": 10,
+        "draw": 7,
+        "fade": 8,
+        "backspin": 10,
+        "recovery": 8,
+        "luck": 15
+      },
+      "sourceSuffix": "98"
+    },
+    {
+      "name": "Tim Kate",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 0
+      },
+      "skillCapCode": "9AAB7999AD",
+      "skillCaps": {
+        "power": 9,
+        "longDrive": 10,
+        "driver": 10,
+        "irons": 11,
+        "putter": 7,
+        "draw": 9,
+        "fade": 9,
+        "backspin": 9,
+        "recovery": 10,
+        "luck": 13
+      },
+      "sourceSuffix": "98"
+    },
+    {
+      "name": "Gabby Prayer",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 9,
+        "pants": 9
+      },
+      "skillCapCode": "78A9998CFC",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 10,
+        "irons": 9,
+        "putter": 9,
+        "draw": 9,
+        "fade": 8,
+        "backspin": 12,
+        "recovery": 15,
+        "luck": 12
+      },
+      "sourceSuffix": "100"
+    },
+    {
+      "name": "Palmer Arnold",
+      "appearance": {
+        "body": 2,
+        "skin": 1,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "78CAC88FAF",
+      "skillCaps": {
+        "power": 7,
+        "longDrive": 8,
+        "driver": 12,
+        "irons": 10,
+        "putter": 12,
+        "draw": 8,
+        "fade": 8,
+        "backspin": 15,
+        "recovery": 10,
+        "luck": 15
+      },
+      "sourceSuffix": "105"
+    },
+    {
+      "name": "Ben Horgan",
+      "appearance": {
+        "body": 1,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "66FCECAACD",
+      "skillCaps": {
+        "power": 6,
+        "longDrive": 6,
+        "driver": 15,
+        "irons": 12,
+        "putter": 14,
+        "draw": 12,
+        "fade": 10,
+        "backspin": 10,
+        "recovery": 12,
+        "luck": 13
+      },
+      "sourceSuffix": "110"
+    },
+    {
+      "name": "Nick Jacklaus",
+      "appearance": {
+        "body": 2,
+        "skin": 0,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "ABACCB9AFA",
+      "skillCaps": {
+        "power": 10,
+        "longDrive": 11,
+        "driver": 10,
+        "irons": 12,
+        "putter": 12,
+        "draw": 11,
+        "fade": 9,
+        "backspin": 10,
+        "recovery": 15,
+        "luck": 10
+      },
+      "sourceSuffix": "110"
+    },
+    {
+      "name": "Tiger Forest",
+      "appearance": {
+        "body": 0,
+        "skin": 3,
+        "hat": 0,
+        "shirt": 4,
+        "pants": 0
+      },
+      "skillCapCode": "BE7AAFBF7F",
+      "skillCaps": {
+        "power": 11,
+        "longDrive": 14,
+        "driver": 7,
+        "irons": 10,
+        "putter": 10,
+        "draw": 15,
+        "fade": 11,
+        "backspin": 15,
+        "recovery": 7,
+        "luck": 15
+      },
+      "sourceSuffix": "115"
+    }
+  ],
+  "unparsedRows": [
+    {
+      "line": "Brad Fiction,0,    ,0,0,0,1,7787E668CA    85",
+      "reason": "Malformed professional roster row."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "simulatedSeconds": 7260.000000018881,
+  "restoreCycles": 12,
+  "elapsedMs": 11628.36325,
+  "checkpointBytes": 167054,
+  "completedRounds": 302,
+  "landingFees": 9,
+  "replayEqual": true,
+  "distinctShotKeys": 55,
+  "distinctPuttKeys": 19,
+  "holesWithShots": [
+    "hole-1",
+    "hole-2"
+  ],
+  "services": 304,
+  "midPuttReplayEqual": true
+}

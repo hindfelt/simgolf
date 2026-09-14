@@ -1,0 +1,9 @@
+# Desert tree collision alignment
+
+Desert vegetation was visually reduced to scrub size while airborne and rolling balls still used full-size tree collision dimensions. Both natural scenery and planted trees now use one shared scale function for presentation and collision radii/heights. Planted desert trees scale by 0.6; natural desert scenery retains its established deterministic 0.38–0.60 scale. Other environments retain their existing dimensions. Tree identities, removed-tree keys and scenery RNG consumption are unchanged.
+
+Ruleset 82 migrates live resort state. Course-layout compatibility is separate from tournament replay compatibility: older layouts remain importable under the current rules, but older desert tournament journals are rejected with an explicit older-physics message. They are not replayed with changed results, and their original stored records are not rewritten. Non-desert tournament physics is unchanged, and prior versions 75–81 now use an explicit command-version mapping. This also repairs the previously missing 79–81 command translations. A formerly invalid future command version remains invalid after translation.
+
+Validation includes planted canopy clearance/collision, narrowed trunk clearance, natural scenery scaling without mutating cached identities, old-layout import, explicit desert replay rejection and previous non-desert replay. Existing planting/removal, package import, desert rendering, save/replay and command checks pass. This addresses browser visual/physical consistency; it does not claim original-executable tree-physics parity. Flooded natural-scenery collision alignment and complete original collision geometry still require their own audit.
+
+Result: 36 distinct targeted checks passed across the tree/scenery, desert, package/competition, replay/session and regional-regression runs; production build passed. No production deployment performed.

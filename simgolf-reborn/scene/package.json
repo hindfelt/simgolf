@@ -1,0 +1,34 @@
+{
+  "name": "simgolf-reborn",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4176 --strictPort",
+    "build": "vite build --base=./",
+    "preview": "vite preview --host 0.0.0.0 --port 4176 --strictPort",
+    "test": "playwright test",
+    "test:live": "playwright test --config playwright.live.config.js",
+    "test:accounts": "vitest run --config server/vitest.config.js",
+    "dev:accounts": "../../node_modules/.bin/wrangler dev --port 8788 --var APP_ORIGIN:http://localhost:4176",
+    "test:account-browser": "playwright test --config server/browser.config.js",
+    "test:shared-integration": "npm run build && playwright test --config server/shared-integration.config.js",
+    "benchmark:shared": "node server/benchmark-shared-host.mjs",
+    "test:earnings-soak": "SIMGOLF_EARNINGS_FULL=1 npm run test:shared-integration -- --grep \"two earnings entrants\"",
+    "test:host-capacity": "SIMGOLF_CAPACITY=1 vitest run --config server/vitest.config.js server/course-capacity.test.js --reporter=default --reporter=./server/capacity-reporter.mjs"
+  },
+  "dependencies": {
+    "jose": "6.2.3",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "@playwright/test": "^1.61.1",
+    "vite": "7.3.6",
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "workerd": "1.20260911.1",
+    "sharp": "0.35.4"
+  }
+}

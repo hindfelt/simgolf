@@ -1,0 +1,29 @@
+# Graphics approval
+
+## Coastal direction — approved 7 September 2026
+
+[Coastal island example save](samples/coastal-island-example.json) contains an open hole with a mainland tee, island green and a connected crossing. Import through the club menu on the [hosted preview](https://simgolfer.0x4d.in/) or current development build. A simulation regression verifies that the hole cannot open without a crossing and that visitors finish paid rounds after it is connected. Export your existing resort before importing this example. It requires protocol 67 or later; the hosted preview was updated to protocol 68 on 9 September 2026.
+
+The owner approved [coastal concept V2](samples/coastal-concept-v2.png) with “looks wonderful!”. Its target is dark slate-blue sea, compact rocky islands and headlands, conifers, a striped lighthouse, connected timber bridges, and rounded course tiles with green borders. It follows the [Vancouver course reference](https://www.reddit.com/r/SimGolf/comments/1n37jjv/this_is_a_picture_of_the_second_hole_of_the/). The Reddit author notes that their original-game terrain tiles were modified.
+
+The first implementation pass adds matching inland/offshore blue water and editable stone banks, with gaps at bridge crossings. This is partial: coastal scenery now has layered evergreen crowns that retain tree removal and terrain-following. New coastal properties now generate a seeded chain of editable offshore islands with room for greens; the chain continues into purchased parcels. Raised shoreline banks now follow terrain edits, and a placeable red-and-cream lighthouse is available in Build (3×3 tiles, provisional $2,000). Planted conifer selection, richer cliff detailing and the full composition still need implementation. Concept approval does not imply the playable render has reached that target.
+
+| Sample | Direction | Owner approval |
+|---|---|---|
+| [A](samples/a-faithful-concept.png) | Detailed original-style isometric scene with lavender interface | Not selected |
+| [B, final revision](samples/b-dimensional-concept.png) | Dimensional materials and lighting with the lavender UI reference | **Approved, 5 September 2026** |
+| [Live browser scene](../scene/) | Actual WebGL implementation with pan/zoom, picking and animation | **Accepted after tile-based refinements; gameplay continuation authorized** |
+
+The owner identified B and said **“I LOVE IT!”**, then authorized the real browser art test with **“go”**. This approves B as the art target. It does not constitute approval of a subsequently produced render or of the full game's completion.
+
+The concept images were generated using the built-in image tool. They are not executable renders or 3D models. Their [prompts](prompts.md) remain preserved. Use the [concept comparison page](../concepts.html) for A/B inspection and original references.
+
+The actual art test uses independently authored Three.js geometry, procedural canvas materials and animation. It does not use the concept as a scene background. The generated image is loaded only for the comparison overlay.
+
+See [art-test review notes](art-test.md) and the [actual browser screenshot](samples/browser-overview.png). The large clubhouse represents a developed resort, rather than the game's starting building. Golf and groundskeeping animations demonstrate appearance; gameplay rules remain governed by the specification and later milestones.
+
+**Continuation:** the owner accepted the refined scene and said “Good. Continue”. The [first playable hole](../playable.md) now uses editable tiles and live golfer/maintenance state. Its [desktop](samples/playable-overview.png) and [phone](samples/playable-phone.png) captures are separate from the preserved art study.
+
+**Style refinement:** the owner subsequently requested original-game tile-based course shapes and explicitly rejected photorealism as the target. Preserve B's dimensional presentation while prioritizing the supplied game's straight fairway edges, stepped outlines and stylized scenery. The second review corrections are recorded in [art-test notes](art-test.md).
+
+**Rounded edges and green collars:** the owner supplied a further original-game close-up and requested rounded corners and a green border. Editable terrain now rounds the exposed perimeter of connected tile regions and adds a continuous dark-green collar around fairways, tees, greens, bunkers and painted water. Shared tile edges remain seamless; the underlying stepped construction grid is retained. Paths receive a smaller corner radius and a narrower edging.

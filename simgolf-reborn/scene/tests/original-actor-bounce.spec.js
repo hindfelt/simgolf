@@ -1,0 +1,5 @@
+import {test,expect} from '@playwright/test';
+import {originalActorBounce} from '../src/simulation/original-actor-bounce.js';
+function fixture(){const b=new Uint8Array(256),a=new DataView(b.buffer);a.setInt32(0xf0,-600,true);return {actors:[b],actorId:0,bounceCoefficient:6,boundaryFlags:0,ballTerrain:7,visualSlot:3};}
+test('audio sees incoming velocity and visual sees rebound from refreshed velocity',()=>{const seen=[];const r=originalActorBounce(fixture(),(e,state)=>{const a=new DataView(state.actors[0].buffer);seen.push([e.address,a.getInt32(0xf0,true)]);if(e.address===0x40c1f0){a.setInt32(0xf0,-1200,true);state.bounceCoefficient=0;}return {state};});expect(seen).toEqual([[0x40c1f0,-600],[0x4096e0,536]]);expect(r.calls[0].args[0]).toBe(55);expect(r.next).toBe('0x42c648');});
+test('airborne actor bypasses contact effects',()=>{const s=fixture();new DataView(s.actors[0].buffer).setInt32(0xe4,2,true);const r=originalActorBounce(s);expect(r.calls).toEqual([]);expect(r.next).toBe('0x42ca6c');});

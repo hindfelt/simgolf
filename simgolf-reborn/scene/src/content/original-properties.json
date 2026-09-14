@@ -1,0 +1,376 @@
+{
+  "source": "supplied golf.exe",
+  "sha256": "82838c7e016de83f2ecfa8023ab05896d2666dd83bf2721b863cf239fcc3b7bf",
+  "tableOffset": 790152,
+  "recordBytes": 130,
+  "properties": [
+    {
+      "originalId": 9,
+      "environment": "parkland",
+      "geography": "coastal",
+      "relief": "rolling",
+      "location": "Monterey",
+      "name": "Ocean's Edge",
+      "bonusLabel": "Scenic Cypress",
+      "sourceOffset": 790152,
+      "mapPoint": {
+        "x": 53,
+        "y": 226
+      },
+      "undecodedBytes": [
+        53,
+        0,
+        226,
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "originalId": 4,
+      "environment": "parkland",
+      "geography": "coastal",
+      "relief": "flat",
+      "location": "San Diego",
+      "name": "Dolphin Coast",
+      "bonusLabel": "Dolphins",
+      "sourceOffset": 790282,
+      "mapPoint": {
+        "x": 53,
+        "y": 244
+      },
+      "undecodedBytes": [
+        53,
+        0,
+        244,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "originalId": 11,
+      "environment": "parkland",
+      "geography": "inland",
+      "relief": "hilly",
+      "location": "Rocky Mtns.",
+      "name": "Jurassic Springs",
+      "bonusLabel": "Free Hotel",
+      "sourceOffset": 790412,
+      "mapPoint": {
+        "x": 92,
+        "y": 226
+      },
+      "undecodedBytes": [
+        92,
+        0,
+        226,
+        0,
+        0,
+        0,
+        2
+      ]
+    },
+    {
+      "originalId": 3,
+      "environment": "desert",
+      "geography": "inland",
+      "relief": "flat",
+      "location": "Las Vegas",
+      "name": "Ace in the Hole",
+      "bonusLabel": "Fun, Fun, Fun",
+      "sourceOffset": 790542,
+      "mapPoint": {
+        "x": 73,
+        "y": 241
+      },
+      "undecodedBytes": [
+        73,
+        0,
+        241,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "originalId": 0,
+      "environment": "desert",
+      "geography": "inland",
+      "relief": "flat",
+      "location": "Phoenix",
+      "name": "Coyote Flats",
+      "bonusLabel": "Free Spa",
+      "sourceOffset": 790672,
+      "mapPoint": {
+        "x": 70,
+        "y": 262
+      },
+      "undecodedBytes": [
+        70,
+        0,
+        6,
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "originalId": 7,
+      "environment": "tropical",
+      "geography": "coastal",
+      "relief": "rolling",
+      "location": "Hawaii",
+      "name": "Flamingo Shores",
+      "bonusLabel": "Scenic Waterfall",
+      "sourceOffset": 790802,
+      "mapPoint": {
+        "x": 26,
+        "y": 327
+      },
+      "undecodedBytes": [
+        26,
+        0,
+        71,
+        1,
+        2,
+        1,
+        1
+      ]
+    },
+    {
+      "originalId": 6,
+      "environment": "tropical",
+      "geography": "island",
+      "relief": "flat",
+      "location": "Oahu",
+      "name": "Island Palms",
+      "bonusLabel": "Japanese Garden",
+      "sourceOffset": 790932,
+      "mapPoint": {
+        "x": 23,
+        "y": 311
+      },
+      "undecodedBytes": [
+        23,
+        0,
+        55,
+        1,
+        2,
+        2,
+        0
+      ]
+    },
+    {
+      "originalId": 8,
+      "environment": "links",
+      "geography": "coastal",
+      "relief": "rolling",
+      "location": "Nova Scotia",
+      "name": "Windy Point",
+      "bonusLabel": "Scenic Lighthouse",
+      "sourceOffset": 791062,
+      "mapPoint": {
+        "x": 158,
+        "y": 250
+      },
+      "undecodedBytes": [
+        158,
+        0,
+        250,
+        0,
+        3,
+        1,
+        1
+      ]
+    },
+    {
+      "originalId": 15,
+      "environment": "parkland",
+      "geography": "inland",
+      "relief": "rolling",
+      "location": "Northeast",
+      "name": "Ravenwood Farms",
+      "bonusLabel": "Civil War Battlefield",
+      "sourceOffset": 791192,
+      "mapPoint": {
+        "x": 138,
+        "y": 254
+      },
+      "undecodedBytes": [
+        138,
+        0,
+        254,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "originalId": 10,
+      "environment": "parkland",
+      "geography": "inland",
+      "relief": "flat",
+      "location": "Carolina",
+      "name": "Christmas Pines",
+      "bonusLabel": "Free Putting Green",
+      "sourceOffset": 791322,
+      "mapPoint": {
+        "x": 133,
+        "y": 272
+      },
+      "undecodedBytes": [
+        133,
+        0,
+        16,
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "originalId": 14,
+      "environment": "links",
+      "geography": "inland",
+      "relief": "hilly",
+      "location": "Ireland",
+      "name": "County Kincaide",
+      "bonusLabel": "Leprechauns",
+      "sourceOffset": 791452,
+      "mapPoint": {
+        "x": 262,
+        "y": 232
+      },
+      "undecodedBytes": [
+        6,
+        1,
+        232,
+        0,
+        3,
+        0,
+        2
+      ]
+    },
+    {
+      "originalId": 12,
+      "environment": "links",
+      "geography": "coastal",
+      "relief": "flat",
+      "location": "Scotland",
+      "name": "Harold's Keep",
+      "bonusLabel": "Free Castle",
+      "sourceOffset": 791582,
+      "mapPoint": {
+        "x": 266,
+        "y": 222
+      },
+      "undecodedBytes": [
+        10,
+        1,
+        222,
+        0,
+        3,
+        1,
+        0
+      ]
+    },
+    {
+      "originalId": 13,
+      "environment": "links",
+      "geography": "island",
+      "relief": "rolling",
+      "location": "Wales",
+      "name": "Thistle Runes",
+      "bonusLabel": "Stonehenge",
+      "sourceOffset": 791712,
+      "mapPoint": {
+        "x": 272,
+        "y": 239
+      },
+      "undecodedBytes": [
+        16,
+        1,
+        239,
+        0,
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "originalId": 2,
+      "environment": "desert",
+      "geography": "coastal",
+      "relief": "rolling",
+      "location": "Spain",
+      "name": "Sangria Bay",
+      "bonusLabel": "Scenic Vineyards",
+      "sourceOffset": 791842,
+      "mapPoint": {
+        "x": 275,
+        "y": 270
+      },
+      "undecodedBytes": [
+        19,
+        1,
+        14,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "originalId": 5,
+      "environment": "tropical",
+      "geography": "coastal",
+      "relief": "flat",
+      "location": "Florida",
+      "name": "Ocean Grove",
+      "bonusLabel": "Free Pro Shop",
+      "sourceOffset": 791972,
+      "mapPoint": {
+        "x": 125,
+        "y": 298
+      },
+      "undecodedBytes": [
+        125,
+        0,
+        42,
+        1,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "originalId": 1,
+      "environment": "tropical",
+      "geography": "inland",
+      "relief": "rolling",
+      "location": "Jamaica",
+      "name": "Scorpion Cove",
+      "bonusLabel": "Scenic Statues",
+      "sourceOffset": 792102,
+      "mapPoint": {
+        "x": 129,
+        "y": 342
+      },
+      "undecodedBytes": [
+        129,
+        0,
+        86,
+        1,
+        2,
+        0,
+        1
+      ]
+    }
+  ]
+}

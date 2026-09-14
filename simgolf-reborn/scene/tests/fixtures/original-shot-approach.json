@@ -1,0 +1,1002 @@
+[
+  [
+    {
+      "distance": 0,
+      "facing": 5,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 1,
+      "classes": [
+        1,
+        3,
+        5,
+        -1
+      ]
+    },
+    {
+      "distance": 0,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 57,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        -1,
+        1,
+        5,
+        1
+      ]
+    },
+    {
+      "distance": 57,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 182,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        0,
+        3,
+        2,
+        5
+      ]
+    },
+    {
+      "distance": 182,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 187,
+      "facing": 6,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 2,
+      "classes": [
+        3,
+        -1,
+        1,
+        1
+      ]
+    },
+    {
+      "distance": 181,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 282,
+      "facing": 7,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 3,
+      "classes": [
+        1,
+        1,
+        2,
+        1
+      ]
+    },
+    {
+      "distance": 282,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 226,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 1,
+      "classes": [
+        4,
+        2,
+        2,
+        2
+      ]
+    },
+    {
+      "distance": 220,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 222,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        0,
+        3,
+        -1,
+        3
+      ]
+    },
+    {
+      "distance": 222,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 337,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        0,
+        4,
+        3,
+        4
+      ]
+    },
+    {
+      "distance": 331,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 172,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        -1,
+        -1,
+        0,
+        3
+      ]
+    },
+    {
+      "distance": 172,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 324,
+      "facing": 5,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 1,
+      "classes": [
+        3,
+        3,
+        2,
+        -1
+      ]
+    },
+    {
+      "distance": 324,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 264,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": -1,
+      "classes": [
+        4,
+        4,
+        4,
+        0
+      ]
+    },
+    {
+      "distance": 258,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 17,
+      "facing": 7,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 3,
+      "classes": [
+        2,
+        2,
+        4,
+        2
+      ]
+    },
+    {
+      "distance": 17,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 198,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        2,
+        -1,
+        5,
+        1
+      ]
+    },
+    {
+      "distance": 198,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 332,
+      "facing": 3,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 1,
+      "classes": [
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "distance": 332,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 112,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 1,
+      "classes": [
+        0,
+        2,
+        0,
+        0
+      ]
+    },
+    {
+      "distance": 112,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 84,
+      "facing": 6,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 2,
+      "classes": [
+        4,
+        0,
+        3,
+        2
+      ]
+    },
+    {
+      "distance": 78,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 180,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 1,
+      "classes": [
+        0,
+        5,
+        -1,
+        0
+      ]
+    },
+    {
+      "distance": 180,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 86,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 4,
+      "classes": [
+        -1,
+        1,
+        4,
+        2
+      ]
+    },
+    {
+      "distance": 86,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 253,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 4,
+      "classes": [
+        2,
+        3,
+        0,
+        4
+      ]
+    },
+    {
+      "distance": 253,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 35,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 1,
+      "classes": [
+        5,
+        5,
+        4,
+        0
+      ]
+    },
+    {
+      "distance": 35,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 233,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 3,
+      "classes": [
+        1,
+        3,
+        3,
+        5
+      ]
+    },
+    {
+      "distance": 233,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 6,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 1,
+      "classes": [
+        0,
+        1,
+        1,
+        5
+      ]
+    },
+    {
+      "distance": 6,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 108,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 4,
+      "classes": [
+        3,
+        1,
+        -1,
+        3
+      ]
+    },
+    {
+      "distance": 108,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 237,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        5,
+        4,
+        2,
+        -1
+      ]
+    },
+    {
+      "distance": 237,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 250,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": -1,
+      "classes": [
+        0,
+        -1,
+        5,
+        4
+      ]
+    },
+    {
+      "distance": 262,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 177,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 0,
+      "classes": [
+        0,
+        1,
+        -1,
+        2
+      ]
+    },
+    {
+      "distance": 177,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 103,
+      "facing": 5,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        3,
+        0,
+        1,
+        4
+      ]
+    },
+    {
+      "distance": 103,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 142,
+      "facing": 0,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        3,
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "distance": 136,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 1,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 2,
+      "classes": [
+        0,
+        1,
+        5,
+        3
+      ]
+    },
+    {
+      "distance": 1,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 45,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        5,
+        2,
+        1,
+        4
+      ]
+    },
+    {
+      "distance": 45,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 70,
+      "facing": 6,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 0,
+      "classes": [
+        0,
+        0,
+        0,
+        4
+      ]
+    },
+    {
+      "distance": 64,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 326,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 2,
+      "classes": [
+        5,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "distance": 326,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 84,
+      "facing": 1,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": 4,
+      "classes": [
+        -1,
+        2,
+        5,
+        2
+      ]
+    },
+    {
+      "distance": 84,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 28,
+      "facing": 6,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 2,
+      "classes": [
+        2,
+        2,
+        5,
+        3
+      ]
+    },
+    {
+      "distance": 28,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 167,
+      "facing": 7,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": -1,
+      "classes": [
+        1,
+        4,
+        4,
+        1
+      ]
+    },
+    {
+      "distance": 179,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 99,
+      "facing": 2,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 1,
+      "currentShotClass": -1,
+      "classes": [
+        0,
+        0,
+        2,
+        1
+      ]
+    },
+    {
+      "distance": 99,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 52,
+      "facing": 3,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": -1,
+      "classes": [
+        0,
+        3,
+        5,
+        3
+      ]
+    },
+    {
+      "distance": 46,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 224,
+      "facing": 5,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 2,
+      "classes": [
+        0,
+        4,
+        3,
+        4
+      ]
+    },
+    {
+      "distance": 224,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 95,
+      "facing": 4,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": -1,
+      "classes": [
+        2,
+        1,
+        3,
+        4
+      ]
+    },
+    {
+      "distance": 95,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ],
+  [
+    {
+      "distance": 231,
+      "facing": 6,
+      "target": {
+        "x": 25,
+        "z": 25
+      },
+      "terrainCode": 0,
+      "currentShotClass": 1,
+      "classes": [
+        1,
+        2,
+        2,
+        -1
+      ]
+    },
+    {
+      "distance": 243,
+      "landing": {
+        "x": 26112,
+        "z": 26112
+      }
+    }
+  ]
+]

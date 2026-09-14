@@ -1,0 +1,464 @@
+{
+  "date": "2026-09-12",
+  "command": "npm run test:earnings-soak",
+  "result": "1 passed (10.2m)",
+  "environment": "Two isolated Chrome contexts against local Wrangler Worker, D1 and Durable Objects; real wall clock, no time acceleration.",
+  "assertions": [
+    "same initial seed and $50000",
+    "private purchase budgets",
+    "both courses built and opened through UI",
+    "both end at tick 12000",
+    "server standings match saved cash and completed holes",
+    "both entrants eligible and ranked",
+    "reload preserves final cash and read-only state",
+    "no browser page errors"
+  ],
+  "samples": [
+    {
+      "sample": 0,
+      "players": [
+        {
+          "time": 3.4499999999999957,
+          "cash": 49520,
+          "fees": 0,
+          "completed": 0,
+          "guests": 0,
+          "ticks": 69
+        },
+        {
+          "time": 3.599999999999995,
+          "cash": 49600,
+          "fees": 0,
+          "completed": 0,
+          "guests": 0,
+          "ticks": 72
+        }
+      ]
+    },
+    {
+      "sample": 1,
+      "players": [
+        {
+          "time": 32.800000000000274,
+          "cash": 50320,
+          "fees": 800,
+          "completed": 2,
+          "guests": 4,
+          "ticks": 656
+        },
+        {
+          "time": 33.70000000000022,
+          "cash": 50200,
+          "fees": 600,
+          "completed": 2,
+          "guests": 4,
+          "ticks": 674
+        }
+      ]
+    },
+    {
+      "sample": 2,
+      "players": [
+        {
+          "time": 63.14999999999855,
+          "cash": 50920,
+          "fees": 1400,
+          "completed": 4,
+          "guests": 4,
+          "ticks": 1263
+        },
+        {
+          "time": 63.09999999999855,
+          "cash": 50800,
+          "fees": 1200,
+          "completed": 4,
+          "guests": 4,
+          "ticks": 1262
+        }
+      ]
+    },
+    {
+      "sample": 3,
+      "players": [
+        {
+          "time": 93.49999999999683,
+          "cash": 52120,
+          "fees": 2600,
+          "completed": 7,
+          "guests": 4,
+          "ticks": 1870
+        },
+        {
+          "time": 93.44999999999683,
+          "cash": 51900,
+          "fees": 2300,
+          "completed": 7,
+          "guests": 4,
+          "ticks": 1869
+        }
+      ]
+    },
+    {
+      "sample": 4,
+      "players": [
+        {
+          "time": 122.84999999999516,
+          "cash": 52420,
+          "fees": 2900,
+          "completed": 10,
+          "guests": 4,
+          "ticks": 2457
+        },
+        {
+          "time": 122.84999999999516,
+          "cash": 51900,
+          "fees": 2300,
+          "completed": 8,
+          "guests": 4,
+          "ticks": 2457
+        }
+      ]
+    },
+    {
+      "sample": 5,
+      "players": [
+        {
+          "time": 153.2500000000006,
+          "cash": 52920,
+          "fees": 3400,
+          "completed": 12,
+          "guests": 2,
+          "ticks": 3065
+        },
+        {
+          "time": 153.2500000000006,
+          "cash": 52200,
+          "fees": 2600,
+          "completed": 12,
+          "guests": 2,
+          "ticks": 3065
+        }
+      ]
+    },
+    {
+      "sample": 6,
+      "players": [
+        {
+          "time": 183.6500000000075,
+          "cash": 53520,
+          "fees": 4000,
+          "completed": 14,
+          "guests": 2,
+          "ticks": 3673
+        },
+        {
+          "time": 183.6000000000075,
+          "cash": 52200,
+          "fees": 2600,
+          "completed": 12,
+          "guests": 2,
+          "ticks": 3672
+        }
+      ]
+    },
+    {
+      "sample": 7,
+      "players": [
+        {
+          "time": 213.00000000001418,
+          "cash": 53520,
+          "fees": 4000,
+          "completed": 14,
+          "guests": 0,
+          "ticks": 4260
+        },
+        {
+          "time": 213.00000000001418,
+          "cash": 53000,
+          "fees": 3400,
+          "completed": 14,
+          "guests": 0,
+          "ticks": 4260
+        }
+      ]
+    },
+    {
+      "sample": 8,
+      "players": [
+        {
+          "time": 243.4500000000211,
+          "cash": 53920,
+          "fees": 4400,
+          "completed": 16,
+          "guests": 2,
+          "ticks": 4869
+        },
+        {
+          "time": 243.4000000000211,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 15,
+          "guests": 2,
+          "ticks": 4868
+        }
+      ]
+    },
+    {
+      "sample": 9,
+      "players": [
+        {
+          "time": 272.80000000002775,
+          "cash": 53920,
+          "fees": 4400,
+          "completed": 16,
+          "guests": 2,
+          "ticks": 5456
+        },
+        {
+          "time": 272.80000000002775,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 16,
+          "guests": 2,
+          "ticks": 5456
+        }
+      ]
+    },
+    {
+      "sample": 10,
+      "players": [
+        {
+          "time": 303.20000000003466,
+          "cash": 53920,
+          "fees": 4400,
+          "completed": 18,
+          "guests": 3,
+          "ticks": 6064
+        },
+        {
+          "time": 303.20000000003466,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 19,
+          "guests": 2,
+          "ticks": 6064
+        }
+      ]
+    },
+    {
+      "sample": 11,
+      "players": [
+        {
+          "time": 333.55000000004156,
+          "cash": 54120,
+          "fees": 4600,
+          "completed": 20,
+          "guests": 4,
+          "ticks": 6671
+        },
+        {
+          "time": 333.55000000004156,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 19,
+          "guests": 2,
+          "ticks": 6671
+        }
+      ]
+    },
+    {
+      "sample": 12,
+      "players": [
+        {
+          "time": 362.95000000004825,
+          "cash": 54120,
+          "fees": 4600,
+          "completed": 22,
+          "guests": 2,
+          "ticks": 7259
+        },
+        {
+          "time": 362.95000000004825,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 20,
+          "guests": 2,
+          "ticks": 7259
+        }
+      ]
+    },
+    {
+      "sample": 13,
+      "players": [
+        {
+          "time": 393.30000000005515,
+          "cash": 54120,
+          "fees": 4600,
+          "completed": 24,
+          "guests": 4,
+          "ticks": 7866
+        },
+        {
+          "time": 393.30000000005515,
+          "cash": 53500,
+          "fees": 3900,
+          "completed": 20,
+          "guests": 3,
+          "ticks": 7866
+        }
+      ]
+    },
+    {
+      "sample": 14,
+      "players": [
+        {
+          "time": 423.70000000006206,
+          "cash": 54120,
+          "fees": 4600,
+          "completed": 26,
+          "guests": 4,
+          "ticks": 8474
+        },
+        {
+          "time": 423.70000000006206,
+          "cash": 53600,
+          "fees": 4000,
+          "completed": 21,
+          "guests": 1,
+          "ticks": 8474
+        }
+      ]
+    },
+    {
+      "sample": 15,
+      "players": [
+        {
+          "time": 453.10000000006875,
+          "cash": 54220,
+          "fees": 4700,
+          "completed": 28,
+          "guests": 0,
+          "ticks": 9062
+        },
+        {
+          "time": 453.05000000006874,
+          "cash": 53600,
+          "fees": 4000,
+          "completed": 21,
+          "guests": 0,
+          "ticks": 9061
+        }
+      ]
+    },
+    {
+      "sample": 16,
+      "players": [
+        {
+          "time": 483.50000000007566,
+          "cash": 54220,
+          "fees": 4700,
+          "completed": 28,
+          "guests": 0,
+          "ticks": 9670
+        },
+        {
+          "time": 483.45000000007565,
+          "cash": 53600,
+          "fees": 4000,
+          "completed": 21,
+          "guests": 0,
+          "ticks": 9669
+        }
+      ]
+    },
+    {
+      "sample": 17,
+      "players": [
+        {
+          "time": 512.8500000000813,
+          "cash": 54420,
+          "fees": 4900,
+          "completed": 30,
+          "guests": 1,
+          "ticks": 10257
+        },
+        {
+          "time": 512.8500000000813,
+          "cash": 53700,
+          "fees": 4100,
+          "completed": 22,
+          "guests": 2,
+          "ticks": 10257
+        }
+      ]
+    },
+    {
+      "sample": 18,
+      "players": [
+        {
+          "time": 543.3000000000536,
+          "cash": 54420,
+          "fees": 4900,
+          "completed": 30,
+          "guests": 2,
+          "ticks": 10866
+        },
+        {
+          "time": 543.3000000000536,
+          "cash": 53700,
+          "fees": 4100,
+          "completed": 22,
+          "guests": 2,
+          "ticks": 10866
+        }
+      ]
+    },
+    {
+      "sample": 19,
+      "players": [
+        {
+          "time": 573.700000000026,
+          "cash": 54420,
+          "fees": 4900,
+          "completed": 31,
+          "guests": 1,
+          "ticks": 11474
+        },
+        {
+          "time": 573.700000000026,
+          "cash": 53700,
+          "fees": 4100,
+          "completed": 22,
+          "guests": 2,
+          "ticks": 11474
+        }
+      ]
+    },
+    {
+      "sample": 20,
+      "players": [
+        {
+          "time": 600.000000000002,
+          "cash": 54420,
+          "fees": 4900,
+          "completed": 31,
+          "guests": 2,
+          "ticks": 12000
+        },
+        {
+          "time": 600.000000000002,
+          "cash": 53700,
+          "fees": 4100,
+          "completed": 22,
+          "guests": 2,
+          "ticks": 12000
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Two small courses only",
+    "Not a hosted capacity or physical-device test",
+    "No production deployment"
+  ]
+}

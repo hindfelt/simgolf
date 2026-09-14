@@ -1,0 +1,127 @@
+import {airbornePoint} from './shot-motion.js';
+import {isCoastal} from './coast.js';
+import {treeScale} from "./tree-scale.js";
+import { GRID, center, key } from "./world.js";
+import { sceneryTrees, sceneryTreeVisible } from "./scenery-trees.js";
+import { elevationAt } from "./landforming.js";
+export const TREE = {
+  radius: 2.2,
+  canopyBottom: 3.3,
+  height: 7,
+  trunkRadius: 0.24,
+};
+function collisionTrees(g) {
+  const trees = Object.entries(g.tiles)
+    .filter(([, v]) => v.type === "tree")
+    .map(([k]) => ({
+      ...center(Number(k) % GRID.width, Math.floor(Number(k) / GRID.width)),
+      ...TREE,
+    }));
+  for (const tree of sceneryTrees(isCoastal(g.landscapeStyle))) {
+    if (isCoastal(g.landscapeStyle)
+      ? !sceneryTreeVisible(g, tree.c, tree.r)
+      : g.removedTrees?.[key(tree.c, tree.r)]) continue;
+    trees.push({
+      ...tree,
+      radius: TREE.radius * tree.size,
+      canopyBottom: tree.height * 0.45,
+      height: tree.height * 1.3,
+      trunkRadius: TREE.trunkRadius * tree.size,
+    });
+  }
+  for (const tree of trees) {
+    if(g.environment==='tropical'){
+      const planted=tree.size===undefined,size=planted?.7:tree.size,crown=planted?4.5:tree.height;
+      // Palm fronds occupy a shallow crown; the bare space beneath them must
+      // not retain the broadleaf tree's invisible collision volume.
+      tree.radius=3.5*size;tree.canopyBottom=crown-.95*size;tree.height=crown+.45*size;
+      tree.trunkRadius=planted?.26:.38*.65*size;
+    }
+    const scale = treeScale(g.environment,tree.x,tree.z,tree.size===undefined);
+    for (const name of ["radius","canopyBottom","height","trunkRadius"])tree[name]*=scale;
+  }
+  return trees;
+}
+
+export function treeCollision(g, shot) {
+  if (shot.putt) return null;
+  const trees = collisionTrees(g);
+  // Exclude trees beyond the flight envelope before stepping the trajectory.
+  const margin = Math.abs(shot.curve) + 3;
+  const points=shot.nativeFlight?.impact?shot.nativeFlight.samples:[shot.from,shot.landing];
+  const bounds={minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),minZ:Math.min(...points.map(p=>p.z)),maxZ:Math.max(...points.map(p=>p.z))};
+  const candidates = trees.filter((t) =>
+    t.x >= bounds.minX - margin &&
+    t.x <= bounds.maxX + margin &&
+    t.z >= bounds.minZ - margin &&
+    t.z <= bounds.maxZ + margin,
+  );
+  if (!candidates.length) return null;
+  const dx = shot.landing.x - shot.from.x,
+    dz = shot.landing.z - shot.from.z,
+    len = Math.hypot(dx, dz) || 1;
+  const steps = Math.max(
+    32,
+    Math.ceil((len + Math.abs(shot.curve) * 4) / 0.12),
+  );
+  for (let i = 1; i <= steps; i++) {
+    const t=i/steps, sample=airbornePoint(shot,t);
+    const point={x:sample.x,z:sample.z},height=sample.lift;
+    for (const tree of candidates) {
+      const relativeHeight = height +
+        elevationAt(g, point.x, point.z) - elevationAt(g, tree.x, tree.z);
+      const d = Math.hypot(point.x - tree.x, point.z - tree.z);
+      if(shot.nativeFlight&&relativeHeight>=0&&relativeHeight<tree.canopyBottom&&d<tree.trunkRadius){
+        // Contact must remain outside solid wood. A sampled point just inside
+        // the trunk becomes unreachable and incorrectly triggers a penalty.
+        const previous=airbornePoint(shot,(i-1)/steps);
+        const vx=point.x-previous.x,vz=point.z-previous.z;
+        const ax=previous.x-tree.x,az=previous.z-tree.z;
+        const a=vx*vx+vz*vz,b=2*(ax*vx+az*vz),c=ax*ax+az*az-tree.trunkRadius**2;
+        if(a>0&&c>=0){
+          const contact=Math.max(0,Math.min(1,(-b-Math.sqrt(Math.max(0,b*b-4*a*c)))/(2*a)));
+          const u=Math.max(0,contact-.0001/Math.sqrt(a));
+          return {t:(i-1+u)/steps,point:{x:previous.x+vx*u,z:previous.z+vz*u},height:previous.lift+(height-previous.lift)*u};
+        }
+      }
+      if (
+        (relativeHeight <= tree.height &&
+          relativeHeight >= tree.canopyBottom &&
+          d < tree.radius) ||
+        (relativeHeight >= 0 &&
+          relativeHeight < tree.canopyBottom &&
+          d < tree.trunkRadius)
+      )
+        return { t, point, height };
+    }
+  }
+  return null;
+}
+
+// Test each ground segment against trunk footprints. Filter against a ray,
+// not just the intended endpoint: faster turf can extend the roll beyond it.
+export function treeGroundBlocker(g, from, proposed) {
+  const allDirections=proposed===null;
+  proposed??={x:from.x+1,z:from.z};
+  const dx = proposed.x - from.x, dz = proposed.z - from.z;
+  const length = Math.hypot(dx, dz);
+  if (!length) return () => false;
+  const trees = collisionTrees(g).filter(tree => {
+    if(allDirections)return true;
+    const x = tree.x - from.x, z = tree.z - from.z;
+    return (x * dx + z * dz) / length >= -tree.trunkRadius &&
+      Math.abs(x * dz - z * dx) / length <= tree.trunkRadius;
+  });
+  return (a, b) => trees.some(tree => {
+    const ax = a.x - tree.x, az = a.z - tree.z;
+    const bx = b.x - tree.x, bz = b.z - tree.z;
+    const radius2 = tree.trunkRadius ** 2;
+    // Legacy balls or a landing inside a trunk can roll out, but not deeper in.
+    const sx = b.x - a.x, sz = b.z - a.z;
+    if (ax * ax + az * az < radius2 && ax * sx + az * sz >= 0 &&
+      bx * bx + bz * bz > ax * ax + az * az) return false;
+    const distance2 = sx * sx + sz * sz;
+    const t = distance2 ? Math.max(0, Math.min(1, -(ax * sx + az * sz) / distance2)) : 0;
+    return (ax + t * sx) ** 2 + (az + t * sz) ** 2 < radius2;
+  });
+}

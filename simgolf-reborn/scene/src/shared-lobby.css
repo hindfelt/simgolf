@@ -1,0 +1,14 @@
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) { margin-top: 12px; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) summary { cursor: pointer; min-height: 32px; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) form, :is(#shared-courses, #tournament-lobby,#earnings-lobby) label { display: grid; gap: 8px; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) form { margin: 14px 0; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) input, :is(#shared-courses, #tournament-lobby,#earnings-lobby) select {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px;
+  border: 1px solid #82749e; border-radius: 8px; padding: 8px 10px;
+  color: #29243d; background: #fffbea; font: inherit;
+}
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) button { min-height: 44px; padding: 8px 12px; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) a { display: inline-block; color: #30294b; font-weight: 600; padding: 8px 0; }
+:is(#shared-courses, #tournament-lobby,#earnings-lobby) code { font-size: .85em; }
+
+#tournament-lobby { overflow-wrap: anywhere; }

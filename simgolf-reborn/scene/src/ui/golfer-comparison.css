@@ -1,0 +1,12 @@
+dialog.golfer-comparison{box-sizing:border-box;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:28px;border:1px solid #b9aa70;border-radius:18px;background:linear-gradient(145deg,#2b4934,#163326);color:#f5edd3;box-shadow:0 18px 80px #071b23aa;font:14px/1.4 system-ui,sans-serif}
+.golfer-comparison::backdrop{background:#071b24b3;backdrop-filter:blur(3px)}
+.golfer-comparison h2{margin:0 0 8px;color:#ffe6a6;font:bold 28px/1.2 Georgia,serif}
+.golfer-comparison p{margin:0 0 24px;color:#c9d5bd}
+.golfer-comparison table{width:100%;border-collapse:collapse;table-layout:fixed}
+.golfer-comparison caption{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.golfer-comparison th,.golfer-comparison td{padding:11px 10px;border-bottom:1px solid #9daa6e26;overflow-wrap:anywhere}
+.golfer-comparison th{text-align:left;font-weight:500}.golfer-comparison thead th{color:#ebce83;font-weight:700;padding-bottom:16px}.golfer-comparison thead th:first-child{width:38%}
+.golfer-comparison td{position:relative;text-align:right;font-variant-numeric:tabular-nums}.golfer-comparison td>span:last-child{position:relative;z-index:1;text-shadow:0 1px 2px #102b20}
+.comparison-bar{position:absolute;left:9px;right:9px;top:10px;bottom:10px;border-radius:5px;background:linear-gradient(to right,#617448 var(--strength),#102f2366 var(--strength))}
+.golfer-comparison footer{display:flex;justify-content:flex-end;margin-top:24px}.golfer-comparison button{min-height:44px;padding:10px 22px;border:1px solid #fff0b1;border-radius:10px;background:linear-gradient(#f0d987,#c5a951);color:#213a27;font:700 14px system-ui;cursor:pointer}.golfer-comparison button:focus-visible{outline:3px solid #fff1bc;outline-offset:3px}
+@media(max-width:500px){dialog.golfer-comparison{padding:20px 14px}.golfer-comparison h2{font-size:24px}.golfer-comparison th,.golfer-comparison td{padding:9px 5px;font-size:12px}.golfer-comparison thead th:first-child{width:40%}.comparison-bar{left:3px;right:3px}.golfer-comparison footer button{width:100%}}

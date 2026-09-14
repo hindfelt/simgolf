@@ -1,0 +1,129 @@
+# Distinct Tropical and Links environments
+
+Both the isolated new-game preview and playable course now use regional
+clubhouse geometry and natural/planted vegetation. Tropical replaces broadleaf
+and coastal conifer crowns with feathered palm fronds, adds a timber pavilion
+with pale pitched roofs, and uses turquoise water and pale water-edge collars.
+Links uses open ochre grass, low scrub/gorse, taller dry grass blades and a
+stone/slate clubhouse. Parklands retains its existing clubhouse and broadleaf
+canopies. Landscape and seed still determine the terrain layout; selecting
+Coast adds coastal landforms independently of the environment.
+
+Scenery identities and removal/elevation keys are retained. Links collision
+sizes follow its reduced visible shrubs. Protocol 84 preserves importable old
+course layouts but rejects older Links tournament replays whose collision
+behavior would change. Other existing environment compatibility gates remain.
+
+Sixteen focused browser/simulation checks passed, covering rendered preview
+changes and camera controls, environment creation/export, phone Tropical
+selection, regional planted trees, collision dimensions and replay boundaries.
+Production build passed. Actual Tropical and Links screenshots were visually
+inspected. This does not complete all regional resort architecture or the full
+approved Tonga island composition. Local implementation; not deployed or pushed.
+
+## Palm collision follow-through
+
+Protocol 85 aligns Tropical collision volumes with the shallow visible palm
+crown and bare trunk, instead of retaining the broadleaf canopy. Low offset
+shots can pass below fronds, crown-height shots collide, high shots clear the
+palm and the trunk continues blocking ground rolls. Previous Tropical course
+layouts remain importable, while old tournament replay is rejected explicitly;
+version-84 saves migrate without resetting time. Links version-84 replay remains
+compatible.
+
+Twelve focused checks pass, including actual-renderer palm selection, raised
+terrain movement and removal, regional collision cases, preview differences,
+old replay boundaries and protocol migration. The production build passes.
+This is local work, with no deployment or push.
+
+## Tropical coast and hotel
+
+Offshore and course water now share the Tropical turquoise palette directly,
+including unowned coast continuation. Switching the environment rebuilds the
+water texture and bank colors without changing simulation data. Tropical banks
+use warm coral tones; other environments retain the previous slate palette.
+
+The Tropical hotel is a lower two-storey timber lodge with an upper wraparound
+veranda, pale roof and no chimney. It keeps the existing footprint, cardinal
+entrances and hotel operation rules. Other environments retain their hotel.
+
+Actual coast and lodge renders were inspected. Four environment/palette/lodge
+checks and twelve existing coastline/hotel regressions passed, along with the
+production build. The palette check covers environment switching with the same
+revision and verifies simulation data stays intact. This remains local work;
+full regional building coverage and broader island composition are still open.
+
+## False shoreline at map edge removed
+
+The water contour previously extended beyond the east canvas edge only. Its
+north/south edges therefore drew a sand or grass collar across continuous sea.
+The contour now includes the seeded exterior water rows as well, retaining
+actual island shores while moving the artificial contour outside the canvas.
+This is presentation-only and does not add water or land to saved courses.
+
+Four targeted tests pass, including three seeds with no horizontal contour
+through continuous sea, input isolation, preview/purchase agreement and the
+Tropical coast render. The updated render was inspected: the straight pale line
+across the top bay is removed. Production build passed. No push or deployment.
+
+## Regional snack pavilions
+
+Tropical snack bars now use timber battens, a pale thatched roof and a fringed
+serving canopy. Links uses stone courses, a slate roof and plain canvas. The
+course factory forwards the environment for both placed and preview buildings.
+Footprints, service logic and access are unchanged. Three targeted renderer
+checks pass and the three variants were visually inspected together; the
+production build passes. Local only, with further regional facilities open.
+
+## Regional pro shops
+
+The pro shop now has its own model with a recessed entrance, glazed displays,
+porch, golf-ball emblem and club rack in place of its previous shared regional design.
+Tropical uses timber/thatch styling; Links uses stone/slate. The shared course
+factory applies these to placement previews and built shops. Two rendering
+checks and the production build pass; all three variants were visually reviewed.
+Service and placement rules are unchanged. Local, not deployed.
+
+## Placed-building cache invalidation
+
+Placed facilities were cached by identity/type alone. Their render signature now
+includes environment, tile position and rotation; obsolete groups are disposed
+and replaced. Environment changes trigger rebuilding even if the numeric course
+revision is unchanged. Rebuilds refresh facility elevation from the landscape.
+Seven checks pass, including real placed-shop environment/rotation replacement,
+no duplicate groups, hotel connection lighting and regional previews. Production
+build passed. This is local work awaiting publication.
+
+## Regional homes
+
+Homes now receive the current environment through the course factory. Tropical
+homes use timber battens, pale roofs and a shaded veranda without a chimney;
+Links homes use stone courses and slate. Side windows improve rotated views.
+The lot footprint and simulation/service rules are unchanged. Four regional
+renderer checks and the production build pass; rendered variants were reviewed.
+This remains local work, not a hosted release.
+
+## Regional marina shore buildings
+
+Tropical and Links marinas now have timber/thatch and stone/slate pitched-roof
+shore buildings. Dock geometry and boat behavior are retained. Facility elevation
+refresh now preserves each model's ground offset, including the airstrip's 0.35
+raised base. Eighteen regional/transport/aircraft checks and one targeted raised-
+base regression passed, as did the production build. Marina variants were
+visually reviewed. Local only; further regional architecture remains open.
+
+## Recreation and service architecture
+
+Cart garages, swim-club changing pavilions and driving-range shelters now receive
+the regional environment. Tropical uses pale timber/thatch colors and Links
+uses stone/slate colors; swim pavilions also gain pitched roofs. The duplicate
+pro-shop implementation in training facilities now delegates to the regional
+shop model. Twenty-six regional, cart, parking, swimming and training checks
+pass; the production build passes. Garage and swim variants were visually
+reviewed. Service behavior remains unchanged. Not deployed.
+
+## Regional starting layouts — 12 September 2026
+
+Changing the new-game environment to Tropical or Links now selects Coastal terrain. Players can still select an inland landscape afterward; the seed is retained. Links scenery uses dense, low gorse foliage without miniature tree trunks. Existing saved terrain is unchanged.
+
+Verified the actual new-game iframe views for Parklands, Tropical and Links, including an explicit return to River valley. The environment appearance, planted regional tree and regional collision suites passed all 13 checks. The production build passed. This verification is local, not a deployment confirmation.

@@ -1,0 +1,35 @@
+{
+  "scope": "Local Workerd/D1/DO elapsed time; not hosted CPU, billing or capacity guarantee",
+  "courses": 16,
+  "holesPerCourse": 18,
+  "staffPerCourse": 16,
+  "initialVisitorsPerCourse": 12,
+  "initialSnapshotBytes": 168820,
+  "batchTicks": 120,
+  "samples": [
+    {
+      "batch": 0,
+      "wallMs": 1086,
+      "medianMs": 1078,
+      "p95Ms": 1080,
+      "visitorsPerCourse": 12
+    },
+    {
+      "batch": 1,
+      "wallMs": 1575,
+      "medianMs": 1565,
+      "p95Ms": 1575,
+      "visitorsPerCourse": 12
+    },
+    {
+      "batch": 2,
+      "wallMs": 851,
+      "medianMs": 841,
+      "p95Ms": 851,
+      "visitorsPerCourse": 12
+    }
+  ],
+  "date": "2026-09-12",
+  "command": "npm run test:host-capacity",
+  "verification": "All 16 snapshots equal after each batch, exact expected ticks and no remaining catch-up."
+}

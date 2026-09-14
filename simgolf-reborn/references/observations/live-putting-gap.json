@@ -1,0 +1,197 @@
+{
+  "scope": "Flat ordinary-green NPC diagnostic. Recovered strength uses a seed at its final draw, not a complete matching original shot. Do not compare equal seed values as equivalent full RNG histories.",
+  "samples": [
+    {
+      "yards": 2,
+      "seed": 1,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 234,
+        "verticalSpeed": 0,
+        "rngState": 1103527590,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 2,
+      "seed": 1234,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 245,
+        "verticalSpeed": 0,
+        "rngState": 233191843,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 2,
+      "seed": 90210,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 229,
+        "verticalSpeed": 0,
+        "rngState": 3653244403,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 5,
+      "seed": 1,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 355,
+        "verticalSpeed": 0,
+        "rngState": 1103527590,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 5,
+      "seed": 1234,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 373,
+        "verticalSpeed": 0,
+        "rngState": 233191843,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 5,
+      "seed": 90210,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 347,
+        "verticalSpeed": 0,
+        "rngState": 3653244403,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 10,
+      "seed": 1,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 558,
+        "verticalSpeed": 0,
+        "rngState": 1103527590,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 10,
+      "seed": 1234,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 585,
+        "verticalSpeed": 0,
+        "rngState": 233191843,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 10,
+      "seed": 90210,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 0,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 545,
+        "verticalSpeed": 0,
+        "rngState": 3653244403,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 20,
+      "seed": 1,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 1.0658141036401503e-14,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 980,
+        "verticalSpeed": 0,
+        "rngState": 1103527590,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 20,
+      "seed": 1234,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 1.0658141036401503e-14,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 1028,
+        "verticalSpeed": 0,
+        "rngState": 233191843,
+        "draws": 1
+      }
+    },
+    {
+      "yards": 20,
+      "seed": 90210,
+      "live": {
+        "durationSeconds": 1.3,
+        "endDistanceFromCup": 1.0658141036401503e-14,
+        "apex": 0,
+        "curve": 0
+      },
+      "recoveredColdCacheLaunch": {
+        "speed": 957,
+        "verticalSpeed": 0,
+        "rngState": 3653244403,
+        "draws": 1
+      }
+    }
+  ]
+}

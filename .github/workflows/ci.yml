@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -36,3 +36,81 @@ jobs:
       - run: npm run test:visual
       - run: npm run test:api
       - run: npm run build
+
+  fairway-baron:
+    name: Fairway Baron live game (${{ matrix.shard }}/4)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      # Bound llvmpipe workers so concurrent clients leave CPU for JS and D1.
+      LP_NUM_THREADS: '2'
+    defaults:
+      run:
+        working-directory: simgolf-reborn/scene
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: simgolf-reborn/scene/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome
+      - run: sudo apt-get install -y libgl1-mesa-dri xvfb
+      - run: DEBUG=pw:browser xvfb-run -a node server/verify-ci-renderer.mjs
+      - run: npm run build
+      - name: Linux graphics smoke test
+        if: matrix.shard == 1
+        run: xvfb-run -a npm run test:live -- tests/art-test.spec.js --workers=1 --reporter=line
+        env:
+          SIMGOLF_PUBLIC_TESTS: '1'
+      - run: xvfb-run -a npm run test:live -- --shard=${{ matrix.shard }}/4 --workers=1 --reporter=line
+        env:
+          SIMGOLF_PUBLIC_TESTS: '1'
+      - name: Save browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fairway-baron-browser-failures-${{ matrix.shard }}
+          path: simgolf-reborn/scene/test-results/
+          retention-days: 7
+
+  fairway-accounts:
+    name: Fairway Baron accounts and shared courses
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      # Bound llvmpipe workers so concurrent clients leave CPU for JS and D1.
+      LP_NUM_THREADS: '2'
+    defaults:
+      run:
+        working-directory: simgolf-reborn/scene
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: simgolf-reborn/scene/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chrome
+      - run: sudo apt-get install -y libgl1-mesa-dri xvfb
+      - run: xvfb-run -a node server/verify-ci-renderer.mjs
+      - run: npm run build
+      - run: npm run test:accounts
+      - run: xvfb-run -a npm run test:account-browser -- --reporter=line
+      - run: xvfb-run -a npm run test:shared-integration -- --reporter=line
+        if: ${{ !cancelled() }}
+      - name: Save account failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fairway-baron-account-failures
+          path: simgolf-reborn/scene/test-results/
+          retention-days: 7
