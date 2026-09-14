@@ -1,6 +1,6 @@
 # Fairway Baron — remaining work and release status
 
-This checkpoint includes regional/audio work and recovered-runtime integration through `9ab4c8b`.
+This checkpoint includes regional/audio work and recovered-runtime integration through `51e1eb7`.
 The package version `1.0.0` names the earlier playable rebuild; it is not a claim
 that the complete game or original-game parity is finished. The older dated
 entries in [backlog.md](backlog.md) retain implementation history. This checklist
@@ -25,9 +25,9 @@ summarizes what still remains; it does not replace the requirements in
 - Local cooperative building, course publications/history, earnings competition
   and asynchronous tournament implementation with authenticated integration tests.
 
-Production was updated on 2026-09-13 from game commit `9ab4c8b` at
+Production was updated on 2026-09-14 from game commit `51e1eb7` at
 https://simgolfer.0x4d.in/. Cloudflare version:
-`2ec92ffd-ccbb-4c98-85e2-62baba43c698`. No new database migrations
+`568499c6-9e31-4d8b-bf32-586e3aae60a2`. No new database migrations
 were required; migrations 0004–0011 were applied in the earlier deployment. The live login loaded without browser errors and all 25
 JavaScript/CSS assets matched the local build exactly. Authenticated production
 play and physical-device acceptance remain separate release gates.
@@ -81,9 +81,10 @@ and [motion evidence](references/release/live-shaped-motion-2026-09-13.md).
   remaining differences for each requirement before claiming parity.
 - [ ] **Publish a reviewed release.** Reconcile remaining dirty work, verify
   CI and the final repository revision, then deploy and smoke-test the actual
-  hosted revision. Production contains `9ab4c8b`; GitHub permissions are fixed.
-  Expanded remote CI failed on software-rendering timing and job limits;
-  run `34765776218` is not green. The rendering fallback remains undeployed.
+  hosted revision. Production now contains `51e1eb7`, including the software-rendering
+  fallback. All six jobs in CI run `34778700640` passed. Deployment and public
+  smoke checks passed; reconciliation of unrelated dirty work and the broader
+  release acceptance items above remain open.
 
 ## Evidence and limitations
 
@@ -107,6 +108,9 @@ above without claiming a clean full-suite exit. See deployment evidence.
 
 
 Latest source validation (`1debf6d`): **578 live tests passed with a clean exit**
-in 7.2 minutes locally. Linux CI remains failing, as detailed in the
-[September 13 validation report](references/release/release-validation-2026-09-13.md).
-This supersedes the older interrupted local-run count above.
+in 7.2 minutes locally. This supersedes the older interrupted local-run count above.
+
+Linux CI is now green on `51e1eb7`: 573 live checks, 82 account unit checks,
+13 account browser checks and eight shared-course integration scenarios passed.
+Five private-reference checks and one optional capacity test were intentionally skipped.
+See [September 14 production evidence](references/release/production-deploy-2026-09-14.md).
